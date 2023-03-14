@@ -10,6 +10,7 @@ enum class Condicao(val value: String) {
     fun get(coluna : String, value : String) : String{
         return when(this) {
             STARTS_WITH -> "startswith(${coluna}, ${value})"
+            EQUAL -> "${coluna} eq ${value}"
             else -> "Invalid month"
         }
     }

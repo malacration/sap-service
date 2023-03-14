@@ -2,7 +2,6 @@ package br.andrew.sap.rovema.services.abstracts
 
 import br.andrew.sap.rovema.infrastructure.odata.Filter
 import br.andrew.sap.rovema.infrastructure.odata.OData
-import br.andrew.sap.rovema.infrastructure.odata.Order
 import br.andrew.sap.rovema.infrastructure.odata.OrderBy
 import br.andrew.sap.rovema.model.SapEnvrioment
 import br.andrew.sap.rovema.model.Session
@@ -19,12 +18,20 @@ abstract class EntitiesService<T>(protected val env: SapEnvrioment,
     }
     abstract fun path() : String
 
-    fun save(entry : T) : OData {
+    fun save(entry: T & Any) : OData {
         val request = RequestEntity
                 .post(env.host+this.path())
                 .header("cookie","B1SESSION=${session().sessionId}")
                 .body(entry)
         return restTemplate.exchange(request, OData::class.java).body!!
+    }
+
+    fun update(entry : T & Any, id : String): OData?{
+        val request = RequestEntity
+                .patch(env.host+this.path()+"($id)")
+                .header("cookie","B1SESSION=${session().sessionId}")
+                .body(entry)
+        return restTemplate.exchange(request, OData::class.java).body
     }
 
     fun get(filter : Filter = Filter(), order : OrderBy = OrderBy()) : OData {

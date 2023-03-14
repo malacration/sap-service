@@ -7,12 +7,14 @@ import com.fasterxml.jackson.module.kotlin.jacksonTypeRef
 class OData() : LinkedHashMap<String,Any>() {
 
     inline fun <reified T: Any> tryGetValue() : T {
-        val json = this.get("value").toString()!!
+        val json = this.get("value")
         val mapper = ObjectMapper().registerModule(KotlinModule())
-        return mapper.readValue(json,T::class.java)
+        if(json is LinkedHashMap<*,*>)
+            return mapper.readValue(mapper.writeValueAsString(json), T::class.java)
+        return mapper.readValue(json.toString(),T::class.java)
     }
 
-    inline fun <reified T: Any> tryGetValues() : List<T> {
+    inline fun <reified T> tryGetValues() : List<T> {
         val json = this.get("value")
         val mapper = ObjectMapper().registerModule(KotlinModule())
 
