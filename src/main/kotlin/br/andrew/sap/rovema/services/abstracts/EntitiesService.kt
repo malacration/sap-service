@@ -63,6 +63,22 @@ abstract class EntitiesService<T>(protected val env: SapEnvrioment,
     fun get(filter : Filter) : OData {
         return get(filter, OrderBy())
     }
+
+    fun cru(body: String): OData {
+        val request = RequestEntity
+                .post(env.host+this.path())
+                .header("cookie","B1SESSION=${session().sessionId}")
+                .body(body)
+        return restTemplate.exchange(request, OData::class.java).body!!
+    }
+
+    fun cruUp(body: String, id : String): OData{
+        val request = RequestEntity
+                .patch(env.host+this.path()+"($id)")
+                .header("cookie","B1SESSION=${session().sessionId}")
+                .body(body)
+        return restTemplate.exchange(request, OData::class.java).body!!
+    }
 }
 
 

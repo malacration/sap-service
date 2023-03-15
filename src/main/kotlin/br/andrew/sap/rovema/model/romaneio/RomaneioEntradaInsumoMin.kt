@@ -2,28 +2,25 @@ package br.andrew.sap.rovema.model.romaneio
 
 import br.andrew.sap.rovema.model.Fazenda
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.PropertyNamingStrategy
 import com.fasterxml.jackson.databind.annotation.JsonNaming
 import java.text.SimpleDateFormat
-import java.time.Instant
-import java.time.LocalDate
-import java.time.format.DateTimeFormatter
 import java.util.*
 
 @JsonNaming(PropertyNamingStrategy.UpperCamelCaseStrategy::class)
 @JsonIgnoreProperties(ignoreUnknown = true)
-class RomaneioEntradaInsumoMinimo(
+class RomaneioEntradaInsumoMin(
         U_DataEntrada : Date?,
         val U_NumeroTicket : Int?,
-        val U_CodDeposito : String?,
         val U_PesoNota : Double?,
         val U_PesoBruto : Double?,
         val U_PesoTara : Double?,
         val U_PlacaCaminhao : String,
-        PECU_REGA : List<Filho> = listOf()
-
+        val U_NumeroBoletim : String? = "006",
 ){
-        var U_DataEntrada = SimpleDateFormat("dd/MM/yyyy").format(U_DataEntrada)
+
+        var U_DataEntrada = SimpleDateFormat("yyyy-MM-dd").format(U_DataEntrada)
         var DocEntry : Int? = null
         val U_PesoLiquido : Double = (U_PesoBruto?:0.0)-(U_PesoTara?:0.0)
         val U_PesoLiquidoDesc : Double = (U_PesoLiquido?:0.0)
@@ -44,12 +41,26 @@ class RomaneioEntradaInsumoMinimo(
         var U_CodMotorista: String? = null; //Objeto customizado
         var U_Motorista : String? = null //Objeto customizado
 
+        var U_CodRegistroCompra: String? = null
+        var U_CodParceiroNegocios: String? = null
+        var U_CodDeposito: String? = null
+        val U_TipoRomaneio = "G"
+
+        @JsonProperty("PECU_REGACollection")
+        val tipoAnalise : List<TipoAnalise> = listOf(TipoAnalise(
+                "5",
+                "UMIDADE SOJA 22/23",
+                33.1000,
+                "KG",
+                14496.9000
+        ))
+
         fun setFazenda(fazenda : Fazenda){
                 this.U_CodFazenda = fazenda.Code;
                 this.U_DscFazenda = fazenda.U_DescriComp
         }
 
-        fun setSafra(fazenda : Fazenda){
+        fun setSafra(){
                 this.U_CodSafra = "SVE";
                 this.U_DscSafra = "FAZENDA SERRA VERDE"
         }
@@ -68,17 +79,10 @@ class RomaneioEntradaInsumoMinimo(
                 U_CodMotorista ="013"
                 U_Motorista = "Marcos de Souza"
         }
-}
 
-
-class Filho(
-        val U_CodTipoAnalise : String,
-        val U_DscTipoAnalise : String,
-        val U_ValorEncontrado : Double,
-        val U_DscUnidadeMedida : String,
-        val U_DescontoPeso : Double
-){
-        var DocEntry: Int? = null
-        var LineId: Int? = null
-
+        fun setRegistroCompra(){
+                U_CodRegistroCompra = "3"
+                U_CodParceiroNegocios = "FOR0000052"
+                U_CodDeposito = "402.999"
+        }
 }

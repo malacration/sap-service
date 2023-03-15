@@ -1,8 +1,6 @@
 package br.andrew.sap.rovema.model
 
-import br.andrew.sap.rovema.model.romaneio.RomaneioEntradaInsumoMinimo
 import org.junit.jupiter.api.Test
-import java.util.*
 
 class RomaneioEntradaInsumoMinimoTest {
 
