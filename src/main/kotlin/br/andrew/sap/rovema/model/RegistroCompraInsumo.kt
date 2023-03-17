@@ -7,12 +7,14 @@ import com.fasterxml.jackson.databind.annotation.JsonNaming
 
 @JsonNaming(PropertyNamingStrategy.UpperCamelCaseStrategy::class)
 @JsonIgnoreProperties(ignoreUnknown = true)
-class Fazenda(val Code : String?, val U_DescriComp : String?) {
+class RegistroCompraInsumo(
+        val code : Int?,
+        val U_CodigoFazenda : String?) {
 
-    var U_CPFCNPJ : String? = null
+    var U_CodParceiroNegocio : String? = null
+    var U_NomParceiroNegocio : String? = null
+    var U_CodigoFilial : String? = null
+    var U_CodDeposito : String? = null
 
 
-    override fun toString(): String {
-        return U_DescriComp?: ""
-    }
 }

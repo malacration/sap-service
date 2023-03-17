@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.PropertyNamingStrategies.UPPER_CAMEL_CASE
 import org.apache.hc.client5.http.impl.classic.HttpClients
 import org.apache.hc.client5.http.impl.io.BasicHttpClientConnectionManager
+import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManager
 import org.apache.hc.client5.http.socket.ConnectionSocketFactory
 import org.apache.hc.client5.http.socket.PlainConnectionSocketFactory
 import org.apache.hc.client5.http.ssl.NoopHostnameVerifier
@@ -35,7 +36,7 @@ class RestTemplateConfig {
                 .register("https", sslsf)
                 .register("http", PlainConnectionSocketFactory())
                 .build()
-        val connectionManager = BasicHttpClientConnectionManager(socketFactoryRegistry)
+        val connectionManager = PoolingHttpClientConnectionManager(socketFactoryRegistry)
         val httpClient = HttpClients.custom().setConnectionManager(connectionManager).build()
 
         val requestFactory = HttpComponentsClientHttpRequestFactory()

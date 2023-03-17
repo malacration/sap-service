@@ -1,6 +1,9 @@
 package br.andrew.sap.rovema.model.romaneio
 
 import br.andrew.sap.rovema.model.Fazenda
+import br.andrew.sap.rovema.model.MotoristaPecuaria
+import br.andrew.sap.rovema.model.RegistroCompraInsumo
+import br.andrew.sap.rovema.model.RomaneioPesagem
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.PropertyNamingStrategy
@@ -16,15 +19,45 @@ class RomaneioEntradaInsumoMin(
         val U_PesoNota : Double?,
         val U_PesoBruto : Double?,
         val U_PesoTara : Double?,
-        val U_PlacaCaminhao : String,
+        val U_PlacaCaminhao : String?,
         val U_NumeroBoletim : String? = "006",
 ){
+        constructor(pesagem : RomaneioPesagem,
+                    compra : RegistroCompraInsumo,
+                    motorista : MotoristaPecuaria,
+                    fazenda : Fazenda) : this(
+                Date(),
+                pesagem.docNum,
+                pesagem.u_PesoNota,
+                pesagem.u_PesoBruto,
+                pesagem.u_PesoTara,
+                pesagem.u_PlacaCarreta,
+                null
+                ){
+                U_PesoLiquido = pesagem.u_PesoLiquido?:0.0
+                U_PesoLiquidoDesc = pesagem.u_PesoLiquidoDesc?:0.0
+                U_Diferenca = pesagem.u_Diferenca?:0.0
+                tipoAnalise = pesagem.tipoAnalise
+
+                U_CodFazenda = compra.U_CodParceiroNegocio
+                U_DscFazenda = compra.U_NomParceiroNegocio
+                U_CodRegistroCompra = compra.code.toString()
+                U_CodDeposito = compra.U_CodDeposito
+
+                U_CodMotorista = motorista.code
+                U_Motorista = motorista.U_NomeCadastro
+                U_CodFazenda = fazenda.Code;
+                U_DscFazenda = fazenda.U_DescriComp
+
+                U_CodTransportador = pesagem.u_CodTransportadora
+                //U_NomeTransportador = pesagem.trans "FAZENDA RIO MADEIRA | FAZENDA RIO MADEIRA"
+        }
 
         var U_DataEntrada = SimpleDateFormat("yyyy-MM-dd").format(U_DataEntrada)
         var DocEntry : Int? = null
-        val U_PesoLiquido : Double = (U_PesoBruto?:0.0)-(U_PesoTara?:0.0)
-        val U_PesoLiquidoDesc : Double = (U_PesoLiquido?:0.0)
-        val U_Diferenca : Double = U_PesoLiquido?: 0.0-(U_PesoNota?:0.0);
+        var U_PesoLiquido : Double = (U_PesoBruto?:0.0)-(U_PesoTara?:0.0)
+        var U_PesoLiquidoDesc : Double = (U_PesoLiquido?:0.0)
+        var U_Diferenca : Double = U_PesoLiquido?: 0.0-(U_PesoNota?:0.0);
 
         var U_CodFazenda : String? = null
         var U_DscFazenda : String? = null
@@ -47,18 +80,7 @@ class RomaneioEntradaInsumoMin(
         val U_TipoRomaneio = "G"
 
         @JsonProperty("PECU_REGACollection")
-        val tipoAnalise : List<TipoAnalise> = listOf(TipoAnalise(
-                "5",
-                "UMIDADE SOJA 22/23",
-                33.1000,
-                "KG",
-                14496.9000
-        ))
-
-        fun setFazenda(fazenda : Fazenda){
-                this.U_CodFazenda = fazenda.Code;
-                this.U_DscFazenda = fazenda.U_DescriComp
-        }
+        var tipoAnalise : List<TipoAnalise>? = null
 
         fun setSafra(){
                 this.U_CodSafra = "SVE";
@@ -70,19 +92,4 @@ class RomaneioEntradaInsumoMin(
                 this.U_NomeResponsavel = "Danielle Lima"
         }
 
-        fun setTransportadora(){
-                U_CodTransportador = "FOR0000051"
-                U_NomeTransportador = "FAZENDA RIO MADEIRA | FAZENDA RIO MADEIRA"
-        }
-
-        fun setMotorista(){
-                U_CodMotorista ="013"
-                U_Motorista = "Marcos de Souza"
-        }
-
-        fun setRegistroCompra(){
-                U_CodRegistroCompra = "3"
-                U_CodParceiroNegocios = "FOR0000052"
-                U_CodDeposito = "402.999"
-        }
 }

@@ -1,7 +1,9 @@
 package br.andrew.sap.rovema.model
 
 import br.andrew.sap.rovema.model.romaneio.RomaneioEntradaInsumo
+import br.andrew.sap.rovema.model.romaneio.TipoAnalise
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.PropertyNamingStrategy
 import com.fasterxml.jackson.databind.annotation.JsonNaming
 import java.util.*
@@ -60,17 +62,17 @@ class RomaneioPesagem(
         val u_UFPlaca3: String?,
         val u_NumeroNota: Int?,
         val u_NumeroNotaCA: String?,
-        val u_PesoNota: Int?,
-        val u_PesoNotaCA: Int?,
+        val u_PesoNota: Double?,
+        val u_PesoNotaCA: Double?,
         val u_ValorNota: Int,
         val u_ValorNotaCA: Int,
-        val u_PesoBruto: Int,
-        val u_PesoTara: Int,
-        val u_PesoLiquido: Int,
-        val u_PesoLiquidoDesc: Int,
+        val u_PesoBruto: Double,
+        val u_PesoTara: Double,
+        val u_PesoLiquido: Double?,
+        val u_PesoLiquidoDesc: Double?,
         val u_PesoDestinoDesc: Int,
         val u_PesoLiquidoDest: Int,
-        val u_Diferenca: Int,
+        val u_Diferenca: Double?,
         val u_MassaTotal: Int,
         val u_EncerradoPor: String?,
         val u_DtEncerramento: String?,
@@ -147,23 +149,8 @@ class RomaneioPesagem(
         val u_CodTransferenciaTerceiros: String?
 ) {
 
-    fun getRomaneioEntradaInsumo(): RomaneioEntradaInsumo {
-        return RomaneioEntradaInsumo(u_ChaveNota,this.u_ModeloNota,u_SerieNota,u_NumeroNota,this.u_ObservacoesNF,
-                u_CodDocumento,this.u_PesoNota,u_ValorNota,u_DtEmissaoNota,u_CodParceiro,u_Moeda,u_TaxaMoeda,
-                u_PesagemAvulsa,null,
-                u_QtdContratoComp,this.u_CodParceiro,"Sem Descrição Fazenda","Codigo Safra",
-                "Descricao Safra", Date(),"responsavel",this.u_CodDocumentoComp,
-                u_NrBoletimColheita, "Nome Responsavel",u_NumeroTicket,
-                u_CodMotorista,u_Motorista,u_PlacaCaminhao,u_CodViagem,
-                500,600,100,u_CodTransportadora,"nome Transportadora",
-                "Nota Fiscal?","RecebMercadoria",u_CodDeposito,u_PesoNota,u_PesoBruto,u_PesoTara,
-                u_PesoLiquido,u_PesoDestinoDesc.toDouble(),u_Diferenca.toDouble(),
-                u_EncerradoPor,u_DtEncerramento,u_HrEncerramento,null,null,
-                u_ObservacoesNF,null, "tipo romaneio",
-                u_CodDocumento,u_NFPropria,u_NumeroNota,u_ModeloNota,u_SerieNota,u_ChaveNota,u_DtEmissaoNota,
-                u_SerieNota,Date(),u_HoraPesoBruto,u_HoraPesoTara,u_HoraPesoTara,u_CodRomaneioOrigem,
-                null,null,u_PesagemManual,null
-        )
-    }
+    @JsonProperty("AMFS_RETACollection")
+    val tipoAnalise : List<TipoAnalise>? = null
+
 
 }

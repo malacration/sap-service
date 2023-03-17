@@ -22,4 +22,13 @@ class FilterTest {
         val resultado = Filter(listOf(Predicate(coluna,valor,comparador))).toString()
         Assertions.assertEquals("\$filter=startswith(Code, 'a')",resultado)
     }
+
+    @Test
+    fun condicaoIn(){
+        val coluna = "Code";
+        val comparador = Condicao.IN
+        val valor = listOf<String>("francisco","gabriel")
+        val resultado = Filter(listOf(Predicate(coluna,valor,comparador))).toString()
+        Assertions.assertEquals("\$filter=Code in ('francisco', 'gabriel')",resultado)
+    }
 }

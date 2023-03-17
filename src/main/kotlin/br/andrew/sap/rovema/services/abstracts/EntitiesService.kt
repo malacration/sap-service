@@ -51,6 +51,14 @@ abstract class EntitiesService<T>(protected val env: SapEnvrioment,
         return restTemplate.exchange(request, OData::class.java).body!!
     }
 
+    fun getById(id : Int) : OData {
+        val request = RequestEntity
+                .get(env.host+this.path()+"(${id})")
+                .header("cookie","B1SESSION=${session().sessionId}")
+                .build()
+        return restTemplate.exchange(request, OData::class.java).body!!
+    }
+
 
     fun get() : OData {
         return get(OrderBy())
