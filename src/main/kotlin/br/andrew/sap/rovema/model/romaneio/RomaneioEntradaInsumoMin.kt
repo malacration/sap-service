@@ -82,11 +82,6 @@ class RomaneioEntradaInsumoMin(
         @JsonProperty("PECU_REGACollection")
         var tipoAnalise : List<TipoAnalise>? = null
 
-        fun setSafra(){
-                this.U_CodSafra = "SVE";
-                this.U_DscSafra = "FAZENDA SERRA VERDE"
-        }
-
         fun setResponsavel(){
                 this.U_CodResponsavel = "243";
                 this.U_NomeResponsavel = "Danielle Lima"

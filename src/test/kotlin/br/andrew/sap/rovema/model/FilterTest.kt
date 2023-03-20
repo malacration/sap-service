@@ -29,6 +29,6 @@ class FilterTest {
         val comparador = Condicao.IN
         val valor = listOf<String>("francisco","gabriel")
         val resultado = Filter(listOf(Predicate(coluna,valor,comparador))).toString()
-        Assertions.assertEquals("\$filter=Code in ('francisco', 'gabriel')",resultado)
+        Assertions.assertEquals("\$filter=Code eq 'francisco' or Code eq 'gabriel'",resultado)
     }
 }

@@ -41,9 +41,8 @@ class RomaneioPesagemController(
                 .tryGetValues<RegistroCompraInsumo>()
                 .map { it.U_CodParceiroNegocio }
         val predicate = Predicate("U_CodParceiro",pns,Condicao.IN)
-        Filter(listOf())
         return romaneioService
-                .get()
+                .get(Filter(listOf(predicate)))
                 .tryGetValues<RomaneioPesagem>()
     }
 
