@@ -1,4 +1,4 @@
-name: Push Logsearch API to Docker Hub
+name: Push to Docker Hub
 
 on:
   push:
