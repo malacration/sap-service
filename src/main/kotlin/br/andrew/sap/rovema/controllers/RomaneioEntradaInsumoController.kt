@@ -55,7 +55,6 @@ class RomaneioEntradaInsumoController(
         val romaneio = RomaneioEntradaInsumoMin(romaneioPesagem,contrato,motoristaPecuaria,fazenda)
                 .also {
                     it.setResponsavel();
-                    it.setSafra()
                 }
         return romaneio
     }
