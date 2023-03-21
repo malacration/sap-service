@@ -1,12 +1,12 @@
 package br.andrew.sap.controllers
 
 import br.andrew.sap.infrastructure.odata.*
-import br.andrew.sap.model.Fazenda
 import br.andrew.sap.model.RegistroCompraInsumo
 import br.andrew.sap.model.RomaneioPesagem
 import br.andrew.sap.services.FazendaService
 import br.andrew.sap.services.RegistroCompraInsumoService
 import br.andrew.sap.services.RomaneioPesagemService
+import org.springframework.data.domain.Pageable
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestMapping
@@ -35,9 +35,9 @@ class RomaneioPesagemController(
     }
 
     @GetMapping("contrato-fazenda")
-    fun getByContrato() : List<RomaneioPesagem>{
+    fun getByContrato(page : Pageable) : List<RomaneioPesagem>{
         val pns = registroCompraInsumoService
-                .get()
+                .get(page)
                 .tryGetValues<RegistroCompraInsumo>()
                 .map { it.U_CodParceiroNegocio }
         val predicate = Predicate("U_CodParceiro",pns,Condicao.IN)
