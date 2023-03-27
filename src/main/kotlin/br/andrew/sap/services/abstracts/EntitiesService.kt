@@ -40,7 +40,7 @@ abstract class EntitiesService<T>(protected val env: SapEnvrioment,
         val aditional = listOf(filter,order).filter { it.toString().isNotEmpty() }.joinToString(" ","&")
         val skip = page.pageNumber*page.pageSize;
         val request = RequestEntity
-                .get(env.host+this.path()+"?skip=${skip}"+aditional)
+                .get(env.host+this.path()+"?\$skip=${skip}"+aditional)
                 .header("cookie","B1SESSION=${session().sessionId}")
                 .build()
         return restTemplate.exchange(request, OData::class.java).body!!

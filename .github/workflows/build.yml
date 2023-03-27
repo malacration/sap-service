@@ -51,12 +51,3 @@ jobs:
           build-args: |
             MY_VERSION=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.version'] }}
             MY_BUILTBY=github-action
-#      - name: Docker Build and push
-#        id: docker_build
-#        uses: docker/build-push-action@v2
-#        with:
-#          context: .
-#          push: true
-#          tags: malacration/operator-logsearchapi:latest
-#      - name: Image digest
-#        run: echo ${{ steps.docker_build.outputs.digest }}
