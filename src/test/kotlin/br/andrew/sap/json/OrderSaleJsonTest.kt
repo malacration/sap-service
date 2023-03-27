@@ -2,8 +2,6 @@ package br.andrew.sap.json
 
 import br.andrew.sap.model.documents.OrderSales
 import br.andrew.sap.model.documents.Product
-import br.andrew.sap.model.sovis.PedidoVenda
-import br.andrew.sap.model.sovis.Produto
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import org.junit.jupiter.api.Test
