@@ -7,6 +7,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import java.util.*
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 class PedidoVenda(
         val idCliente : String,
         val idEmpresa : String,
@@ -15,6 +16,8 @@ class PedidoVenda(
         @JsonFormat(with = arrayOf(JsonFormat.Feature.ACCEPT_SINGLE_VALUE_AS_ARRAY))
         val produtos : List<Produto>,
         val codVendedor : String) {
+
+    var idPedido : String? = null;
 
     @JsonIgnore
     fun getOrder(): OrderSales {

@@ -1,0 +1,4 @@
+sap.service.layer.url=https://localhost:500000
+sap.service.layer.user=usuario
+sap.service.layer.password=senha
+sap.service.layer.companyDB=base

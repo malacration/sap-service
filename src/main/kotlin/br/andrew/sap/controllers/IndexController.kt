@@ -50,9 +50,17 @@ class IndexController(val env: SapEnvrioment,
         return restTemplate.exchange(request, OData::class.java).body!!
     }
 
+    //STACode IC17BI01
+    //STAType = 25 -> Tipo imposto desonerado
+    //EffectiveRate -> Taxa atual aplicada
+    // Exemplo de imposto com desoneração -> val
+    // url = "https://localhost:50000/b1s/v1/SalesTaxCodes('5101-006')"
+    //val url = "https://localhost:50000/b1s/v1/SalesTaxAuthorities(Code='IC17BI01',Type=10)"
+
+    //Definições de imposto SalesTaxAuthorities
     @GetMapping("get")
     fun getteste() : Any{
-        val url = "https://localhost:50000/b1s/v1/SalesTaxInvoices"
+        val url = "https://localhost:50000/b1s/v1/SalesTaxAuthorities(Code='IC17BI01',Type=25)"
         val request = RequestEntity
                 .get(url)
                 .header("cookie","B1SESSION=${session().sessionId}")
