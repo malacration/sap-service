@@ -1,6 +1,12 @@
 package br.andrew.sap.model
 
-class SalesTaxAuthorities(val type : Int, val Rate : Int,
-                          u_Base : Double, u_Isento : Double,
-                          u_Outros : Double) {
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import com.fasterxml.jackson.databind.PropertyNamingStrategy
+import com.fasterxml.jackson.databind.annotation.JsonNaming
+
+@JsonNaming(PropertyNamingStrategy.UpperCamelCaseStrategy::class)
+@JsonIgnoreProperties(ignoreUnknown = true)
+class SalesTaxAuthorities(val type : Int, val Rate : Double,
+                          val u_Base : Double, val u_Isento : Double,
+                          val u_Outros : Double) {
 }

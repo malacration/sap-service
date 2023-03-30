@@ -11,8 +11,12 @@ import java.util.*
 @JsonIgnoreProperties(ignoreUnknown = true)
 class OrderSales(CardCode: String,
                  @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "YYY-MM-dd", timezone = "UTC")
-                 DocDueDate: Date,
+                 DocDueDate: String?,
                  DocumentLines: List<Product>,
                  BPL_IDAssignedToInvoice: String,
-                 Usage: String) : Document(CardCode, DocDueDate, DocumentLines, BPL_IDAssignedToInvoice, Usage) {
+                 Usage: String?) : Document(CardCode, DocDueDate, DocumentLines, BPL_IDAssignedToInvoice, Usage) {
+
+    var DocEntry : String? = null
+    fun removeDate(){
+    }
 }

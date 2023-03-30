@@ -5,6 +5,8 @@ import br.andrew.sap.infrastructure.odata.OrderBy
 import br.andrew.sap.model.*
 import br.andrew.sap.model.romaneio.RomaneioEntradaInsumoMin
 import br.andrew.sap.services.*
+import br.andrew.sap.services.romaneio.RomaneioEntradaInsumoService
+import br.andrew.sap.services.romaneio.RomaneioPesagemService
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.client.RestTemplate
 

@@ -21,7 +21,7 @@ class PedidoVenda(
 
     @JsonIgnore
     fun getOrder(): OrderSales {
-        return OrderSales(idCliente, Date(),produtos.map { it.getProduct() },idEmpresa,"62")
+        return OrderSales(idCliente, "2023-03-01",produtos.map { it.getProduct() },idEmpresa,"9")
     }
 }
 

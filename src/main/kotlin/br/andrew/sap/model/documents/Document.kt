@@ -6,16 +6,21 @@ import java.util.Date
 
 abstract class Document(val CardCode : String,
                     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "YYY-MM-dd", timezone = "UTC")
-                    DocDueDate : Date,
+                    val DocDueDate : String?,
                     val DocumentLines : List<Product>,
                     private val BPL_IDAssignedToInvoice : String,
-                    val Usage : String) {
+                    val Usage : String?) {
 
-    val DocDueDate : String = "2023-03-20"
 
     @JsonProperty("BPL_IDAssignedToInvoice")
     fun getBPL_IDAssignedToInvoice(): String {
         return BPL_IDAssignedToInvoice;
+    }
+
+    fun productsByTax(): Map<String, List<Product>> {
+        return this.DocumentLines
+                .filter { it.TaxCode != null }
+                .groupBy { it.TaxCode!! }
     }
 
 }

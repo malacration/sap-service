@@ -1,19 +1,18 @@
-package br.andrew.sap.services
+package br.andrew.sap.services.tax
 
 import br.andrew.sap.model.SalesTaxCode
 import br.andrew.sap.model.SapEnvrioment
-import br.andrew.sap.model.documents.OrderSales
+import br.andrew.sap.services.AuthService
 import br.andrew.sap.services.abstracts.EntitiesService
 import org.springframework.stereotype.Service
 import org.springframework.web.client.RestTemplate
 
 @Service
-class SalesTaxAuthoritiesService(val env: SapEnvrioment,
-                                 val restTemplate: RestTemplate,
-                                 val authService: AuthService) {
+class SalesTaxCodeService(env: SapEnvrioment, restTemplate: RestTemplate, authService: AuthService) :
+        EntitiesService<SalesTaxCode>(env, restTemplate, authService) {
 
 
-    fun path(): String {
+    override fun path(): String {
         return "/b1s/v1/SalesTaxCodes"
     }
 }

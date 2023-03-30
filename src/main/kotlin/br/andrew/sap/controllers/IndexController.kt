@@ -2,6 +2,7 @@ package br.andrew.sap.controllers
 
 
 import br.andrew.sap.infrastructure.odata.OData
+import br.andrew.sap.model.SalesTaxCode
 import br.andrew.sap.model.SapEnvrioment
 import br.andrew.sap.model.Session
 import br.andrew.sap.model.documents.Document
@@ -9,6 +10,8 @@ import br.andrew.sap.model.documents.OrderSales
 import br.andrew.sap.model.documents.Product
 import br.andrew.sap.model.sovis.PedidoVenda
 import br.andrew.sap.services.AuthService
+import br.andrew.sap.services.tax.SalesTaxAuthoritiesService
+import br.andrew.sap.services.tax.SalesTaxCodeService
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.databind.PropertyNamingStrategy
 import com.fasterxml.jackson.databind.annotation.JsonNaming
@@ -22,7 +25,9 @@ import java.util.*
 @RestController
 class IndexController(val env: SapEnvrioment,
                       val restTemplate: RestTemplate,
-                      val authService: AuthService) {
+                      val authService: AuthService,
+                      val salexTaxAuthoritiesService: SalesTaxAuthoritiesService,
+                      val salesTaxCodeService: SalesTaxCodeService) {
 
     @GetMapping("/")
     fun index() : String{
@@ -34,20 +39,8 @@ class IndexController(val env: SapEnvrioment,
     }
 
     @GetMapping("teste")
-    fun teste() : Any{
-        val url = "https://localhost:50000/b1s/v1/InvoicesService_GetApprovalTemplates"
-        val products = listOf(Product("PAC0000118","1.0","4.0"))
-        val documento = OrderSales(
-                "CLI0000863",
-                Date(),
-                products,
-                "2",
-                "9")
-        val request = RequestEntity
-                .post(url)
-                .header("cookie","B1SESSION=${session().sessionId}")
-                .body(Teste(documento))
-        return restTemplate.exchange(request, OData::class.java).body!!
+    fun teste() : SalesTaxCode {
+        return salesTaxCodeService.getById("5101-006").tryGetValue();
     }
 
     //STACode IC17BI01
@@ -60,12 +53,7 @@ class IndexController(val env: SapEnvrioment,
     //Definições de imposto SalesTaxAuthorities
     @GetMapping("get")
     fun getteste() : Any{
-        val url = "https://localhost:50000/b1s/v1/SalesTaxAuthorities(Code='IC17BI01',Type=25)"
-        val request = RequestEntity
-                .get(url)
-                .header("cookie","B1SESSION=${session().sessionId}")
-                .build()
-        return restTemplate.exchange(request, OData::class.java).body!!
+        return salexTaxAuthoritiesService.get("IC17BI01",25)
     }
 
 

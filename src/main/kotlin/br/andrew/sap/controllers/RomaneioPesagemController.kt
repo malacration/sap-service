@@ -5,7 +5,7 @@ import br.andrew.sap.model.RegistroCompraInsumo
 import br.andrew.sap.model.RomaneioPesagem
 import br.andrew.sap.services.FazendaService
 import br.andrew.sap.services.RegistroCompraInsumoService
-import br.andrew.sap.services.RomaneioPesagemService
+import br.andrew.sap.services.romaneio.RomaneioPesagemService
 import org.springframework.data.domain.Pageable
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable

@@ -7,5 +7,9 @@ import com.fasterxml.jackson.databind.annotation.JsonNaming
 
 @JsonNaming(PropertyNamingStrategy.UpperCamelCaseStrategy::class)
 @JsonIgnoreProperties(ignoreUnknown = true)
-class Product(val ItemCode : String, val Quantity : String, val UnitPrice : String){
+class Product(val ItemCode : String, val Quantity : String, var UnitPrice : String){
+
+    var LineNum : Int? = null;
+    var TaxCode : String? = null
+
 }
