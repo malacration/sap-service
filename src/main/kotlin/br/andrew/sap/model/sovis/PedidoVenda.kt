@@ -20,12 +20,3 @@ class PedidoVenda(
     }
 }
 
-class Produto(val idProduto : String,
-              val precoUnitario : Double,
-              val quantidade : Double){
-
-    fun getProduct(): Product {
-        return Product(idProduto,quantidade.toString(),precoUnitario.toString())
-    }
-
-}
