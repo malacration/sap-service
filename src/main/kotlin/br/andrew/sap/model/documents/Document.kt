@@ -11,6 +11,8 @@ abstract class Document(val CardCode : String,
                     private val BPL_IDAssignedToInvoice : String,
                     val Usage : String?) {
 
+    var DocEntry : String? = null
+    var DocNum : String? = null
 
     @JsonProperty("BPL_IDAssignedToInvoice")
     fun getBPL_IDAssignedToInvoice(): String {

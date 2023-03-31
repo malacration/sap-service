@@ -16,8 +16,20 @@ class OrderSales(CardCode: String,
                  BPL_IDAssignedToInvoice: String,
                  Usage: String?) : Document(CardCode, DocDueDate, DocumentLines, BPL_IDAssignedToInvoice, Usage) {
 
-    var DocEntry : String? = null
-    var DocNum : String? = null
-    fun removeDate(){
-    }
+
+
+
+    //TODO não achei onde fica esse propriedade
+    var Header : String? = null
 }
+
+
+//obs da nota - oinv Header
+//observação pedido - ORDR.comments
+//data de entrega - ORDRdocduedate
+//desconto do vendedor(linha) - RDRdiscPrcnt
+//desconto da contdição(geral) - ordr, discPricnt
+//Forma de pagamento - ORDR.peymethod
+//Grupo economico RDR1."CogsOcrCod"
+//Centro de custo RDR1CogsOcrCo2
+//Utilização - RDR1.usage
