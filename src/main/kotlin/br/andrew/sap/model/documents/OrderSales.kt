@@ -17,6 +17,7 @@ class OrderSales(CardCode: String,
                  Usage: String?) : Document(CardCode, DocDueDate, DocumentLines, BPL_IDAssignedToInvoice, Usage) {
 
     var DocEntry : String? = null
+    var DocNum : String? = null
     fun removeDate(){
     }
 }
