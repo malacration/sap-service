@@ -15,7 +15,7 @@ class OrderSalesController(val ordersService: OrdersService) {
     @PostMapping("")
     fun save(@RequestBody pedido : PedidoVenda): OrderSales {
         val order = ordersService.save(pedido.getOrder()).tryGetValue<OrderSales>()
-         ordersService.update(order,order.DocEntry!!)
+         ordersService.aplicaDesonerado(order)
         return order
     }
 
