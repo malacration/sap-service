@@ -1,18 +1,28 @@
 package br.andrew.sap.model.documents
 
 import com.fasterxml.jackson.annotation.JsonFormat
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
-import java.util.Date
+import com.fasterxml.jackson.databind.PropertyNamingStrategy
+import com.fasterxml.jackson.databind.annotation.JsonNaming
 
+@JsonNaming(PropertyNamingStrategy.UpperCamelCaseStrategy::class)
+@JsonIgnoreProperties(ignoreUnknown = true)
 abstract class Document(val CardCode : String,
                     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "YYY-MM-dd", timezone = "UTC")
                     val DocDueDate : String?,
                     val DocumentLines : List<Product>,
                     private val BPL_IDAssignedToInvoice : String,
-                    val Usage : String?) {
+                    val usage : String?) {
 
-    var DocEntry : String? = null
-    var DocNum : String? = null
+    var salesPersonCode: Int = -1
+    var paymentGroupCode: String? = null
+    var docEntry : String? = null
+    var docNum : String? = null
+    var paymentMethod : String? = null
+    var discountPercent : Double = 0.0
+    var COGSCostingCode : String? = null
+    var COGSCostingCode2 : String? = null
 
     @JsonProperty("BPL_IDAssignedToInvoice")
     fun getBPL_IDAssignedToInvoice(): String {

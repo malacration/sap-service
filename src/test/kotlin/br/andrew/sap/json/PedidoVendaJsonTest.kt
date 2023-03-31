@@ -1,12 +1,12 @@
 package br.andrew.sap.json
 
-import br.andrew.sap.model.romaneio.RomaneioEntradaInsumo
 import br.andrew.sap.model.sovis.PedidoVenda
 import br.andrew.sap.model.sovis.Produto
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.fasterxml.jackson.module.kotlin.jacksonTypeRef
 import org.junit.jupiter.api.Test
+import java.util.*
 
 class PedidoVendaJsonTest {
 
@@ -36,6 +36,21 @@ class PedidoVendaJsonTest {
     fun testeJsonSingleToList(){
         val mapper = ObjectMapper().registerModule(KotlinModule())
         val obj = mapper.readValue(json2, jacksonTypeRef<PedidoVenda>())
+    }
+
+    @Test
+    fun jsonExtend(){
+        val mapper = ObjectMapper().registerModule(KotlinModule())
+        val produtos = listOf<Produto>(Produto("PRO0001",10.5,10.0)
+                .also { it.desconto = 100.0 })
+        val pedido = PedidoVenda("CLI0001","18",
+                "avista",
+                "15", produtos,"2")
+                .also {
+                    it.idPedido = "10"
+                    it.desconto = 10.0
+                }
+        println(mapper.writeValueAsString(pedido))
     }
 
     val json = "{\n" +

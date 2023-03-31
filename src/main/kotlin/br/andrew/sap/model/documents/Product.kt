@@ -11,5 +11,6 @@ class Product(val ItemCode : String, val Quantity : String, var UnitPrice : Stri
 
     var LineNum : Int? = null;
     var TaxCode : String? = null
+    var discountPercent : Double = 0.0
 
 }

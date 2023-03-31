@@ -9,9 +9,11 @@ class Produto(val idProduto : String,
               val precoUnitario : Double,
               val quantidade : Double){
 
+    var desconto : Double = 0.0
     @JsonIgnore
     fun getProduct(): Product {
         return Product(idProduto,quantidade.toString(),precoUnitario.toString())
+                .also { it.discountPercent = desconto }
     }
 
 }
