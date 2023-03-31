@@ -13,8 +13,7 @@ class OrderSaleJsonTest {
     fun test(){
         val mapper = ObjectMapper().registerModule(KotlinModule())
         val produtos = listOf<Product>(Product("PRO0001","10.5","10.0"))
-        val pedido = OrderSales("CLI0001", "Date()",produtos,"2",
-                "avista")
+        val pedido = OrderSales("CLI0001", "Date()",produtos,"2")
         println(mapper.writeValueAsString(pedido))
     }
 }

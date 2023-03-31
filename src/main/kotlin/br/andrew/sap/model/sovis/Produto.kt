@@ -11,8 +11,8 @@ class Produto(val idProduto : String,
 
     var desconto : Double = 0.0
     @JsonIgnore
-    fun getProduct(): Product {
-        return Product(idProduto,quantidade.toString(),precoUnitario.toString())
+    fun getProduct(tipoPedido: Int): Product {
+        return Product(idProduto,quantidade.toString(),precoUnitario.toString(),tipoPedido)
                 .also { it.discountPercent = desconto }
     }
 

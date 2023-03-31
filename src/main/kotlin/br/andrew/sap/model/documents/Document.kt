@@ -12,8 +12,7 @@ abstract class Document(val CardCode : String,
                     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "YYY-MM-dd", timezone = "UTC")
                     val DocDueDate : String?,
                     val DocumentLines : List<Product>,
-                    private val BPL_IDAssignedToInvoice : String,
-                    val usage : String?) {
+                    private val BPL_IDAssignedToInvoice : String) {
 
     var salesPersonCode: Int = -1
     var paymentGroupCode: String? = null
@@ -31,7 +30,7 @@ abstract class Document(val CardCode : String,
 
     fun productsByTax(): Map<String, List<Product>> {
         return this.DocumentLines
-                .filter { it.TaxCode != null }
+                .filter { it.TaxCode != null && it.TaxCode!!.isNotEmpty() }
                 .groupBy { it.TaxCode!! }
     }
 

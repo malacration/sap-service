@@ -1,21 +1,16 @@
 package br.andrew.sap.controllers
 
 
-import br.andrew.sap.infrastructure.odata.OData
 import br.andrew.sap.model.SalesTaxCode
 import br.andrew.sap.model.SapEnvrioment
 import br.andrew.sap.model.Session
 import br.andrew.sap.model.documents.Document
-import br.andrew.sap.model.documents.OrderSales
-import br.andrew.sap.model.documents.Product
-import br.andrew.sap.model.sovis.PedidoVenda
 import br.andrew.sap.services.AuthService
 import br.andrew.sap.services.tax.SalesTaxAuthoritiesService
 import br.andrew.sap.services.tax.SalesTaxCodeService
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.databind.PropertyNamingStrategy
 import com.fasterxml.jackson.databind.annotation.JsonNaming
-import org.springframework.http.RequestEntity
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.client.RestTemplate

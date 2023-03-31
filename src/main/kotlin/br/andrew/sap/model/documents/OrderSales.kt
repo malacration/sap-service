@@ -13,8 +13,8 @@ class OrderSales(CardCode: String,
                  @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "YYY-MM-dd", timezone = "UTC")
                  DocDueDate: String?,
                  DocumentLines: List<Product>,
-                 BPL_IDAssignedToInvoice: String,
-                 Usage: String?) : Document(CardCode, DocDueDate, DocumentLines, BPL_IDAssignedToInvoice, Usage) {
+                 BPL_IDAssignedToInvoice: String)
+    : Document(CardCode, DocDueDate, DocumentLines, BPL_IDAssignedToInvoice) {
 
 
     //TODO não achei onde fica esse propriedade

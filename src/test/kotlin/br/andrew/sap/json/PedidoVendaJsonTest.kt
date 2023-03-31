@@ -16,7 +16,7 @@ class PedidoVendaJsonTest {
         val produtos = listOf<Produto>(Produto("PRO0001",10.5,10.0))
         val pedido = PedidoVenda("CLI0001","18",
                 "avista",
-                "15", produtos,"2")
+                "15", produtos,2)
         println(mapper.writeValueAsString(pedido))
     }
 
@@ -45,7 +45,7 @@ class PedidoVendaJsonTest {
                 .also { it.desconto = 100.0 })
         val pedido = PedidoVenda("CLI0001","18",
                 "avista",
-                "15", produtos,"2")
+                "15", produtos,2)
                 .also {
                     it.idPedido = "10"
                     it.desconto = 10.0
