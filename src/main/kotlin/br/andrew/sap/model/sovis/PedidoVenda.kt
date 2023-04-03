@@ -1,5 +1,6 @@
 package br.andrew.sap.model.sovis
 
+import br.andrew.sap.model.documents.AdditionalExpenses
 import br.andrew.sap.model.documents.OrderSales
 import com.fasterxml.jackson.annotation.JsonFormat
 import com.fasterxml.jackson.annotation.JsonIgnore
@@ -17,6 +18,7 @@ class PedidoVenda(
         val produtos : List<Produto>,
         val codVendedor : Int) {
 
+    var frete: Double? = null
     var idPedido : String? = null
 
     //TODO fazer parse de data
@@ -34,6 +36,8 @@ class PedidoVenda(
                     it.discountPercent = desconto
                     it.paymentGroupCode = idCondicaoPagamento
                     it.salesPersonCode = codVendedor
+                    if(this.frete != null)
+                        it.documentAdditionalExpenses = listOf(AdditionalExpenses.frete(this.frete!!))
                 }
     }
 }

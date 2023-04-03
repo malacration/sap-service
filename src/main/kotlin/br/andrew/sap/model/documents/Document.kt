@@ -23,6 +23,14 @@ abstract class Document(val CardCode : String,
     var COGSCostingCode : String? = null
     var COGSCostingCode2 : String? = null
 
+
+    var documentAdditionalExpenses : List<AdditionalExpenses> = emptyList()
+    var frete: Double? = null
+        set(valor){
+
+        field = valor
+    }
+
     @JsonProperty("BPL_IDAssignedToInvoice")
     fun getBPL_IDAssignedToInvoice(): String {
         return BPL_IDAssignedToInvoice;

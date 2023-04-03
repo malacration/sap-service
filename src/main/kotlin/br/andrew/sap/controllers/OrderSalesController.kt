@@ -4,6 +4,7 @@ import br.andrew.sap.infrastructure.odata.OData
 import br.andrew.sap.infrastructure.odata.Order
 import br.andrew.sap.infrastructure.odata.OrderBy
 import br.andrew.sap.model.documents.OrderSales
+import br.andrew.sap.model.documents.Product
 import br.andrew.sap.model.sovis.PedidoVenda
 import br.andrew.sap.model.sovis.Produto
 import br.andrew.sap.services.OrdersService
