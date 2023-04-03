@@ -21,7 +21,11 @@ class OrdersService(env: SapEnvrioment, restTemplate: RestTemplate, authService:
     }
 
     fun aplicaDesonerado(order : OrderSales): OrderSales {
-        order.productsByTax().forEach{
+        val orderFor = if (order.docEntry != null && order.productsByTax().isEmpty())
+            this.getById(order.docEntry!!).tryGetValue<OrderSales>()
+        else
+            order
+        orderFor.productsByTax().forEach{
             var taxParam = taxAuthoritiesService.get(taxCodeService.getById(it.key).tryGetValue<SalesTaxCode>()
                     .salesTaxCodes_Lines.filter { it.STAType == 25 }.first())
                     .tryGetValue<SalesTaxAuthorities>()
