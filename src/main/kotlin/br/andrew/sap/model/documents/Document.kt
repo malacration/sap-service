@@ -16,7 +16,7 @@ abstract class Document(val CardCode : String,
 
     var salesPersonCode: Int = -1
     var paymentGroupCode: String? = null
-    var docEntry : String? = null
+    var docEntry : Int? = null
     var docNum : String? = null
     var paymentMethod : String? = null
     var discountPercent : Double = 0.0

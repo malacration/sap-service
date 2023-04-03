@@ -21,17 +21,14 @@ class OrdersService(env: SapEnvrioment, restTemplate: RestTemplate, authService:
     }
 
     fun aplicaDesonerado(order : OrderSales): OrderSales {
-        val orderFor = if (order.docEntry != null && order.productsByTax().isEmpty())
-            this.getById(order.docEntry!!).tryGetValue<OrderSales>()
-        else
-            order
-        orderFor.productsByTax().forEach{
+        order.productsByTax().forEach{
             var taxParam = taxAuthoritiesService.get(taxCodeService.getById(it.key).tryGetValue<SalesTaxCode>()
                     .salesTaxCodes_Lines.filter { it.STAType == 25 }.first())
                     .tryGetValue<SalesTaxAuthorities>()
             it.value.forEach { p ->
                 p.UnitPrice =  PrecoUnitarioComDesoneracao().calculaPreco(p.UnitPrice,taxParam).toString() }
         }
+        update(orderFor,orderFor.docEntry.toString())
         return order
     }
 }
