@@ -28,7 +28,7 @@ class OrdersService(env: SapEnvrioment, restTemplate: RestTemplate, authService:
             it.value.forEach { p ->
                 p.UnitPrice =  PrecoUnitarioComDesoneracao().calculaPreco(p.UnitPrice,taxParam).toString() }
         }
-        update(orderFor,orderFor.docEntry.toString())
+        update(order,order.docEntry.toString())
         return order
     }
 }
