@@ -26,7 +26,7 @@ class OrdersService(env: SapEnvrioment, restTemplate: RestTemplate, authService:
                     .salesTaxCodes_Lines.filter { it.STAType == 25 }.first())
                     .tryGetValue<SalesTaxAuthorities>()
             it.value.forEach { p ->
-                p.UnitPrice =  PrecoUnitarioComDesoneracao().calculaPreco(p.UnitPrice,taxParam).toString() }
+                p.unitPrice =  PrecoUnitarioComDesoneracao().calculaPreco(p.unitPrice,taxParam).toString() }
         }
         update(order,order.docEntry.toString())
         return order

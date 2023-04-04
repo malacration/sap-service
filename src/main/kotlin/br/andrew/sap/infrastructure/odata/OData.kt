@@ -24,4 +24,8 @@ class OData() : LinkedHashMap<String,Any>() {
             return json.map { mapper.readValue(mapper.writeValueAsString(it), T::class.java) }
         throw Exception("Não foi possivel fazer o parse")
     }
+
+    fun next() {
+
+    }
 }

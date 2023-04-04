@@ -14,6 +14,7 @@ abstract class Document(val CardCode : String,
                     val DocumentLines : List<Product>,
                     private val BPL_IDAssignedToInvoice : String) {
 
+    var docDate :String? = null
     var salesPersonCode: Int = -1
     var paymentGroupCode: String? = null
     var docEntry : Int? = null
@@ -22,6 +23,9 @@ abstract class Document(val CardCode : String,
     var discountPercent : Double = 0.0
     var COGSCostingCode : String? = null
     var COGSCostingCode2 : String? = null
+    var ControlAccount : String? = null
+    var documentInstallments : List<Installment> = listOf()
+    var journalMemo : String? = null
 
 
     var documentAdditionalExpenses : List<AdditionalExpenses> = emptyList()
@@ -38,8 +42,8 @@ abstract class Document(val CardCode : String,
 
     fun productsByTax(): Map<String, List<Product>> {
         return this.DocumentLines
-                .filter { it.TaxCode != null && it.TaxCode!!.isNotEmpty() }
-                .groupBy { it.TaxCode!! }
+                .filter { it.taxCode != null && it.taxCode!!.isNotEmpty() }
+                .groupBy { it.taxCode!! }
     }
 
 }

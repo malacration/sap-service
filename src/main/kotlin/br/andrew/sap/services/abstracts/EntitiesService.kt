@@ -36,6 +36,14 @@ abstract class EntitiesService<T>(protected val env: SapEnvrioment,
         return restTemplate.exchange(request, OData::class.java).body
     }
 
+    fun cancel(id : String): OData? {
+        val request = RequestEntity
+                .post(env.host+this.path()+"($id)/Cancel")
+                .header("cookie","B1SESSION=${session().sessionId}")
+                .build()
+        return restTemplate.exchange(request, OData::class.java).body
+    }
+
     fun get(filter : Filter = Filter(), order : OrderBy = OrderBy(), page : Pageable = Pageable.ofSize(20)) : OData {
         val aditional = listOf(filter,order).filter { it.toString().isNotEmpty() }.joinToString(" ","&")
         val skip = page.pageNumber*page.pageSize;
