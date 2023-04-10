@@ -16,7 +16,7 @@ class PedidoVenda(
         val idCondicaoPagamento : String,
         @JsonFormat(with = arrayOf(JsonFormat.Feature.ACCEPT_SINGLE_VALUE_AS_ARRAY))
         val produtos : List<Produto>,
-        val codVendedor : Int) {
+        val codVendedor : Int = -1) {
 
     var frete: Double? = null
     var idPedido : String? = null

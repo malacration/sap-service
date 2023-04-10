@@ -24,7 +24,7 @@ abstract class Document(val CardCode : String,
     var COGSCostingCode : String? = null
     var COGSCostingCode2 : String? = null
     var ControlAccount : String? = null
-    var documentInstallments : List<Installment> = listOf()
+    var documentInstallments : List<Installment>? = null
     var journalMemo : String? = null
 
 

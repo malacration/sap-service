@@ -4,12 +4,14 @@ import br.andrew.sap.infrastructure.odata.Filter
 import br.andrew.sap.infrastructure.odata.OData
 import br.andrew.sap.infrastructure.odata.OrderBy
 import br.andrew.sap.model.SapEnvrioment
+import br.andrew.sap.model.SapError
 import br.andrew.sap.model.Session
 import br.andrew.sap.services.AuthService
 import org.springframework.boot.autoconfigure.data.web.SpringDataWebProperties
 import org.springframework.core.ParameterizedTypeReference
 import org.springframework.data.domain.Pageable
 import org.springframework.http.RequestEntity
+import org.springframework.web.client.HttpClientErrorException
 import org.springframework.web.client.RestTemplate
 
 abstract class EntitiesService<T>(protected val env: SapEnvrioment,
@@ -21,11 +23,16 @@ abstract class EntitiesService<T>(protected val env: SapEnvrioment,
     abstract fun path() : String
 
     fun save(entry: T & Any) : OData {
-        val request = RequestEntity
-                .post(env.host+this.path())
-                .header("cookie","B1SESSION=${session().sessionId}")
-                .body(entry)
-        return restTemplate.exchange(request, OData::class.java).body!!
+        try{
+            val request = RequestEntity
+                    .post(env.host+this.path())
+                    .header("cookie","B1SESSION=${session().sessionId}")
+                    .body(entry)
+            return restTemplate.exchange(request, OData::class.java).body!!
+        }catch (t : HttpClientErrorException){
+            throw t.getResponseBodyAs(SapError::class.java)?.getError() ?: t
+        }
+
     }
 
     fun update(entry : T & Any, id : String): OData?{
