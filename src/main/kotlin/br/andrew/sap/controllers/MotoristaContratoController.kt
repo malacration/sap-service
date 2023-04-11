@@ -19,6 +19,6 @@ class MotoristaContratoController(val motoristaContratoService : MotoristaContra
 
     @GetMapping("{id}")
     fun getByCodParceiro(@PathVariable id : String): OData {
-        return motoristaContratoService.getById(id).tryGetValue()
+        return motoristaContratoService.getById("'$id'").tryGetValue()
     }
 }

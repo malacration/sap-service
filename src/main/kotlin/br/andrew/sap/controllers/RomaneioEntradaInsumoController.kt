@@ -40,7 +40,7 @@ class RomaneioEntradaInsumoController(
                 .first()
 
         val motoristaContrato = motoristaContratoService
-                .getById(romaneioPesagem.u_CodMotorista!!).tryGetValue<MotoristaContrato>()
+                .getById("'${romaneioPesagem.u_CodMotorista!!}'").tryGetValue<MotoristaContrato>()
 
         val motoristaPecuaria = motoristaPecuariaService.getByCnh(motoristaContrato.U_RegistroCNH!!)
                 .tryGetValues<MotoristaPecuaria>()

@@ -22,12 +22,13 @@ class OrdersService(env: SapEnvrioment, restTemplate: RestTemplate, authService:
 
     fun aplicaDesonerado(order : OrderSales): OrderSales {
         order.productsByTax().forEach{
-            var taxParam = taxAuthoritiesService.get(taxCodeService.getById(it.key).tryGetValue<SalesTaxCode>()
+            var taxParam = taxAuthoritiesService.get(taxCodeService.getById("'${it.key}'").tryGetValue<SalesTaxCode>()
                     .salesTaxCodes_Lines.filter { it.STAType == 25 }.first())
                     .tryGetValue<SalesTaxAuthorities>()
             it.value.forEach { p ->
                 p.unitPrice =  PrecoUnitarioComDesoneracao().calculaPreco(p.unitPrice,taxParam).toString() }
         }
+        order.u_pedido_update = "0";
         update(order,order.docEntry.toString())
         return order
     }

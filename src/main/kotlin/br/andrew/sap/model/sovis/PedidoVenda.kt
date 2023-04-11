@@ -36,6 +36,7 @@ class PedidoVenda(
                     it.discountPercent = desconto
                     it.paymentGroupCode = idCondicaoPagamento
                     it.salesPersonCode = codVendedor
+                    it.u_pedido_update = "1"
                     if(this.frete != null)
                         it.documentAdditionalExpenses = listOf(AdditionalExpenses.frete(this.frete!!))
                 }

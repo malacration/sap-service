@@ -26,6 +26,7 @@ abstract class Document(val CardCode : String,
     var ControlAccount : String? = null
     var documentInstallments : List<Installment>? = null
     var journalMemo : String? = null
+    var u_pedido_update : String = "0";
 
 
     var documentAdditionalExpenses : List<AdditionalExpenses> = emptyList()

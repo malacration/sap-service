@@ -18,7 +18,7 @@ class PurchaseInvoicesController(val purchaseInvoiceService: PurchaseInvoiceServ
 
     @GetMapping("duplicate/{id}")
     fun duplicate(@PathVariable id : String) : Any{
-        val duplicado =  purchaseInvoiceService.getById(id).tryGetValue<PurchaseInvoice>().duplicate()
+        val duplicado =  purchaseInvoiceService.getById("'$id'").tryGetValue<PurchaseInvoice>().duplicate()
         return purchaseInvoiceService.save(duplicado)
     }
 
