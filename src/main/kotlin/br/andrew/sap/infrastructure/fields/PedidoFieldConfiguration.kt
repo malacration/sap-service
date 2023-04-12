@@ -15,6 +15,6 @@ class PedidoFieldConfiguration(val userFieldsMDService: UserFieldsMDService) {
         userFieldsMDService.findOrCreate(updatePedido)
 
         val idPedidoForca = FieldMd("id_pedido_forca","Id Pedido Venda","ORDR")
-        userFieldsMDService.findOrCreate(updatePedido)
+        userFieldsMDService.findOrCreate(idPedidoForca)
     }
 }

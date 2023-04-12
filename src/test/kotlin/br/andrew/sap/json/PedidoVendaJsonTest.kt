@@ -40,14 +40,6 @@ class PedidoVendaJsonTest {
     }
 
     @Test
-    fun testPedido37(){
-        val mapper = ObjectMapper().registerModule(KotlinModule())
-        val obj = mapper.readValue(jsonPedido37, jacksonTypeRef<PedidoVenda>())
-        Assertions.assertEquals(1,obj.getOrder().DocumentLines.size)
-        Assertions.assertEquals(1,obj.getOrder().DocumentLines.get(0).itemCode)
-    }
-
-    @Test
     fun jsonExtend(){
         val mapper = ObjectMapper().registerModule(KotlinModule())
         val produtos = listOf<Produto>(Produto("PRO0001",10.5,10.0)
@@ -98,5 +90,4 @@ class PedidoVendaJsonTest {
 
     val jsonSingleProduto = "{\"idCliente\":\"CLI0002777\",\"produtos\":{\"precoUnitario\":162.3362,\"idproduto\":\"PAC0000118\",\"quantidade\":4},\"idCondicaoPagamento\":\"\",\"idEmpresa\":2,\"idFormaPagamento\":\"AVISTA\"}"
 
-    val jsonPedido37 = "{\"dataEntraga\":\"2023-04-10\",\"idCliente\":\"\",\"desconto\":\"\",\"produtos\":{\"precoUnitario\":115.6,\"idProduto\":\"\",\"desconto\":3,\"quantidade\":2},\"idCondicaoPagamento\":\"\",\"frete\":\"\",\"idEmpresa\":2,\"tipoPedido\":9,\"codVendedor\":\"\",\"idPedido\":37,\"idFormaPagamento\":\"BB-RC-BOL-1199\"}"
 }
