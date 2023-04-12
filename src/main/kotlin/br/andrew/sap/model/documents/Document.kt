@@ -14,6 +14,7 @@ abstract class Document(val CardCode : String,
                     val DocumentLines : List<Product>,
                     private val BPL_IDAssignedToInvoice : String) {
 
+    var comments: String? = null
     var docDate :String? = null
     var salesPersonCode: Int = -1
     var paymentGroupCode: String? = null
@@ -26,7 +27,8 @@ abstract class Document(val CardCode : String,
     var ControlAccount : String? = null
     var documentInstallments : List<Installment>? = null
     var journalMemo : String? = null
-    var u_pedido_update : String = "0";
+    var u_pedido_update : String? = "0";
+    var u_id_pedido_forca: String? = null
 
 
     var documentAdditionalExpenses : List<AdditionalExpenses> = emptyList()

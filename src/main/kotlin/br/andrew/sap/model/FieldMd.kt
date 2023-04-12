@@ -9,7 +9,7 @@ import com.fasterxml.jackson.databind.annotation.JsonNaming
 class FieldMd(val name : String,
               val description: String,
               val tableName : String,
-              val type : String = "db_Alpha", val size : Int = 2,
+              val type : String = "db_Alpha", val size : Int = 15,
               val defaultValue: String = "0",
               val editSize : Int = 2,
               val mandatory: String = "tNO") {

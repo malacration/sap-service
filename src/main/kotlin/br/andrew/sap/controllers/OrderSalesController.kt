@@ -12,14 +12,17 @@ import br.andrew.sap.services.BusinessPartnersService
 import br.andrew.sap.services.BussinesPlaceService
 import br.andrew.sap.services.DummyService
 import br.andrew.sap.services.OrdersService
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import com.fasterxml.jackson.annotation.JsonInclude
+import com.fasterxml.jackson.databind.PropertyNamingStrategy
+import com.fasterxml.jackson.databind.annotation.JsonNaming
 import org.springframework.web.bind.annotation.*
 import java.util.*
 
 @RestController
 @RequestMapping("pedido-venda")
 class OrderSalesController(val ordersService: OrdersService,
-                           val businesPartner : BusinessPartnersService,
-                           val dumy : DummyService) {
+                           val businesPartner : BusinessPartnersService) {
 
 
     @PostMapping("")
@@ -47,12 +50,11 @@ class OrderSalesController(val ordersService: OrdersService,
     fun getData(): OData {
         return ordersService.get(OrderBy(mapOf("DocEntry" to Order.DESC)))
     }
-
-    @GetMapping("try")
-    fun getUpdate(): OrderSales {
-        val produtos = listOf(Produto("PAC0000107",100.0,1.0))
-        val pedido = PedidoVenda("CLI0000001","2","BB-RC-BOL-1199",
-                "-1",produtos)
-        return save(pedido)
-    }
 }
+
+@JsonNaming(PropertyNamingStrategy.UpperCamelCaseStrategy::class)
+@JsonIgnoreProperties(ignoreUnknown = true)
+@JsonInclude(JsonInclude.Include.NON_NULL)
+class DocumentWrapper(val Document : OrderSales
+
+)

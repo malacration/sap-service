@@ -20,6 +20,7 @@ class PedidoVenda(
 
     var frete: Double? = null
     var idPedido : String? = null
+    var observacao : String? = null
 
     //TODO fazer parse de data
     var dataEntraga : String = SimpleDateFormat("yyy-MM-dd").format(Date())
@@ -37,6 +38,8 @@ class PedidoVenda(
                     it.paymentGroupCode = idCondicaoPagamento
                     it.salesPersonCode = codVendedor
                     it.u_pedido_update = "1"
+                    it.comments = observacao
+                    it.u_id_pedido_forca = idPedido
                     if(this.frete != null)
                         it.documentAdditionalExpenses = listOf(AdditionalExpenses.frete(this.frete!!))
                 }

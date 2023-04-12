@@ -6,13 +6,13 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 class Produto(val idProduto : String,
-              val precoUnitario : Double,
+              val valorTabela : Double,
               val quantidade : Double){
 
     var desconto : Double = 0.0
     @JsonIgnore
     fun getProduct(tipoPedido: Int): Product {
-        return Product(idProduto,quantidade.toString(),precoUnitario.toString(),tipoPedido)
+        return Product(idProduto,quantidade.toString(),valorTabela.toString(),tipoPedido)
                 .also { it.discountPercent = desconto }
     }
 

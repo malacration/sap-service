@@ -7,8 +7,7 @@ import br.andrew.sap.infrastructure.odata.Predicate
 import br.andrew.sap.model.SapEnvrioment
 import br.andrew.sap.model.Version
 import br.andrew.sap.services.AuthService
-import br.andrew.sap.services.UserFieldsMDService
-import br.andrew.sap.services.tax.SalesTaxAuthoritiesService
+import br.andrew.sap.services.DummyService
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.client.RestTemplate
@@ -20,8 +19,7 @@ class IndexController(val env: SapEnvrioment,
                       val restTemplate: RestTemplate,
                       val authService: AuthService,
                       val version : Version,
-                      val salexTaxAuthoritiesService: SalesTaxAuthoritiesService,
-                      val service: UserFieldsMDService) {
+                      val service: DummyService) {
 
     @GetMapping("/")
     fun index() : Version{

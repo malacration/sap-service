@@ -13,5 +13,8 @@ class PedidoFieldConfiguration(val userFieldsMDService: UserFieldsMDService) {
         val updatePedido = FieldMd("pedido_update","Atualização pedido","ORDR")
                 .also { it.ValidValuesMD = listOf(ValuesMd("0","NÃO"),ValuesMd("1","SIM")) }
         userFieldsMDService.findOrCreate(updatePedido)
+
+        val idPedidoForca = FieldMd("id_pedido_forca","Id Pedido Venda","ORDR")
+        userFieldsMDService.findOrCreate(updatePedido)
     }
 }
