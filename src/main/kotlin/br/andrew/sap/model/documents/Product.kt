@@ -1,5 +1,6 @@
 package br.andrew.sap.model.documents
 
+import br.andrew.sap.services.ItemsService
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.databind.PropertyNamingStrategy
@@ -19,8 +20,14 @@ class Product(val itemCode : String, val quantity : String, var unitPrice : Stri
         }
     }
 
+    fun aplicaBase(itemService: ItemsService) {
+        this.u_preco_base = itemService.getPriceBase(this)
+    }
+
     var LineNum : Int? = null
     var taxCode : String? = null
     var discountPercent : Double = 0.0
+    var u_preco_base: Double = 0.0
+    var U_preco_negociado: Double = 0.0
 
 }

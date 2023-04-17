@@ -1,5 +1,6 @@
 package br.andrew.sap.model.documents
 
+import br.andrew.sap.services.ItemsService
 import com.fasterxml.jackson.annotation.JsonFormat
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
@@ -47,6 +48,11 @@ abstract class Document(val CardCode : String,
         return this.DocumentLines
                 .filter { it.taxCode != null && it.taxCode!!.isNotEmpty() }
                 .groupBy { it.taxCode!! }
+    }
+
+    fun aplicaBase(itemService: ItemsService){
+        this.DocumentLines.forEach { it.aplicaBase(itemService) }
+
     }
 
 }

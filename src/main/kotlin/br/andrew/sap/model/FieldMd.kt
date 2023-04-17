@@ -9,7 +9,7 @@ import com.fasterxml.jackson.databind.annotation.JsonNaming
 class FieldMd(val name : String,
               val description: String,
               val tableName : String,
-              val type : String = "db_Alpha", val size : Int = 15,
+              val type : DbType = DbType.db_Alpha, val size : Int = 15,
               val defaultValue: String = "0",
               val editSize : Int = 2,
               val mandatory: String = "tNO") {
@@ -17,6 +17,14 @@ class FieldMd(val name : String,
     var ValidValuesMD : List<ValuesMd> = listOf()
 
 
+}
+
+enum class DbType {
+    db_Alpha,
+    db_Memo, //Observacao
+    db_Numeric,
+    db_Float,
+    db_Date;
 }
 
 @JsonNaming(PropertyNamingStrategy.UpperCamelCaseStrategy::class)

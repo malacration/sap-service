@@ -32,7 +32,6 @@ abstract class EntitiesService<T>(protected val env: SapEnvrioment,
         }catch (t : HttpClientErrorException){
             throw t.getResponseBodyAs(SapError::class.java)?.getError() ?: t
         }
-
     }
 
     fun update(entry : T & Any, id : String): OData?{
@@ -104,6 +103,8 @@ abstract class EntitiesService<T>(protected val env: SapEnvrioment,
                 .body(body)
         return restTemplate.exchange(request, OData::class.java).body!!
     }
+
+
 }
 
 

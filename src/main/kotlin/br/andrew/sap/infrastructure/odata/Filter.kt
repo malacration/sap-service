@@ -10,7 +10,7 @@ class Filter(val propertie : List<Predicate>) {
     override fun toString(): String {
         if(propertie.isEmpty())
             return ""
-        val filtros = propertie.map { it.toString() }.joinToString(" and")
+        val filtros = propertie.map { it.toString() }.joinToString(" and ")
         return "\$filter=${filtros}"
     }
 }

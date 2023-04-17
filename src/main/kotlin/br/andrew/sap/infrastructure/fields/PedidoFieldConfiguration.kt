@@ -16,5 +16,8 @@ class PedidoFieldConfiguration(val userFieldsMDService: UserFieldsMDService) {
 
         val idPedidoForca = FieldMd("id_pedido_forca","Id Pedido Venda","ORDR")
         userFieldsMDService.findOrCreate(idPedidoForca)
+
+//        val precoNegociado = FieldMd("preco_negociado","Preço Negociado","RDR1", DbType.db_Float)
+//        userFieldsMDService.findOrCreate(precoNegociado)
     }
 }

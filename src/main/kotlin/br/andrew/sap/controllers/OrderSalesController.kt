@@ -4,31 +4,26 @@ import br.andrew.sap.infrastructure.odata.OData
 import br.andrew.sap.infrastructure.odata.Order
 import br.andrew.sap.infrastructure.odata.OrderBy
 import br.andrew.sap.model.documents.OrderSales
-import br.andrew.sap.model.documents.Product
 import br.andrew.sap.model.exceptions.LinkedPaymentMethodException
 import br.andrew.sap.model.sovis.PedidoVenda
-import br.andrew.sap.model.sovis.Produto
-import br.andrew.sap.services.BusinessPartnersService
-import br.andrew.sap.services.BussinesPlaceService
-import br.andrew.sap.services.DummyService
-import br.andrew.sap.services.OrdersService
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties
-import com.fasterxml.jackson.annotation.JsonInclude
-import com.fasterxml.jackson.databind.PropertyNamingStrategy
-import com.fasterxml.jackson.databind.annotation.JsonNaming
+import br.andrew.sap.services.*
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.web.bind.annotation.*
 import java.util.*
 
 @RestController
 @RequestMapping("pedido-venda")
 class OrderSalesController(val ordersService: OrdersService,
-                           val businesPartner : BusinessPartnersService) {
-
+                           val priceList : PriceListsService,
+                           val businesPartner : BusinessPartnersService,
+                           val itemService : ItemsService) {
 
     @PostMapping("")
     fun save(@RequestBody pedido : PedidoVenda): OrderSales {
         try {
-            val order = ordersService.save(pedido.getOrder()).tryGetValue<OrderSales>()
+            val order = ordersService.save(
+                    pedido.getOrder().also { it.aplicaBase(itemService) }
+            ).tryGetValue<OrderSales>()
             try{
                 ordersService.aplicaDesonerado(order)
             }catch (e : Throwable){
@@ -50,11 +45,9 @@ class OrderSalesController(val ordersService: OrdersService,
     fun getData(): OData {
         return ordersService.get(OrderBy(mapOf("DocEntry" to Order.DESC)))
     }
+
+    @GetMapping("teste")
+    fun tete(@Value("{base.price.list.name:none}") list : String): Any {
+        return itemService.getPriceBase("PAC0000105")
+    }
 }
-
-@JsonNaming(PropertyNamingStrategy.UpperCamelCaseStrategy::class)
-@JsonIgnoreProperties(ignoreUnknown = true)
-@JsonInclude(JsonInclude.Include.NON_NULL)
-class DocumentWrapper(val Document : OrderSales
-
-)
