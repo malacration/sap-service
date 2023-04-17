@@ -1,5 +1,8 @@
 package br.andrew.sap.controllers
 
+import br.andrew.sap.infrastructure.odata.Condicao
+import br.andrew.sap.infrastructure.odata.Filter
+import br.andrew.sap.infrastructure.odata.Predicate
 import br.andrew.sap.services.UserFieldsMDService
 import org.springframework.data.domain.Pageable
 import org.springframework.web.bind.annotation.GetMapping
@@ -13,6 +16,7 @@ class UserFieldsController(val userFieldsMDService: UserFieldsMDService) {
 
     @GetMapping()
     fun get(page : Pageable) : Any{
-        return userFieldsMDService.get(page);
+        val filter = Filter(listOf(Predicate("Name","B1SYS_IV",Condicao.STARTS_WITH)))
+        return userFieldsMDService.get(filter,page);
     }
 }

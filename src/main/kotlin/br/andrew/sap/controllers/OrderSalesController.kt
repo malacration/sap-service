@@ -14,7 +14,6 @@ import java.util.*
 @RestController
 @RequestMapping("pedido-venda")
 class OrderSalesController(val ordersService: OrdersService,
-                           val priceList : PriceListsService,
                            val businesPartner : BusinessPartnersService,
                            val itemService : ItemsService) {
 

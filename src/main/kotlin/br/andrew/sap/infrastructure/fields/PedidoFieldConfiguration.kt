@@ -1,5 +1,6 @@
 package br.andrew.sap.infrastructure.fields
 
+import br.andrew.sap.model.DbType
 import br.andrew.sap.model.FieldMd
 import br.andrew.sap.model.ValuesMd
 import br.andrew.sap.services.UserFieldsMDService
@@ -17,7 +18,7 @@ class PedidoFieldConfiguration(val userFieldsMDService: UserFieldsMDService) {
         val idPedidoForca = FieldMd("id_pedido_forca","Id Pedido Venda","ORDR")
         userFieldsMDService.findOrCreate(idPedidoForca)
 
-//        val precoNegociado = FieldMd("preco_negociado","Preço Negociado","RDR1", DbType.db_Float)
-//        userFieldsMDService.findOrCreate(precoNegociado)
+        val precoNegociado = FieldMd("preco_negociado","Preço Negociado","DRF1", DbType.db_Float)
+        userFieldsMDService.findOrCreate(precoNegociado)
     }
 }

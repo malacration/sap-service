@@ -88,6 +88,10 @@ abstract class EntitiesService<T>(protected val env: SapEnvrioment,
         return get(filter, OrderBy())
     }
 
+    fun get(filter: Filter, page: Pageable): OData {
+        return get(filter, OrderBy(), page)
+    }
+
     fun cru(body: String): OData {
         val request = RequestEntity
                 .post(env.host+this.path())
