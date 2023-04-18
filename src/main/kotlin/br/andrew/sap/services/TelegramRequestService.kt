@@ -19,12 +19,8 @@ class TelegramRequestService(val config: TelegramConfig, val template: RestTempl
 
     val logger: Logger = LoggerFactory.getLogger(TelegramRequestService::class.java)
 
-    fun send(mensagem: Any) {
-        val headers = HttpHeaders().also {
-            it.add("Content-Type", "application/json")
-        }
-        val entity = HttpEntity("msg", headers)
-        template.postForEntity(config.messageUrl, entity, String::class.java)
+    fun send(mensagem: String) {
+        template.getForEntity(config.messageUrl+"&text=$mensagem",String::class.java)
     }
 
 }

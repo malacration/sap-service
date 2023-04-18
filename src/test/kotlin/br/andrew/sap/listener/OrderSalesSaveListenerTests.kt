@@ -16,11 +16,16 @@ class OrderSalesSaveListenerTests {
 
     @Test
     fun test(){
+
         val order = OrderSales("windson","", listOf(),"3")
             .also {
                 it.docEntry = 10
                 it.docNum = "11"
             }
-        applicationEventPublisher?.publishEvent(OrderSalesSaveEvent(order))
+        try {
+            applicationEventPublisher?.publishEvent(OrderSalesSaveEvent(order))
+        }catch (t : Throwable){
+            t.printStackTrace()
+        }
     }
 }

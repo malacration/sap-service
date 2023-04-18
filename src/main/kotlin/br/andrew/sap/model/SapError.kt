@@ -6,7 +6,7 @@ import br.andrew.sap.model.exceptions.SapGenericException
 
 class SapError(val error : Error) {
     fun getError() : Throwable {
-            return error.getError(this) ?: SapGenericException(this)
+        return error.getError(this) ?: SapGenericException(this)
     }
 }
 

@@ -21,13 +21,13 @@ class Product(val itemCode : String, val quantity : String, var unitPrice : Stri
     }
 
     fun aplicaBase(itemService: ItemsService) {
-        this.u_preco_base = itemService.getPriceBase(this)
+        this.U_preco_base = itemService.getPriceBase(this)
     }
 
     var LineNum : Int? = null
     var taxCode : String? = null
-    var discountPercent : Double = 0.0
-    var u_preco_base: Double = 0.0
-    var U_preco_negociado: Double = 0.0
+    var discountPercent : Double? = null
+    var U_preco_base: Double? = null
+    var U_preco_negociado: Double? = null
 
 }
