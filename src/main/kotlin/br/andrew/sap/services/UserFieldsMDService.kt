@@ -17,7 +17,7 @@ class UserFieldsMDService(env: SapEnvrioment, restTemplate: RestTemplate,
     }
 
     fun findOrCreate(field: FieldMd) {
-        val predicates = listOf(Predicate("Description",field.description,Condicao.EQUAL))
+        val predicates = listOf(Predicate("Name",field.name,Condicao.EQUAL))
         val result = get(Filter(predicates))
         if(result.tryGetValues<FieldMd>().isEmpty()){
             save(field)

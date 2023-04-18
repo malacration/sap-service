@@ -54,6 +54,15 @@ class PedidoVendaJsonTest {
         println(mapper.writeValueAsString(pedido))
     }
 
+    @Test
+    fun jsonPrecoUnitarioTabela(){
+        val mapper = ObjectMapper().registerModule(KotlinModule())
+        val obj = mapper.readValue(jsonPrecos, jacksonTypeRef<PedidoVenda>())
+        val produto = obj.produtos.get(0)
+        Assertions.assertEquals(140.0,produto.precoUnitario)
+        Assertions.assertEquals(141.5,produto.valorTabela)
+    }
+
     val json = "{\n" +
             "   \"idCliente\":\"\",\n" +
             "   \"idEmpresa\":\"2\",\n" +
@@ -89,5 +98,7 @@ class PedidoVendaJsonTest {
             "}"
 
     val jsonSingleProduto = "{\"idCliente\":\"CLI0002777\",\"produtos\":{\"precoUnitario\":162.3362,\"idproduto\":\"PAC0000118\",\"quantidade\":4},\"idCondicaoPagamento\":\"\",\"idEmpresa\":2,\"idFormaPagamento\":\"AVISTA\"}"
+
+    val jsonPrecos = "{\"dataEntraga\":\"2023-04-17\",\"observacao\":\"\",\"idCliente\":\"CLI0002773\",\"desconto\":0,\"produtos\":{\"precoUnitario\":140.0,\"idProduto\":\"PAC0000105\",\"desconto\":0,\"valorTabela\":141.5,\"quantidade\":1},\"idCondicaoPagamento\":15,\"frete\":0,\"idEmpresa\":2,\"tipoPedido\":16,\"codVendedor\":54,\"idPedido\":49,\"idFormaPagamento\":\"BB-RC-BOL-1199\"}\n"
 
 }
