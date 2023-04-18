@@ -21,7 +21,7 @@ class VersionBean {
 }
 
 @Configuration
-@PropertySource("classpath:/version.properties")
+@PropertySource("classpath:/version.properties", ignoreResourceNotFound = true)
 class VersionEnvironment {
     @Value("\${major:''}")
     private val major: String? = null

@@ -5,9 +5,11 @@ import br.andrew.sap.model.FieldMd
 import br.andrew.sap.model.ValuesMd
 import br.andrew.sap.services.UserFieldsMDService
 import org.springframework.context.annotation.Configuration
+import org.springframework.context.annotation.Profile
 
 
 @Configuration
+@Profile("!test")
 class PedidoFieldConfiguration(val userFieldsMDService: UserFieldsMDService) {
 
     init {
