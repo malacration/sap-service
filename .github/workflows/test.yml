@@ -15,6 +15,7 @@ jobs:
           java-version: '19'
       - name: Run Coverage
         run: |
+          echo $application_test_properties > src/test/resources/application.properties
           chmod +x gradlew
           ./gradlew jacocoTestReport
 
