@@ -18,6 +18,7 @@ jobs:
           mkdir -p src/test/resources
           touch src/test/resources/application.properties
           echo $APPLICATION_TEST_PROPERTIES > src/test/resources/application.properties
+          cat src/test/resources/application.properties
           chmod +x gradlew
           ./gradlew jacocoTestReport
 
