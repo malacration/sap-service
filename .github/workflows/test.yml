@@ -15,7 +15,7 @@ jobs:
           java-version: '19'
       - name: Run Coverage
         run: |
-          ls
+          mkdir -p src/test/resources
           touch src/test/resources/application.properties
           echo $application_test_properties > src/test/resources/application.properties
           chmod +x gradlew
