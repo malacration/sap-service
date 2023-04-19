@@ -11,12 +11,12 @@ jobs:
       - name: Set up JDK 19
         uses: actions/setup-java@v3
         with:
-          distribution: 'zulu'
+          distribution: 'temurin'
           java-version: '19'
       - name: Run Coverage
         run: |
           chmod +x gradlew
-          ./gradlew testCoverage
+          ./gradlew jacocoTestReport
 
       - name: Add coverage to PR
         id: jacoco
