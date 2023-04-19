@@ -1,22 +1,24 @@
 package br.andrew.sap.model
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.databind.PropertyNamingStrategy
 import com.fasterxml.jackson.databind.annotation.JsonNaming
 
 @JsonNaming(PropertyNamingStrategy.UpperCamelCaseStrategy::class)
 @JsonIgnoreProperties(ignoreUnknown = true)
+@JsonInclude(JsonInclude.Include.NON_NULL)
 class FieldMd(val name : String,
               val description: String,
               val tableName : String,
               val type : DbType = DbType.db_Alpha,
-              val size : Int = 15,
-              val defaultValue: String = "0",
-              val editSize : Int = 2,
+              var size : Int = 15,
               val mandatory: String = "tNO") {
 
     var ValidValuesMD : List<ValuesMd> = listOf()
     val subType : String? = if(type == DbType.db_Float) "st_Measurement" else null
+    var defaultValue: String? = null
+    var editSize : Int? = null
 
 }
 
