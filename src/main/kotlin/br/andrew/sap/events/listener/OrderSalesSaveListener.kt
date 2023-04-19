@@ -1,4 +1,4 @@
-package br.andrew.sap.listener
+package br.andrew.sap.events.listener
 
 import br.andrew.sap.events.OrderSalesSaveEvent
 import br.andrew.sap.model.SapEnvrioment

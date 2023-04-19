@@ -16,7 +16,6 @@ class OrderSalesSaveListenerTests {
 
     @Test
     fun test(){
-
         val order = OrderSales("windson","", listOf(),"3")
             .also {
                 it.docEntry = 10

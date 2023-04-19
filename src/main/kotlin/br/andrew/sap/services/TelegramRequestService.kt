@@ -20,7 +20,8 @@ class TelegramRequestService(val config: TelegramConfig, val template: RestTempl
     val logger: Logger = LoggerFactory.getLogger(TelegramRequestService::class.java)
 
     fun send(mensagem: String) {
-        template.getForEntity(config.messageUrl+"&text=$mensagem",String::class.java)
+        if(config.token.isNotEmpty())
+            template.getForEntity(config.messageUrl+"&text=$mensagem",String::class.java)
     }
 
 }

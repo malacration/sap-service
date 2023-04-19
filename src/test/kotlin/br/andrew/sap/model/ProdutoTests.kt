@@ -17,7 +17,7 @@ class ProdutoTests {
         val valorNegociado = 90.0
         val valorUnitario = 100.0
         Assertions.assertEquals(valorNegociado, itemSap.U_preco_negociado)
-        Assertions.assertEquals(0.00, itemSap.U_preco_base)
+        Assertions.assertEquals(null, itemSap.U_preco_base)
         Assertions.assertEquals(10.0, itemSap.discountPercent)
         Assertions.assertEquals(valorUnitario.toString(), itemSap.unitPrice)
     }

@@ -3,6 +3,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 plugins {
 	id("org.springframework.boot") version "3.0.3"
 	id("io.spring.dependency-management") version "1.1.0"
+	id("jacoco")
 	kotlin("jvm") version "1.7.22"
 	kotlin("plugin.spring") version "1.7.22"
 }
@@ -35,4 +36,29 @@ tasks.withType<KotlinCompile> {
 
 tasks.withType<Test> {
 	useJUnitPlatform()
+}
+
+tasks.named("jacocoTestReport", JacocoReport::class) {
+	dependsOn(tasks.withType<Test>())
+
+	group = "Reporting"
+	reports {
+		html.required.set(true)
+		xml.required.set(true)
+		csv.required.set(false)
+		html.outputLocation.set(file("$buildDir/jacocoHtml"))
+		xml.outputLocation.set(file("$buildDir/jacoco.xml"))
+	}
+
+	classDirectories.from(
+		files(classDirectories.files.map {
+			fileTree(it) {
+				exclude(
+					"**/*Test*.*",
+					"**/*Controller*.*",
+				)
+			}
+		})
+	)
+	executionData.from(files("${project.buildDir}/jacoco/test.exec"))
 }
