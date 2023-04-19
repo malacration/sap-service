@@ -29,5 +29,6 @@ class SapErrorListener(val telegramRequest : TelegramRequestService,
     fun error(error: Error) {
         val msg = "Erro no SAP-Service ao chamar o SAP o servidor diz: ${error.code} ${error.message.value} - [Base:${sapEnvrioment.companyDB}]"
         telegramRequest.send(msg)
+
     }
 }
