@@ -13,12 +13,14 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '19'
-      - name: Run Coverage
+      - name: Create Properties
         run: |
           mkdir -p src/test/resources
           touch src/test/resources/application.properties
           echo $APPLICATION_TEST_PROPERTIES > src/test/resources/application.properties
           cat src/test/resources/application.properties
+      - name: Run Coverage
+        run: |
           chmod +x gradlew
           ./gradlew jacocoTestReport
 
