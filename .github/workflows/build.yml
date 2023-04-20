@@ -43,7 +43,7 @@ jobs:
       - name: create version.properties
         id: versioning
         run: |
-          echo {{tag}}
+          echo ${{ steps.meta.outputs.tags }}
 
       - name: build and push docker image
         uses: docker/build-push-action@v3.2.0
