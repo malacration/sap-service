@@ -39,6 +39,8 @@ class PedidoVenda(
                     it.salesPersonCode = codVendedor
                     it.u_pedido_update = "1"
                     it.comments = observacao
+                    it.OpeningRemarks = observacao
+
                     it.u_id_pedido_forca = idPedido
                     if(this.frete != null)
                         it.documentAdditionalExpenses = listOf(AdditionalExpenses.frete(this.frete!!))

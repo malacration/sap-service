@@ -49,7 +49,7 @@ class OrderSalesController(val ordersService: OrdersService,
 
     @GetMapping("teste")
     fun tete(@Value("{base.price.list.name:none}") list : String): Any {
-        val json = "{\"dataEntraga\":\"2023-04-18\",\"observacao\":\"\",\"idCliente\":\"CLI0002765\",\"desconto\":0,\"produtos\":[{\"precoUnitario\":130.05,\"idProduto\":\"PAC0000098\",\"desconto\":0,\"valorTabela\":130.05,\"quantidade\":6},{\"precoUnitario\":132.6,\"idProduto\":\"PAC0000089\",\"desconto\":0,\"valorTabela\":132.6,\"quantidade\":4},{\"precoUnitario\":117.3,\"idProduto\":\"PAC0000075\",\"desconto\":0,\"valorTabela\":117.3,\"quantidade\":6}],\"idCondicaoPagamento\":24,\"frete\":50,\"idEmpresa\":2,\"tipoPedido\":16,\"codVendedor\":54,\"idPedido\":52,\"idFormaPagamento\":\"BB-RC-BOL-1199\"}"
+        val json = "{\"dataEntraga\":\"2023-04-18\",\"observacao\":\"teste\",\"idCliente\":\"CLI0002765\",\"desconto\":0,\"produtos\":[{\"precoUnitario\":130.05,\"idProduto\":\"PAC0000098\",\"desconto\":0,\"valorTabela\":130.05,\"quantidade\":6},{\"precoUnitario\":132.6,\"idProduto\":\"PAC0000089\",\"desconto\":0,\"valorTabela\":132.6,\"quantidade\":4},{\"precoUnitario\":117.3,\"idProduto\":\"PAC0000075\",\"desconto\":0,\"valorTabela\":117.3,\"quantidade\":6}],\"idCondicaoPagamento\":24,\"frete\":50,\"idEmpresa\":2,\"tipoPedido\":16,\"codVendedor\":54,\"idPedido\":52,\"idFormaPagamento\":\"BB-RC-BOL-1199\",\"OBSNota\":\"teste obs nota\"}"
         val mapper = ObjectMapper().registerModule(KotlinModule())
         val pedido = mapper.readValue(json, jacksonTypeRef<PedidoVenda>())
         return this.save(pedido)

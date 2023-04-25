@@ -31,6 +31,7 @@ abstract class Document(val CardCode : String,
     var u_pedido_update : String? = "0";
     var u_id_pedido_forca: String? = null
     var cardName: String? = null
+    var OpeningRemarks: String? = null
 
 
     var documentAdditionalExpenses : List<AdditionalExpenses> = emptyList()
