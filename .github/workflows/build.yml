@@ -39,12 +39,7 @@ jobs:
             type=ref,event=branch
             # in addition to full semantic version (x.y.z) would also create (x.y)
             #type=semver,pattern={{major}}.{{minor}}
-
-      - name: create version.properties
-        id: versioning
-        run: |
-          echo ${{ steps.meta.outputs.tags }}
-          echo ${{ vars.GITHUB_SHA }}
+          
 
       - name: build and push docker image
         uses: docker/build-push-action@v3.2.0
