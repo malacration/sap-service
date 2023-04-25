@@ -5,6 +5,7 @@ on:
 
 jobs:
   teste:
+    environment: homologation
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3.5.2
@@ -21,7 +22,7 @@ jobs:
         run: |
           mkdir -p src/test/resources
           touch src/test/resources/application.properties
-          echo "${{ vars.APPLICATION_TEST_PROPERTIES }}" > src/test/resources/application.properties
+          echo "${{ vars.APPLICATION_TEST_PROPERTIES }} \n telegram.plantao.token=${{secrets.TELEGRAM_PLANTAO_TOKEN}}" > src/test/resources/application.properties
       - name: Run Coverage
         run: |
           chmod +x gradlew
