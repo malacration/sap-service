@@ -1,5 +1,6 @@
 package br.andrew.sap.infrastructure.configurations
 
+import br.andrew.sap.model.User
 import br.andrew.sap.services.OrdersService
 import org.mockito.Mockito
 import org.springframework.context.annotation.Bean
@@ -20,8 +21,14 @@ class MockConfig {
         return Mockito.mock(OrdersService::class.java)
     }
 
-    @Bean
-    fun restTemplate(): RestTemplate?{
-        return Mockito.mock(RestTemplate::class.java)
+//    @Bean
+//    @Primary
+//    fun restTemplate(): RestTemplate?{
+//        return Mockito.mock(RestTemplate::class.java)
+//    }
+
+    @Bean(name = arrayOf("user.current"))
+    fun getCurrentUser() : User {
+        return User(666)
     }
 }
