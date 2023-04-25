@@ -42,19 +42,6 @@ jobs:
           verbosity: 'Info' # The verbosity level of the log messages. Values: Verbose, Info, Warning, Error, Off
           toolpath: 'reportgeneratortool' # Default directory for installing the dotnet tool.
 
-      - name: JaCoCo Code Coverage Report
-        id: jacoco_reporter
-        uses: PavanMudigonda/jacoco-reporter@v4.8
-        with:
-          coverage_results_path: ${{ github.workspace }}/build/jacoco.xml
-          coverage_report_name: Coverage
-          coverage_report_title: JaCoCo
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          skip_check_run: false
-          minimum_coverage: 80
-          fail_below_threshold: false
-          publish_only_summary: false
-
       # Publish Coverage Job Summary  # Optional
       - name: Add Coverage Job Summary
         run: echo "${{ steps.jacoco_reporter.outputs.coverageSummary }}" >> $GITHUB_STEP_SUMMARY
