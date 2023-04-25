@@ -44,6 +44,7 @@ jobs:
         id: versioning
         run: |
           echo ${{ steps.meta.outputs.tags }}
+          echo ${{ GITHUB_SHA }}
 
       - name: build and push docker image
         uses: docker/build-push-action@v3.2.0

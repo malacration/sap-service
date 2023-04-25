@@ -17,7 +17,7 @@ jobs:
         run: |
           mkdir -p src/test/resources
           touch src/test/resources/application.properties
-          echo ${{ env.APPLICATION_TEST_PROPERTIES }}  > src/test/resources/application.properties
+          echo ${{ vars.APPLICATION_TEST_PROPERTIES }}  > src/test/resources/application.properties
           cat src/test/resources/application.properties
       - name: Run Coverage
         run: |
