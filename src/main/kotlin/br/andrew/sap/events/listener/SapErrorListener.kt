@@ -3,6 +3,7 @@ package br.andrew.sap.events.listener
 import br.andrew.sap.model.ErrorMsg
 import br.andrew.sap.model.SapEnvrioment
 import br.andrew.sap.model.SapError
+import br.andrew.sap.model.documents.Document
 import br.andrew.sap.model.exceptions.SapGenericException
 import br.andrew.sap.services.OrdersService
 import br.andrew.sap.services.TelegramRequestService
@@ -21,8 +22,11 @@ class SapErrorListener(val telegramRequest : TelegramRequestService,
 
 
     @EventListener
-    fun erroSap(error: SapError) {
-        error(error.error)
+    fun erroSap(sapErro: SapError) {
+        val error = sapErro.error
+        val detail = sapErro.entry.toString()
+        val msg = "Erro no SAP-Service ao chamar o SAP o servidor diz: ${error.code} ${error.message.value} - [Base:${sapEnvrioment.companyDB}] - ${detail}"
+        telegramRequest.send(msg)
     }
 
     @EventListener

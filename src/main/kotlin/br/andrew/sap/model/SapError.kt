@@ -1,5 +1,6 @@
 package br.andrew.sap.model
 
+import br.andrew.sap.model.documents.Document
 import br.andrew.sap.model.exceptions.CreditException
 import br.andrew.sap.model.exceptions.LinkedPaymentMethodException
 import br.andrew.sap.model.exceptions.SapGenericException
@@ -12,13 +13,15 @@ class SapError(val error : ErrorMsg) {
 
     var hedears : HttpHeaders? = null
     var httpStatusCode : HttpStatusCode? = null
+    var entry : Any = ""
     fun getError() : Throwable {
         return error.getError(this) ?: SapGenericException(this)
     }
 
-    fun getError(t: HttpClientErrorException): Throwable? {
+    fun getError(t: HttpClientErrorException, entry: Any): Throwable? {
         this.hedears = t.responseHeaders
         this.httpStatusCode = t.statusCode
+        this.entry = entry;
         return getError()
     }
 }
