@@ -38,13 +38,15 @@ jobs:
         with:
           reports: ${{ github.workspace }}/build/jacoco.xml
           targetdir: 'coveragereport' # REQUIRED # The directory where the generated report should be saved.
-          reporttypes: 'HtmlInline;Cobertura' # The output formats and scope (separated by semicolon) Values: Badges, Clover, Cobertura, CsvSummary, Html, Html_Dark, Html_Light, Html_BlueRed, HtmlChart, HtmlInline, HtmlInline_AzurePipelines, HtmlInline_AzurePipelines_Dark, HtmlInline_AzurePipelines_Light, HtmlSummary, JsonSummary, Latex, LatexSummary, lcov, MarkdownSummary, MarkdownSummaryGithub, MarkdownDeltaSummary, MHtml, PngChart, SonarQube, TeamCitySummary, TextSummary, TextDeltaSummary, Xml, XmlSummary
+          reporttypes: 'MarkdownSummaryGithub;Cobertura' # The output formats and scope (separated by semicolon) Values: Badges, Clover, Cobertura, CsvSummary, Html, Html_Dark, Html_Light, Html_BlueRed, HtmlChart, HtmlInline, HtmlInline_AzurePipelines, HtmlInline_AzurePipelines_Dark, HtmlInline_AzurePipelines_Light, HtmlSummary, JsonSummary, Latex, LatexSummary, lcov, MarkdownSummary, MarkdownSummaryGithub, MarkdownDeltaSummary, MHtml, PngChart, SonarQube, TeamCitySummary, TextSummary, TextDeltaSummary, Xml, XmlSummary
           verbosity: 'Info' # The verbosity level of the log messages. Values: Verbose, Info, Warning, Error, Off
           toolpath: 'reportgeneratortool' # Default directory for installing the dotnet tool.
 
       # Publish Coverage Job Summary  # Optional
       - name: Add Coverage Job Summary
-        run: echo "${{ steps.jacoco_reporter.outputs.coverageSummary }}" >> $GITHUB_STEP_SUMMARY
+        run: |
+          ls
+          cat coveragereport/SummaryGithub.md >> $GITHUB_STEP_SUMMARY
 
       # uploads the coverage-report.md artifact  # Optional
 
