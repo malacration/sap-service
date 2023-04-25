@@ -3,13 +3,15 @@ package br.andrew.sap.model.documents
 import br.andrew.sap.services.ItemsService
 import com.fasterxml.jackson.annotation.JsonFormat
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.PropertyNamingStrategy
 import com.fasterxml.jackson.databind.annotation.JsonNaming
 
 @JsonNaming(PropertyNamingStrategy.UpperCamelCaseStrategy::class)
 @JsonIgnoreProperties(ignoreUnknown = true)
-abstract class Document(val CardCode : String,
+@JsonInclude(JsonInclude.Include.NON_NULL)
+open class Document(val CardCode : String,
                     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "YYY-MM-dd", timezone = "UTC")
                     val DocDueDate : String?,
                     val DocumentLines : List<Product>,
@@ -29,6 +31,8 @@ abstract class Document(val CardCode : String,
     var documentInstallments : List<Installment>? = null
     var journalMemo : String? = null
     var u_pedido_update : String? = "0";
+
+    @JsonProperty("U_Id_Pedido_Forca")
     var u_id_pedido_forca: String? = null
     var cardName: String? = null
     var OpeningRemarks: String? = null
@@ -57,5 +61,12 @@ abstract class Document(val CardCode : String,
 
     }
 
+    fun isAvista(): Boolean {
+        return paymentGroupCode == "-1"
+    }
+
+    fun isCalculaDesonaerado(): Boolean {
+        return u_pedido_update == "1"
+    }
 }
 

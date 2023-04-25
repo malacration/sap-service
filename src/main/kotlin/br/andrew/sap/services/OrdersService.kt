@@ -4,6 +4,7 @@ import br.andrew.sap.model.PrecoUnitarioComDesoneracao
 import br.andrew.sap.model.SalesTaxAuthorities
 import br.andrew.sap.model.SalesTaxCode
 import br.andrew.sap.model.SapEnvrioment
+import br.andrew.sap.model.documents.Document
 import br.andrew.sap.model.documents.OrderSales
 import br.andrew.sap.services.abstracts.EntitiesService
 import br.andrew.sap.services.tax.SalesTaxAuthoritiesService
@@ -20,7 +21,9 @@ class OrdersService(env: SapEnvrioment, restTemplate: RestTemplate, authService:
         return "/b1s/v1/Orders"
     }
 
-    fun aplicaDesonerado(order : OrderSales): OrderSales {
+    //TODO mover esse metodo para outro lugar
+    @Deprecated("Mover esse metodo para outro lugar")
+    fun aplicaDesonerado(order : Document): Document {
         order.productsByTax().forEach{
             val taxCodeDesonerado = taxCodeService.getById("'${it.key}'").tryGetValue<SalesTaxCode>()
                     .salesTaxCodes_Lines.firstOrNull { it.STAType == 25 }
@@ -28,12 +31,11 @@ class OrdersService(env: SapEnvrioment, restTemplate: RestTemplate, authService:
                 var taxParam = taxAuthoritiesService.get(taxCodeDesonerado)
                         .tryGetValue<SalesTaxAuthorities>()
                 it.value.forEach { p ->
-                    p.unitPrice = PrecoUnitarioComDesoneracao().calculaPreco(p.unitPrice, taxParam).toString()
+                    p.unitPrice = PrecoUnitarioComDesoneracao().calculaPreco(p.U_preco_negociado.toString(), taxParam).toString()
                 }
             }
         }
         order.u_pedido_update = "0";
-        update(order,order.docEntry.toString())
         return order
     }
 }

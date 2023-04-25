@@ -30,7 +30,7 @@ abstract class EntitiesService<T>(protected val env: SapEnvrioment,
                     .body(entry)
             return restTemplate.exchange(request, OData::class.java).body!!
         }catch (t : HttpClientErrorException){
-            throw t.getResponseBodyAs(SapError::class.java)?.getError() ?: t
+            throw t.getResponseBodyAs(SapError::class.java)?.getError(t) ?: t
         }
     }
 
@@ -57,7 +57,7 @@ abstract class EntitiesService<T>(protected val env: SapEnvrioment,
                 .get(env.host+this.path()+"?\$skip=${skip}"+aditional)
                 .header("cookie","B1SESSION=${session().sessionId}")
                 .build()
-        return restTemplate.exchange(request, OData::class.java).body!!
+        return restTemplate.exchange(request, OData::class.java).body ?: OData()
     }
 
     fun getById(id : String) : OData {
@@ -107,7 +107,6 @@ abstract class EntitiesService<T>(protected val env: SapEnvrioment,
                 .body(body)
         return restTemplate.exchange(request, OData::class.java).body!!
     }
-
 
 }
 

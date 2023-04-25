@@ -21,8 +21,8 @@ enum class Condicao(val value: String) {
     fun get(coluna: String, value: List<*>): String {
         return when(this) {
             IN -> {
-                value.map { EQUAL.get(coluna,"'${it}'") }
-                        .joinToString(" or ")
+                "("+value.map { EQUAL.get(coluna,"'${it}'") }
+                        .joinToString(" or ")+")"
             }
             else -> "Tipo de dado é invalido para a condição"
         }
