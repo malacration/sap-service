@@ -51,13 +51,13 @@ jobs:
       - name: Upload html
         uses: actions/upload-artifact@v3.1.2
         with:
-          name: CoverageReport
+          name: report.index
           path: coveragereport/index.html
           retention-days: 1
 
       - name: Upload Badage
         uses: actions/upload-artifact@v3.1.2
         with:
-          name: CoverageReport
+          name: badge-line-coverage.svg
           path: coveragereport/badge_shieldsio_linecoverage_green.svg
           retention-days: 1
