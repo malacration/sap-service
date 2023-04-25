@@ -11,7 +11,7 @@ jobs:
         run: |
           mkdir -p src/test/resources
           touch src/test/resources/application.properties
-          echo ${{ vars.APPLICATION_TEST_PROPERTIES }} > src/test/resources/application.properties
+          echo "${{ vars.APPLICATION_TEST_PROPERTIES }}" > src/test/resources/application.properties
       - uses: actions/checkout@v3.5.2
       - name: Set up JDK 19
         uses: actions/setup-java@v3
