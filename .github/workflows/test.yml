@@ -47,8 +47,8 @@ jobs:
       # uploads the coverage-report.md artifact  # Optional
 
       - name: Upload Code Coverage Artifacts
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3.1.2
         with:
           name: code-coverage-report-markdown
-          path: */coverage-results.md
+          path: coverage-results.md
           retention-days: 1
