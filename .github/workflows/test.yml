@@ -33,16 +33,8 @@ jobs:
         with:
           reports: ${{ github.workspace }}/build/jacoco.xml
           targetdir: 'coveragereport' # REQUIRED # The directory where the generated report should be saved.
-          reporttypes: 'HtmlInline;JaCoCo' # The output formats and scope (separated by semicolon) Values: Badges, Clover, Cobertura, CsvSummary, Html, Html_Dark, Html_Light, Html_BlueRed, HtmlChart, HtmlInline, HtmlInline_AzurePipelines, HtmlInline_AzurePipelines_Dark, HtmlInline_AzurePipelines_Light, HtmlSummary, JsonSummary, Latex, LatexSummary, lcov, MarkdownSummary, MarkdownSummaryGithub, MarkdownDeltaSummary, MHtml, PngChart, SonarQube, TeamCitySummary, TextSummary, TextDeltaSummary, Xml, XmlSummary
-          sourcedirs: '' # Optional directories which contain the corresponding source code (separated by semicolon). The source directories are used if coverage report contains classes without path information.
-          historydir: '' # Optional directory for storing persistent coverage information. Can be used in future reports to show coverage evolution.
-          plugins: '' # Optional plugin files for custom reports or custom history storage (separated by semicolon).
-          assemblyfilters: '+*' # Optional list of assemblies that should be included or excluded in the report. Exclusion filters take precedence over inclusion filters. Wildcards are allowed.
-          classfilters: '+*' # Optional list of classes that should be included or excluded in the report. Exclusion filters take precedence over inclusion filters. Wildcards are allowed.
+          reporttypes: 'HtmlInline;Cobertura' # The output formats and scope (separated by semicolon) Values: Badges, Clover, Cobertura, CsvSummary, Html, Html_Dark, Html_Light, Html_BlueRed, HtmlChart, HtmlInline, HtmlInline_AzurePipelines, HtmlInline_AzurePipelines_Dark, HtmlInline_AzurePipelines_Light, HtmlSummary, JsonSummary, Latex, LatexSummary, lcov, MarkdownSummary, MarkdownSummaryGithub, MarkdownDeltaSummary, MHtml, PngChart, SonarQube, TeamCitySummary, TextSummary, TextDeltaSummary, Xml, XmlSummary
           verbosity: 'Info' # The verbosity level of the log messages. Values: Verbose, Info, Warning, Error, Off
-          title: '' # Optional title.
-          tag: '${{ github.run_number }}_${{ github.run_id }}' # Optional tag or build version.
-          customSettings: '' # Optional custom settings (separated by semicolon). See: https://github.com/danielpalme/ReportGenerator/wiki/Settings.
           toolpath: 'reportgeneratortool' # Default directory for installing the dotnet tool.
 
       - name: JaCoCo Code Coverage Report
