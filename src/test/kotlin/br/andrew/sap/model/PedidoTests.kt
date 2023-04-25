@@ -12,5 +12,6 @@ class PedidoTests {
                 "condicao", listOf()).also { it.idPedido = "666" }
         val documento = pedido.getOrder()
         Assertions.assertEquals("666",documento.u_id_pedido_forca)
+        Assertions.assertEquals("1",documento.u_pedido_update)
     }
 }
