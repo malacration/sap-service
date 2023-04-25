@@ -7,8 +7,6 @@ import br.andrew.sap.model.SapEnvrioment
 import br.andrew.sap.model.SapError
 import br.andrew.sap.model.Session
 import br.andrew.sap.services.AuthService
-import org.springframework.boot.autoconfigure.data.web.SpringDataWebProperties
-import org.springframework.core.ParameterizedTypeReference
 import org.springframework.data.domain.Pageable
 import org.springframework.http.RequestEntity
 import org.springframework.web.client.HttpClientErrorException
