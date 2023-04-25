@@ -62,7 +62,10 @@ open class Document(val CardCode : String,
 
     fun isAvista(): Boolean {
         return paymentGroupCode == "-1"
+    }
 
+    fun isCalculaDesonaerado(): Boolean {
+        return u_pedido_update == "1"
     }
 }
 

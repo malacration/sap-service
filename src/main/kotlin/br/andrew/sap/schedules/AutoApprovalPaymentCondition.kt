@@ -40,6 +40,7 @@ class AutoApprovalPaymentCondition(
             val requests = approvalRequestsService.get(Filter(predicados)).tryGetValues<ApprovalRequests>()
             requests.filter { it.draftEntry != null }
                     .map { draftsService.getById(it.draftEntry!!).tryGetValue<OrderSales>()  }
+                    .filter { it.isCalculaDesonaerado() }
                     .forEach {
                         try{
                             approvalRequestsService.aprovaEhCria(it,requests.first{r -> r.draftEntry == it.docEntry})
