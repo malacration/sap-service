@@ -17,7 +17,9 @@ class PedidoFieldConfiguration(val userFieldsMDService: UserFieldsMDService) {
                 .also { it.ValidValuesMD = listOf(ValuesMd("0","NÃO"),ValuesMd("1","SIM")) }
         userFieldsMDService.findOrCreate(updatePedido)
 
-        val idPedidoForca = FieldMd("id_pedido_forca","Id Pedido Venda","ORDR")
+        val idPedidoForca = FieldMd("id_pedido_forca","Id Pedido Venda","ORDR").also {
+            it.size = 20
+        }
         userFieldsMDService.findOrCreate(idPedidoForca)
 
         val precoNegociado = FieldMd("preco_negociado","Preço Negociado","DRF1", DbType.db_Float)
@@ -25,5 +27,10 @@ class PedidoFieldConfiguration(val userFieldsMDService: UserFieldsMDService) {
 
         val precoBase = FieldMd("preco_base","Preço base","DRF1", DbType.db_Float)
         userFieldsMDService.findOrCreate(precoBase)
+
+
+//        val authStarvation = FieldMd("starvation","Evita Starvation","OWDD", DbType.db_Alpha)
+//        userFieldsMDService.findOrCreate(authStarvation)
+
     }
 }

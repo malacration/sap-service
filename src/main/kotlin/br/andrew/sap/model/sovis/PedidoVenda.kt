@@ -2,9 +2,7 @@ package br.andrew.sap.model.sovis
 
 import br.andrew.sap.model.documents.AdditionalExpenses
 import br.andrew.sap.model.documents.OrderSales
-import com.fasterxml.jackson.annotation.JsonFormat
-import com.fasterxml.jackson.annotation.JsonIgnore
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import com.fasterxml.jackson.annotation.*
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -23,7 +21,11 @@ class PedidoVenda(
     var observacao : String? = null
 
     //TODO fazer parse de data
-    var dataEntraga : String = SimpleDateFormat("yyy-MM-dd").format(Date())
+    var dataEntraga : String? = SimpleDateFormat("yyy-MM-dd").format(Date())
+        set(value)  {
+            if(value != null)
+                field = value
+        }
     var tipoPedido : Int = 9
     var desconto : Double = 0.0
 

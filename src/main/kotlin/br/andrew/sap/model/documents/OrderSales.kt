@@ -18,9 +18,6 @@ class OrderSales(CardCode: String,
                  BPL_IDAssignedToInvoice: String)
     : Document(CardCode, DocDueDate, DocumentLines, BPL_IDAssignedToInvoice) {
 
-
-
-
     //TODO não achei onde fica esse propriedade
     var header : String? = null
 }

@@ -2,11 +2,14 @@ package br.andrew.sap.json
 
 import br.andrew.sap.model.sovis.PedidoVenda
 import br.andrew.sap.model.sovis.Produto
+import br.andrew.sap.services.ItemsService
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.fasterxml.jackson.module.kotlin.jacksonTypeRef
+import org.hamcrest.CoreMatchers
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
+import org.mockito.Mock
 import java.util.*
 
 class PedidoVendaJsonTest {
@@ -62,6 +65,14 @@ class PedidoVendaJsonTest {
         Assertions.assertEquals(140.0,produto.precoUnitario)
         Assertions.assertEquals(141.5,produto.valorTabela)
     }
+
+    @Test
+    fun jsonParseDataNull(){
+        val mapper = ObjectMapper().registerModule(KotlinModule())
+        val obj = mapper.readValue(jsonDataNull, jacksonTypeRef<PedidoVenda>())
+    }
+
+    val jsonDataNull = "{\"dataEntraga\":null,\"observacao\":\"RETIRAR NA FABRICA\\nFRETE A R\$12,00/SC\",\"idCliente\":\"CLI0001475\",\"desconto\":0,\"produtos\":{\"precoUnitario\":113.19,\"idProduto\":\"PAC0000121\",\"desconto\":0,\"valorTabela\":113.19,\"quantidade\":30},\"idCondicaoPagamento\":20,\"frete\":360,\"idEmpresa\":2,\"tipoPedido\":9,\"codVendedor\":65,\"idPedido\":52,\"idFormaPagamento\":\"BB-RC-BOL-1199\"}"
 
     val json = "{\n" +
             "   \"idCliente\":\"\",\n" +

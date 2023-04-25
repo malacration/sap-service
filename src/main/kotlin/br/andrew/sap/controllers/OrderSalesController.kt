@@ -1,17 +1,15 @@
 package br.andrew.sap.controllers
 
+import br.andrew.sap.events.DraftOrderSalesSaveEvent
 import br.andrew.sap.events.OrderSalesSaveEvent
-import br.andrew.sap.infrastructure.odata.OData
-import br.andrew.sap.infrastructure.odata.Order
-import br.andrew.sap.infrastructure.odata.OrderBy
+import br.andrew.sap.infrastructure.odata.*
 import br.andrew.sap.model.documents.OrderSales
+import br.andrew.sap.model.exceptions.CreditException
 import br.andrew.sap.model.exceptions.LinkedPaymentMethodException
 import br.andrew.sap.model.sovis.PedidoVenda
+import br.andrew.sap.model.sovis.Produto
 import br.andrew.sap.services.*
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.kotlin.KotlinModule
-import com.fasterxml.jackson.module.kotlin.jacksonTypeRef
-import org.springframework.beans.factory.annotation.Value
+import org.slf4j.LoggerFactory
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.web.bind.annotation.*
 import java.util.*
@@ -21,10 +19,14 @@ import java.util.*
 class OrderSalesController(val ordersService: OrdersService,
                            val businesPartner : BusinessPartnersService,
                            val itemService : ItemsService,
-        val applicationEventPublisher: ApplicationEventPublisher) {
+                           val approvalRequest : ApprovalRequestsService,
+                           val draft : DraftsService,
+                           val applicationEventPublisher: ApplicationEventPublisher) {
+
+    val logger = LoggerFactory.getLogger(OrderSalesController::class.java)
 
     @PostMapping("")
-    fun save(@RequestBody pedido : PedidoVenda): OrderSales {
+    fun save(@RequestBody pedido : PedidoVenda): Any {
         try {
             val order = ordersService.save(
                     pedido.getOrder().also { it.aplicaBase(itemService) }
@@ -34,6 +36,9 @@ class OrderSalesController(val ordersService: OrdersService,
         }catch (t : LinkedPaymentMethodException){
             businesPartner.addPaymentMethod(pedido.idCliente,pedido.idFormaPagamento)
             throw t
+        }catch (t : CreditException){
+            logger.warn(t.message,t)
+            return t.getOrderFake(pedido).also { applicationEventPublisher.publishEvent(DraftOrderSalesSaveEvent(it)) }
         }
     }
 
@@ -47,11 +52,9 @@ class OrderSalesController(val ordersService: OrdersService,
         return ordersService.get(OrderBy(mapOf("DocEntry" to Order.DESC)))
     }
 
-    @GetMapping("teste")
-    fun tete(@Value("{base.price.list.name:none}") list : String): Any {
-        val json = "{\"dataEntraga\":\"2023-04-18\",\"observacao\":\"\",\"idCliente\":\"CLI0002765\",\"desconto\":0,\"produtos\":[{\"precoUnitario\":130.05,\"idProduto\":\"PAC0000098\",\"desconto\":0,\"valorTabela\":130.05,\"quantidade\":6},{\"precoUnitario\":132.6,\"idProduto\":\"PAC0000089\",\"desconto\":0,\"valorTabela\":132.6,\"quantidade\":4},{\"precoUnitario\":117.3,\"idProduto\":\"PAC0000075\",\"desconto\":0,\"valorTabela\":117.3,\"quantidade\":6}],\"idCondicaoPagamento\":24,\"frete\":50,\"idEmpresa\":2,\"tipoPedido\":16,\"codVendedor\":54,\"idPedido\":52,\"idFormaPagamento\":\"BB-RC-BOL-1199\"}"
-        val mapper = ObjectMapper().registerModule(KotlinModule())
-        val pedido = mapper.readValue(json, jacksonTypeRef<PedidoVenda>())
-        return this.save(pedido)
+    @GetMapping("try")
+    fun tryPedido(): Any {
+        val produtos = listOf(Produto("PAC0000016",100.0,1.0).also { it.precoUnitario = 110.0 })
+        return save(PedidoVenda("CLI0000001","2","BB-RC-BOL-1199","-1",produtos))
     }
 }
