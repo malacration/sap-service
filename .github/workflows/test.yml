@@ -48,9 +48,16 @@ jobs:
 
       # uploads the coverage-report.md artifact  # Optional
 
-      - name: Upload Code Coverage Artifacts
+      - name: Upload html
         uses: actions/upload-artifact@v3.1.2
         with:
           name: CoverageReport
-          path: coveragereport
+          path: coveragereport/index.html
+          retention-days: 1
+
+      - name: Upload Badage
+        uses: actions/upload-artifact@v3.1.2
+        with:
+          name: CoverageReport
+          path: coveragereport/badge_shieldsio_linecoverage_green.svg
           retention-days: 1
