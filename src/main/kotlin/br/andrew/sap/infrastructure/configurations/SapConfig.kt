@@ -1,4 +1,4 @@
-package br.andrew.sap.infrastructure
+package br.andrew.sap.infrastructure.configurations
 
 import br.andrew.sap.model.SapEnvrioment
 import org.springframework.beans.factory.annotation.Value

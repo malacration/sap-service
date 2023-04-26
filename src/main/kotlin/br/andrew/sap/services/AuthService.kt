@@ -5,12 +5,14 @@ import br.andrew.sap.model.Session
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.cache.annotation.Caching
+import org.springframework.context.annotation.Profile
 import org.springframework.stereotype.Service
 import org.springframework.web.client.RestTemplate
 import java.net.URI
 
 @Service
-class AuthService(
+@Profile("!test")
+open class AuthService(
         private @Value("\${sap.service.layer.url:https://localhost:50000}") val host : String,
         private val restTemplate: RestTemplate) {
 

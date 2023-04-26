@@ -16,14 +16,6 @@ class OrderSalesSaveListener(val telegramRequest : TelegramRequestService,
                              val sapEnvrioment: SapEnvrioment,
                              val draftsService: DraftsService,
                              val ordersService: OrdersService) {
-
-    @EventListener
-    fun mensagemTelegram(event: OrderSalesSaveEvent) {
-        val entity = event.order
-        val msg = "Pedido para ${entity.cardName ?: ""} [DocNum:${entity.docNum}] foi recebido com sucesso! - [Base:${sapEnvrioment.companyDB}]"
-        telegramRequest.send(msg)
-    }
-
     @EventListener
     fun aplicaDesonerado(event: OrderSalesSaveEvent) {
         val order = ordersService.aplicaDesonerado(event.order)
