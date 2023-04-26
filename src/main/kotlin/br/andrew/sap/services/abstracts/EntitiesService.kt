@@ -28,7 +28,7 @@ abstract class EntitiesService<T>(protected val env: SapEnvrioment,
                     .body(entry)
             return restTemplate.exchange(request, OData::class.java).body!!
         }catch (t : HttpClientErrorException){
-            throw t.getResponseBodyAs(SapError::class.java)?.getError(t) ?: t
+            throw t.getResponseBodyAs(SapError::class.java)?.getError(t,entry) ?: t
         }
     }
 

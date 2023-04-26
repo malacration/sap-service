@@ -68,5 +68,11 @@ open class Document(val CardCode : String,
     fun isCalculaDesonaerado(): Boolean {
         return u_pedido_update == "1"
     }
+
+    override fun toString(): String {
+        return "Document(CardCode='$CardCode', Branch='$BPL_IDAssignedToInvoice', docEntry=$docEntry, docNum=$docNum, pedido_forca=$u_id_pedido_forca)"
+    }
+
+
 }
 
