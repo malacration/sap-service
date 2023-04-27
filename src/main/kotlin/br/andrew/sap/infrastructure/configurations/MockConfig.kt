@@ -15,18 +15,6 @@ import org.springframework.web.client.RestTemplate
 @Configuration
 class MockConfig {
 
-    @Bean
-    @Primary
-    fun nameService(): OrdersService {
-        return Mockito.mock(OrdersService::class.java)
-    }
-
-//    @Bean
-//    @Primary
-//    fun restTemplate(): RestTemplate?{
-//        return Mockito.mock(RestTemplate::class.java)
-//    }
-
     @Bean(name = arrayOf("user.current"))
     fun getCurrentUser() : User {
         return User(666)
