@@ -35,6 +35,7 @@ open class Document(val CardCode : String,
     @JsonProperty("U_Id_Pedido_Forca")
     var u_id_pedido_forca: String? = null
     var cardName: String? = null
+    var OpeningRemarks: String? = null
 
 
     var documentAdditionalExpenses : List<AdditionalExpenses> = emptyList()

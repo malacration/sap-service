@@ -52,9 +52,5 @@ class OrderSalesController(val ordersService: OrdersService,
         return ordersService.get(OrderBy(mapOf("DocEntry" to Order.DESC)))
     }
 
-    @GetMapping("try")
-    fun tryPedido(): Any {
-        val produtos = listOf(Produto("PAC0000016",100.0,1.0).also { it.precoUnitario = 110.0 })
-        return save(PedidoVenda("CLI0000001","2","BB-RC-BOL-1199","-1",produtos))
-    }
+
 }
