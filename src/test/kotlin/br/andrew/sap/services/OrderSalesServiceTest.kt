@@ -1,4 +1,4 @@
-package br.andrew.sap.controllers
+package br.andrew.sap.services
 
 import br.andrew.sap.model.PrecoUnitarioComDesoneracao
 import br.andrew.sap.model.SalesTaxAuthorities
@@ -8,13 +8,11 @@ import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.fasterxml.jackson.module.kotlin.jacksonTypeRef
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
-import java.math.BigDecimal
-import java.math.RoundingMode
 
 
 //@ActiveProfiles("test")
 //@SpringBootTest
-class OrderSalesControllerTest {
+class OrderSalesServiceTest {
 
     @Test
     fun test(){
