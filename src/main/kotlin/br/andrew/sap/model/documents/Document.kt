@@ -1,5 +1,6 @@
 package br.andrew.sap.model.documents
 
+import br.andrew.sap.model.WarehouseDefault
 import br.andrew.sap.services.ItemsService
 import com.fasterxml.jackson.annotation.JsonFormat
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
@@ -58,7 +59,18 @@ open class Document(val CardCode : String,
 
     fun aplicaBase(itemService: ItemsService){
         this.DocumentLines.forEach { it.aplicaBase(itemService) }
+    }
 
+    fun usaBrenchDefaultWarehouse(branchs : List<WarehouseDefault>){
+        branchs.firstOrNull{ it.BPLID == BPL_IDAssignedToInvoice }
+                ?.also { usaBrenchDefaultWarehouse(it) }
+
+    }
+    fun usaBrenchDefaultWarehouse(default : WarehouseDefault){
+        if(default.defaultWarehouseID != null)
+            DocumentLines
+                    .filter { it.warehouseCode == null}
+                    .forEach { it.warehouseCode = default.defaultWarehouseID}
     }
 
     fun isAvista(): Boolean {

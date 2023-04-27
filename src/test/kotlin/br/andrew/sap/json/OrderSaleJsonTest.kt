@@ -6,6 +6,7 @@ import br.andrew.sap.model.documents.Product
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.fasterxml.jackson.module.kotlin.jacksonTypeRef
+import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import java.io.File
 
@@ -46,6 +47,8 @@ class OrderSaleJsonTest {
         val mapper = ObjectMapper().registerModule(KotlinModule())
         val file = File("src/test/kotlin/br/andrew/sap/json/draft.json").readBytes()
         val obj = mapper.readValue(String(file), jacksonTypeRef<OData>())
-        obj.tryGetValue<OrderSales>()
+        val order = obj.tryGetValue<OrderSales>()
+        order.DocumentLines.forEach { Assertions.assertEquals("500.01",it.warehouseCode) }
+
     }
 }

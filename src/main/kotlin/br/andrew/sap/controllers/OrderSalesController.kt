@@ -2,6 +2,7 @@ package br.andrew.sap.controllers
 
 import br.andrew.sap.events.DraftOrderSalesSaveEvent
 import br.andrew.sap.events.OrderSalesSaveEvent
+import br.andrew.sap.infrastructure.WarehouseDefaultConfig
 import br.andrew.sap.infrastructure.odata.*
 import br.andrew.sap.model.documents.OrderSales
 import br.andrew.sap.model.exceptions.CreditException
@@ -28,7 +29,10 @@ class OrderSalesController(val ordersService: OrdersService,
     fun save(@RequestBody pedido : PedidoVenda): Any {
         try {
             val order = ordersService.save(
-                    pedido.getOrder().also { it.aplicaBase(itemService) }
+                    pedido.getOrder().also {
+                        it.aplicaBase(itemService)
+                        it.usaBrenchDefaultWarehouse(WarehouseDefaultConfig.warehouses)
+                    }
             ).tryGetValue<OrderSales>()
             applicationEventPublisher.publishEvent(OrderSalesSaveEvent(order))
             return order

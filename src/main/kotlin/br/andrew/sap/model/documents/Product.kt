@@ -45,5 +45,6 @@ class Product(val itemCode : String, val quantity : String, var unitPrice : Stri
     var discountPercent : Double? = null
     var U_preco_base: Double? = null
     var U_preco_negociado: Double? = null
+    var warehouseCode: String? = null
 
 }
