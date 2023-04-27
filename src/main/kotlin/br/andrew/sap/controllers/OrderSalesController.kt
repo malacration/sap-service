@@ -7,7 +7,6 @@ import br.andrew.sap.model.documents.OrderSales
 import br.andrew.sap.model.exceptions.CreditException
 import br.andrew.sap.model.exceptions.LinkedPaymentMethodException
 import br.andrew.sap.model.sovis.PedidoVenda
-import br.andrew.sap.model.sovis.Produto
 import br.andrew.sap.services.*
 import org.slf4j.LoggerFactory
 import org.springframework.context.ApplicationEventPublisher
