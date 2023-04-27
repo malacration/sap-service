@@ -9,7 +9,6 @@ class PrecoUnitarioComDesoneracaoTest {
 
     @Test
     fun teste(){
-
         val precoAlvo = BigDecimal("93.65");
         val imposto = SalesTaxAuthorities(0,
                 17.5,
