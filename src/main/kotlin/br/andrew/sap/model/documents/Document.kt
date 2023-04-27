@@ -69,6 +69,22 @@ open class Document(val CardCode : String,
         return u_pedido_update == "1"
     }
 
+    fun total() : Double {
+        return DocumentLines.sumOf { it.total() }.plus(totalDespesaAdicional());
+    }
+
+    fun totalNegociado() : Double {
+        return DocumentLines.sumOf { it.totalNegociado() }
+    }
+
+    fun totalDespesaAdicional(): Double {
+        return documentAdditionalExpenses.sumOf { it.lineTotalSys }
+    }
+
+    fun presumeDesonerado(rate : Double) : Double {
+        return DocumentLines.sumOf { it.presumeDesonerado(rate) }
+    }
+
     override fun toString(): String {
         return "Document(CardCode='$CardCode', Branch='$BPL_IDAssignedToInvoice', docEntry=$docEntry, docNum=$docNum, pedido_forca=$u_id_pedido_forca)"
     }
