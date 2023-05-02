@@ -51,12 +51,12 @@ class RomaneioEntradaInsumoController(
                     Fazenda(null,null)
                 else
                     fazendaService
-                            .getById(contrato.U_CodigoFazenda)
+                            .getById("'${contrato.U_CodigoFazenda}'")
                             .tryGetValue<Fazenda>()
 
         val romaneio = RomaneioEntradaInsumoMin(romaneioPesagem,contrato,motoristaPecuaria,fazenda)
                 .also {
-                    it.setResponsavel();
+                    it.setResponsavel()
                 }
         return romaneio
     }
