@@ -6,6 +6,7 @@ import br.andrew.sap.model.RomaneioPesagem
 import br.andrew.sap.services.FazendaService
 import br.andrew.sap.services.RegistroCompraInsumoService
 import br.andrew.sap.services.romaneio.RomaneioPesagemService
+import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
@@ -35,15 +36,15 @@ class RomaneioPesagemController(
     }
 
     @GetMapping("contrato-fazenda")
-    fun getByContrato(page : Pageable) : List<RomaneioPesagem>{
+    fun getByContrato(page : Pageable) : Page<RomaneioPesagem>{
         val pns = registroCompraInsumoService
-                .get(page)
+                .get()
                 .tryGetValues<RegistroCompraInsumo>()
                 .map { it.U_CodParceiroNegocio }
         val predicate = Predicate("U_CodParceiro",pns,Condicao.IN)
         return romaneioService
-                .get(Filter(listOf(predicate)))
-                .tryGetValues<RomaneioPesagem>()
+                .get(Filter(listOf(predicate)),page)
+                .tryGetPageValues<RomaneioPesagem>()
     }
 
 

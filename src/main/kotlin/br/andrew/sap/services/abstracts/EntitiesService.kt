@@ -50,7 +50,7 @@ abstract class EntitiesService<T>(protected val env: SapEnvrioment,
 
     fun get(filter : Filter = Filter(), order : OrderBy = OrderBy(), page : Pageable = Pageable.ofSize(20)) : OData {
         val aditional = listOf(filter,order).filter { it.toString().isNotEmpty() }.joinToString(" ","&")
-        val skip = page.pageNumber*page.pageSize;
+        val skip = (page.pageNumber*page.pageSize).toString()+"&\$inlinecount=allpages"
         val request = RequestEntity
                 .get(env.host+this.path()+"?\$skip=${skip}"+aditional)
                 .header("cookie","B1SESSION=${session().sessionId}")
