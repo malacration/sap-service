@@ -3,6 +3,9 @@ package br.andrew.sap.infrastructure.odata
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.fasterxml.jackson.module.kotlin.jacksonTypeRef
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.PageImpl
+import org.springframework.data.domain.Pageable
 
 class OData() : LinkedHashMap<String,Any>() {
 
@@ -25,7 +28,16 @@ class OData() : LinkedHashMap<String,Any>() {
         throw Exception("Não foi possivel fazer o parse")
     }
 
+    inline fun <reified T> tryGetPageValues(): Page<T> {
+        return PageImpl<T>(tryGetValues<T>(), Pageable.unpaged(),count() ?:100)
+    }
+
     fun next() {
 
     }
+
+    fun count() : Long?{
+        return (this.get("odata.count") as Int?)?.toLong()
+    }
+
 }
