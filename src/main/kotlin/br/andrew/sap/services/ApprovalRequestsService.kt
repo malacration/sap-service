@@ -36,7 +36,7 @@ class ApprovalRequestsService(env : SapEnvrioment,
                 it.approvalRequestDecisions = listOf(Decision("ardNotApproved"))
             }
             update(reprova, approvalRequest.code.toString())
-        }else if(draft.isAvista()){
+        }else{
             draftsService.draftToDocument(draft)
         }
     }

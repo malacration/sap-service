@@ -47,5 +47,16 @@ class RomaneioPesagemController(
                 .tryGetPageValues<RomaneioPesagem>()
     }
 
+    @GetMapping("teste")
+    fun teste(page : Pageable) : Page<Any>{
+        val pns = registroCompraInsumoService
+                .get()
+                .tryGetValues<RegistroCompraInsumo>()
+                .map { it.U_CodParceiroNegocio }
+        val predicate = Predicate("U_CodParceiro",pns,Condicao.IN)
+        return romaneioService
+                .getNotUseInEntrada(pns)
+    }
+
 
 }
