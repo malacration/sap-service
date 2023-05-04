@@ -17,9 +17,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
 
-      - name: Build binary
-        run: cargo build --release --verbose
-
       - name: Send mail
         uses: dawidd6/action-send-mail@v3
         with:
