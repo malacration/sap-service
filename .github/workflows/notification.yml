@@ -1,0 +1,36 @@
+name: Release Notifier Action
+
+on:
+  release:
+    types: [ created ]
+
+jobs:
+  notification:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Get release
+        id: get_release
+        uses: bruceadams/get-release@v1.3.2
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+
+      - name: Build binary
+        run: cargo build --release --verbose
+
+      - name: Send mail
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: ${{secrets.MAIL_SMTP_ADDRESS}}
+          server_port: ${{secrets.MAIL_PORT}}
+          username: ${{secrets.MAIL_USERNAME}}
+          password: ${{secrets.MAIL_PASSWORD}}
+          subject: Release notes - Serviço de integração SAP versão ${{ steps.get_release.outputs.tag_name }}
+          to: ${{secrets.MAIL_TO_LIST}}
+          from: ${{secrets.MAIL_USERNAME}}
+          html_body: ${{ steps.get_release.outputs.body }}
+          reply_to: ${{secrets.MAIL_USERNAME}}
+          convert_markdown: true
+          priority: low
