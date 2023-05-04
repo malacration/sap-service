@@ -1,8 +1,8 @@
 name: Push to Docker Hub
 
 on:
-  push:
-    tags: ['v*']
+  release:
+    types: [ created ]
 
 env:
   FULL_IMAGE_NAME: malacration/sap-service

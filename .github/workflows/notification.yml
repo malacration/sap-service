@@ -1,13 +1,15 @@
 name: Release Notifier Action
 
 on:
-  push:
+  release:
+    types: [ created ]
+
 jobs:
   notification:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Get release
         id: get_release
@@ -25,12 +27,10 @@ jobs:
           server_port: ${{secrets.MAIL_PORT}}
           username: ${{secrets.MAIL_USERNAME}}
           password: ${{secrets.MAIL_PASSWORD}}
-          subject: Github Actions job result
+          subject: Release notes - Serviço de integração SAP versão ${{ steps.get_release.outputs.tag_name }}
           to: ${{secrets.MAIL_TO_LIST}}
           from: ${{secrets.MAIL_USERNAME}}
-          body: Build job of ${{github.repository}} completed successfully!
-          #html_body: file://README.html
+          html_body: ${{ steps.get_release.outputs.body }}
           reply_to: ${{secrets.MAIL_USERNAME}}
           convert_markdown: true
           priority: low
-
