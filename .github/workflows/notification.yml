@@ -9,8 +9,7 @@ jobs:
     - name: Send mail
       uses: dawidd6/action-send-mail@v3
       with:
-        connection_url: ${{secrets.MAIL_CONNECTION}}
-        server_address: ${{secrets.MAIL_ADDRESS}}
+        server_address: ${{secrets.MAIL_SMTP_ADDRESS}}
         server_port: ${{secrets.MAIL_PORT}}
         username: ${{secrets.MAIL_USERNAME}}
         password: ${{secrets.MAIL_PASSWORD}}
@@ -18,7 +17,7 @@ jobs:
         to: ${{secrets.MAIL_TO_LIST}}
         from: ${{secrets.MAIL_USERNAME}}
         body: Build job of ${{github.repository}} completed successfully!
-        html_body: file://README.html
+        #html_body: file://README.html
         reply_to: ${{secrets.MAIL_USERNAME}}
         convert_markdown: true
         priority: low
