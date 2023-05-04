@@ -1,6 +1,6 @@
 package br.andrew.sap.listener
 
-import br.andrew.sap.model.Error
+import br.andrew.sap.model.ErrorMsg
 import br.andrew.sap.model.SapError
 import br.andrew.sap.model.SapMessage
 import br.andrew.sap.model.exceptions.LinkedPaymentMethodException
@@ -18,13 +18,13 @@ class SapErrorListenerTests {
 
     @Test
     fun testaProducaoMsgErro(){
-        val error = SapError(Error("", SapMessage("666","teste de integração msg erro - windson")))
+        val error = SapError(ErrorMsg("", SapMessage("666","teste de integração msg erro - windson")))
         eventPublisher!!.publishEvent(SapGenericException(error))
     }
 
     @Test
     fun testeLinkedPayment(){
-        val error = SapError(Error("", SapMessage("666","teste de integração - linkedPayment - windson")))
+        val error = SapError(ErrorMsg("", SapMessage("666","teste de integração - linkedPayment - windson")))
         eventPublisher!!.publishEvent(LinkedPaymentMethodException(error))
     }
 }

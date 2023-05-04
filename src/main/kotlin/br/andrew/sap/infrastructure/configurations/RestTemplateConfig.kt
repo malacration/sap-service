@@ -1,4 +1,4 @@
-package br.andrew.sap.infrastructure
+package br.andrew.sap.infrastructure.configurations
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.PropertyNamingStrategies.UPPER_CAMEL_CASE

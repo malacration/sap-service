@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v3.5.2
         with:
           fetch-depth: 0 # get all tags, needed to get git log
           ref: master
@@ -39,11 +39,6 @@ jobs:
             type=ref,event=branch
             # in addition to full semantic version (x.y.z) would also create (x.y)
             #type=semver,pattern={{major}}.{{minor}}
-
-      - name: create version.properties
-        id: versioning
-        run: |
-          echo {{tag}}
 
       - name: build and push docker image
         uses: docker/build-push-action@v3.2.0

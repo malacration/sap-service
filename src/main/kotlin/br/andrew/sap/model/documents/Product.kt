@@ -24,10 +24,27 @@ class Product(val itemCode : String, val quantity : String, var unitPrice : Stri
         this.U_preco_base = itemService.getPriceBase(this)
     }
 
+    fun total(): Double {
+        return unitPrice.toDouble() * quantity.toDouble() * 1-(discountPercent ?: 0.0)/100
+    }
+
+    fun totalAntesDesconto() {
+        TODO("Not yet implemented")
+    }
+
+    fun totalNegociado(): Double {
+        return quantity.toDouble() * (U_preco_negociado ?: 0.0)
+    }
+
+    fun presumeDesonerado(rate: Double): Double {
+        return total()*rate/100
+    }
+
     var LineNum : Int? = null
     var taxCode : String? = null
     var discountPercent : Double? = null
     var U_preco_base: Double? = null
     var U_preco_negociado: Double? = null
+    var warehouseCode: String? = null
 
 }

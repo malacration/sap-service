@@ -6,7 +6,7 @@ import org.springframework.context.annotation.Configuration
 @Configuration
 class TelegramConfig(@Value("\${telegram.plantao.apiUrl:}") var apiUrl: String,
                      @Value("\${telegram.plantao.token:}") val token: String,
-                     @Value("\${telegram.plantao.channel:}") private val channel: String) {
+                     @Value("\${telegram.plantao.channel:}") val chatId: String) {
 
-    internal val messageUrl: String = "${apiUrl.removeSuffix("/")}/bot$token/sendMessage?chat_id=$channel"
+    internal val messageUrl: String = "${apiUrl.removeSuffix("/")}/bot$token/sendMessage"
 }
