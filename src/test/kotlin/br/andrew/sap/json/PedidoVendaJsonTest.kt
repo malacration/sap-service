@@ -20,7 +20,7 @@ class PedidoVendaJsonTest {
         val produtos = listOf<Produto>(Produto("PRO0001",10.5,10.0))
         val pedido = PedidoVenda("CLI0001","18",
                 "avista",
-                "15", produtos,2)
+                "15", produtos,"5",2)
         println(mapper.writeValueAsString(pedido))
     }
 
@@ -49,7 +49,7 @@ class PedidoVendaJsonTest {
                 .also { it.desconto = 100.0 })
         val pedido = PedidoVenda("CLI0001","18",
                 "avista",
-                "15", produtos,2)
+                "15", produtos,"5",2)
                 .also {
                     it.idPedido = "10"
                     it.desconto = 10.0
@@ -79,6 +79,7 @@ class PedidoVendaJsonTest {
             "   \"idEmpresa\":\"2\",\n" +
             "   \"idFormaPagamento\":\"avista\",\n" +
             "   \"idCondicaoPagamento\":\"15\",\n" +
+            "   \"idPedido\":\"15\",\n" +
             "   \"produtos\":[\n" +
             "      {\n" +
             "         \"idProduto\":\"PAC0000105\",\n" +
@@ -90,6 +91,7 @@ class PedidoVendaJsonTest {
             "}"
     val json2 = "{\n" +
             "   \"idCliente\": \"CLI0002776\",\n" +
+            "   \"idPedido\": \"CLI0002776\",\n" +
             "   \"produtos\": [\n" +
             "      {\n" +
             "         \"precoUnitario\": 157.8008,\n" +

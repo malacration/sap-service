@@ -14,10 +14,10 @@ class PedidoVenda(
         val idCondicaoPagamento : String,
         @JsonFormat(with = arrayOf(JsonFormat.Feature.ACCEPT_SINGLE_VALUE_AS_ARRAY))
         val produtos : List<Produto>,
+        var idPedido : String,
         val codVendedor : Int = -1) {
 
     var frete: Double? = null
-    var idPedido : String? = null
     var observacao : String? = null
 
     //TODO fazer parse de data
