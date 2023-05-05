@@ -1,11 +1,9 @@
 package br.andrew.sap.services
 
 import br.andrew.sap.infrastructure.odata.OData
-import br.andrew.sap.model.BusinessPartner
+import br.andrew.sap.model.partner.BusinessPartner
 import br.andrew.sap.model.PaymentMethod
 import br.andrew.sap.model.SapEnvrioment
-import br.andrew.sap.model.sovis.PedidoVenda
-import br.andrew.sap.model.sovis.Produto
 import br.andrew.sap.services.abstracts.EntitiesService
 import org.springframework.stereotype.Service
 import org.springframework.web.client.RestTemplate
@@ -18,7 +16,7 @@ class BusinessPartnersService(env: SapEnvrioment, restTemplate: RestTemplate, au
     }
 
     fun addPaymentMethod(cardCode : String, idFormaPagamento: String): OData? {
-        val bp : BusinessPartner = BusinessPartner(cardCode)
+        val bp : BusinessPartner = BusinessPartner().also { it.cardCode = cardCode }
                 .also { it.setBPPaymentMethods(listOf(PaymentMethod(idFormaPagamento)))  }
         return update(bp,"'${bp.cardCode}'")
     }
