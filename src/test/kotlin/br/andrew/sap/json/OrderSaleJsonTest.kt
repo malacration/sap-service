@@ -22,7 +22,7 @@ class OrderSaleJsonTest {
         }
         val json = mapper.writeValueAsString(pedido)
         println(json)
-        org.junit.jupiter.api.Assertions.assertTrue(json.contains("\"U_Id_Pedido_Forca\":\"666\""))
+        org.junit.jupiter.api.Assertions.assertTrue(json.contains("\"U_id_Pedido_Forca\":\"666\""))
         org.junit.jupiter.api.Assertions.assertTrue(json.contains("\"U_preco_negociado\":123.0"))
         org.junit.jupiter.api.Assertions.assertTrue(json.contains("\"U_preco_base\":555.0"))
     }
@@ -36,7 +36,7 @@ class OrderSaleJsonTest {
         }
         val json = mapper.writeValueAsString(pedido)
         println(json)
-        org.junit.jupiter.api.Assertions.assertTrue(!json.contains("U_Id_Pedido_Forca"))
+        org.junit.jupiter.api.Assertions.assertTrue(!json.contains("U_id_Pedido_Forca"))
         org.junit.jupiter.api.Assertions.assertTrue(!json.contains("U_preco_negociado"))
         org.junit.jupiter.api.Assertions.assertTrue(!json.contains("U_preco_base"))
     }
