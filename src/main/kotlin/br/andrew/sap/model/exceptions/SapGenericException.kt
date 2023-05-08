@@ -2,7 +2,7 @@ package br.andrew.sap.model.exceptions
 
 import br.andrew.sap.model.SapError
 import br.andrew.sap.model.documents.OrderSales
-import br.andrew.sap.model.sovis.PedidoVenda
+import br.andrew.sap.model.forca.PedidoVenda
 
 open class SapGenericException(val erro : SapError, val causa : Throwable? = null, extra : String = "") :
         Exception(erro.error.message.value+" - "+extra,causa){

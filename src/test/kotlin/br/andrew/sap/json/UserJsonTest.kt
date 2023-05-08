@@ -2,17 +2,11 @@ package br.andrew.sap.json
 
 import br.andrew.sap.infrastructure.odata.OData
 import br.andrew.sap.model.User
-import br.andrew.sap.model.sovis.PedidoVenda
-import br.andrew.sap.model.sovis.Produto
-import br.andrew.sap.services.ItemsService
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.fasterxml.jackson.module.kotlin.jacksonTypeRef
-import org.hamcrest.CoreMatchers
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
-import org.mockito.Mock
-import java.util.*
 
 class UserJsonTest {
 

@@ -1,6 +1,6 @@
 package br.andrew.sap.model
 
-import br.andrew.sap.model.sovis.Produto
+import br.andrew.sap.model.forca.Produto
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 

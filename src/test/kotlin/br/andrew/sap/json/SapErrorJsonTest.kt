@@ -1,12 +1,8 @@
 package br.andrew.sap.json
 
 import br.andrew.sap.model.SapError
-import br.andrew.sap.model.romaneio.RomaneioEntradaInsumo
-import br.andrew.sap.model.sovis.PedidoVenda
-import br.andrew.sap.model.sovis.Produto
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
-import com.fasterxml.jackson.module.kotlin.jacksonTypeRef
 import org.junit.jupiter.api.Test
 
 class SapErrorJsonTest {

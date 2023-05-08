@@ -17,6 +17,7 @@ class SpringDocConfig {
         return GroupedOpenApi.builder()
                 .group("mock-chat-bot")
                 .pathsToMatch("/mock/**")
+                .pathsToMatch("/business-partners/save")
                 .build()
     }
 }

@@ -33,7 +33,7 @@ open class Document(val CardCode : String,
     var journalMemo : String? = null
     var u_pedido_update : String? = "0";
 
-    @JsonProperty("U_Id_Pedido_Forca")
+    @JsonProperty("U_id_pedido_forca")
     var u_id_pedido_forca: String? = null
     var cardName: String? = null
     var OpeningRemarks: String? = null

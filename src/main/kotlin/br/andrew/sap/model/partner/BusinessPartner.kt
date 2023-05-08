@@ -66,7 +66,7 @@ class BusinessPartner() {
         BPAddresses = valor
     }
 
-    fun setAddresses(valor : Address) {
+    fun setAddresse(valor : Address) {
         BPAddresses = listOf(
             valor.also { it.AddressType = AddresType.bo_ShipTo },
             valor.duplicate().also {
