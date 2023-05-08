@@ -1,4 +1,4 @@
-package br.andrew.sap.model.sovis
+package br.andrew.sap.model.forca
 
 import br.andrew.sap.model.documents.AdditionalExpenses
 import br.andrew.sap.model.documents.OrderSales

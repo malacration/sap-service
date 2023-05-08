@@ -1,16 +1,12 @@
 package br.andrew.sap.json
 
-import br.andrew.sap.model.sovis.PedidoVenda
-import br.andrew.sap.model.sovis.Produto
-import br.andrew.sap.services.ItemsService
+import br.andrew.sap.model.forca.PedidoVenda
+import br.andrew.sap.model.forca.Produto
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.fasterxml.jackson.module.kotlin.jacksonTypeRef
-import org.hamcrest.CoreMatchers
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
-import org.mockito.Mock
-import java.util.*
 
 class PedidoVendaJsonTest {
 

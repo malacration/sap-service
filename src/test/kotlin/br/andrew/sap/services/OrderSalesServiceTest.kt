@@ -2,7 +2,7 @@ package br.andrew.sap.services
 
 import br.andrew.sap.model.PrecoUnitarioComDesoneracao
 import br.andrew.sap.model.SalesTaxAuthorities
-import br.andrew.sap.model.sovis.PedidoVenda
+import br.andrew.sap.model.forca.PedidoVenda
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.fasterxml.jackson.module.kotlin.jacksonTypeRef
