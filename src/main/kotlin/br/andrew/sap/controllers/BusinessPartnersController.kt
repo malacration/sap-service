@@ -2,10 +2,8 @@ package br.andrew.sap.controllers
 
 import br.andrew.sap.infrastructure.odata.OData
 import br.andrew.sap.model.forca.Cliente
-import br.andrew.sap.model.forca.Endereco
 import br.andrew.sap.model.partner.*
 import br.andrew.sap.services.BusinessPartnersService
-import org.springframework.boot.autoconfigure.integration.IntegrationProperties.RSocket.Client
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
