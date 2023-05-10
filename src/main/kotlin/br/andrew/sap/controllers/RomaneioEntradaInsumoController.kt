@@ -39,10 +39,12 @@ class RomaneioEntradaInsumoController(
                 .ifEmpty { listOf(RegistroCompraInsumo(null,null)) }
                 .first()
 
-        val motoristaContrato = motoristaContratoService
-                .getById("'${romaneioPesagem.u_CodMotorista!!}'").tryGetValue<MotoristaContrato>()
+        val motoristaContrato = if(romaneioPesagem.u_CodMotorista == null ) null else
+            motoristaContratoService.getById("'${romaneioPesagem.u_CodMotorista!!}'")
+                    .tryGetValue<MotoristaContrato>()
 
-        val motoristaPecuaria = motoristaPecuariaService.getByCnh(motoristaContrato.U_RegistroCNH!!)
+        val motoristaPecuaria = if(motoristaContrato == null ) null else
+            motoristaPecuariaService.getByCnh(motoristaContrato.U_RegistroCNH!!)
                 .tryGetValues<MotoristaPecuaria>()
                 .ifEmpty { listOf(MotoristaPecuaria(null,null,null)) }.first()
 

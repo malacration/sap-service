@@ -1,5 +1,6 @@
 package br.andrew.sap.services
 
+import br.andrew.sap.infrastructure.odata.OData
 import br.andrew.sap.model.PrecoUnitarioComDesoneracao
 import br.andrew.sap.model.SalesTaxAuthorities
 import br.andrew.sap.model.SalesTaxCode
@@ -9,6 +10,7 @@ import br.andrew.sap.model.documents.OrderSales
 import br.andrew.sap.services.abstracts.EntitiesService
 import br.andrew.sap.services.tax.SalesTaxAuthoritiesService
 import br.andrew.sap.services.tax.SalesTaxCodeService
+import org.springframework.http.RequestEntity
 import org.springframework.stereotype.Service
 import org.springframework.web.client.RestTemplate
 
@@ -37,5 +39,17 @@ class OrdersService(env: SapEnvrioment, restTemplate: RestTemplate, authService:
         }
         order.u_pedido_update = "0";
         return order
+    }
+
+    fun getTeste(): Any {
+        restTemplate.exchange(RequestEntity
+                .post(env.host+"/b1s/v1/SQLViews('*')/Expose")
+                .header("cookie","B1SESSION=${session().sessionId}")
+                .build(), OData::class.java).body
+
+        return restTemplate.exchange(RequestEntity
+                .get(env.host+"/b1s/v1/SQLViews('SBOGRUPOROVEMA.testeB1SLQuery')")
+                .header("cookie","B1SESSION=${session().sessionId}")
+                .build(), OData::class.java).body ?: OData()
     }
 }
