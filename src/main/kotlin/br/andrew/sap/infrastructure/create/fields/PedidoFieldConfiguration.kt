@@ -1,9 +1,9 @@
-package br.andrew.sap.infrastructure.fields
+package br.andrew.sap.infrastructure.create.fields
 
 import br.andrew.sap.model.DbType
 import br.andrew.sap.model.FieldMd
 import br.andrew.sap.model.ValuesMd
-import br.andrew.sap.services.UserFieldsMDService
+import br.andrew.sap.services.structs.UserFieldsMDService
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Profile
 

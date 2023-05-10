@@ -11,6 +11,7 @@ import br.andrew.sap.model.forca.PedidoVenda
 import br.andrew.sap.services.*
 import org.slf4j.LoggerFactory
 import org.springframework.context.ApplicationEventPublisher
+import org.springframework.http.RequestEntity
 import org.springframework.web.bind.annotation.*
 import java.util.*
 
@@ -51,8 +52,8 @@ class OrderSalesController(val ordersService: OrdersService,
     }
 
     @GetMapping("data")
-    fun getData(): OData {
-        return ordersService.get(OrderBy(mapOf("DocEntry" to Order.DESC)))
+    fun getData(): Any {
+        return ordersService.getTeste()
     }
 
 

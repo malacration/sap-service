@@ -3,7 +3,7 @@ package br.andrew.sap.controllers
 import br.andrew.sap.infrastructure.odata.Condicao
 import br.andrew.sap.infrastructure.odata.Filter
 import br.andrew.sap.infrastructure.odata.Predicate
-import br.andrew.sap.services.UserFieldsMDService
+import br.andrew.sap.services.structs.UserFieldsMDService
 import org.springframework.data.domain.Pageable
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping

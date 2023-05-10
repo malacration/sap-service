@@ -24,7 +24,7 @@ class RomaneioEntradaInsumoMin(
 ){
         constructor(pesagem : RomaneioPesagem,
                     compra : RegistroCompraInsumo,
-                    motorista : MotoristaPecuaria,
+                    motorista : MotoristaPecuaria?,
                     fazenda : Fazenda) : this(
                 Date(),
                 pesagem.docNum,
@@ -44,8 +44,8 @@ class RomaneioEntradaInsumoMin(
                 U_CodRegistroCompra = compra.code.toString()
                 U_CodDeposito = compra.U_CodDeposito
 
-                U_CodMotorista = motorista.code
-                U_Motorista = motorista.U_NomeCadastro
+                U_CodMotorista = motorista?.code
+                U_Motorista = motorista?.U_NomeCadastro
                 U_CodFazenda = fazenda.Code;
                 U_DscFazenda = fazenda.U_DescriComp
 
