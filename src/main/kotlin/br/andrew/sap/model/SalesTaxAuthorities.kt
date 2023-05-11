@@ -9,4 +9,9 @@ import com.fasterxml.jackson.databind.annotation.JsonNaming
 class SalesTaxAuthorities(val type : Int, val Rate : Double,
                           val u_Base : Double, val u_Isento : Double,
                           val u_Outros : Double) {
+
+
+    fun taxValueOutros(base : Double): Double {
+        return (Rate/100)*(u_Outros/100)*base
+    }
 }

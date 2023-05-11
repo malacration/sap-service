@@ -2,6 +2,8 @@ package br.andrew.sap.services
 
 import br.andrew.sap.model.PrecoUnitarioComDesoneracao
 import br.andrew.sap.model.SalesTaxAuthorities
+import br.andrew.sap.model.documents.OrderSales
+import br.andrew.sap.model.documents.Product
 import br.andrew.sap.model.forca.PedidoVenda
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
@@ -10,8 +12,6 @@ import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 
 
-//@ActiveProfiles("test")
-//@SpringBootTest
 class OrderSalesServiceTest {
 
     @Test
@@ -24,7 +24,7 @@ class OrderSalesServiceTest {
         val negociadoEsperado = 544.50
 
         Assertions.assertEquals("106",orderBase.u_id_pedido_forca)
-        Assertions.assertEquals(614.9,orderBase.total())
+        Assertions.assertEquals(554.5,orderBase.total())
         Assertions.assertEquals(negociadoEsperado,orderBase.totalNegociado())
         Assertions.assertEquals(10.0,orderBase.totalDespesaAdicional())
         Assertions.assertEquals(0.0,orderBase.discountPercent)
@@ -38,7 +38,16 @@ class OrderSalesServiceTest {
         }
         val totalDesonerado = orderBase.total()-orderBase.presumeDesonerado(17.5)
 
-        Assertions.assertEquals(743.2339999999999,orderBase.total())
+        Assertions.assertEquals(670.0006,orderBase.total())
         Assertions.assertEquals(544.50,orderBase.totalNegociado())
+    }
+
+    @Test
+    fun totalComDesconto(){
+        val produtos = listOf<Product>(
+            (Product("PAC0000069","1","100",5).also { it.discountPercent = 10.0 })
+        )
+        val order = OrderSales("",null,produtos,"")
+        Assertions.assertEquals(90.0,order.total())
     }
 }
