@@ -33,23 +33,11 @@ class OrdersService(env: SapEnvrioment, restTemplate: RestTemplate, authService:
                 var taxParam = taxAuthoritiesService.get(taxCodeDesonerado)
                         .tryGetValue<SalesTaxAuthorities>()
                 it.value.forEach { p ->
-                    p.unitPrice = PrecoUnitarioComDesoneracao().calculaPreco(p.U_preco_negociado.toString(), taxParam).toString()
+                    p.unitPrice = PrecoUnitarioComDesoneracao().calculaPreco(p, taxParam).toString()
                 }
             }
         }
         order.u_pedido_update = "0";
         return order
-    }
-
-    fun getTeste(): Any {
-        restTemplate.exchange(RequestEntity
-                .post(env.host+"/b1s/v1/SQLViews('*')/Expose")
-                .header("cookie","B1SESSION=${session().sessionId}")
-                .build(), OData::class.java).body
-
-        return restTemplate.exchange(RequestEntity
-                .get(env.host+"/b1s/v1/SQLViews('SBOGRUPOROVEMA.testeB1SLQuery')")
-                .header("cookie","B1SESSION=${session().sessionId}")
-                .build(), OData::class.java).body ?: OData()
     }
 }

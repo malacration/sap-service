@@ -9,6 +9,9 @@ import br.andrew.sap.model.exceptions.CreditException
 import br.andrew.sap.model.exceptions.LinkedPaymentMethodException
 import br.andrew.sap.model.forca.PedidoVenda
 import br.andrew.sap.services.*
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.kotlin.KotlinModule
+import com.fasterxml.jackson.module.kotlin.jacksonTypeRef
 import org.slf4j.LoggerFactory
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.http.RequestEntity
@@ -49,11 +52,6 @@ class OrderSalesController(val ordersService: OrdersService,
     @GetMapping("")
     fun get(): List<OrderSales> {
         return ordersService.get(OrderBy(mapOf("DocEntry" to Order.DESC))).tryGetValues<OrderSales>()
-    }
-
-    @GetMapping("data")
-    fun getData(): Any {
-        return ordersService.getTeste()
     }
 
 

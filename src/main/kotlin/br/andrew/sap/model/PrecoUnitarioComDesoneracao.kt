@@ -12,10 +12,6 @@ class PrecoUnitarioComDesoneracao {
         return calculaPreco(BigDecimal(produto.U_preco_negociado!!),tax,BigDecimal(produto.discountPercent?:0.0))
     }
 
-    fun calculaPreco(valorAlvo : String, tax : SalesTaxAuthorities, discountPercent : String = "0") : BigDecimal{
-        return calculaPreco(BigDecimal(valorAlvo),tax,BigDecimal(discountPercent))
-    }
-
     fun calculaPreco(valorAlvo : BigDecimal, tax : SalesTaxAuthorities, discountPercent : BigDecimal = BigDecimal("0")) : BigDecimal{
         val sem = BigDecimal(100)
         val one = BigDecimal(1)

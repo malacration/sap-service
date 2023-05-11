@@ -25,7 +25,7 @@ class Product(val itemCode : String, val quantity : String, var unitPrice : Stri
     }
 
     fun total(): Double {
-        return unitPrice.toDouble() * quantity.toDouble() * 1-(discountPercent ?: 0.0)/100
+        return (unitPrice.toDouble() * quantity.toDouble()) * (1-(discountPercent ?: 0.0)/100)
     }
 
     fun totalAntesDesconto() {
