@@ -25,6 +25,6 @@ class SapErrorListenerTests {
     @Test
     fun testeLinkedPayment(){
         val error = SapError(ErrorMsg("", SapMessage("666","teste de integração - linkedPayment - windson")))
-        eventPublisher!!.publishEvent(LinkedPaymentMethodException(error, error.entry))
+        eventPublisher!!.publishEvent(LinkedPaymentMethodException(error))
     }
 }

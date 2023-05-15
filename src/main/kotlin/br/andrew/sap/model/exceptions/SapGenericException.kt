@@ -26,6 +26,6 @@ class CreditException(error: SapError, val location : String?, cause: Throwable?
 }
 class LinkedPaymentMethodException(error: SapError) : SapGenericException(error, error.throwable) {
     init {
-
+        EventPublisherSingleton.instance.publishEvent(this)
     }
 }

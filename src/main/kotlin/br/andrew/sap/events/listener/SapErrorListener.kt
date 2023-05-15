@@ -4,7 +4,6 @@ import br.andrew.sap.model.ErrorMsg
 import br.andrew.sap.model.SapEnvrioment
 import br.andrew.sap.model.SapError
 import br.andrew.sap.model.exceptions.BusinessPartnerNotAssignedException
-import br.andrew.sap.model.exceptions.LinkedPaymentMethodException
 import br.andrew.sap.model.exceptions.SapGenericException
 import br.andrew.sap.services.BusinessPartnersService
 import br.andrew.sap.services.OrdersService
