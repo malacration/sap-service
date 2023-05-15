@@ -24,8 +24,8 @@ class BusinessPartnersService(env: SapEnvrioment, restTemplate: RestTemplate, au
     fun addBusinesPlace(cardCode : String, idBusinesPlace: String): OData? {
         val bp : BusinessPartner = BusinessPartner().also {
             it.cardCode = cardCode
-            it.BPLID = idBusinesPlace
-            it.DisabledForBP = "tNO"
+//            it.BPLID = idBusinesPlace
+//            it.DisabledForBP = "tNO"
         }
         return update(bp,"'${bp.cardCode}'")
     }

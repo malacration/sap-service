@@ -1,7 +1,9 @@
 package br.andrew.sap.model.forca
 
 import br.andrew.sap.model.partner.Address
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 class Endereco(val rua : String,
                val numero : String,
                val bairro : String,
@@ -17,10 +19,12 @@ class Endereco(val rua : String,
             it.StreetNo = numero
             it.Block = bairro
             it.City = cidade
+            it.County = cidade
             it.State = estado
             it.ZipCode = cep
             it.Country = pais
-            it.addrType = tipoEndereco
+//            it.addrType = tipoEndereco
+            it.typeOfAddress = tipoEndereco
         }
     }
 }

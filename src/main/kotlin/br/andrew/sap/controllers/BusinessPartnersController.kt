@@ -20,8 +20,13 @@ class BusinessPartnersController(val service : BusinessPartnersService) {
         return service.get()
     }
 
+    @PostMapping("")
+    fun salvar(@RequestBody bp : Cliente): BusinessPartner {
+        return service.save(bp.getBusinessPartner()).tryGetValue()
+    }
+
     @PostMapping("save")
     fun save(@RequestBody bp : Cliente): BusinessPartner {
-        return service.save(bp.getBusinessPartner()).tryGetValue()
+        return salvar(bp)
     }
 }

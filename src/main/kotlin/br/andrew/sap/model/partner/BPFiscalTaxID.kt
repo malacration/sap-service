@@ -12,11 +12,9 @@ class BPFiscalTaxID() {
         if (cpfCnpj.isCpf()) {
             TaxId4 = cpfCnpj.value
         } else {
-            TaxId1 = cpfCnpj.value
+            TaxId0 = cpfCnpj.value
         }
     }
-    var TaxId1 : String? = null
+    var TaxId0 : String? = null
     var TaxId4 : String? = null
-//    AddrType: "bo_ShipTo",
-//    TaxId12: "FOR0000032",
 }
