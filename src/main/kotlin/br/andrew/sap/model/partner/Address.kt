@@ -17,6 +17,7 @@ class Address {
     var Country:  String? = null
     var State: String? = null
     var BuildingFloorRoom: String? = null
+    var addrType : String? = null
 
     var AddressType: AddresType? = null
         set(value) {
@@ -27,8 +28,6 @@ class Address {
     var TypeOfAddress: String? = null
     var StreetNo: String? = null
 
-//    U_TX_IE: "00000005476909",
-//    U_IE: "00000005476909"
 
     //copy for new intance address
     @JsonIgnoreProperties

@@ -8,7 +8,8 @@ class Endereco(val rua : String,
                val cidade : String,
                val estado : String,
                val cep : String,
-               val pais : String) {
+               val pais : String,
+               val tipoEndereco : String) {
 
     fun getAddresse(): Address {
         return Address().also {
@@ -19,6 +20,7 @@ class Endereco(val rua : String,
             it.State = estado
             it.ZipCode = cep
             it.Country = pais
+            it.addrType = tipoEndereco
         }
     }
 }

@@ -1,6 +1,8 @@
 package br.andrew.sap.model.exceptions
 
+import br.andrew.sap.infrastructure.configurations.EventPublisherSingleton
 import br.andrew.sap.model.SapError
+import br.andrew.sap.model.documents.Document
 import br.andrew.sap.model.documents.OrderSales
 import br.andrew.sap.model.forca.PedidoVenda
 
@@ -22,5 +24,8 @@ class CreditException(error: SapError, val location : String?, cause: Throwable?
 
     }
 }
-class LinkedPaymentMethodException(error: SapError, cause: Throwable? = null) : SapGenericException(error, cause) {
+class LinkedPaymentMethodException(error: SapError) : SapGenericException(error, error.throwable) {
+    init {
+        EventPublisherSingleton.instance.publishEvent(this)
+    }
 }
