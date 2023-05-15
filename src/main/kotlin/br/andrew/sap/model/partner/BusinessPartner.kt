@@ -28,6 +28,8 @@ class BusinessPartner() {
     var cardName : String? = null;
     var cardType : BusinessPartnerType? = null;
     var cardCode : String? = null
+    var BPLID : String? = null
+    var DisabledForBP : String? = null
     var series : Int? = 77
 
     @JsonIgnoreProperties

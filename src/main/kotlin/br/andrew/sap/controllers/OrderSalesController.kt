@@ -14,7 +14,6 @@ import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.fasterxml.jackson.module.kotlin.jacksonTypeRef
 import org.slf4j.LoggerFactory
 import org.springframework.context.ApplicationEventPublisher
-import org.springframework.http.RequestEntity
 import org.springframework.web.bind.annotation.*
 import java.util.*
 
@@ -53,6 +52,5 @@ class OrderSalesController(val ordersService: OrdersService,
     fun get(): List<OrderSales> {
         return ordersService.get(OrderBy(mapOf("DocEntry" to Order.DESC))).tryGetValues<OrderSales>()
     }
-
 
 }
