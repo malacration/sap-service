@@ -18,5 +18,7 @@ class BusinessPartnerJsonTest {
                 .also { it.setCpfCnpj(CpfCnpj("01847004261")) })
         Assertions.assertTrue(saida.contains("BPFiscalTaxIDCollection"))
         Assertions.assertTrue(!saida.contains("BpfiscalTaxIDCollection"))
+        Assertions.assertTrue(saida.contains("BPAddresses"))
+        println(saida)
     }
 }

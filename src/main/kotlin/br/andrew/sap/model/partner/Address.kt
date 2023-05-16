@@ -17,15 +17,16 @@ class Address {
     var Country:  String? = null
     var State: String? = null
     var BuildingFloorRoom: String? = null
-    var addrType : String? = null
+//    var addrType : String? = null
 
-    var AddressType: AddresType? = null
+    var addressType: AddresType? = null
         set(value) {
             if(addressName == null)
                 addressName = value?.cardType
             field = value
+//            addrType = value?.name
         }
-    var TypeOfAddress: String? = null
+    var typeOfAddress: String? = null
     var StreetNo: String? = null
 
 
@@ -42,9 +43,10 @@ class Address {
         newAddress.Country = this.Country
         newAddress.State = this.State
         newAddress.BuildingFloorRoom = this.BuildingFloorRoom
-        newAddress.AddressType = this.AddressType
-        newAddress.TypeOfAddress = this.TypeOfAddress
+        newAddress.addressType = this.addressType
+        newAddress.typeOfAddress = this.typeOfAddress
         newAddress.StreetNo = this.StreetNo
+//        newAddress.addrType = this.addrType
         return newAddress
     }
 }

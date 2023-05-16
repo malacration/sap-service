@@ -28,8 +28,8 @@ class BusinessPartner() {
     var cardName : String? = null;
     var cardType : BusinessPartnerType? = null;
     var cardCode : String? = null
-    var BPLID : String? = null
-    var DisabledForBP : String? = null
+//    var BPLID : String? = null
+//    var DisabledForBP : String? = null
     var series : Int? = 77
 
     @JsonIgnoreProperties
@@ -70,10 +70,10 @@ class BusinessPartner() {
 
     fun setAddresse(valor : Address) {
         BPAddresses = listOf(
-            valor.also { it.AddressType = AddresType.bo_ShipTo },
+            valor.also { it.addressType = AddresType.bo_ShipTo },
             valor.duplicate().also {
                 it.addressName = null
-                it.AddressType = AddresType.bo_BillTo }
+                it.addressType = AddresType.bo_BillTo }
         )
 
     }

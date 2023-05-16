@@ -6,6 +6,7 @@ import br.andrew.sap.model.partner.CpfCnpj
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 class Cliente(
         val nome : String,
         val cpfCnpj : String,
