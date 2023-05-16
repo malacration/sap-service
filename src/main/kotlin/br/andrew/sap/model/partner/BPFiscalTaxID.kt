@@ -10,9 +10,9 @@ class BPFiscalTaxID() {
 
     constructor(cpfCnpj: CpfCnpj) : this(){
         if (cpfCnpj.isCpf()) {
-            TaxId4 = cpfCnpj.value
+            TaxId4 = cpfCnpj.getWithMask()
         } else {
-            TaxId0 = cpfCnpj.value
+            TaxId0 = cpfCnpj.getWithMask()
         }
     }
     var TaxId0 : String? = null
