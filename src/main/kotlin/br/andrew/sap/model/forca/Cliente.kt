@@ -15,6 +15,8 @@ class Cliente(
 
     var telefone : String? = null
     val email : String? = null
+    val idVendedor : String? = null
+    val obscadastral : String? = null
 
     @JsonIgnore
     @JsonIgnoreProperties
@@ -22,6 +24,11 @@ class Cliente(
         return BusinessPartner(nome, BusinessPartnerType.C).also {
             it.setCpfCnpj(CpfCnpj(cpfCnpj))
             it.setAddresse(endereco.getAddresse())
+            it.u_id_forca = idCliente
+            it.phone1 = telefone
+            it.emailAddress = email
+            it.salesPersonCode = idVendedor?.toInt() ?: -1
+            it.freeText = obscadastral;
         }
     }
 }

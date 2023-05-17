@@ -25,9 +25,14 @@ class BusinessPartner() {
         this.BPFiscalTaxIDCollection = listOf(BPFiscalTaxID(cpfCnpj))
     }
 
+    var freeText: String? = null
+    var u_id_forca: String? = null
+    var emailAddress: String? = null
+    var phone1: String? = null
     var cardName : String? = null;
     var cardType : BusinessPartnerType? = null;
     var cardCode : String? = null
+    var salesPersonCode : Int? = null
 //    var BPLID : String? = null
 //    var DisabledForBP : String? = null
     var series : Int? = 77
