@@ -25,7 +25,7 @@ jobs:
           username: ${{secrets.MAIL_USERNAME}}
           password: ${{secrets.MAIL_PASSWORD}}
           subject: Release notes - Serviço de integração SAP versão ${{ steps.get_release.outputs.tag_name }}
-          to: ${{secrets.MAIL_TO_LIST}}
+          to: ${{vars.MAIL_TO_LIST}}
           from: ${{secrets.MAIL_USERNAME}}
           html_body: ${{ steps.get_release.outputs.body }}
           reply_to: ${{secrets.MAIL_USERNAME}}
