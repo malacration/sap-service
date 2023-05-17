@@ -28,9 +28,10 @@ class PedidoFieldConfiguration(val userFieldsMDService: UserFieldsMDService) {
         val precoBase = FieldMd("preco_base","Preço base","DRF1", DbType.db_Float)
         userFieldsMDService.findOrCreate(precoBase)
 
-
-//        val authStarvation = FieldMd("starvation","Evita Starvation","OWDD", DbType.db_Alpha)
-//        userFieldsMDService.findOrCreate(authStarvation)
-
+        val idForcaVendas = FieldMd("id_forca","Id Força de vendas","OCRD",DbType.db_Numeric)
+                .also {
+                    it.size = null
+                }
+        userFieldsMDService.findOrCreate(idForcaVendas)
     }
 }

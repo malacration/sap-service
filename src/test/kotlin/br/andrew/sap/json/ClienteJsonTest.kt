@@ -13,7 +13,7 @@ import org.springframework.util.Assert
 class ClienteJsonTest {
 
     val json = "{\n" +
-            "   \"telefone\":\"\",\n" +
+            "   \"telefone\":\"5555555\",\n" +
             "   \"idCliente\":6,\n" +
             "   \"endereco\":{\n" +
             "      \"cidade\":3651,\n" +
@@ -23,18 +23,21 @@ class ClienteJsonTest {
             "      \"tipoEndereco\":\"RUA\",\n" +
             "      \"pais\":\"BR\",\n" +
             "      \"rua\":\"RUA asdas DANTAS\",\n" +
-            "      \"cep\":asdasd\n" +
+            "      \"cep\": 661\n" +
             "   },\n" +
             "   \"nome\":\"Fake LTDA\",\n" +
             "   \"cpfCnpj\":29601566000100,\n" +
-            "   \"email\":\"\"\n" +
+            "   \"email\":\"windson@windson.com\"\n" +
             "}"
     @Test
     fun testeJsonCliente(){
         val mapper = ObjectMapper().registerModule(KotlinModule())
         val obj = mapper.readValue(json, jacksonTypeRef<Cliente>())
-        obj.getBusinessPartner();
-//        Assertions.assertEquals("olar",)
+        val bp = obj.getBusinessPartner();
+        Assertions.assertEquals("5555555",bp.phone1)
+        Assertions.assertEquals("6",bp.u_id_forca)
+        Assertions.assertEquals("windson@windson.com",bp.emailAddress)
+        Assertions.assertEquals("windson@windson.com",bp.emailAddress)
     }
 
 

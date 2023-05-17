@@ -12,9 +12,9 @@ class FieldMd(val name : String,
               val description: String,
               val tableName : String,
               val type : DbType = DbType.db_Alpha,
-              var size : Int = 15,
               val mandatory: String = "tNO") {
 
+    var size : Int? = 15
     var ValidValuesMD : List<ValuesMd> = listOf()
     val subType : String? = if(type == DbType.db_Float) "st_Measurement" else null
     var defaultValue: String? = null
