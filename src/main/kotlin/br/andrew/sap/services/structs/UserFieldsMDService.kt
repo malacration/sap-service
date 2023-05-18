@@ -22,7 +22,7 @@ class UserFieldsMDService(env: SapEnvrioment, restTemplate: RestTemplate,
                 Predicate("Name",field.name,Condicao.EQUAL),
                 Predicate("TableName",field.tableName,Condicao.EQUAL)
         )
-com         val result = get(Filter(predicates))
+         val result = get(Filter(predicates))
         if(result.tryGetValues<FieldMd>().isEmpty()){
             save(field)
         }
