@@ -8,13 +8,15 @@ import com.fasterxml.jackson.databind.annotation.JsonNaming
 @JsonIgnoreProperties(ignoreUnknown = true)
 class BPFiscalTaxID() {
 
-    constructor(cpfCnpj: CpfCnpj) : this(){
+    constructor(cpfCnpj: CpfCnpj, ierg: String? = null) : this(){
         if (cpfCnpj.isCpf()) {
             TaxId4 = cpfCnpj.getWithMask()
         } else {
             TaxId0 = cpfCnpj.getWithMask()
+            TaxId1 = ierg
         }
     }
+    var TaxId1 : String? = null
     var TaxId0 : String? = null
     var TaxId4 : String? = null
 }
