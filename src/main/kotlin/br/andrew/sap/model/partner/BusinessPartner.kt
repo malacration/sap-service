@@ -31,7 +31,7 @@ class BusinessPartner() {
     var cardType : BusinessPartnerType? = null;
     var cardCode : String? = null
     var salesPersonCode : Int? = null
-    var u_fazer_fluxo_prazo : String? = "0"
+    var U_fazer_fluxo_prazo : String? = "0"
 //    var BPLID : String? = null
 //    var DisabledForBP : String? = null
     var series : Int? = 77
