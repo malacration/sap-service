@@ -17,18 +17,20 @@ class Cliente(
     val email : String? = null
     val idVendedor : String? = null
     val obscadastral : String? = null
+    var ierg : String? = null
 
     @JsonIgnore
     @JsonIgnoreProperties
     fun getBusinessPartner() : BusinessPartner {
         return BusinessPartner(nome, BusinessPartnerType.C).also {
-            it.setCpfCnpj(CpfCnpj(cpfCnpj))
+            it.setCpfCnpj(CpfCnpj(cpfCnpj),ierg)
             it.setAddresse(endereco.getAddresse())
             it.u_id_forca = idCliente
             it.phone1 = telefone
             it.emailAddress = email
             it.salesPersonCode = idVendedor?.toInt() ?: -1
             it.freeText = obscadastral;
+            it.u_fazer_fluxo_prazo = "1"
         }
     }
 }

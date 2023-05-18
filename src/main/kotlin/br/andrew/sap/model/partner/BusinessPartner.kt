@@ -17,13 +17,11 @@ class BusinessPartner() {
         this.cardType = type
     }
 
-    fun setCpfCnpj(cpfCnpj: CpfCnpj) {
-        this.BPFiscalTaxIDCollection = listOf(BPFiscalTaxID(cpfCnpj))
+    fun setCpfCnpj(cpfCnpj: CpfCnpj, ierg: String? = null) {
+        this.BPFiscalTaxIDCollection = listOf(BPFiscalTaxID(cpfCnpj,ierg))
     }
 
-    fun setAdders(cpfCnpj: CpfCnpj) {
-        this.BPFiscalTaxIDCollection = listOf(BPFiscalTaxID(cpfCnpj))
-    }
+
 
     var freeText: String? = null
     var u_id_forca: String? = null
@@ -33,6 +31,7 @@ class BusinessPartner() {
     var cardType : BusinessPartnerType? = null;
     var cardCode : String? = null
     var salesPersonCode : Int? = null
+    var u_fazer_fluxo_prazo : String? = "0"
 //    var BPLID : String? = null
 //    var DisabledForBP : String? = null
     var series : Int? = 77

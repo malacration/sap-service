@@ -33,5 +33,14 @@ class PedidoFieldConfiguration(val userFieldsMDService: UserFieldsMDService) {
                     it.size = null
                 }
         userFieldsMDService.findOrCreate(idForcaVendas)
+
+
+        //Deterinar se fez ou nao o fluxo de venda a prazo
+        val fluxoVendaPrazo = FieldMd("fazer_fluxo_prazo","Fazer Fluxo Prazo?","OCRD")
+                .also {
+                    it.ValidValuesMD = listOf(ValuesMd("0","NÃO"),ValuesMd("1","SIM"))
+                    it.defaultValue = "0"
+                }
+        userFieldsMDService.findOrCreate(fluxoVendaPrazo)
     }
 }
