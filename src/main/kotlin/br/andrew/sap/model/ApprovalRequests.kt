@@ -14,6 +14,10 @@ class ApprovalRequests {
     var approvalRequestDecisions : List<Decision> = listOf()
     var status : String? = null
     var U_starvation: String? = null
+
+    override fun toString(): String {
+        return "Code: $code - DraftEntry: $draftEntry - Status: $status"
+    }
 }
 
 @JsonNaming(PropertyNamingStrategy.UpperCamelCaseStrategy::class)

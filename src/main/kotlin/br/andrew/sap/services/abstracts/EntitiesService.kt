@@ -11,6 +11,7 @@ import org.springframework.data.domain.Pageable
 import org.springframework.http.RequestEntity
 import org.springframework.web.client.HttpClientErrorException
 import org.springframework.web.client.RestTemplate
+import java.net.URLDecoder
 
 abstract class EntitiesService<T>(protected val env: SapEnvrioment,
                                   protected val restTemplate: RestTemplate,
@@ -88,6 +89,20 @@ abstract class EntitiesService<T>(protected val env: SapEnvrioment,
 
     fun get(filter: Filter, page: Pageable): OData {
         return get(filter, OrderBy(), page)
+    }
+
+    fun next(odata : OData) : OData {
+        return next(odata.nextLink())
+    }
+
+    fun next(next : String) : OData {
+        val regex = "/([^/]+)$".toRegex()
+        val url = (env.host+this.path()).replace(regex,"/")+next
+        val request = RequestEntity
+            .get(URLDecoder.decode(url,"UTF-8"))
+            .header("cookie","B1SESSION=${session().sessionId}")
+            .build()
+        return restTemplate.exchange(request, OData::class.java).body!!
     }
 
     fun cru(body: String): OData {
