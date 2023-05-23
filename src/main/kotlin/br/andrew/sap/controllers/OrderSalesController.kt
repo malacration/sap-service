@@ -8,6 +8,7 @@ import br.andrew.sap.model.documents.OrderSales
 import br.andrew.sap.model.exceptions.CreditException
 import br.andrew.sap.model.exceptions.LinkedPaymentMethodException
 import br.andrew.sap.model.forca.PedidoVenda
+import br.andrew.sap.model.forca.Produto
 import br.andrew.sap.services.*
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
@@ -22,8 +23,6 @@ import java.util.*
 class OrderSalesController(val ordersService: OrdersService,
                            val businesPartner : BusinessPartnersService,
                            val itemService : ItemsService,
-                           val approvalRequest : ApprovalRequestsService,
-                           val draft : DraftsService,
                            val applicationEventPublisher: ApplicationEventPublisher) {
 
     val logger = LoggerFactory.getLogger(OrderSalesController::class.java)
@@ -39,9 +38,6 @@ class OrderSalesController(val ordersService: OrdersService,
             ).tryGetValue<OrderSales>()
             applicationEventPublisher.publishEvent(OrderSalesSaveEvent(order))
             return order
-        }catch (t : LinkedPaymentMethodException){
-            businesPartner.addPaymentMethod(pedido.idCliente,pedido.idFormaPagamento)
-            throw t
         }catch (t : CreditException){
             logger.warn(t.message,t)
             return t.getOrderFake(pedido).also { applicationEventPublisher.publishEvent(DraftOrderSalesSaveEvent(it)) }
@@ -52,5 +48,4 @@ class OrderSalesController(val ordersService: OrdersService,
     fun get(): List<OrderSales> {
         return ordersService.get(OrderBy(mapOf("DocEntry" to Order.DESC))).tryGetValues<OrderSales>()
     }
-
 }

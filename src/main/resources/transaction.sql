@@ -21,7 +21,7 @@ IF :object_type = '17' then
 				GROUP BY "U_pedido_update"
 				ORDER BY MAX("LogInstanc") DESC))
 			)) THEN
-		error := '88';
+		error := '666';
     	error_message := 'O item esta bloqueado para atualização de imposto desonerado';
 	END if;
 END IF;

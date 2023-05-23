@@ -6,8 +6,9 @@ import com.fasterxml.jackson.module.kotlin.jacksonTypeRef
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.Pageable
+import org.springframework.web.client.RestTemplate
 
-class OData() : LinkedHashMap<String,Any>() {
+class OData() : LinkedHashMap<String,Any>(){
 
     inline fun <reified T: Any> tryGetValue() : T {
         val mapper = ObjectMapper().registerModule(KotlinModule())
@@ -32,12 +33,15 @@ class OData() : LinkedHashMap<String,Any>() {
         return PageImpl<T>(tryGetValues<T>(), Pageable.unpaged(),count() ?:100)
     }
 
-    fun next() {
+    fun nextLink() : String{
+        return this.get("odata.nextLink").toString()
+    }
 
+    fun hasNext() : Boolean{
+        return this.get("odata.nextLink") != null
     }
 
     fun count() : Long?{
         return (this.get("odata.count") as Int?)?.toLong()
     }
-
 }

@@ -1,6 +1,7 @@
 package br.andrew.sap.services
 
 import br.andrew.sap.model.SapEnvrioment
+import br.andrew.sap.model.SapError
 import br.andrew.sap.model.documents.Document
 import br.andrew.sap.services.abstracts.EntitiesService
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
@@ -9,6 +10,7 @@ import com.fasterxml.jackson.databind.PropertyNamingStrategy
 import com.fasterxml.jackson.databind.annotation.JsonNaming
 import org.springframework.http.RequestEntity
 import org.springframework.stereotype.Service
+import org.springframework.web.client.HttpClientErrorException
 import org.springframework.web.client.RestTemplate
 
 
@@ -31,12 +33,16 @@ class DraftsService(env : SapEnvrioment,
      * }
      */
     fun draftToDocument(documento : Document) {
-        val url = env.host+this.path()+"Service_SaveDraftToDocument"
-        val request = RequestEntity
-                .post(url)
-                .header("cookie","B1SESSION=${session().sessionId}")
-                .body(DraftWrapper(documento))
-        restTemplate.exchange(request, String::class.java)
+        try{
+            val url = env.host+this.path()+"Service_SaveDraftToDocument"
+            val request = RequestEntity
+                    .post(url)
+                    .header("cookie","B1SESSION=${session().sessionId}")
+                    .body(DraftWrapper(documento))
+            restTemplate.exchange(request, String::class.java)
+        }catch (t : HttpClientErrorException){
+            throw t.getResponseBodyAs(SapError::class.java)?.getError(t,documento) ?: t
+        }
     }
 
     @JsonNaming(PropertyNamingStrategy.UpperCamelCaseStrategy::class)

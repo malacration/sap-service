@@ -2,6 +2,7 @@ package br.andrew.sap.schedules
 
 import br.andrew.sap.infrastructure.odata.Condicao
 import br.andrew.sap.infrastructure.odata.Filter
+import br.andrew.sap.infrastructure.odata.OData
 import br.andrew.sap.infrastructure.odata.Predicate
 import br.andrew.sap.model.ApprovalRequests
 import br.andrew.sap.model.User
@@ -37,18 +38,26 @@ class AutoApprovalPaymentCondition(
                     Predicate("IsDraft","Y", Condicao.EQUAL),
                     Predicate("Status", listOf("arsApproved","arsPending"), Condicao.IN),
                     )
-            val requests = approvalRequestsService.get(Filter(predicados)).tryGetValues<ApprovalRequests>()
-            requests.filter { it.draftEntry != null }
-                    .map { draftsService.getById(it.draftEntry!!).tryGetValue<OrderSales>()  }
-                    .forEach {
-                        try{
-                            approvalRequestsService.aprovaEhCria(it,requests.first{r -> r.draftEntry == it.docEntry})
-                        }catch (t : Throwable){
-                            logger.error("Erro ao aprovar e draft entry ${it.docEntry} num ${it.docNum}",t)
+            var requests : OData? = null
+            do {
+                requests = if(requests == null)
+                        approvalRequestsService.get(Filter(predicados))
+                    else
+                        approvalRequestsService.next(requests)
+                val approval = requests.tryGetValues<ApprovalRequests>()
+                approval.filter { it.draftEntry != null }
+                        .map { draftsService.getById(it.draftEntry!!).tryGetValue<OrderSales>()  }
+                        .forEach {
+                            try{
+                                approvalRequestsService.aprovaEhCria(it,approval.first{r -> r.draftEntry == it.docEntry})
+                            }catch (t : Throwable){
+                                logger.error("Erro ao aprovar e draft entry ${it.docEntry} num ${it.docNum}",t)
+                            }
                         }
-                    }
+            } while (requests!!.hasNext())
+
         }catch (t : Throwable){
-            t.printStackTrace()
+            logger.error(t.message,t)
         }
 
     }
