@@ -40,11 +40,19 @@ class Product(val itemCode : String, val quantity : String, var unitPrice : Stri
         return total()*rate/100
     }
 
+    fun setDistribuicaoCusto(branch: DistribuicaoCustoByBranch) {
+        costingCode = branch.grupoEconomico
+        costingCode2 = branch.centroCusto
+    }
+
     var LineNum : Int? = null
     var taxCode : String? = null
     var discountPercent : Double? = null
     var U_preco_base: Double? = null
     var U_preco_negociado: Double? = null
     var warehouseCode: String? = null
+    var U_id_item_forca: String? = null
+    var costingCode: String? = null
+    var costingCode2: String? =null
 
 }

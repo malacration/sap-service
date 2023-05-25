@@ -26,8 +26,6 @@ open class Document(val CardCode : String,
     var docNum : String? = null
     var paymentMethod : String? = null
     var discountPercent : Double = 0.0
-    var COGSCostingCode : String? = null
-    var COGSCostingCode2 : String? = null
     var ControlAccount : String? = null
     var documentInstallments : List<Installment>? = null
     var journalMemo : String? = null
@@ -64,6 +62,19 @@ open class Document(val CardCode : String,
     fun usaBrenchDefaultWarehouse(branchs : List<WarehouseDefault>){
         branchs.firstOrNull{ it.BPLID == BPL_IDAssignedToInvoice }
                 ?.also { usaBrenchDefaultWarehouse(it) }
+
+    }
+    fun setDistribuicaoCusto(distCusto : List<DistribuicaoCustoByBranch>){
+
+
+
+
+
+        distCusto.firstOrNull{it.branch == BPL_IDAssignedToInvoice}?.also { branch ->
+            this.DocumentLines.forEach{
+                it.setDistribuicaoCusto( branch)
+            }
+        }
 
     }
     fun usaBrenchDefaultWarehouse(default : WarehouseDefault){

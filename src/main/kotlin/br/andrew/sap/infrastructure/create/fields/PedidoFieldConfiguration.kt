@@ -34,6 +34,11 @@ class PedidoFieldConfiguration(val userFieldsMDService: UserFieldsMDService) {
                 }
         userFieldsMDService.findOrCreate(idForcaVendas)
 
+        val idItemForca = FieldMd("id_item_forca","Id Item Força","DRF1").also {
+            it.size = 100
+        }
+        userFieldsMDService.findOrCreate(idItemForca)
+
 
         //Deterinar se fez ou nao o fluxo de venda a prazo
         val fluxoVendaPrazo = FieldMd("fazer_fluxo_prazo","Fazer Fluxo Prazo?","OCRD")

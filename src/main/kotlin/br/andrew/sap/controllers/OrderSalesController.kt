@@ -3,6 +3,7 @@ package br.andrew.sap.controllers
 import br.andrew.sap.events.DraftOrderSalesSaveEvent
 import br.andrew.sap.events.OrderSalesSaveEvent
 import br.andrew.sap.infrastructure.WarehouseDefaultConfig
+import br.andrew.sap.infrastructure.configurations.DistribuicaoCustoByBranchConfig
 import br.andrew.sap.infrastructure.odata.*
 import br.andrew.sap.model.documents.OrderSales
 import br.andrew.sap.model.exceptions.CreditException
@@ -34,6 +35,8 @@ class OrderSalesController(val ordersService: OrdersService,
                     pedido.getOrder().also {
                         it.aplicaBase(itemService)
                         it.usaBrenchDefaultWarehouse(WarehouseDefaultConfig.warehouses)
+                        it.setDistribuicaoCusto(DistribuicaoCustoByBranchConfig.distibucoesCustos)
+
                     }
             ).tryGetValue<OrderSales>()
             applicationEventPublisher.publishEvent(OrderSalesSaveEvent(order))

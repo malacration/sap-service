@@ -1,1 +1,1 @@
-rootProject.name = "Sap-Service"
+rootProject.name = "sap-service"
