@@ -11,7 +11,7 @@ class Produto(val idProduto : String,
 
     var desconto : Double = 0.0
     var precoUnitario : Double = 0.0
-    var idItemForca: String? = null
+    var idItem: String? = null
 
 
     @JsonIgnore
@@ -20,7 +20,7 @@ class Produto(val idProduto : String,
                 .also {
                     it.discountPercent = desconto
                     it.U_preco_negociado = precoUnitario
-                    it.U_id_item_forca = idItemForca
+                    it.U_id_item_forca = idItem
                 }
     }
 
