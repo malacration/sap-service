@@ -36,7 +36,6 @@ class OrderSalesController(val ordersService: OrdersService,
                         it.aplicaBase(itemService)
                         it.usaBrenchDefaultWarehouse(WarehouseDefaultConfig.warehouses)
                         it.setDistribuicaoCusto(DistribuicaoCustoByBranchConfig.distibucoesCustos)
-
                     }
             ).tryGetValue<OrderSales>()
             applicationEventPublisher.publishEvent(OrderSalesSaveEvent(order))
