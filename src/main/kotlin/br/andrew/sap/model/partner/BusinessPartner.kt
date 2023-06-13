@@ -2,6 +2,7 @@ package br.andrew.sap.model.partner
 
 import br.andrew.sap.model.PaymentMethod
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.PropertyNamingStrategy
 import com.fasterxml.jackson.databind.annotation.JsonNaming
@@ -9,6 +10,7 @@ import com.fasterxml.jackson.databind.annotation.JsonNaming
 
 @JsonNaming(PropertyNamingStrategy.UpperCamelCaseStrategy::class)
 @JsonIgnoreProperties(ignoreUnknown = true)
+@JsonInclude(JsonInclude.Include.NON_NULL)
 class BusinessPartner() {
     constructor(cardName : String,
                 type: BusinessPartnerType) : this() {
@@ -32,6 +34,7 @@ class BusinessPartner() {
     var cardCode : String? = null
     var salesPersonCode : Int? = null
     var U_fazer_fluxo_prazo : String? = "0"
+    var attachmentEntry : Int? = null
 //    var BPLID : String? = null
 //    var DisabledForBP : String? = null
     var series : Int? = 77
@@ -80,5 +83,9 @@ class BusinessPartner() {
                 it.addressType = AddresType.bo_BillTo }
         )
 
+    }
+
+    override fun toString(): String {
+        return "$cardCode - $cardName CNPJ($BPFiscalTaxIDCollection)"
     }
 }

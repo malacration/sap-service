@@ -52,7 +52,7 @@ class SapErrorListener(val telegramRequest : TelegramRequestService,
     @EventListener
     fun linkedPaymentMethodException(erro : LinkedPaymentMethodException){
         val entry = erro.erro.entry
-        if(entry is Document && entry.paymentMethod != null)
+        if(entry is Document)
             bussinesPartenerService.addPaymentMethod(entry.CardCode,entry.paymentMethod!!)
     }
 

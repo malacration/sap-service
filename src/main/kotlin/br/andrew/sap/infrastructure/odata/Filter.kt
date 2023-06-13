@@ -1,11 +1,9 @@
 package br.andrew.sap.infrastructure.odata
 
 
-
-
-
 class Filter(val propertie : List<Predicate>) {
     constructor() : this(listOf())
+    constructor(predicate: Predicate) : this(listOf(predicate))
 
     override fun toString(): String {
         if(propertie.isEmpty())
