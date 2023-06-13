@@ -17,7 +17,7 @@ class SapError(val error : ErrorMsg) {
     var entry : Any = ""
     var throwable : Throwable? = null
     fun getError() : Throwable {
-        return error.getError(this) ?: SapGenericException(this)
+        return error.getError(this) ?: SapGenericException(this,throwable)
     }
 
     fun getError(t: HttpClientErrorException, entry: Any): Throwable? {

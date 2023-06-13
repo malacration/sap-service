@@ -16,14 +16,15 @@ class BusinessPartnersService(env: SapEnvrioment, restTemplate: RestTemplate, au
     }
 
     fun addPaymentMethod(cardCode : String, idFormaPagamento: String): OData? {
-        val bp : BusinessPartner = BusinessPartner().also { it.cardCode = cardCode }
-                .also { it.setBPPaymentMethods(listOf(PaymentMethod(idFormaPagamento)))  }
-        return update(bp,"'${bp.cardCode}'")
+        val bp : BusinessPartner = BusinessPartner().also {
+            it.setBPPaymentMethods(listOf(PaymentMethod(idFormaPagamento)))
+        }
+        return update(bp,"'${cardCode}'")
     }
 
     fun addBusinesPlace(cardCode : String, idBusinesPlace: String): OData? {
+        //TODO corrigir o busines place
         val bp : BusinessPartner = BusinessPartner().also {
-            it.cardCode = cardCode
 //            it.BPLID = idBusinesPlace
 //            it.DisabledForBP = "tNO"
         }

@@ -21,7 +21,7 @@ abstract class EntitiesService<T>(protected val env: SapEnvrioment,
     }
     abstract fun path() : String
 
-    fun save(entry: T & Any) : OData {
+    open fun save(entry: T & Any) : OData {
         try{
             val request = RequestEntity
                     .post(env.host+this.path())

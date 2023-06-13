@@ -25,6 +25,8 @@ dependencies {
 	implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.1.0")
 	implementation("org.springdoc:springdoc-openapi-ui:1.7.0")
 
+	implementation("org.apache.tika:tika-core:2.8.0")
+
 	implementation("org.apache.httpcomponents.client5:httpclient5:5.2.1")
 	implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
 	implementation("org.jetbrains.kotlin:kotlin-reflect")
