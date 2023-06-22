@@ -1,16 +1,15 @@
-package br.andrew.sap.services
+package br.andrew.sap.services.document
 
-import br.andrew.sap.infrastructure.odata.OData
 import br.andrew.sap.model.PrecoUnitarioComDesoneracao
 import br.andrew.sap.model.SalesTaxAuthorities
 import br.andrew.sap.model.SalesTaxCode
 import br.andrew.sap.model.SapEnvrioment
 import br.andrew.sap.model.documents.Document
 import br.andrew.sap.model.documents.OrderSales
+import br.andrew.sap.services.AuthService
 import br.andrew.sap.services.abstracts.EntitiesService
 import br.andrew.sap.services.tax.SalesTaxAuthoritiesService
 import br.andrew.sap.services.tax.SalesTaxCodeService
-import org.springframework.http.RequestEntity
 import org.springframework.stereotype.Service
 import org.springframework.web.client.RestTemplate
 

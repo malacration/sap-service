@@ -3,10 +3,8 @@ package br.andrew.sap.events.listener
 import br.andrew.sap.events.DraftOrderSalesSaveEvent
 import br.andrew.sap.events.OrderSalesSaveEvent
 import br.andrew.sap.model.SapEnvrioment
-import br.andrew.sap.model.documents.Document
-import br.andrew.sap.model.documents.OrderSales
 import br.andrew.sap.services.DraftsService
-import br.andrew.sap.services.OrdersService
+import br.andrew.sap.services.document.OrdersService
 import br.andrew.sap.services.TelegramRequestService
 import org.springframework.context.event.EventListener
 import org.springframework.stereotype.Component
@@ -15,7 +13,8 @@ import org.springframework.stereotype.Component
 class TelegramListener(val telegramRequest : TelegramRequestService,
                        val sapEnvrioment: SapEnvrioment,
                        val draftsService: DraftsService,
-                       val ordersService: OrdersService) {
+                       val ordersService: OrdersService
+) {
 
     @EventListener
     fun mensagemTelegram(event: OrderSalesSaveEvent) {

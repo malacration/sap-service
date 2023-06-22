@@ -5,7 +5,7 @@ import br.andrew.sap.infrastructure.odata.Filter
 import br.andrew.sap.infrastructure.odata.OData
 import br.andrew.sap.infrastructure.odata.Predicate
 import br.andrew.sap.model.documents.PurchaseInvoice
-import br.andrew.sap.services.PurchaseInvoiceService
+import br.andrew.sap.services.document.PurchaseInvoiceService
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestMapping

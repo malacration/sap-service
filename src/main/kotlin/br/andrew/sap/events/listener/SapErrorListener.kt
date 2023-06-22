@@ -8,7 +8,7 @@ import br.andrew.sap.model.exceptions.BusinessPartnerNotAssignedException
 import br.andrew.sap.model.exceptions.LinkedPaymentMethodException
 import br.andrew.sap.model.exceptions.SapGenericException
 import br.andrew.sap.services.BusinessPartnersService
-import br.andrew.sap.services.OrdersService
+import br.andrew.sap.services.document.OrdersService
 import br.andrew.sap.services.TelegramRequestService
 import org.springframework.context.event.EventListener
 import org.springframework.stereotype.Component
@@ -17,7 +17,8 @@ import org.springframework.stereotype.Component
 class SapErrorListener(val telegramRequest : TelegramRequestService,
                        val sapEnvrioment: SapEnvrioment,
                        val bussinesPartenerService : BusinessPartnersService,
-                       val ordersService: OrdersService) {
+                       val ordersService: OrdersService
+) {
 
     @EventListener
     fun sapExceptiopn(event: SapGenericException) {

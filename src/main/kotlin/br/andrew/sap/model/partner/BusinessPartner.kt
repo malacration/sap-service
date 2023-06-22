@@ -86,6 +86,6 @@ class BusinessPartner() {
     }
 
     override fun toString(): String {
-        return "$cardCode - $cardName CNPJ($BPFiscalTaxIDCollection)"
+        return "$cardCode - CNPJ($BPFiscalTaxIDCollection)"
     }
 }
