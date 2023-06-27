@@ -1,7 +1,6 @@
 package br.andrew.sap.controllers
 
 import br.andrew.sap.infrastructure.odata.*
-import br.andrew.sap.model.RegistroCompraInsumo
 import br.andrew.sap.model.RomaneioPesagem
 import br.andrew.sap.services.FazendaService
 import br.andrew.sap.services.RegistroCompraInsumoService
