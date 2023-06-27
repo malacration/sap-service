@@ -6,6 +6,7 @@ enum class Condicao(val value: String) {
     EQUAL("eq"),
     NOT_EQUAL("ne"),
     STARTS_WITH("startswith"),
+    CONTAINS("contains"),
     IN("in");
 
 
@@ -14,6 +15,7 @@ enum class Condicao(val value: String) {
             STARTS_WITH -> "startswith(${coluna}, ${value})"
             EQUAL -> "${coluna} eq ${value}"
             NOT_EQUAL -> "${coluna} ne ${value}"
+            CONTAINS -> "contains(${coluna}, ${value})"
             else -> "Tipo de dado é invalido para a condição"
         }
     }

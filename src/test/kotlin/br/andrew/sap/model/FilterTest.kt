@@ -31,4 +31,13 @@ class FilterTest {
         val resultado = Filter(listOf(Predicate(coluna,valor,comparador))).toString()
         Assertions.assertEquals("\$filter=(Code eq 'francisco' or Code eq 'gabriel')",resultado)
     }
+
+    @Test
+    fun condicaoContains(){
+        val coluna = "Code";
+        val comparador = Condicao.CONTAINS
+        val valor = "geovana"
+        val resultado = Filter(listOf(Predicate(coluna,valor,comparador))).toString()
+        Assertions.assertEquals("\$filter=contains(Code, 'geovana')",resultado)
+    }
 }

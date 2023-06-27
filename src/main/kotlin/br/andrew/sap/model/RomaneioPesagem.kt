@@ -53,13 +53,13 @@ class RomaneioPesagem(
         val u_CodViagem: String?,
         val u_NumeroTicket: Int?,
         val u_Motorista: String?,
-        val u_PlacaCaminhao: String?,
+        val U_PlacaCaminhao: String?,
         val u_UFPlaca: String?,
         val u_PlacaCarreta: String?,
         val u_UFPlacaCarreta: String?,
         val u_PlacaCaminhao3: String?,
         val u_UFPlaca3: String?,
-        val u_NumeroNota: Int?,
+        val U_NumeroNota: Int?,
         val u_NumeroNotaCA: String?,
         val u_PesoNota: Double?,
         val u_PesoNotaCA: Double?,
@@ -98,7 +98,7 @@ class RomaneioPesagem(
         val u_ObsRomaneio: String?,
         val u_RecusaCarga: String?,
         val u_QtdRecusada: Int?,
-        val u_CodVeiculo: String?,
+        val U_CodVeiculo: String?,
         val u_CodMotorista: String?,
         val u_TipoGrao: String?,
         val u_SubtipoGrao: String?,
@@ -148,8 +148,8 @@ class RomaneioPesagem(
         val u_CodTransferenciaTerceiros: String?
 ) {
 
-    @JsonProperty("AMFS_RETACollection")
-    val tipoAnalise : List<TipoAnalise>? = null
+        @JsonProperty("AMFS_RETACollection")
+        val tipoAnalise : List<TipoAnalise>? = null
 
 
 }

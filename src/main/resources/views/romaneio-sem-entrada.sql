@@ -17,13 +17,17 @@ SELECT
 	rom."U_Status",
 	rom."u_PesagemManual",
 	rom."u_PesagemAvulsa",
+	rom."u_NumeroNota",
 	rom."u_TaxaMoeda",
 	rom."Creator",
-	rom."U_ObsRomaneio"
+	rom."U_ObsRomaneio",
+	rom."U_PlacaCaminhao",
+	rom."U_CodVeiculo"
 FROM
 	"@AMFS_RETR" rom
 	LEFT JOIN "@PECU_REGR" ent ON ent."U_NumeroTicket" = rom."DocNum" AND ent."Canceled" = 'N'
 WHERE
 	ent."U_NumeroTicket" is NULL
 	AND rom."U_CodParceiro" IN (SELECT DISTINCT "@PECU_RCIS"."U_CodParceiroNegocio" FROM "@PECU_RCIS" WHERE "Canceled" = 'N')
+	AND rom."U_Status" = 'E'
 ORDER BY rom."DocNum" desc
