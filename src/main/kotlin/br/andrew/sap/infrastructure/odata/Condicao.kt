@@ -23,6 +23,9 @@ enum class Condicao(val value: String) {
             return ""
         return when(this) {
             IN -> {
+                if(value.get(0) is Int)
+                    return "("+value.map { EQUAL.get(coluna,"${it}") }
+                        .joinToString(" or ")+")"
                 "("+value.map { EQUAL.get(coluna,"'${it}'") }
                         .joinToString(" or ")+")"
             }

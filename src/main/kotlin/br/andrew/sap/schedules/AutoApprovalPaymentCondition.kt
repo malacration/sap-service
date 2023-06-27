@@ -9,7 +9,6 @@ import br.andrew.sap.model.User
 import br.andrew.sap.model.documents.OrderSales
 import br.andrew.sap.services.ApprovalRequestsService
 import br.andrew.sap.services.DraftsService
-import br.andrew.sap.services.TelegramRequestService
 import org.quartz.DisallowConcurrentExecution
 import org.quartz.Job
 import org.quartz.JobExecutionContext

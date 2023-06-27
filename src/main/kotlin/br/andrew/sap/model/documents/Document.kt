@@ -1,5 +1,7 @@
 package br.andrew.sap.model.documents
 
+import br.andrew.sap.infrastructure.NfeModelDefaultBean
+import br.andrew.sap.model.Cancelled
 import br.andrew.sap.model.WarehouseDefault
 import br.andrew.sap.services.ItemsService
 import com.fasterxml.jackson.annotation.JsonFormat
@@ -26,21 +28,22 @@ open class Document(val CardCode : String,
     var docNum : String? = null
     var paymentMethod : String? = null
     var discountPercent : Double = 0.0
-    var ControlAccount : String? = null
     var documentInstallments : List<Installment>? = null
     var journalMemo : String? = null
+    var Cancelled : Cancelled? = null
     var u_pedido_update : String? = "0";
 
     @JsonProperty("U_id_pedido_forca")
     var u_id_pedido_forca: String? = null
     var cardName: String? = null
     var OpeningRemarks: String? = null
+    var controlAccount: String? = null
+    var model : Int? = null
 
 
     var documentAdditionalExpenses : List<AdditionalExpenses> = emptyList()
     var frete: Double? = null
         set(valor){
-
         field = valor
     }
 

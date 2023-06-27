@@ -7,13 +7,9 @@ import br.andrew.sap.infrastructure.configurations.DistribuicaoCustoByBranchConf
 import br.andrew.sap.infrastructure.odata.*
 import br.andrew.sap.model.documents.OrderSales
 import br.andrew.sap.model.exceptions.CreditException
-import br.andrew.sap.model.exceptions.LinkedPaymentMethodException
 import br.andrew.sap.model.forca.PedidoVenda
-import br.andrew.sap.model.forca.Produto
 import br.andrew.sap.services.*
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.kotlin.KotlinModule
-import com.fasterxml.jackson.module.kotlin.jacksonTypeRef
+import br.andrew.sap.services.document.OrdersService
 import org.slf4j.LoggerFactory
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.web.bind.annotation.*

@@ -1,6 +1,7 @@
 package br.andrew.sap.json
 
 import br.andrew.sap.infrastructure.odata.OData
+import br.andrew.sap.model.DocEntry
 import br.andrew.sap.model.documents.OrderSales
 import br.andrew.sap.model.documents.Product
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -51,4 +52,23 @@ class OrderSaleJsonTest {
         order.DocumentLines.forEach { Assertions.assertEquals("500.01",it.warehouseCode) }
 
     }
+
+
+    @Test
+    fun tryJsonSqlTest(){
+        val mapper = ObjectMapper().registerModule(KotlinModule())
+        val obj = mapper.readValue(jsonSql, jacksonTypeRef<OData>())
+        val data = obj.tryGetValues<DocEntry>()
+        Assertions.assertEquals(11993,data[0].DocEntry)
+    }
+
+    val jsonSql = "{\n" +
+            "   \"odata.metadata\" : \"https://134.65.16.195:50000/b1s/v1/\$metadata#SAPB1.SQLQueryResult\",\n" +
+            "   \"SqlText\" : \"SELECT  t.\\\"DocEntry\\\" FROM     \\\"OVPM\\\" t     LEFT JOIN \\\"VPM2\\\" line ON t.\\\"DocEntry\\\" = line.\\\"DocNum\\\" WHERE  line.\\\"DocEntry\\\" = :DocEntry\",\n" +
+            "   \"value\" : [\n" +
+            "      {\n" +
+            "         \"DocEntry\" : 11993\n" +
+            "      }\n" +
+            "   ]\n" +
+            "}"
 }

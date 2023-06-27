@@ -5,7 +5,6 @@ import br.andrew.sap.infrastructure.odata.Filter
 import br.andrew.sap.infrastructure.odata.OData
 import br.andrew.sap.infrastructure.odata.Predicate
 import br.andrew.sap.model.RegistroCompraInsumo
-import br.andrew.sap.model.RomaneioPesagem
 import br.andrew.sap.model.SapEnvrioment
 import br.andrew.sap.services.abstracts.EntitiesService
 import org.springframework.stereotype.Service
