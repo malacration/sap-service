@@ -22,7 +22,7 @@ class MotoristaPecuariaService(env : SapEnvrioment,
     fun getByCnh(cnh : String): OData {
         return get(Filter(
                 listOf(
-                        Predicate("U_RegistroCNH",cnh, Condicao.EQUAL)
+                        Predicate("U_RegistroCNH",cnh.trim().trimStart('0'), Condicao.CONTAINS)
                 )));
     }
 }

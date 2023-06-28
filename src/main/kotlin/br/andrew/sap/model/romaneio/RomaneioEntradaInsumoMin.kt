@@ -31,13 +31,14 @@ class RomaneioEntradaInsumoMin(
                 pesagem.u_PesoNota,
                 pesagem.u_PesoBruto,
                 pesagem.u_PesoTara,
-                pesagem.u_PlacaCarreta,
+                pesagem.U_PlacaCaminhao,
                 null
                 ){
                 U_PesoLiquido = pesagem.u_PesoLiquido?:0.0
                 U_PesoLiquidoDesc = pesagem.u_PesoLiquidoDesc?:0.0
                 U_Diferenca = pesagem.u_Diferenca?:0.0
                 tipoAnalise = pesagem.tipoAnalise
+                U_CodVeiculo = pesagem.U_CodVeiculo
 
                 U_CodFazenda = compra.U_CodParceiroNegocio
                 U_DscFazenda = compra.U_NomParceiroNegocio
@@ -61,6 +62,8 @@ class RomaneioEntradaInsumoMin(
 
         var U_CodFazenda : String? = null
         var U_DscFazenda : String? = null
+
+        var U_CodVeiculo : String? = null
 
         var U_CodSafra: String? = null
         var U_DscSafra : String? = null

@@ -43,8 +43,8 @@ class RomaneioEntradaInsumoController(
             motoristaContratoService.getById("'${romaneioPesagem.u_CodMotorista!!}'")
                     .tryGetValue<MotoristaContrato>()
 
-        val motoristaPecuaria = if(motoristaContrato == null ) null else
-            motoristaPecuariaService.getByCnh(motoristaContrato.U_RegistroCNH!!)
+        val motoristaPecuaria = if(motoristaContrato == null || motoristaContrato.U_RegistroCNH == null) null else
+            motoristaPecuariaService.getByCnh(motoristaContrato.U_RegistroCNH)
                 .tryGetValues<MotoristaPecuaria>()
                 .ifEmpty { listOf(MotoristaPecuaria(null,null,null)) }.first()
 
