@@ -36,8 +36,14 @@ class RomaneioPesagemController(
     }
 
     @GetMapping("contrato-fazenda")
-    fun getByContrato(page : Pageable, @RequestParam("bp") filial : String?) : Page<RomaneioPesagem>{
-        var parametros = listOf(filial).map { Predicate("bp", it?:"all",Condicao.EQUAL) }
+    fun getByContrato(page : Pageable,
+                      @RequestParam("bp") filial : String?,
+                      @RequestParam("nfNum") numero : Int?) : Page<RomaneioPesagem>{
+        var parametros = listOf(
+            Predicate("bp", filial?:"all",Condicao.EQUAL),
+            Predicate("nfNum", numero?:-666,Condicao.EQUAL)
+        )
+
         return romaneioService.romaneisoSemEntrada(page,Filter(parametros))
     }
 }

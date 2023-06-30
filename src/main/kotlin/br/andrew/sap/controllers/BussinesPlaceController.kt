@@ -14,7 +14,6 @@ import org.springframework.web.bind.annotation.RestController
 @RequestMapping("place")
 class BussinesPlaceController(val bussinesPlaceService: BussinessPlaceService) {
 
-
     @GetMapping()
     fun get(): List<BussinessPlace> {
         return bussinesPlaceService
