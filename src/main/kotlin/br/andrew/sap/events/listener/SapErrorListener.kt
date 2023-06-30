@@ -7,6 +7,7 @@ import br.andrew.sap.model.documents.Document
 import br.andrew.sap.model.exceptions.BusinessPartnerNotAssignedException
 import br.andrew.sap.model.exceptions.LinkedPaymentMethodException
 import br.andrew.sap.model.exceptions.SapGenericException
+import br.andrew.sap.model.telegram.TipoMensagem
 import br.andrew.sap.services.BusinessPartnersService
 import br.andrew.sap.services.document.OrdersService
 import br.andrew.sap.services.TelegramRequestService
@@ -31,13 +32,13 @@ class SapErrorListener(val telegramRequest : TelegramRequestService,
         val error = sapErro.error
         val detail = sapErro.entry.toString()
         val msg = "Erro no SAP-Service ao chamar o SAP o servidor diz: ${error.code} ${error.message.value} - [Base:${sapEnvrioment.companyDB}] - ${detail}"
-        telegramRequest.send(msg)
+        telegramRequest.send(msg,TipoMensagem.erros)
     }
 
     @EventListener
     fun error(error: ErrorMsg) {
         val msg = "Erro no SAP-Service ao chamar o SAP o servidor diz: ${error.code} ${error.message.value} - [Base:${sapEnvrioment.companyDB}]"
-        telegramRequest.send(msg)
+        telegramRequest.send(msg,TipoMensagem.erros)
 
     }
 
@@ -46,7 +47,7 @@ class SapErrorListener(val telegramRequest : TelegramRequestService,
         val msg = "Erro no SAP-Service ao cadastrar pedido de venda! o SAP o servidor " +
                 "diz: ${error.erro.error.code} ${error.erro.error.message.value} - [Base:${sapEnvrioment.companyDB}]" +
                 "\nO sistema ira vincular o cliente automaticamente para essa empresa, por favor aguarde alguns minutos"
-        telegramRequest.send(msg)
+        telegramRequest.send(msg,TipoMensagem.erros)
         bussinesPartenerService.addBusinesPlace(error.entry.CardCode, error.entry.getBPL_IDAssignedToInvoice())
     }
 

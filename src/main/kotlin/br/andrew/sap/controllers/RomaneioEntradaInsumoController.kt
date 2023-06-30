@@ -4,6 +4,7 @@ import br.andrew.sap.infrastructure.odata.Order
 import br.andrew.sap.infrastructure.odata.OrderBy
 import br.andrew.sap.model.*
 import br.andrew.sap.model.romaneio.RomaneioEntradaInsumoMin
+import br.andrew.sap.model.telegram.TipoMensagem
 import br.andrew.sap.services.*
 import br.andrew.sap.services.romaneio.RomaneioEntradaInsumoService
 import br.andrew.sap.services.romaneio.RomaneioPesagemService
@@ -19,7 +20,7 @@ class RomaneioEntradaInsumoController(
         val registroCompraInsumoService: RegistroCompraInsumoService,
         val motoristaContratoService: MotoristaContratoService,
         val motoristaPecuariaService: MotoristaPecuariaService,
-        val romaneioAnaliseService: TipoAnaliseService,
+        val telegram : TelegramRequestService,
         val restTemplate : RestTemplate) {
 
 
@@ -65,7 +66,11 @@ class RomaneioEntradaInsumoController(
 
     @GetMapping("/salvar/{idRomaneioPesagem}")
     fun salvar(@PathVariable idRomaneioPesagem : Int) : Any?{
-        return romaneioEntradaServie.save(draft(idRomaneioPesagem))
+        return romaneioEntradaServie.save(draft(idRomaneioPesagem)).also {
+            it.tryGetValue<RomaneioEntradaInsumoMin>()?.let {
+                telegram.send("Romaneio de entrada de insumo ${it.DocEntry} salvo com sucesso!",TipoMensagem.geral)
+            }
+        }
     }
 
 
