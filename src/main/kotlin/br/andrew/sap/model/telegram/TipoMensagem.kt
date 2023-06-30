@@ -1,7 +1,7 @@
 package br.andrew.sap.model.telegram
 
 enum class TipoMensagem(val tipo: String){
-    eventos("sap"),
+    eventos("eventos"),
     geral("geral"),
     autorizacao("autorizacao"),
     testes("testes"),

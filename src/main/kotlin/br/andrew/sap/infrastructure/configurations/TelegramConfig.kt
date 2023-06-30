@@ -8,7 +8,7 @@ import org.springframework.context.annotation.Configuration
 class TelegramConfig(@Value("\${telegram.plantao.apiUrl:}") var apiUrl: String,
                      @Value("\${telegram.plantao.token:}") val token: String,
                      @Value("\${telegram.plantao.channel:}") val chatId: String,
-                     @Value("\${telegram.plantao.topicos:}") val topicos: Map<String,Int>) {
+                     @Value("#{\${telegram.plantao.topicos:{'testes': 44}}}") val topicos: Map<String,Int>) {
 
     internal val messageUrl: String = "${apiUrl.removeSuffix("/")}/bot$token/sendMessage"
 
