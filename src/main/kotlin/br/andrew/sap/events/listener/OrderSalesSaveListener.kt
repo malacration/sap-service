@@ -5,6 +5,7 @@ import br.andrew.sap.events.OrderSalesSaveEvent
 import br.andrew.sap.model.SapEnvrioment
 import br.andrew.sap.model.documents.Document
 import br.andrew.sap.model.documents.OrderSales
+import br.andrew.sap.model.telegram.TipoMensagem
 import br.andrew.sap.services.DraftsService
 import br.andrew.sap.services.document.OrdersService
 import br.andrew.sap.services.TelegramRequestService
@@ -23,14 +24,14 @@ class OrderSalesSaveListener(val telegramRequest : TelegramRequestService,
         if(order is OrderSales)
             ordersService.update(order,order.docEntry.toString())
         else
-            telegramRequest.send("O documento não é uma instancia de OrderSales entry: ${order.docEntry}")
+            telegramRequest.send("O documento não é uma instancia de OrderSales entry: ${order.docEntry}", TipoMensagem.erros)
     }
 
     @EventListener
     fun draftOrder(event: DraftOrderSalesSaveEvent) {
         if(event.order.docEntry == null) {
             val msg = "Erro ao atualizar um rascunho no procedimento de autorização, docEntry null - Num = ${event.order.docNum}"
-            telegramRequest.send(msg)
+            telegramRequest.send(msg,TipoMensagem.erros)
             throw Exception(msg)
         }
         val draft = draftsService.getById(event.order.docEntry!!).tryGetValue<Document>()
