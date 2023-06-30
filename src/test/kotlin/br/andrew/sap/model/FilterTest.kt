@@ -40,4 +40,24 @@ class FilterTest {
         val resultado = Filter(listOf(Predicate(coluna,valor,comparador))).toString()
         Assertions.assertEquals("\$filter=contains(Code, 'geovana')",resultado)
     }
+    @Test
+    fun filterSql(){
+        val coluna = "Code";
+        val comparador = Condicao.EQUAL
+        val valor = "windson"
+        val resultado = Filter(listOf(Predicate(coluna,valor,comparador))).toSql()
+        Assertions.assertEquals("Code='windson'",resultado)
+    }
+
+    @Test
+    fun filterSqlVariosPredicados(){
+        val coluna = "Code";
+        val comparador = Condicao.EQUAL
+        val valor = 1
+        val resultado = Filter(
+            Predicate(coluna,valor,comparador),
+            Predicate("jose","rico",comparador)
+        ).toSql()
+        Assertions.assertEquals("Code=1&jose='rico'",resultado)
+    }
 }
