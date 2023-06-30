@@ -14,6 +14,13 @@ class Filter(val propertie : List<Predicate>) {
         val filtros = propertie.map { it.toString() }.joinToString(" and ")
         return "\$filter=${filtros}"
     }
+
+    fun toSql(): String {
+        if(propertie.isEmpty())
+            return ""
+        val filtros = propertie.map { it.toSql() }.joinToString("&")
+        return filtros;
+    }
 }
 
 class Predicate(val coluna: String, val value: Any, val condicao: Condicao){
@@ -26,5 +33,12 @@ class Predicate(val coluna: String, val value: Any, val condicao: Condicao){
             condicao.get(coluna,value)
         else
             condicao.get(coluna,"'${value.toString()}'")
+    }
+
+    fun toSql(): String {
+        return if(value is Int)
+            "$coluna=${value.toString()}"
+        else
+            "$coluna='${value.toString()}'"
     }
 }

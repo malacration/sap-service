@@ -1,7 +1,6 @@
 package br.andrew.sap.services.romaneio
 
 import br.andrew.sap.infrastructure.odata.*
-import br.andrew.sap.model.RegistroCompraInsumo
 import br.andrew.sap.model.RomaneioPesagem
 import br.andrew.sap.model.SapEnvrioment
 import br.andrew.sap.services.AuthService
@@ -37,11 +36,12 @@ class RomaneioPesagemService(restTemplate: RestTemplate,
         return restTemplate.exchange(request, OData::class.java).body?.tryGetPageValues() ?: OData().tryGetPageValues()
     }
 
-    fun romaneisoSemEntrada(page : Pageable = Pageable.ofSize(20)): Page<RomaneioPesagem> {
+    fun romaneisoSemEntrada(page: Pageable = Pageable.ofSize(20), parametros: Filter): Page<RomaneioPesagem> {
         val url = env.host+"/b1s/v1/SQLQueries"
         val skip = (page.pageNumber*page.pageSize).toString()
+        val sql = parametros.toSql()
         return restTemplate.exchange(RequestEntity
-                .get("$url('romaneio-sem-entrada.sql')/List?$skip=${skip}")
+                .get("$url('romaneio-sem-entrada.sql')/List?\$skip=${skip}&$sql")
                 .header("cookie","B1SESSION=${session().sessionId}")
                 .build(), OData::class.java).body!!.tryGetPageValues()
     }

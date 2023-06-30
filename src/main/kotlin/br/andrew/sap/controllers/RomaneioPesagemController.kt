@@ -10,6 +10,7 @@ import org.springframework.data.domain.Pageable
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
@@ -35,7 +36,8 @@ class RomaneioPesagemController(
     }
 
     @GetMapping("contrato-fazenda")
-    fun getByContrato(page : Pageable) : Page<RomaneioPesagem>{
-        return romaneioService.romaneisoSemEntrada(page)
+    fun getByContrato(page : Pageable, @RequestParam("bp") filial : String?) : Page<RomaneioPesagem>{
+        var parametros = listOf(filial).map { Predicate("bp", it?:"all",Condicao.EQUAL) }
+        return romaneioService.romaneisoSemEntrada(page,Filter(parametros))
     }
 }
