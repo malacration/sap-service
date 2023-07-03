@@ -48,7 +48,14 @@ class SapErrorListener(val telegramRequest : TelegramRequestService,
                 "diz: ${error.erro.error.code} ${error.erro.error.message.value} - [Base:${sapEnvrioment.companyDB}]" +
                 "\nO sistema ira vincular o cliente automaticamente para essa empresa, por favor aguarde alguns minutos"
         telegramRequest.send(msg,TipoMensagem.erros)
-        bussinesPartenerService.addBusinesPlace(error.entry.CardCode, error.entry.getBPL_IDAssignedToInvoice())
+        try{
+            bussinesPartenerService.addBusinesPlace(error.entry.CardCode, error.entry.getBPL_IDAssignedToInvoice())
+        }catch (e: Exception){
+            val msg = "Erro ao vincular o cliente automaticamente para essa empresa, por favor vincule manualmente"
+            telegramRequest.send(msg,TipoMensagem.erros)
+            throw Exception(msg,e)
+        }
+
     }
 
     @EventListener

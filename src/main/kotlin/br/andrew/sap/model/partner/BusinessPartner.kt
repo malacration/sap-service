@@ -39,6 +39,11 @@ class BusinessPartner() {
 //    var DisabledForBP : String? = null
     var series : Int? = 77
 
+
+
+    @JsonProperty("BPBranchAssignment")
+    var BPBranchAssignment : List<BPBranchAssignment>? = null
+
     @JsonIgnoreProperties
     private var BPFiscalTaxIDCollection : List<BPFiscalTaxID>? = null
     @JsonIgnoreProperties
