@@ -1,9 +1,11 @@
 package br.andrew.sap.services
 
 import br.andrew.sap.infrastructure.odata.OData
+import br.andrew.sap.model.Cancelled
 import br.andrew.sap.model.partner.BusinessPartner
 import br.andrew.sap.model.PaymentMethod
 import br.andrew.sap.model.SapEnvrioment
+import br.andrew.sap.model.partner.BPBranchAssignment
 import br.andrew.sap.services.abstracts.EntitiesService
 import org.springframework.stereotype.Service
 import org.springframework.web.client.RestTemplate
@@ -23,10 +25,12 @@ class BusinessPartnersService(env: SapEnvrioment, restTemplate: RestTemplate, au
     }
 
     fun addBusinesPlace(cardCode : String, idBusinesPlace: String): OData? {
-        //TODO corrigir o busines place
         val bp : BusinessPartner = BusinessPartner().also {
-//            it.BPLID = idBusinesPlace
-//            it.DisabledForBP = "tNO"
+            it.BPBranchAssignment = listOf(BPBranchAssignment().also {
+                it.BPCode = cardCode
+                it.BPLID = idBusinesPlace
+                it.DisabledForBP = Cancelled.tNO
+            })
         }
         return update(bp,"'${bp.cardCode}'")
     }
