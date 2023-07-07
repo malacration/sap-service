@@ -2,3 +2,12 @@ sap.service.layer.url=https://localhost:500000
 sap.service.layer.user=usuario
 sap.service.layer.password=senha
 sap.service.layer.companyDB=base
+
+
+
+uzzipay.host=https://openhml-api.uzzipay.com
+uzzipay.contas[0].cnpj=1
+uzzipay.contas[0].privateKey=private
+uzzipay.contas[0].chavePix=chavePix
+uzzipay.contas[0].chave-pix=chavePix
+uzzipay.contas[0].tokenJwt=jwt
