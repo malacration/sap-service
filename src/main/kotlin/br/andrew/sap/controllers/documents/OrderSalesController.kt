@@ -1,4 +1,4 @@
-package br.andrew.sap.controllers
+package br.andrew.sap.controllers.documents
 
 import br.andrew.sap.events.DraftOrderSalesSaveEvent
 import br.andrew.sap.events.OrderSalesSaveEvent

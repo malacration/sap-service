@@ -17,7 +17,7 @@ import com.fasterxml.jackson.databind.annotation.JsonNaming
 open class Document(val CardCode : String,
                     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "YYY-MM-dd", timezone = "UTC")
                     val DocDueDate : String?,
-                    val DocumentLines : List<Product>,
+                    val DocumentLines : List<DocumentLines>,
                     private val BPL_IDAssignedToInvoice : String) {
 
     var comments: String? = null
@@ -53,9 +53,12 @@ open class Document(val CardCode : String,
     }
 
     fun productsByTax(): Map<String, List<Product>> {
+        this.DocumentLines
+            .filter { it is Product && it.TaxCode != null && it.TaxCode!!.isNotEmpty() }
+
         return this.DocumentLines
-                .filter { it.taxCode != null && it.taxCode!!.isNotEmpty() }
-                .groupBy { it.taxCode!! }
+                .filter { it is Product && it.TaxCode != null && it.TaxCode!!.isNotEmpty() }
+                .groupBy { if(it is Product) it.TaxCode!! } as Map<String, List<Product>>
     }
 
     fun aplicaBase(itemService: ItemsService){
@@ -83,8 +86,8 @@ open class Document(val CardCode : String,
     fun usaBrenchDefaultWarehouse(default : WarehouseDefault){
         if(default.defaultWarehouseID != null)
             DocumentLines
-                    .filter { it.warehouseCode == null}
-                    .forEach { it.warehouseCode = default.defaultWarehouseID}
+                    .filter { it.WarehouseCode == null}
+                    .forEach { it.WarehouseCode = default.defaultWarehouseID}
     }
 
     fun isAvista(): Boolean {

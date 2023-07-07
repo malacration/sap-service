@@ -1,4 +1,4 @@
-package br.andrew.sap.controllers
+package br.andrew.sap.controllers.documents
 
 import br.andrew.sap.infrastructure.odata.Condicao
 import br.andrew.sap.infrastructure.odata.Filter
@@ -29,7 +29,6 @@ class PurchaseInvoicesController(val purchaseInvoiceService: PurchaseInvoiceServ
 
     @GetMapping("cancel-duplicate/{cardCode}")
     fun cancelAndDuplicate(@PathVariable cardCode : String) : OData? {
-
         //TODO terminar essa logica
         val predicate = Predicate("CardCode",cardCode,Condicao.EQUAL)
         return purchaseInvoiceService.get(Filter(listOf(predicate)));

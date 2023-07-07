@@ -1,6 +1,7 @@
 package br.andrew.sap.services.uzzipay
 
 import br.andrew.sap.infrastructure.configurations.uzzipay.UzziPayEnvrioment
+import br.andrew.sap.model.documents.Installment
 import br.andrew.sap.model.partner.CpfCnpj
 import br.andrew.sap.model.uzzipay.Payer
 import br.andrew.sap.model.uzzipay.RequestQrCode
@@ -20,6 +21,19 @@ class DynamicQrCodeService(val restTemplate: RestTemplate, val envrioment: UzziP
         return "/v1/qr-codes/dynamic/due-date"
     }
 
+    fun genereateFor(installment: Installment){
+//        val requestQrCode = getMock(installment.id,installment.cnpj)
+//        val toSign = "post:${path()}?${requestQrCode.externalIdentifier},${requestQrCode.getAmount()}"
+//        val hash = getHash(installment.privateKey,toSign)
+//        val request = RequestEntity
+//            .post(url)
+//            .header("Authorization","Bearer ${installment.tokenJwt}")
+//            .header("Transaction-hash",hash)
+//            .body(requestQrCode)
+//        val response = restTemplate.exchange(request, Any::class.java).body
+//        println(response)
+    }
+
     fun generateQrCode(id: String, cnpj: String): Any? {
         val conta = envrioment.contas.first { it.cnpj==cnpj }
         val requestQrCode = getMock(id,conta.chavePix)
@@ -29,7 +43,7 @@ class DynamicQrCodeService(val restTemplate: RestTemplate, val envrioment: UzziP
             .post(url)
             .header("Authorization","Bearer ${conta.tokenJwt}")
             .header("Transaction-hash",hash)
-            .body("windson")
+            .body(requestQrCode)
         return restTemplate.exchange(request, Any::class.java).body
     }
 

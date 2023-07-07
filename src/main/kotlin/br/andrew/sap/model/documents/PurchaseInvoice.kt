@@ -4,7 +4,7 @@ import br.andrew.sap.infrastructure.NfeModelDefaultBean
 
 class PurchaseInvoice(CardCode: String,
                       DocDueDate: String?,
-                      DocumentLines: List<Product>,
+                      DocumentLines: List<DocumentLines>,
                       BPL_IDAssignedToInvoice: String) :
         Document(CardCode, DocDueDate, DocumentLines, BPL_IDAssignedToInvoice) {
 

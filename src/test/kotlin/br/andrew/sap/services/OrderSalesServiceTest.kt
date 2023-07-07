@@ -28,12 +28,12 @@ class OrderSalesServiceTest {
         Assertions.assertEquals(negociadoEsperado,orderBase.totalNegociado())
         Assertions.assertEquals(10.0,orderBase.totalDespesaAdicional())
         Assertions.assertEquals(0.0,orderBase.discountPercent)
-        orderBase.DocumentLines.forEach {  Assertions.assertEquals(10.0,it.discountPercent) }
-        orderBase.DocumentLines.forEach {  Assertions.assertEquals("121.0",it.unitPrice) }
+        orderBase.DocumentLines.forEach {  Assertions.assertEquals(10.0,it.DiscountPercent) }
+        orderBase.DocumentLines.forEach {  Assertions.assertEquals("121.0",it.UnitPrice) }
 
 
         orderBase.DocumentLines.forEach {
-            it.unitPrice = PrecoUnitarioComDesoneracao()
+            it.UnitPrice = PrecoUnitarioComDesoneracao()
                     .calculaPreco(it, SalesTaxAuthorities(-1,17.5,0.0,0.0,100.0)).toString()
         }
         val totalDesonerado = orderBase.total()-orderBase.presumeDesonerado(17.5)
@@ -45,7 +45,7 @@ class OrderSalesServiceTest {
     @Test
     fun totalComDesconto(){
         val produtos = listOf<Product>(
-            (Product("PAC0000069","1","100",5).also { it.discountPercent = 10.0 })
+            (Product("PAC0000069","1","100",5).also { it.DiscountPercent = 10.0 })
         )
         val order = OrderSales("",null,produtos,"")
         Assertions.assertEquals(90.0,order.total())

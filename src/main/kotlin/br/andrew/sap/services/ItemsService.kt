@@ -31,7 +31,7 @@ class ItemsService(env : SapEnvrioment,
     }
 
     fun getPriceBase(documentLine: Product): Double {
-        return getPriceBase(documentLine.itemCode)
+        return getPriceBase(documentLine.ItemCode!!)
     }
 }
 

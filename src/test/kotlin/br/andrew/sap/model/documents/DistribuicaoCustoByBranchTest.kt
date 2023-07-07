@@ -9,6 +9,6 @@ class DistribuicaoCustoByBranchTest{
     fun teste(){
         val product = Product("teste", "2","2.90",9)
         product.setDistribuicaoCusto(DistribuicaoCustoByBranch("2","500","50000201"))
-        Assertions.assertEquals("500",product.costingCode)
+        Assertions.assertEquals("500",product.CostingCode)
     }
 }

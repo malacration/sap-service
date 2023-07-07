@@ -81,8 +81,8 @@ class PrecoUnitarioComDesoneracaoTest {
                 0.0,
                 100.00)
         for (documentLine in orderBase.DocumentLines) {
-            documentLine.unitPrice = PrecoUnitarioComDesoneracao().calculaPreco(documentLine,imposto).toString()
-            println(documentLine.unitPrice)
+            documentLine.UnitPrice = PrecoUnitarioComDesoneracao().calculaPreco(documentLine,imposto).toString()
+            println(documentLine.UnitPrice)
         }
         val desonerado = imposto.taxValueOutros(orderBase.total())
         Assertions.assertEquals(1699.7355167157484,orderBase.total())

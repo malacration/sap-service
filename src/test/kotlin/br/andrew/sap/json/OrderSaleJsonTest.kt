@@ -49,7 +49,7 @@ class OrderSaleJsonTest {
         val file = File("src/test/kotlin/br/andrew/sap/json/draft.json").readBytes()
         val obj = mapper.readValue(String(file), jacksonTypeRef<OData>())
         val order = obj.tryGetValue<OrderSales>()
-        order.DocumentLines.forEach { Assertions.assertEquals("500.01",it.warehouseCode) }
+        order.DocumentLines.forEach { Assertions.assertEquals("500.01",it.WarehouseCode) }
 
     }
 

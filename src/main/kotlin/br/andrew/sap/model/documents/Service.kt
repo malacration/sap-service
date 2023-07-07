@@ -9,11 +9,11 @@ import com.fasterxml.jackson.databind.annotation.JsonNaming
 @JsonNaming(PropertyNamingStrategy.UpperCamelCaseStrategy::class)
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
-class Product(itemCode : String, quantity : String, unitPrice : String, usage : Int = 9)
-    : DocumentLines(unitPrice, quantity, usage){
+class Service(unitPrice : String, quantity : String = "0") : DocumentLines(unitPrice, quantity){
 
-    override fun Duplicate(): Product {
-        return Product(ItemCode!!,Quantity,UnitPrice,Usage).also {
+    override fun Duplicate(): Service {
+        return Service(Quantity,UnitPrice).also {
+            it.Usage = Usage;
             it.TaxCode = TaxCode
             it.AccountCode = AccountCode;
         }

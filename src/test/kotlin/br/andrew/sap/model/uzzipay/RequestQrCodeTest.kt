@@ -24,7 +24,6 @@ class RequestQrCodeTest {
                 "SP"
             ))
 
-        Assertions.assertEquals("12200.00",request.amountFormat())
-
+        Assertions.assertEquals("12200.00",request.getAmount())
     }
 }
