@@ -15,7 +15,7 @@ class Product(itemCode : String, quantity : String, unitPrice : String, usage : 
     override fun Duplicate(): Product {
         return Product(ItemCode!!,Quantity,UnitPrice,Usage).also {
             it.TaxCode = TaxCode
-            it.AccountCode = AccountCode;
+            it.AccountCode = AccountCode
         }
     }
 }

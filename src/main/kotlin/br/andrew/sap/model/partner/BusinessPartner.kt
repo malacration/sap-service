@@ -1,6 +1,7 @@
 package br.andrew.sap.model.partner
 
 import br.andrew.sap.model.PaymentMethod
+import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonProperty
@@ -14,13 +15,20 @@ import com.fasterxml.jackson.databind.annotation.JsonNaming
 class BusinessPartner() {
     constructor(cardName : String,
                 type: BusinessPartnerType) : this() {
-        this.cardName = cardName;
-        this.cardCode = cardCode
+        this.cardName = cardName
         this.cardType = type
     }
 
     fun setCpfCnpj(cpfCnpj: CpfCnpj, ierg: String? = null) {
         this.BPFiscalTaxIDCollection = listOf(BPFiscalTaxID(cpfCnpj,ierg))
+    }
+
+    @JsonIgnore
+    fun getCpfCnpj() : CpfCnpj {
+        return BPFiscalTaxIDCollection
+            ?.filter { it.TaxId0 != null || it.TaxId4 != null }
+            ?.map { CpfCnpj(it) }
+            ?.first() ?: throw Exception("CpfCnpj not found")
     }
 
 
@@ -29,8 +37,8 @@ class BusinessPartner() {
     var u_id_forca: String? = null
     var emailAddress: String? = null
     var phone1: String? = null
-    var cardName : String? = null;
-    var cardType : BusinessPartnerType? = null;
+    var cardName : String? = null
+    var cardType : BusinessPartnerType? = null
     var cardCode : String? = null
     var salesPersonCode : Int? = null
     var U_fazer_fluxo_prazo : String? = "0"

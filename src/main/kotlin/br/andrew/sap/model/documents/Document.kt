@@ -1,8 +1,8 @@
 package br.andrew.sap.model.documents
 
-import br.andrew.sap.infrastructure.NfeModelDefaultBean
 import br.andrew.sap.model.Cancelled
 import br.andrew.sap.model.WarehouseDefault
+import br.andrew.sap.model.uzzipay.RequestQrCode
 import br.andrew.sap.services.ItemsService
 import com.fasterxml.jackson.annotation.JsonFormat
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
@@ -31,7 +31,7 @@ open class Document(val CardCode : String,
     var documentInstallments : List<Installment>? = null
     var journalMemo : String? = null
     var Cancelled : Cancelled? = null
-    var u_pedido_update : String? = "0";
+    var u_pedido_update : String? = "0"
 
     @JsonProperty("U_id_pedido_forca")
     var u_id_pedido_forca: String? = null
@@ -39,17 +39,16 @@ open class Document(val CardCode : String,
     var OpeningRemarks: String? = null
     var controlAccount: String? = null
     var model : Int? = null
+    var docType: String? = null
+    var docObjectCode : String? = null
 
 
     var documentAdditionalExpenses : List<AdditionalExpenses> = emptyList()
     var frete: Double? = null
-        set(valor){
-        field = valor
-    }
 
     @JsonProperty("BPL_IDAssignedToInvoice")
     fun getBPL_IDAssignedToInvoice(): String {
-        return BPL_IDAssignedToInvoice;
+        return BPL_IDAssignedToInvoice
     }
 
     fun productsByTax(): Map<String, List<Product>> {
@@ -99,7 +98,7 @@ open class Document(val CardCode : String,
     }
 
     fun total() : Double {
-        return DocumentLines.sumOf { it.total() }.plus(totalDespesaAdicional());
+        return DocumentLines.sumOf { it.total() }.plus(totalDespesaAdicional())
     }
 
     fun totalNegociado() : Double {
@@ -116,6 +115,14 @@ open class Document(val CardCode : String,
 
     override fun toString(): String {
         return "Document(CardCode='$CardCode', Branch='$BPL_IDAssignedToInvoice', docEntry=$docEntry, docNum=$docNum, pedido_forca=$u_id_pedido_forca)"
+    }
+
+    fun setPix(request: RequestQrCode, chave: String) {
+        if(request.docEntry() != docEntry)
+            throw Exception("O qrCode nao pertence a esse documento")
+        this.documentInstallments!!.find { it.InstallmentId == request.getInstallmentId() }?.also {
+            it.U_QrCodePix = chave
+        }
     }
 
 

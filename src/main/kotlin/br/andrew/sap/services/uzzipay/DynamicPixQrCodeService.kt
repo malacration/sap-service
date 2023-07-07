@@ -1,8 +1,6 @@
 package br.andrew.sap.services.uzzipay
 
 import br.andrew.sap.infrastructure.configurations.uzzipay.UzziPayEnvrioment
-import br.andrew.sap.model.documents.Installment
-import br.andrew.sap.model.partner.CpfCnpj
 import br.andrew.sap.model.uzzipay.Payer
 import br.andrew.sap.model.uzzipay.RequestQrCode
 import br.andrew.sap.model.uzzipay.Type
@@ -11,27 +9,25 @@ import org.springframework.stereotype.Service
 import org.springframework.web.client.RestTemplate
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
-import kotlin.reflect.jvm.internal.impl.descriptors.Visibilities.Private
 
 @Service
-class DynamicQrCodeService(val restTemplate: RestTemplate, val envrioment: UzziPayEnvrioment) {
+class DynamicPixQrCodeService(val restTemplate: RestTemplate, val envrioment: UzziPayEnvrioment) {
 
-    val url = envrioment.host+"/gateway"+path();
+    val url = envrioment.host+"/gateway"+path()
     fun path(): String {
         return "/v1/qr-codes/dynamic/due-date"
     }
 
-    fun genereateFor(installment: Installment){
-//        val requestQrCode = getMock(installment.id,installment.cnpj)
-//        val toSign = "post:${path()}?${requestQrCode.externalIdentifier},${requestQrCode.getAmount()}"
-//        val hash = getHash(installment.privateKey,toSign)
-//        val request = RequestEntity
-//            .post(url)
-//            .header("Authorization","Bearer ${installment.tokenJwt}")
-//            .header("Transaction-hash",hash)
-//            .body(requestQrCode)
-//        val response = restTemplate.exchange(request, Any::class.java).body
-//        println(response)
+    fun genereateFor(requestQrCode: RequestQrCode): Any? {
+        val conta = envrioment.contas.first { it.cnpj==requestQrCode.getCnpj() }
+        val toSign = "post:${path()}?${requestQrCode.externalIdentifier},${requestQrCode.getAmount()}"
+        val hash = getHash(conta.privateKey,toSign)
+        val request = RequestEntity
+            .post(url)
+            .header("Authorization","Bearer ${conta.tokenJwt}")
+            .header("Transaction-hash",hash)
+            .body(requestQrCode)
+        return restTemplate.exchange(request, Any::class.java).body
     }
 
     fun generateQrCode(id: String, cnpj: String): Any? {
@@ -61,7 +57,8 @@ class DynamicQrCodeService(val restTemplate: RestTemplate, val envrioment: UzziP
                 "Rua dos Bobos",
                 "São Paulo",
                 "SP",
-                "12345678"))
+                "12345678"),
+            "1")
     }
 
     private fun getHash(privateKey : String, toSign  : String): String {

@@ -2,6 +2,7 @@ package br.andrew.sap.model
 
 import br.andrew.sap.model.forca.PedidoVenda
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.kotlin.KotlinFeature
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.fasterxml.jackson.module.kotlin.jacksonTypeRef
 import org.junit.jupiter.api.Assertions
@@ -13,27 +14,27 @@ class PrecoUnitarioComDesoneracaoTest {
 
     @Test
     fun teste(){
-        val precoAlvo = BigDecimal("93.65");
+        val precoAlvo = BigDecimal("93.65")
         val imposto = SalesTaxAuthorities(0,
                 17.5,
                 0.0,
                 0.0,
                 100.0)
-        val valorEsperado = BigDecimal("113.5152");
+        val valorEsperado = BigDecimal("113.5152")
         val resultado = PrecoUnitarioComDesoneracao().calculaPreco(precoAlvo,imposto)
         Assertions.assertEquals(valorEsperado, resultado)
     }
 
     @Test
     fun baseReduzida(){
-        val precoAlvo = BigDecimal("93.65");
+        val precoAlvo = BigDecimal("93.65")
         val imposto = SalesTaxAuthorities(0,
                 18.0,
                 0.0,
                 0.0,
                 0.00)
 
-        val valorEsperado = BigDecimal("93.65");
+        val valorEsperado = BigDecimal("93.65")
         val resultado = PrecoUnitarioComDesoneracao().calculaPreco(precoAlvo,imposto)
         Assertions.assertEquals(valorEsperado, resultado)
     }
@@ -41,21 +42,21 @@ class PrecoUnitarioComDesoneracaoTest {
 
     @Test
     fun desoneradoDesconto(){
-        val precoAlvo = BigDecimal("93.65");
+        val precoAlvo = BigDecimal("93.65")
         val imposto = SalesTaxAuthorities(0,
                 18.0,
                 0.0,
                 0.0,
                 0.00)
 
-        val valorEsperado = BigDecimal("93.65");
+        val valorEsperado = BigDecimal("93.65")
         val resultado = PrecoUnitarioComDesoneracao().calculaPreco(precoAlvo,imposto)
         Assertions.assertEquals(valorEsperado, resultado)
     }
 
     @Test
     fun desoneradoComDesconto(){
-        val precoAlvo = BigDecimal("100");
+        val precoAlvo = BigDecimal("100")
         val imposto = SalesTaxAuthorities(0,
                 17.5,
                 0.0,

@@ -24,7 +24,7 @@ class AttachmentService(env: SapEnvrioment, val bpService: BusinessPartnersServi
         return "/b1s/v1/Attachments2"
     }
 
-    open fun download(id: String) : Pair<String, ByteArray> {
+    fun download(id: String) : Pair<String, ByteArray> {
         val request = RequestEntity
             .get(env.host+this.path()+"(${id})/\$value")
             .header("cookie","B1SESSION=${session().sessionId}")

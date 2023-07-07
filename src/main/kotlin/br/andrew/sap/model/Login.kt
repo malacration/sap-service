@@ -7,5 +7,4 @@ import com.fasterxml.jackson.databind.annotation.JsonNaming
 class Login(
         val userName: String,
         val password : String,
-        val companyDB : String) {
-}
+        val companyDB : String)

@@ -1,6 +1,7 @@
 package br.andrew.sap.infrastructure.odata
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.kotlin.KotlinFeature
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.fasterxml.jackson.module.kotlin.jacksonTypeRef
 import org.springframework.data.domain.Page
@@ -8,10 +9,10 @@ import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.Pageable
 import org.springframework.web.client.RestTemplate
 
-class OData() : LinkedHashMap<String,Any>(){
+class OData : LinkedHashMap<String,Any>(){
 
     inline fun <reified T: Any> tryGetValue() : T {
-        val mapper = ObjectMapper().registerModule(KotlinModule())
+        val mapper = ObjectMapper().registerModule(KotlinModule()).registerModule(KotlinModule())
         val json = this.get("value") ?: mapper.writeValueAsString(this)
         if(json is LinkedHashMap<*,*>)
             return mapper.readValue(mapper.writeValueAsString(json), T::class.java)
@@ -20,7 +21,7 @@ class OData() : LinkedHashMap<String,Any>(){
 
     inline fun <reified T> tryGetValues() : List<T> {
         val json = this.get("value")
-        val mapper = ObjectMapper().registerModule(KotlinModule())
+        val mapper = ObjectMapper().registerModule(KotlinModule()).registerModule(KotlinModule())
 
         if(json is String)
             return mapper.readValue(json, jacksonTypeRef<List<T>>())

@@ -1,5 +1,11 @@
 package br.andrew.sap.model.uzzipay
 
+import br.andrew.sap.model.BussinessPlace
+import br.andrew.sap.model.documents.Document
+import br.andrew.sap.model.documents.Installment
+import br.andrew.sap.model.partner.Address
+import br.andrew.sap.model.partner.BusinessPartner
+import br.andrew.sap.model.partner.CpfCnpj
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import java.math.BigDecimal
 import java.math.RoundingMode
@@ -13,11 +19,33 @@ class RequestQrCode(
     private val amount : BigDecimal,
     val dueDate : String,
     val Payer : Payer,
-    val qrCodePurposeType : String = "PDV"
+    private val cnpj: String,
+    val qrCodePurposeType : String = "PDV",
 ) {
 
+    @JsonIgnoreProperties
+    fun getCnpj() : String {
+        return cnpj
+    }
     fun getAmount(): String {
         return "%.2f".format(Locale.ENGLISH, amount)
+    }
+
+    @JsonIgnoreProperties
+    fun getInstallmentId(): Any {
+        return externalIdentifier.split("-")[2].split(":")[1].toInt()
+    }
+
+    fun docEntry(): Int {
+        return externalIdentifier.split("-")[1].replace("Entry","").toInt()
+    }
+
+    fun docType(): String {
+        return externalIdentifier.split("-")[3]
+    }
+
+    fun docNum(): String {
+        return externalIdentifier.split("-")[0].replace("Num","")
     }
 }
 

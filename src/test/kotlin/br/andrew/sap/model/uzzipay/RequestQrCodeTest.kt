@@ -22,7 +22,7 @@ class RequestQrCodeTest {
                 "Rua dos Bobos",
                 "São Paulo",
                 "SP"
-            ))
+            ),"1")
 
         Assertions.assertEquals("12200.00",request.getAmount())
     }

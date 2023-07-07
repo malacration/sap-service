@@ -13,9 +13,9 @@ class Service(unitPrice : String, quantity : String = "0") : DocumentLines(unitP
 
     override fun Duplicate(): Service {
         return Service(Quantity,UnitPrice).also {
-            it.Usage = Usage;
+            it.Usage = Usage
             it.TaxCode = TaxCode
-            it.AccountCode = AccountCode;
+            it.AccountCode = AccountCode
         }
     }
 }

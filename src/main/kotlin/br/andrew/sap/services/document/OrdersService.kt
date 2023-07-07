@@ -36,7 +36,7 @@ class OrdersService(env: SapEnvrioment, restTemplate: RestTemplate, authService:
                 }
             }
         }
-        order.u_pedido_update = "0";
+        order.u_pedido_update = "0"
         return order
     }
 }

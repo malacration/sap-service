@@ -2,6 +2,8 @@ package br.andrew.sap.model.partner
 
 class CpfCnpj(value : String) {
 
+    constructor(tax : BPFiscalTaxID) : this(tax.TaxId4?:tax.TaxId0?: throw Exception("TaxId4 or TaxId0 must be not null"))
+
     val value = value.replace("\\D".toRegex(), "")
 
     fun isCpf() : Boolean {

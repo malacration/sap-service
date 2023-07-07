@@ -12,9 +12,9 @@ import java.net.URI
 
 @Service
 @Profile("!test")
-open class AuthService(
-        private @Value("\${sap.service.layer.url:https://localhost:50000}") val host : String,
-        private val restTemplate: RestTemplate) {
+class AuthService(
+    @Value("\${sap.service.layer.url:https://localhost:50000}") private val host : String,
+    private val restTemplate: RestTemplate) {
 
     companion object{
         private var session :Session? = null
@@ -24,6 +24,6 @@ open class AuthService(
         val url = URI("$host/b1s/v1/Login")
         if(session == null || session!!.isExpire())
             session = restTemplate.postForEntity(url,login, Session::class.java).body
-        return session!!;
+        return session!!
     }
 }

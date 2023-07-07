@@ -2,7 +2,7 @@ package br.andrew.sap.model.uzzipay
 
 
 
-class ContaUzziPayPix(){
+class ContaUzziPayPix {
     lateinit var cnpj : String
     lateinit var tokenJwt : String
     lateinit var privateKey : String

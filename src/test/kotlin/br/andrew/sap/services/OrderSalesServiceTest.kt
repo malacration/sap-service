@@ -6,6 +6,7 @@ import br.andrew.sap.model.documents.OrderSales
 import br.andrew.sap.model.documents.Product
 import br.andrew.sap.model.forca.PedidoVenda
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.kotlin.KotlinFeature
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.fasterxml.jackson.module.kotlin.jacksonTypeRef
 import org.junit.jupiter.api.Assertions

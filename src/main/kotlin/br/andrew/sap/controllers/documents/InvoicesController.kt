@@ -7,6 +7,7 @@ import br.andrew.sap.infrastructure.configurations.DistribuicaoCustoByBranchConf
 import br.andrew.sap.infrastructure.odata.*
 import br.andrew.sap.model.documents.Invoice
 import br.andrew.sap.model.documents.OrderSales
+import br.andrew.sap.model.documents.PurchaseInvoice
 import br.andrew.sap.model.exceptions.CreditException
 import br.andrew.sap.model.forca.PedidoVenda
 import br.andrew.sap.services.*
@@ -24,6 +25,16 @@ class InvoicesController(val invoice: InvoiceService) {
 
     @GetMapping("")
     fun get(): Any {
-        return invoice.get(OrderBy(mapOf("DocEntry" to Order.DESC)))
+        return invoice.get(OrderBy(mapOf("DocEntry" to Order.DESC))).tryGetValues<Invoice>()
+    }
+
+    @GetMapping("{id}")
+    fun getById(@PathVariable id : String) : Any{
+        return invoice.getById("$id")
+    }
+
+    @GetMapping("{id}/create-pix")
+    fun createPix(@PathVariable id : Int) : Any{
+        return invoice.createPix(id)
     }
 }

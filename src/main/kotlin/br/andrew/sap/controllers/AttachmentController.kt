@@ -24,7 +24,7 @@ class AttachmentController(val service: AttachmentService) {
         val retorno = service.download(id)
         return ResponseEntity.ok()
             .contentType(MediaType.parseMediaType(retorno.first.replace("[","").replace("]","")))
-            .body(retorno.second);
+            .body(retorno.second)
     }
 
     @PostMapping("business-partners/{cardCode}")

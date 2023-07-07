@@ -16,7 +16,7 @@ class SapConfig {
             @Value("\${sap.service.layer.password:password}") password : String,
             @Value("\${sap.service.layer.companyDB:companyDB}") companyDB : String,
     ): SapEnvrioment {
-        return SapEnvrioment(host,user,password,companyDB);
+        return SapEnvrioment(host,user,password,companyDB)
     }
 
 }

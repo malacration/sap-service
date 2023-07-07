@@ -7,8 +7,7 @@ import org.springframework.context.annotation.Configuration
 
 @Configuration
 @ConfigurationProperties(prefix = "uzzipay", ignoreInvalidFields = true, ignoreUnknownFields = true)
-class UzziPayEnvrioment(
-    ){
+class UzziPayEnvrioment {
     lateinit var host : String
     lateinit var contas : List<ContaUzziPayPix>
 }

@@ -26,7 +26,7 @@ class ItemsService(env : SapEnvrioment,
         if(priceListId == "none")
             return 0.0
         return getById("'$itemCode'")
-                .tryGetValue<Item>().itemPrices?.first { it.PriceList == priceListId }?.Price ?: 0.0
+            .tryGetValue<Item>().itemPrices.first { it.PriceList == priceListId }?.Price ?: 0.0
 
     }
 

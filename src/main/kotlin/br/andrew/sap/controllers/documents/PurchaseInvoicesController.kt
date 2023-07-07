@@ -31,6 +31,6 @@ class PurchaseInvoicesController(val purchaseInvoiceService: PurchaseInvoiceServ
     fun cancelAndDuplicate(@PathVariable cardCode : String) : OData? {
         //TODO terminar essa logica
         val predicate = Predicate("CardCode",cardCode,Condicao.EQUAL)
-        return purchaseInvoiceService.get(Filter(listOf(predicate)));
+        return purchaseInvoiceService.get(Filter(listOf(predicate)))
     }
 }

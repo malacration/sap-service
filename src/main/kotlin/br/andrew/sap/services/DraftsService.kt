@@ -48,8 +48,6 @@ class DraftsService(env : SapEnvrioment,
     @JsonNaming(PropertyNamingStrategy.UpperCamelCaseStrategy::class)
     @JsonIgnoreProperties(ignoreUnknown = true)
     @JsonInclude(JsonInclude.Include.NON_NULL)
-    class DraftWrapper(val document : Document){
-
-    }
+    class DraftWrapper(val document : Document)
 }
 

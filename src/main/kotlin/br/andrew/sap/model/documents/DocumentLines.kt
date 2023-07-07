@@ -4,6 +4,9 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.databind.*
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
+import kotlin.reflect.KMutableProperty
+import kotlin.reflect.full.memberProperties
+import kotlin.reflect.jvm.javaField
 
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -23,7 +26,7 @@ abstract class DocumentLines(var UnitPrice : String, var Quantity : String, var 
     var CostingCode2: String? =null
     var AccountCode : String? = null
 
-    abstract fun Duplicate() : DocumentLines;
+    abstract fun Duplicate() : DocumentLines
 
     fun total(): Double {
         return (UnitPrice.toDouble() * Quantity.toDouble()) * (1-(DiscountPercent ?: 0.0)/100)
@@ -53,18 +56,18 @@ abstract class DocumentLines(var UnitPrice : String, var Quantity : String, var 
 
     fun setJson(node: JsonNode){
         //setAll Properties
-        val fields = DocumentLines::class.java.declaredFields
+        val fields = this::class.memberProperties
         fields.forEach {
-            if(node.get(it.name) != null){
-                if(it.type == Int::class.java || it.type == Integer::class.java)
-                    it.set(this, node.get(it.name).asInt())
-                else if(it.type == Double::class.javaPrimitiveType || it.type == Double::class.javaObjectType)
-                    it.set(this, node.get(it.name).asDouble())
-                else if(it.type == String::class.java)
-                    it.set(this, node.get(it.name).asText())
-            }else if(it.trySetAccessible()) {
+            if(node.get(it.name) != null && it is KMutableProperty<*> && node.get(it.name)?.asText() ?: "" != "null"){
+                if(it.returnType == Int::class || it.returnType == Integer::class.java || it.javaField!!.type == Integer::class.javaObjectType || it.javaField!!.type == Integer::class.javaPrimitiveType)
+                    it.setter.call(this, node.get(it.name).asInt())
+                else if(it.returnType == Double::class.javaPrimitiveType || it.javaField!!.type == Double::class.javaObjectType || it.javaField!!.type == Double::class.javaPrimitiveType)
+                    it.setter.call(this, node.get(it.name).asDouble())
+                else if(it.returnType == String::class || it.javaField!!.type == String::class.java)
+                    it.setter.call(this, node.get(it.name).asText())
+            }else if(node.get(it.name)?.asText() ?: "" == "null" && it is KMutableProperty<*>) {
                 try {
-                    it.set(this, null)
+                    it.setter.call(this, null)
                 } catch (e: Exception) {
                     println(e.message)
                 }

@@ -6,6 +6,4 @@ import com.fasterxml.jackson.databind.annotation.JsonNaming
 
 @JsonNaming(PropertyNamingStrategy.UpperCamelCaseStrategy::class)
 @JsonIgnoreProperties(ignoreUnknown = true)
-class PaymentMethod(val paymentMethodCode : String) {
-
-}
+class PaymentMethod(val paymentMethodCode : String)

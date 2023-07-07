@@ -3,6 +3,7 @@ package br.andrew.sap.json
 import br.andrew.sap.infrastructure.odata.OData
 import br.andrew.sap.model.documents.Invoice
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.kotlin.KotlinFeature
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.fasterxml.jackson.module.kotlin.jacksonTypeRef
 import org.junit.jupiter.api.Assertions
@@ -35,6 +36,7 @@ class DocumentLinesJsonTests {
         Assertions.assertEquals(0.0,product.U_preco_base)
         Assertions.assertEquals(0.0,product.U_preco_negociado)
         Assertions.assertEquals(null,product.U_id_item_forca)
+        Assertions.assertEquals("TESTE01",product.TaxCode)
     }
 
     @Test
@@ -45,6 +47,24 @@ class DocumentLinesJsonTests {
         Assertions.assertEquals(333,data.docEntry)
         val service = data.DocumentLines.get(0)
         Assertions.assertEquals(0,service.LineNum)
+
+        Assertions.assertEquals(null,service.ItemCode)
+        Assertions.assertEquals("0.0",service.Quantity)
+//        Assertions.assertEquals(77.44,product.price)
+//        Assertions.assertEquals(98.1552,product.priceAfterVAT)
+//        Assertions.assertEquals("R\$",product.currency)
+//        Assertions.assertEquals(0.0,product.rate)
+        Assertions.assertEquals(0.0,service.DiscountPercent)
+        Assertions.assertEquals(null,service.WarehouseCode)
+//        Assertions.assertEquals(30,product.salesPersonCode)
+        Assertions.assertEquals(null,service.CostingCode)
+        Assertions.assertEquals(null,service.CostingCode2)
+        Assertions.assertEquals("2.9.1.001.00006",service.AccountCode)
+        Assertions.assertEquals(9,service.Usage)
+        Assertions.assertEquals(null,service.U_preco_base)
+        Assertions.assertEquals(null,service.U_preco_negociado)
+        Assertions.assertEquals(null,service.U_id_item_forca)
+        Assertions.assertEquals(null,service.TaxCode)
     }
 
     val jsonProduct = "{" +
