@@ -2,7 +2,12 @@ package br.andrew.sap.model.partner
 
 class CpfCnpj(value : String) {
 
-    constructor(tax : BPFiscalTaxID) : this(tax.TaxId4?:tax.TaxId0?: throw Exception("TaxId4 or TaxId0 must be not null"))
+    constructor(tax : BPFiscalTaxID) : this(
+        if(tax.TaxId4 == null || tax.TaxId4!!.isBlank())
+            tax.TaxId0 ?: throw Exception("CpfCnpj not found")
+        else
+            tax.TaxId4 ?: throw Exception("CpfCnpj not found")
+    )
 
     val value = value.replace("\\D".toRegex(), "")
 

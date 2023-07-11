@@ -2,6 +2,7 @@ package br.andrew.sap.model.documents
 
 import br.andrew.sap.model.Cancelled
 import br.andrew.sap.model.WarehouseDefault
+import br.andrew.sap.model.uzzipay.DataRetonroPixQrCode
 import br.andrew.sap.model.uzzipay.RequestQrCode
 import br.andrew.sap.services.ItemsService
 import com.fasterxml.jackson.annotation.JsonFormat
@@ -117,11 +118,11 @@ open class Document(val CardCode : String,
         return "Document(CardCode='$CardCode', Branch='$BPL_IDAssignedToInvoice', docEntry=$docEntry, docNum=$docNum, pedido_forca=$u_id_pedido_forca)"
     }
 
-    fun setPix(request: RequestQrCode, chave: String) {
+    fun setPix(request: RequestQrCode, chave: DataRetonroPixQrCode) {
         if(request.docEntry() != docEntry)
             throw Exception("O qrCode nao pertence a esse documento")
         this.documentInstallments!!.find { it.InstallmentId == request.getInstallmentId() }?.also {
-            it.U_QrCodePix = chave
+            it.U_QrCodePix = chave.data.reference
         }
     }
 

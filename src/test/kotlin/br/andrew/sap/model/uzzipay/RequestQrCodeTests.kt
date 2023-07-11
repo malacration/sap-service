@@ -1,10 +1,7 @@
-package br.andrew.sap.model
+package br.andrew.sap.model.uzzipay
 
 import br.andrew.sap.model.documents.Document
 import br.andrew.sap.model.documents.Installment
-import br.andrew.sap.model.uzzipay.Payer
-import br.andrew.sap.model.uzzipay.RequestQrCode
-import br.andrew.sap.model.uzzipay.Type
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import java.util.*
@@ -24,7 +21,7 @@ class RequestQrCodeTests {
 
         val request = RequestQrCode(
             installment.createExternalIdentifier(document),
-            "123",
+            ContaUzziPayPix(),
             Type.EVP,
             100.00.toBigDecimal(),
             "2024-12-31",

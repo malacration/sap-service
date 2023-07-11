@@ -4,7 +4,7 @@ import br.andrew.sap.model.BussinessPlace
 import br.andrew.sap.model.SapEnvrioment
 import br.andrew.sap.model.documents.Invoice
 import br.andrew.sap.model.partner.BusinessPartner
-import br.andrew.sap.model.uzzipay.RequestQrCodeBuilder
+import br.andrew.sap.model.uzzipay.RequestPixQrCodeSemContaBuilder
 import br.andrew.sap.services.AuthService
 import br.andrew.sap.services.BusinessPartnersService
 import br.andrew.sap.services.BussinessPlaceService
@@ -29,11 +29,10 @@ class InvoiceService(env: SapEnvrioment, restTemplate: RestTemplate, authService
             .getById(invoice.getBPL_IDAssignedToInvoice())
             .tryGetValue<BussinessPlace>()
         val partner = bussinesPartnersService.getById("'${invoice.CardCode}'").tryGetValue<BusinessPartner>()
-        val requestes = RequestQrCodeBuilder(partner,bussinessPlace,invoice).build()
+        val requestes = RequestPixQrCodeSemContaBuilder(partner,bussinessPlace,invoice).build()
         requestes.forEach {
-            val chave = pixService.genereateFor(it)
-            invoice.setPix(it,chave.toString())
-            println("Criando pix para parcela ${it.externalIdentifier} no valor de ${it.getAmount()}")
+            invoice.setPix(it,pixService.genereateFor(it))
         }
+        this.update(invoice,invoice.docEntry.toString())
     }
 }

@@ -26,7 +26,7 @@ class BusinessPartner() {
     @JsonIgnore
     fun getCpfCnpj() : CpfCnpj {
         return BPFiscalTaxIDCollection
-            ?.filter { it.TaxId0 != null || it.TaxId4 != null }
+            ?.filter { (it.TaxId0 != null && it.TaxId0!!.isNotBlank()) || (it.TaxId4 != null && it.TaxId4!!.isNotBlank()) }
             ?.map { CpfCnpj(it) }
             ?.first() ?: throw Exception("CpfCnpj not found")
     }

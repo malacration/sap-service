@@ -8,4 +8,9 @@ class Payer(
     val city : String,
     val state : String,
     val zipCode : String
-)
+){
+    init {
+        if(document.isBlank())
+            throw Exception("Documento do cliente nao pode ser vazio")
+    }
+}

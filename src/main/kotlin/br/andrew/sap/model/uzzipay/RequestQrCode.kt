@@ -14,15 +14,20 @@ import java.util.Locale
 
 class RequestQrCode(
     val externalIdentifier: String,
-    val key : String,
+    private val conta : ContaUzziPayPix,
     val keyType : Type,
     private val amount : BigDecimal,
     val dueDate : String,
     val Payer : Payer,
     private val cnpj: String,
-    val qrCodePurposeType : String = "PDV",
+    val qrCodePurposeType : String = "BILLET",
 ) {
+    val key = conta.chavePix
 
+    @JsonIgnoreProperties
+    fun getContaSelecioanda(contas : List<ContaUzziPayPix>): ContaUzziPayPix {
+        return contas.first { it.cnpj == conta.cnpj }
+    }
     @JsonIgnoreProperties
     fun getCnpj() : String {
         return cnpj
