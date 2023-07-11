@@ -1,5 +1,6 @@
 package br.andrew.sap.model
 
+import br.andrew.sap.model.partner.CpfCnpj
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.PropertyNamingStrategy
@@ -16,4 +17,9 @@ class BussinessPlace {
     var DefaultCustomerID: String? = null
     var DefaultVendorID: String? = null
     var DefaultWarehouseID: String? = null
+    var FederalTaxID : String? = null
+
+    fun cnpjSemMascara() : String {
+        return CpfCnpj(FederalTaxID ?: throw Exception("Erro, filial $BPLName sem cnpj")).value
+    }
 }

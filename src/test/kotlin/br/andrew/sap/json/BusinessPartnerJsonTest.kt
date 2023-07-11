@@ -4,6 +4,7 @@ import br.andrew.sap.model.partner.BusinessPartner
 import br.andrew.sap.model.partner.BusinessPartnerType
 import br.andrew.sap.model.partner.CpfCnpj
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.kotlin.KotlinFeature
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test

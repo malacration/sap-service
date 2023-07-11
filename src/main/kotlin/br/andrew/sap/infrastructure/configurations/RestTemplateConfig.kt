@@ -40,7 +40,7 @@ class RestTemplateConfig {
         val httpClient = HttpClients.custom().setConnectionManager(connectionManager).build()
 
         val requestFactory = HttpComponentsClientHttpRequestFactory()
-        requestFactory.setHttpClient(httpClient)
+        requestFactory.httpClient = httpClient
         return RestTemplate(requestFactory)
     }
 

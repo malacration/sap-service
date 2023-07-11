@@ -18,7 +18,7 @@ class Produto(val idProduto : String,
     fun getProduct(tipoPedido: Int): Product {
         return Product(idProduto,quantidade.toString(),valorTabela.toString(),tipoPedido)
                 .also {
-                    it.discountPercent = desconto
+                    it.DiscountPercent = desconto
                     it.U_preco_negociado = precoUnitario
                     it.U_id_item_forca = idItem
                 }

@@ -46,7 +46,7 @@ class MockChatBotController {
 
     fun headerValidation(header : String){
         if(header!="windson")
-            throw Exception("Acesso negado - mock");
+            throw Exception("Acesso negado - mock")
     }
 
     val faturas = listOf(

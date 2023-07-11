@@ -32,11 +32,11 @@ class OrdersService(env: SapEnvrioment, restTemplate: RestTemplate, authService:
                 var taxParam = taxAuthoritiesService.get(taxCodeDesonerado)
                         .tryGetValue<SalesTaxAuthorities>()
                 it.value.forEach { p ->
-                    p.unitPrice = PrecoUnitarioComDesoneracao().calculaPreco(p, taxParam).toString()
+                    p.UnitPrice = PrecoUnitarioComDesoneracao().calculaPreco(p, taxParam).toString()
                 }
             }
         }
-        order.u_pedido_update = "0";
+        order.u_pedido_update = "0"
         return order
     }
 }

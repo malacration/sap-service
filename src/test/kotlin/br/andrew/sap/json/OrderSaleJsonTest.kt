@@ -5,6 +5,7 @@ import br.andrew.sap.model.DocEntry
 import br.andrew.sap.model.documents.OrderSales
 import br.andrew.sap.model.documents.Product
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.kotlin.KotlinFeature
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.fasterxml.jackson.module.kotlin.jacksonTypeRef
 import org.junit.jupiter.api.Assertions
@@ -23,9 +24,9 @@ class OrderSaleJsonTest {
         }
         val json = mapper.writeValueAsString(pedido)
         println(json)
-        org.junit.jupiter.api.Assertions.assertTrue(json.contains("\"U_id_pedido_forca\":\"666\""))
-        org.junit.jupiter.api.Assertions.assertTrue(json.contains("\"U_preco_negociado\":123.0"))
-        org.junit.jupiter.api.Assertions.assertTrue(json.contains("\"U_preco_base\":555.0"))
+        Assertions.assertTrue(json.contains("\"U_id_pedido_forca\":\"666\""))
+        Assertions.assertTrue(json.contains("\"U_preco_negociado\":123.0"))
+        Assertions.assertTrue(json.contains("\"U_preco_base\":555.0"))
     }
 
     @Test
@@ -37,9 +38,9 @@ class OrderSaleJsonTest {
         }
         val json = mapper.writeValueAsString(pedido)
         println(json)
-        org.junit.jupiter.api.Assertions.assertTrue(!json.contains("U_id_Pedido_Forca"))
-        org.junit.jupiter.api.Assertions.assertTrue(!json.contains("U_preco_negociado"))
-        org.junit.jupiter.api.Assertions.assertTrue(!json.contains("U_preco_base"))
+        Assertions.assertTrue(!json.contains("U_id_Pedido_Forca"))
+        Assertions.assertTrue(!json.contains("U_preco_negociado"))
+        Assertions.assertTrue(!json.contains("U_preco_base"))
     }
 
 
@@ -49,7 +50,7 @@ class OrderSaleJsonTest {
         val file = File("src/test/kotlin/br/andrew/sap/json/draft.json").readBytes()
         val obj = mapper.readValue(String(file), jacksonTypeRef<OData>())
         val order = obj.tryGetValue<OrderSales>()
-        order.DocumentLines.forEach { Assertions.assertEquals("500.01",it.warehouseCode) }
+        order.DocumentLines.forEach { Assertions.assertEquals("500.01",it.WarehouseCode) }
 
     }
 

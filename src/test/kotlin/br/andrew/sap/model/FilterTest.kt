@@ -16,7 +16,7 @@ class FilterTest {
 
     @Test
     fun startsWith(){
-        val coluna = "Code";
+        val coluna = "Code"
         val comparador = Condicao.STARTS_WITH
         val valor = "a"
         val resultado = Filter(listOf(Predicate(coluna,valor,comparador))).toString()
@@ -25,7 +25,7 @@ class FilterTest {
 
     @Test
     fun condicaoIn(){
-        val coluna = "Code";
+        val coluna = "Code"
         val comparador = Condicao.IN
         val valor = listOf<String>("francisco","gabriel")
         val resultado = Filter(listOf(Predicate(coluna,valor,comparador))).toString()
@@ -34,7 +34,7 @@ class FilterTest {
 
     @Test
     fun condicaoContains(){
-        val coluna = "Code";
+        val coluna = "Code"
         val comparador = Condicao.CONTAINS
         val valor = "geovana"
         val resultado = Filter(listOf(Predicate(coluna,valor,comparador))).toString()
@@ -42,7 +42,7 @@ class FilterTest {
     }
     @Test
     fun filterSql(){
-        val coluna = "Code";
+        val coluna = "Code"
         val comparador = Condicao.EQUAL
         val valor = "windson"
         val resultado = Filter(listOf(Predicate(coluna,valor,comparador))).toSql()
@@ -51,7 +51,7 @@ class FilterTest {
 
     @Test
     fun filterSqlVariosPredicados(){
-        val coluna = "Code";
+        val coluna = "Code"
         val comparador = Condicao.EQUAL
         val valor = 1
         val resultado = Filter(

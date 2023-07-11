@@ -8,6 +8,4 @@ import com.fasterxml.jackson.databind.annotation.JsonNaming
 @JsonIgnoreProperties(ignoreUnknown = true)
 class MotoristaPecuaria(val code : String?,
         val U_NomeCadastro : String?,
-        val U_RegistroCNH : String?) {
-
-}
+        val U_RegistroCNH : String?)

@@ -47,8 +47,8 @@ class RomaneioEntradaInsumoMin(
 
                 U_CodMotorista = motorista?.code
                 U_Motorista = motorista?.U_NomeCadastro
-                U_CodFazenda = fazenda.Code;
-                U_DscFazenda = fazenda.U_DescriComp
+                U_CodFazenda = fazenda.Code
+            U_DscFazenda = fazenda.U_DescriComp
 
                 U_CodTransportador = pesagem.u_CodTransportadora
                 //U_NomeTransportador = pesagem.trans "FAZENDA RIO MADEIRA | FAZENDA RIO MADEIRA"
@@ -57,10 +57,10 @@ class RomaneioEntradaInsumoMin(
         var U_DataEntrada = SimpleDateFormat("yyyy-MM-dd").format(U_DataEntrada)
         var DocEntry : Int? = null
         var U_PesoLiquido : Double = (U_PesoBruto?:0.0)-(U_PesoTara?:0.0)
-        var U_PesoLiquidoDesc : Double = (U_PesoLiquido?:0.0)
-        var U_Diferenca : Double = U_PesoLiquido?: 0.0-(U_PesoNota?:0.0);
+        var U_PesoLiquidoDesc : Double = U_PesoLiquido
+        var U_Diferenca : Double = U_PesoLiquido
 
-        var U_CodFazenda : String? = null
+    var U_CodFazenda : String? = null
         var U_DscFazenda : String? = null
 
         var U_CodVeiculo : String? = null
@@ -74,7 +74,7 @@ class RomaneioEntradaInsumoMin(
         var U_CodTransportador : String? = null //Parceiro Negocio
         var U_NomeTransportador : String? = null
 
-        var U_CodMotorista: String? = null; //Objeto customizado
+        var U_CodMotorista: String? = null //Objeto customizado
         var U_Motorista : String? = null //Objeto customizado
 
         var U_CodRegistroCompra: String? = null
@@ -86,8 +86,8 @@ class RomaneioEntradaInsumoMin(
         var tipoAnalise : List<TipoAnalise>? = null
 
         fun setResponsavel(){
-                this.U_CodResponsavel = "243";
-                this.U_NomeResponsavel = "Danielle Lima"
+                this.U_CodResponsavel = "243"
+            this.U_NomeResponsavel = "Danielle Lima"
         }
 
 }

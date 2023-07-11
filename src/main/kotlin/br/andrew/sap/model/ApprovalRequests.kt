@@ -10,7 +10,7 @@ import com.fasterxml.jackson.databind.annotation.JsonNaming
 @JsonInclude(JsonInclude.Include.NON_NULL)
 class ApprovalRequests {
     var code : Int? = null
-    var draftEntry : Int? = null;
+    var draftEntry : Int? = null
     var approvalRequestDecisions : List<Decision> = listOf()
     var status : String? = null
     var U_starvation: String? = null

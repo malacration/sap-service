@@ -6,6 +6,4 @@ import com.fasterxml.jackson.databind.annotation.JsonNaming
 
 @JsonNaming(PropertyNamingStrategy.UpperCamelCaseStrategy::class)
 @JsonIgnoreProperties(ignoreUnknown = true)
-class ItemPrice( val PriceList: String, val Price: Double) {
-
-}
+class ItemPrice( val PriceList: String, val Price: Double)

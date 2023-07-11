@@ -17,6 +17,6 @@ class UserFieldsController(val userFieldsMDService: UserFieldsMDService) {
     @GetMapping()
     fun get(page : Pageable) : Any{
         val filter = Filter(listOf(Predicate("Name","B1SYS_IV",Condicao.STARTS_WITH)))
-        return userFieldsMDService.get(filter,page);
+        return userFieldsMDService.get(filter,page)
     }
 }

@@ -41,7 +41,7 @@ class RomaneioEntradaInsumoController(
                 .first()
 
         val motoristaContrato = if(romaneioPesagem.u_CodMotorista == null ) null else
-            motoristaContratoService.getById("'${romaneioPesagem.u_CodMotorista!!}'")
+            motoristaContratoService.getById("'${romaneioPesagem.u_CodMotorista}'")
                     .tryGetValue<MotoristaContrato>()
 
         val motoristaPecuaria = if(motoristaContrato == null || motoristaContrato.U_RegistroCNH == null) null else
@@ -67,7 +67,7 @@ class RomaneioEntradaInsumoController(
     @GetMapping("/salvar/{idRomaneioPesagem}")
     fun salvar(@PathVariable idRomaneioPesagem : Int) : Any?{
         return romaneioEntradaServie.save(draft(idRomaneioPesagem)).also {
-            it.tryGetValue<RomaneioEntradaInsumoMin>()?.let {
+            it.tryGetValue<RomaneioEntradaInsumoMin>().let {
                 telegram.send("Romaneio de entrada de insumo ${it.DocEntry} salvo com sucesso!",TipoMensagem.geral)
             }
         }

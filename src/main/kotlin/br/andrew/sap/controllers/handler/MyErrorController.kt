@@ -7,6 +7,7 @@ import org.springframework.boot.web.servlet.error.ErrorController
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.RequestMapping
+import java.util.*
 
 class MyErrorController : ErrorController {
 
@@ -42,7 +43,7 @@ class MyErrorController : ErrorController {
 
     private fun getTraceParameter(request: HttpServletRequest): Boolean {
         val parameter = request.getParameter("trace") ?: return false
-        return "false" != parameter.toLowerCase()
+        return "false" != parameter.lowercase(Locale.getDefault())
     }
 }
 

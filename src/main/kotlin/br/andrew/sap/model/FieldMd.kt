@@ -32,6 +32,4 @@ enum class DbType {
 
 @JsonNaming(PropertyNamingStrategy.UpperCamelCaseStrategy::class)
 @JsonIgnoreProperties(ignoreUnknown = true)
-class ValuesMd(val value : String, val description : String){
-
-}
+class ValuesMd(val value : String, val description : String)

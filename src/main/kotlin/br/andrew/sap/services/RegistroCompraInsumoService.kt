@@ -24,6 +24,6 @@ class RegistroCompraInsumoService(
         return get(Filter(
                 listOf(
                         Predicate("U_CodParceiroNegocio",codPn,Condicao.EQUAL)
-                )));
+                )))
     }
 }

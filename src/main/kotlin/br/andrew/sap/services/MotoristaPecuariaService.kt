@@ -23,6 +23,6 @@ class MotoristaPecuariaService(env : SapEnvrioment,
         return get(Filter(
                 listOf(
                         Predicate("U_RegistroCNH",cnh.trim().trimStart('0'), Condicao.CONTAINS)
-                )));
+                )))
     }
 }

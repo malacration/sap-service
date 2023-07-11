@@ -29,7 +29,7 @@ class CreditExceptionTest {
 
     @Test
     fun linkPaymentException(){
-        EventPublisherSingleton.instance = mock(ApplicationEventPublisher::class.java);
+        EventPublisherSingleton.instance = mock(ApplicationEventPublisher::class.java)
         val msg = "Linked payment method BB-RC-BOL-1199 is inactive or is no longer linked with business partner CLI0003204"
         val sapErro = SapError(ErrorMsg("code", SapMessage("",msg)))
         val exception = sapErro.getError()

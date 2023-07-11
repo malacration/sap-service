@@ -7,9 +7,7 @@ import br.andrew.sap.model.documents.OrderSales
 import br.andrew.sap.model.forca.PedidoVenda
 
 open class SapGenericException(val erro : SapError, val causa : Throwable? = null, extra : String = "") :
-        Exception(erro.error.message.value+" - "+extra,causa){
-
-}
+        Exception(erro.error.message.value+" - "+extra,causa)
 
 class CreditException(error: SapError, val location : String?, cause: Throwable? = null) : SapGenericException(error, cause, "Detecção de erro relacionado a Credito do PN") {
     //TODO é possivel fazer a chamada a draft para verificar os valores

@@ -4,6 +4,7 @@ import br.andrew.sap.model.forca.Cliente
 import br.andrew.sap.model.forca.PedidoVenda
 import br.andrew.sap.model.forca.Produto
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.kotlin.KotlinFeature
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.fasterxml.jackson.module.kotlin.jacksonTypeRef
 import org.junit.jupiter.api.Assertions
@@ -33,7 +34,7 @@ class ClienteJsonTest {
     fun testeJsonCliente(){
         val mapper = ObjectMapper().registerModule(KotlinModule())
         val obj = mapper.readValue(json, jacksonTypeRef<Cliente>())
-        val bp = obj.getBusinessPartner();
+        val bp = obj.getBusinessPartner()
         Assertions.assertEquals("5555555",bp.phone1)
         Assertions.assertEquals("6",bp.u_id_forca)
         Assertions.assertEquals("windson@windson.com",bp.emailAddress)

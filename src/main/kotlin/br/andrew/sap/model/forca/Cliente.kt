@@ -29,7 +29,7 @@ class Cliente(
             it.phone1 = telefone
             it.emailAddress = email
             it.salesPersonCode = idVendedor?.toInt() ?: -1
-            it.freeText = obscadastral;
+            it.freeText = obscadastral
             it.U_fazer_fluxo_prazo = "1"
         }
     }
