@@ -21,7 +21,7 @@ class RequestQrCodeTests {
 
         val request = RequestQrCode(
             installment.createExternalIdentifier(document),
-            ContaUzziPayPix(),
+            ContaUzziPayPix().also { it.chavePix = "" },
             Type.EVP,
             100.00.toBigDecimal(),
             "2024-12-31",
