@@ -15,6 +15,9 @@ class RegistroCompraInsumo(
     var U_NomParceiroNegocio : String? = null
     var U_CodigoFilial : String? = null
     var U_CodDeposito : String? = null
+    var U_Status : String? = null
+    var U_CodigoItem : String? = null
+    var U_NomeItem : String? = null
 
 
 }
