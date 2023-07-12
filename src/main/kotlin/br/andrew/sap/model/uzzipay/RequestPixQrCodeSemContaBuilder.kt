@@ -27,7 +27,7 @@ class RequestPixQrCodeSemContaBuilder(val bussinesPartner: BusinessPartner,
         return RequestPixQrCodeBuilder(bussinesPartner, bussinessPlace, document, conta)
     }
 
-    fun build(): List<RequestQrCode> {
+    fun build(): List<RequestPixDueDate> {
         if(contas.isEmpty()){
             throw Exception("Nenhuma conta configurada")
         }
@@ -39,12 +39,11 @@ class RequestPixQrCodeBuilder(private val bp: BusinessPartner,
                               private val bussinessPlace: BussinessPlace,
                               private val document : Document,
                               private val conta : ContaUzziPayPix) {
-    fun build(): List<RequestQrCode> {
+    fun build(): List<RequestPixDueDate> {
         return document.documentInstallments?.map {
-            RequestQrCode(
+            RequestPixDueDate(
                 it.createExternalIdentifier(document),
                 conta,
-                Type.EVP,
                 BigDecimal(it.total).setScale(2, RoundingMode.HALF_EVEN),
                 it.dueDate ?: throw Exception("Data de vencimento não informada"),
                 getPayer(),

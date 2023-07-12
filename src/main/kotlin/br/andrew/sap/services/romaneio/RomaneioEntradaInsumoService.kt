@@ -1,6 +1,6 @@
 package br.andrew.sap.services.romaneio
 
-import br.andrew.sap.model.SapEnvrioment
+import br.andrew.sap.model.envrioments.SapEnvrioment
 import br.andrew.sap.model.romaneio.RomaneioEntradaInsumoMin
 import br.andrew.sap.services.AuthService
 import br.andrew.sap.services.abstracts.EntitiesService

@@ -37,4 +37,9 @@ class InvoicesController(val invoice: InvoiceService) {
     fun createPix(@PathVariable id : Int) : Any{
         return invoice.createPix(id)
     }
+
+    @GetMapping("pix")
+    fun teste() : Any{
+        return invoice.getAllPixs();
+    }
 }

@@ -10,6 +10,7 @@ import org.springframework.context.annotation.Configuration
 @ConfigurationProperties(prefix = "uzzipay", ignoreInvalidFields = true, ignoreUnknownFields = true)
 class UzziPayEnvrioment {
     lateinit var host : String
+    lateinit var consultaHost : String
     var contas : List<ContaUzziPayPix> = listOf()
         set(value) {
             field = value

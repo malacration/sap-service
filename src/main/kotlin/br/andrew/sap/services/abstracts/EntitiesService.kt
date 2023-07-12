@@ -3,7 +3,7 @@ package br.andrew.sap.services.abstracts
 import br.andrew.sap.infrastructure.odata.Filter
 import br.andrew.sap.infrastructure.odata.OData
 import br.andrew.sap.infrastructure.odata.OrderBy
-import br.andrew.sap.model.SapEnvrioment
+import br.andrew.sap.model.envrioments.SapEnvrioment
 import br.andrew.sap.model.SapError
 import br.andrew.sap.model.Session
 import br.andrew.sap.services.AuthService

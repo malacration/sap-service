@@ -1,7 +1,7 @@
 package br.andrew.sap.controllers
 
 
-import br.andrew.sap.model.SapEnvrioment
+import br.andrew.sap.model.envrioments.SapEnvrioment
 import br.andrew.sap.model.Version
 import br.andrew.sap.services.AuthService
 import br.andrew.sap.services.DummyService

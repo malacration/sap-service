@@ -5,7 +5,7 @@ import br.andrew.sap.infrastructure.odata.Filter
 import br.andrew.sap.infrastructure.odata.OData
 import br.andrew.sap.infrastructure.odata.Predicate
 import br.andrew.sap.model.MotoristaPecuaria
-import br.andrew.sap.model.SapEnvrioment
+import br.andrew.sap.model.envrioments.SapEnvrioment
 import br.andrew.sap.services.abstracts.EntitiesService
 import org.springframework.stereotype.Service
 import org.springframework.web.client.RestTemplate

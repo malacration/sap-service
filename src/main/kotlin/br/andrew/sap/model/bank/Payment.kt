@@ -32,9 +32,9 @@ class Payment {
     var docEntry: Int? = null
     var cardCode : String? = null
     var cashAccount : String? = null
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "YYY-MM-dd", timezone = "UTC")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "YYY-MM-dd")
     var docDate : String? = null
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "YYY-MM-dd", timezone = "UTC")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "YYY-MM-dd")
     var dueDate : String? = null
     var cashSum : Double? = null
     var paymentInvoices : List<PaymentInvoice> = listOf()

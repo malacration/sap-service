@@ -3,7 +3,7 @@ package br.andrew.sap.model.documents
 import br.andrew.sap.model.Cancelled
 import br.andrew.sap.model.WarehouseDefault
 import br.andrew.sap.model.uzzipay.DataRetonroPixQrCode
-import br.andrew.sap.model.uzzipay.RequestQrCode
+import br.andrew.sap.model.uzzipay.RequestPixDueDate
 import br.andrew.sap.services.ItemsService
 import com.fasterxml.jackson.annotation.JsonFormat
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
@@ -11,6 +11,7 @@ import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.PropertyNamingStrategy
 import com.fasterxml.jackson.databind.annotation.JsonNaming
+import java.math.BigDecimal
 
 @JsonNaming(PropertyNamingStrategy.UpperCamelCaseStrategy::class)
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -42,6 +43,7 @@ open class Document(val CardCode : String,
     var model : Int? = null
     var docType: String? = null
     var docObjectCode : String? = null
+    var DocTotalFc : BigDecimal? = null
 
 
     var documentAdditionalExpenses : List<AdditionalExpenses> = emptyList()
@@ -118,11 +120,14 @@ open class Document(val CardCode : String,
         return "Document(CardCode='$CardCode', Branch='$BPL_IDAssignedToInvoice', docEntry=$docEntry, docNum=$docNum, pedido_forca=$u_id_pedido_forca)"
     }
 
-    fun setPix(request: RequestQrCode, chave: DataRetonroPixQrCode) {
+    fun setPix(request: RequestPixDueDate, chave: DataRetonroPixQrCode) {
         if(request.docEntry() != docEntry)
             throw Exception("O qrCode nao pertence a esse documento")
         this.documentInstallments!!.find { it.InstallmentId == request.getInstallmentId() }?.also {
-            it.U_QrCodePix = chave.data.reference
+            it.U_QrCodePix = chave.data.textContent
+            it.U_pix_textContent = chave.data.textContent
+            it.U_pix_link = chave.data.link
+            it.U_pix_reference = chave.data.reference
         }
     }
 

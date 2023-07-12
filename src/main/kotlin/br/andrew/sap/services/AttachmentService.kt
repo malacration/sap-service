@@ -2,7 +2,7 @@ package br.andrew.sap.services
 
 import br.andrew.sap.infrastructure.odata.OData
 import br.andrew.sap.model.Attachment
-import br.andrew.sap.model.SapEnvrioment
+import br.andrew.sap.model.envrioments.SapEnvrioment
 import br.andrew.sap.model.SapError
 import br.andrew.sap.model.partner.BusinessPartner
 import br.andrew.sap.services.abstracts.EntitiesService

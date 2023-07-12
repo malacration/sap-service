@@ -1,7 +1,7 @@
 package br.andrew.sap.services
 
 import br.andrew.sap.infrastructure.odata.OData
-import br.andrew.sap.model.SapEnvrioment
+import br.andrew.sap.model.envrioments.SapEnvrioment
 import br.andrew.sap.model.User
 import br.andrew.sap.model.documents.PurchaseInvoice
 import br.andrew.sap.services.abstracts.EntitiesService

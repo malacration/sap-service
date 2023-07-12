@@ -2,34 +2,30 @@ package br.andrew.sap.services.uzzipay
 
 import br.andrew.sap.infrastructure.configurations.uzzipay.UzziPayEnvrioment
 import br.andrew.sap.model.uzzipay.ContaUzziPayPix
-import br.andrew.sap.model.uzzipay.DataRetonroPixQrCode
-import br.andrew.sap.model.uzzipay.RequestQrCode
+import br.andrew.sap.model.uzzipay.Transaction
 import org.springframework.http.RequestEntity
 import org.springframework.stereotype.Service
 import org.springframework.web.client.RestTemplate
-import javax.crypto.Mac
-import javax.crypto.spec.SecretKeySpec
 
 @Service
 class TransactionsPixService(val restTemplate: RestTemplate,
                              val envrioment: UzziPayEnvrioment) {
 
-    val url = envrioment.host+path()
+    val url = envrioment.consultaHost+path()
     fun path(): String {
         return "/api/transactions"
     }
 
-    fun get(id : String, conta: ContaUzziPayPix): Any? {
+    fun get(id : String, conta: ContaUzziPayPix): Transaction {
         val request = RequestEntity
-            .get(url+"/$id")
-            .header("Authorization","Bearer ${conta.tokenJwt}")
-            .header("X-API-Key","${conta.tokenJwt}")
+            .get(url+"?reference=$id")
+            .header("X-API-Key","${conta.consulta}")
             .build()
-        return restTemplate.exchange(request, DataRetonroPixQrCode::class.java).body ?:
-            throw Exception("Nao retornou qr code")
+        return restTemplate.exchange(request, Transaction::class.java).body ?:
+            throw Exception("Nao foi possivel encontrar a transaction")
     }
 
-    fun get(id : String): Any? {
+    fun get(id : String): Transaction {
         return get(id,envrioment.contas[0])
     }
 }
