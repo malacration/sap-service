@@ -6,7 +6,7 @@ import br.andrew.sap.model.envrioments.SapEnvrioment
 import br.andrew.sap.model.documents.Installment
 import br.andrew.sap.model.documents.Invoice
 import br.andrew.sap.model.partner.BusinessPartner
-import br.andrew.sap.model.uzzipay.RequestPixQrCodeSemContaBuilder
+import br.andrew.sap.model.uzzipay.builder.RequestPixDueDateSemContaBuilder
 import br.andrew.sap.services.AuthService
 import br.andrew.sap.services.BusinessPartnersService
 import br.andrew.sap.services.BussinessPlaceService
@@ -34,7 +34,7 @@ class InvoiceService(env: SapEnvrioment, restTemplate: RestTemplate, authService
             .getById(invoice.getBPL_IDAssignedToInvoice())
             .tryGetValue<BussinessPlace>()
         val partner = bussinesPartnersService.getById("'${invoice.CardCode}'").tryGetValue<BusinessPartner>()
-        val requestes = RequestPixQrCodeSemContaBuilder(partner,bussinessPlace,invoice).build()
+        val requestes = RequestPixDueDateSemContaBuilder(partner,bussinessPlace,invoice).build()
         requestes.forEach {
             invoice.setPix(it,pixService.genereateFor(it))
         }
@@ -47,7 +47,7 @@ class InvoiceService(env: SapEnvrioment, restTemplate: RestTemplate, authService
             .getById(invoice.getBPL_IDAssignedToInvoice())
             .tryGetValue<BussinessPlace>()
         val partner = bussinesPartnersService.getById("'${invoice.CardCode}'").tryGetValue<BusinessPartner>()
-        val requestes = RequestPixQrCodeSemContaBuilder(partner,bussinessPlace,invoice).build()
+        val requestes = RequestPixDueDateSemContaBuilder(partner,bussinessPlace,invoice).build()
         requestes.forEach {
             invoice.setPix(it,pixService.genereateFor(it))
         }
