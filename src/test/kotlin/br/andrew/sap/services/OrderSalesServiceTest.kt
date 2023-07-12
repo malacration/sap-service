@@ -37,7 +37,7 @@ class OrderSalesServiceTest {
             it.UnitPrice = PrecoUnitarioComDesoneracao()
                     .calculaPreco(it, SalesTaxAuthorities(-1,17.5,0.0,0.0,100.0)).toString()
         }
-        val totalDesonerado = orderBase.total()-orderBase.presumeDesonerado(17.5)
+        orderBase.total()-orderBase.presumeDesonerado(17.5)
 
         Assertions.assertEquals(670.0006,orderBase.total())
         Assertions.assertEquals(544.50,orderBase.totalNegociado())

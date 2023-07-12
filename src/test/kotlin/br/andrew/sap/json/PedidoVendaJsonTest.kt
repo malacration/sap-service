@@ -24,19 +24,19 @@ class PedidoVendaJsonTest {
     @Test
     fun testeJsonCliente(){
         val mapper = ObjectMapper().registerModule(KotlinModule())
-        val obj = mapper.readValue(json, jacksonTypeRef<PedidoVenda>())
+        mapper.readValue(json, jacksonTypeRef<PedidoVenda>())
     }
 
     @Test
     fun testeJson2Cliente(){
         val mapper = ObjectMapper().registerModule(KotlinModule())
-        val obj = mapper.readValue(json2, jacksonTypeRef<PedidoVenda>())
+        mapper.readValue(json2, jacksonTypeRef<PedidoVenda>())
     }
 
     @Test
     fun testeJsonSingleToList(){
         val mapper = ObjectMapper().registerModule(KotlinModule())
-        val obj = mapper.readValue(json2, jacksonTypeRef<PedidoVenda>())
+        mapper.readValue(json2, jacksonTypeRef<PedidoVenda>())
     }
 
     @Test

@@ -39,10 +39,10 @@ class RomaneioEntradaInsumoController(
             if(romaneioPesagem.u_CodItem == null)
                 ""
             else if(romaneioPesagem.u_CodParceiro == null)
-                romaneioPesagem.u_CodItem!!
+                romaneioPesagem.u_CodItem
             else {
                 alternateCatService
-                    .get(romaneioPesagem.u_CodItem!!, romaneioPesagem.u_CodParceiro!!)
+                    .get(romaneioPesagem.u_CodItem, romaneioPesagem.u_CodParceiro)
                     ?.substitute
                     ?: romaneioPesagem.u_CodItem
             }
