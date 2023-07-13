@@ -1,7 +1,7 @@
 package br.andrew.sap.services.tax
 
 import br.andrew.sap.model.SalesTaxCode
-import br.andrew.sap.model.SapEnvrioment
+import br.andrew.sap.model.envrioments.SapEnvrioment
 import br.andrew.sap.services.AuthService
 import br.andrew.sap.services.abstracts.EntitiesService
 import org.springframework.stereotype.Service

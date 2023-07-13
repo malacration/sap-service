@@ -3,7 +3,7 @@ package br.andrew.sap.services.document
 import br.andrew.sap.model.PrecoUnitarioComDesoneracao
 import br.andrew.sap.model.SalesTaxAuthorities
 import br.andrew.sap.model.SalesTaxCode
-import br.andrew.sap.model.SapEnvrioment
+import br.andrew.sap.model.envrioments.SapEnvrioment
 import br.andrew.sap.model.documents.Document
 import br.andrew.sap.model.documents.OrderSales
 import br.andrew.sap.services.AuthService

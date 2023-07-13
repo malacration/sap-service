@@ -1,27 +1,38 @@
 package br.andrew.sap.model.uzzipay
 
-import br.andrew.sap.model.BussinessPlace
-import br.andrew.sap.model.documents.Document
-import br.andrew.sap.model.documents.Installment
-import br.andrew.sap.model.partner.Address
-import br.andrew.sap.model.partner.BusinessPartner
-import br.andrew.sap.model.partner.CpfCnpj
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import java.math.BigDecimal
-import java.math.RoundingMode
-import java.text.DecimalFormat
-import java.util.Locale
+import java.text.SimpleDateFormat
+import java.time.LocalDate
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.util.*
 
-class RequestQrCode(
+class RequestPixDueDate(
     val externalIdentifier: String,
     private val conta : ContaUzziPayPix,
-    val keyType : Type,
     private val amount : BigDecimal,
-    val dueDate : String,
+    private val dueDate : LocalDate,
     val Payer : Payer,
     private val cnpj: String,
+    val keyType : Type = Type.EVP,
     val qrCodePurposeType : String = "BILLET",
 ) {
+    constructor(externalIdentifier: String,
+                conta: ContaUzziPayPix,
+                amount: BigDecimal,
+                dueDate: String, Payer: Payer, cnpj: String,
+                keyType: Type = Type.EVP) :
+            this(externalIdentifier,conta,amount,
+                LocalDate.parse(dueDate,DateTimeFormatter.ofPattern("yyy-MM-dd")),
+                Payer,
+                cnpj,keyType)
+
+    init{
+        if (LocalDate.now() > dueDate)
+            throw Exception("Data de vencimento não pode ser menor que a data atual")
+
+    }
     val key = conta.chavePix
 
     @JsonIgnoreProperties
@@ -51,6 +62,14 @@ class RequestQrCode(
 
     fun docNum(): String {
         return externalIdentifier.split("-")[0].replace("Num","")
+    }
+
+    fun getDueDate(): String {
+            if (LocalDate.now() == dueDate)
+                return SimpleDateFormat("yyyy-MM-dd")
+                    .format(Date.from(LocalDate.now().plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant()))
+        return dueDate.toString();
+
     }
 }
 

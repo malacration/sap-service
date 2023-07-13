@@ -40,12 +40,29 @@ class PedidoFieldConfiguration(val userFieldsMDService: UserFieldsMDService) {
         userFieldsMDService.findOrCreate(idItemForca)
 
 
-        //Deterinar se fez ou nao o fluxo de venda a prazo
         val fluxoVendaPrazo = FieldMd("fazer_fluxo_prazo","Fazer Fluxo Prazo?","OCRD")
                 .also {
                     it.ValidValuesMD = listOf(ValuesMd("0","NÃO"),ValuesMd("1","SIM"))
                     it.defaultValue = "0"
                 }
         userFieldsMDService.findOrCreate(fluxoVendaPrazo)
+
+
+        listOf(
+            FieldMd("pix_textContent","Text Content - PIX","INV6", DbType.db_Memo),
+            FieldMd("pix_link","Link - PIX","INV6", DbType.db_Memo),
+            FieldMd("pix_reference","Reference - PIX","INV6", DbType.db_Memo),
+        ).forEach { userFieldsMDService.findOrCreate(it) }
+
+
+        listOf(
+            FieldMd("gerar_pix","Gerar Pix?","OPYM")
+                .also {
+                it.ValidValuesMD = listOf(ValuesMd("0","NÃO"),ValuesMd("1","SIM"))
+                it.defaultValue = "0"
+            },
+        ).forEach { userFieldsMDService.findOrCreate(it)}
+
+
     }
 }

@@ -1,10 +1,8 @@
 package br.andrew.sap.services
 
 import br.andrew.sap.model.Item
-import br.andrew.sap.model.MotoristaContrato
-import br.andrew.sap.model.SapEnvrioment
+import br.andrew.sap.model.envrioments.SapEnvrioment
 import br.andrew.sap.model.documents.Product
-import br.andrew.sap.model.price.ItemPrice
 import br.andrew.sap.services.abstracts.EntitiesService
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Service

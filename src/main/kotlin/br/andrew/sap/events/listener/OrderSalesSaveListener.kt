@@ -2,7 +2,7 @@ package br.andrew.sap.events.listener
 
 import br.andrew.sap.events.DraftOrderSalesSaveEvent
 import br.andrew.sap.events.OrderSalesSaveEvent
-import br.andrew.sap.model.SapEnvrioment
+import br.andrew.sap.model.envrioments.SapEnvrioment
 import br.andrew.sap.model.documents.Document
 import br.andrew.sap.model.documents.OrderSales
 import br.andrew.sap.model.telegram.TipoMensagem

@@ -2,7 +2,7 @@ package br.andrew.sap.services.uzzipay
 
 import br.andrew.sap.infrastructure.configurations.uzzipay.UzziPayEnvrioment
 import br.andrew.sap.model.uzzipay.DataRetonroPixQrCode
-import br.andrew.sap.model.uzzipay.RequestQrCode
+import br.andrew.sap.model.uzzipay.RequestPixDueDate
 import org.springframework.http.RequestEntity
 import org.springframework.stereotype.Service
 import org.springframework.web.client.RestTemplate
@@ -18,7 +18,7 @@ class DynamicPixQrCodeService(val restTemplate: RestTemplate,
         return "/v1/qr-codes/dynamic/due-date"
     }
 
-    fun genereateFor(requestQrCode: RequestQrCode): DataRetonroPixQrCode {
+    fun genereateFor(requestQrCode: RequestPixDueDate): DataRetonroPixQrCode {
         val conta = requestQrCode.getContaSelecioanda(envrioment.contas)
         val toSign = "post:${path()}?${requestQrCode.externalIdentifier},${requestQrCode.getAmount()}"
         val hash = getHash(conta.privateKey,toSign)
