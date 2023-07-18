@@ -5,7 +5,7 @@ import br.andrew.sap.model.ErrorMsg
 import br.andrew.sap.model.SapError
 import br.andrew.sap.model.SapMessage
 import br.andrew.sap.model.exceptions.CreditException
-import br.andrew.sap.model.exceptions.LinkedPaymentMethodException
+import br.andrew.sap.model.exceptions.PixPaymentException
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.mock
@@ -33,6 +33,6 @@ class CreditExceptionTest {
         val msg = "Linked payment method BB-RC-BOL-1199 is inactive or is no longer linked with business partner CLI0003204"
         val sapErro = SapError(ErrorMsg("code", SapMessage("",msg)))
         val exception = sapErro.getError()
-        Assertions.assertTrue(exception is LinkedPaymentMethodException)
+        Assertions.assertTrue(exception is PixPaymentException)
     }
 }

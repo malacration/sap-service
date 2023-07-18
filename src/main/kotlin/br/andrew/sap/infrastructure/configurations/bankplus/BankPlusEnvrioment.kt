@@ -7,8 +7,9 @@ import org.springframework.context.annotation.Configuration
 @Configuration
 @ConfigurationProperties(prefix = "bankplus", ignoreInvalidFields = true, ignoreUnknownFields = true)
 class BankPlusEnvrioment {
-    lateinit var host : String
-    lateinit var token : String
+    var host : String = ""
+    var token : String  = ""
+    var base : String  = ""
 }
 
 

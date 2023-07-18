@@ -4,6 +4,7 @@ import br.andrew.sap.model.Cancelled
 import br.andrew.sap.model.WarehouseDefault
 import br.andrew.sap.model.uzzipay.DataRetonroPixQrCode
 import br.andrew.sap.model.uzzipay.RequestPixDueDate
+import br.andrew.sap.model.uzzipay.Transaction
 import br.andrew.sap.services.ItemsService
 import com.fasterxml.jackson.annotation.JsonFormat
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
@@ -44,6 +45,11 @@ open class Document(val CardCode : String,
     var docType: String? = null
     var docObjectCode : String? = null
     var DocTotalFc : BigDecimal? = null
+
+    val DocumentStatus : String? = null
+    //bost_Close
+    //bost_Open
+
 
 
     var documentAdditionalExpenses : List<AdditionalExpenses> = emptyList()
@@ -129,6 +135,13 @@ open class Document(val CardCode : String,
             it.U_pix_link = chave.data.link
             it.U_pix_reference = chave.data.reference
         }
+    }
+
+    fun getInstallmentBy(transaction: Transaction): Installment? {
+        val parcelas = documentInstallments?.filter { it.getBy(transaction) } ?: listOf()
+        if(parcelas.size > 1)
+            throw Exception("Existe mais de uma parcela para baixar")
+        return parcelas.firstOrNull()
     }
 
 

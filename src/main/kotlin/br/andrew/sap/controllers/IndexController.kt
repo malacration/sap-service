@@ -17,7 +17,6 @@ class IndexController(val env: SapEnvrioment,
                       val restTemplate: RestTemplate,
                       val authService: AuthService,
                       val version : Version,
-                      val vendorPaymentService: VendorPaymentService,
                       val service: DummyService) {
 
     @GetMapping("/")

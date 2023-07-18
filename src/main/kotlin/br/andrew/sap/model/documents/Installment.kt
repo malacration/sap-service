@@ -1,5 +1,7 @@
 package br.andrew.sap.model.documents
 
+import br.andrew.sap.model.bankplus.Boleto
+import br.andrew.sap.model.uzzipay.Transaction
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonProperty
@@ -34,6 +36,18 @@ class Installment(@JsonProperty("DueDate") private val _dueDate : Date?, val tot
                 "-ins:${this.InstallmentId}" +
                 "-${document.docObjectCode}" +
                 "-"+System.currentTimeMillis()
+    }
+
+    fun getBy(transaction: Transaction): Boolean {
+        if(this.U_pix_reference == null)
+            return false
+        return (this.U_pix_reference == transaction.txId)
+    }
+
+    fun getBy(boleto: Boleto): Boolean {
+        if(this.InstallmentId == null)
+            return false
+        return this.InstallmentId == boleto.numeroDaParcela
     }
 
     companion object{

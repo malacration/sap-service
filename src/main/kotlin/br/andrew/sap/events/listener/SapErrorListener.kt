@@ -5,7 +5,7 @@ import br.andrew.sap.model.envrioments.SapEnvrioment
 import br.andrew.sap.model.SapError
 import br.andrew.sap.model.documents.Document
 import br.andrew.sap.model.exceptions.BusinessPartnerNotAssignedException
-import br.andrew.sap.model.exceptions.LinkedPaymentMethodException
+import br.andrew.sap.model.exceptions.PixPaymentException
 import br.andrew.sap.model.exceptions.SapGenericException
 import br.andrew.sap.model.telegram.TipoMensagem
 import br.andrew.sap.services.BusinessPartnersService
@@ -59,7 +59,7 @@ class SapErrorListener(val telegramRequest : TelegramRequestService,
     }
 
     @EventListener
-    fun linkedPaymentMethodException(erro : LinkedPaymentMethodException){
+    fun linkedPaymentMethodException(erro : PixPaymentException){
         val entry = erro.erro.entry
         if(entry is Document)
             bussinesPartenerService.addPaymentMethod(entry.CardCode,entry.paymentMethod!!)
