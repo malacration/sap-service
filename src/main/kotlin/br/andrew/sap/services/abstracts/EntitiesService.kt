@@ -3,6 +3,7 @@ package br.andrew.sap.services.abstracts
 import br.andrew.sap.infrastructure.odata.Filter
 import br.andrew.sap.infrastructure.odata.OData
 import br.andrew.sap.infrastructure.odata.OrderBy
+import br.andrew.sap.model.DocEntry
 import br.andrew.sap.model.envrioments.SapEnvrioment
 import br.andrew.sap.model.SapError
 import br.andrew.sap.model.Session
@@ -73,6 +74,10 @@ abstract class EntitiesService<T>(protected val env: SapEnvrioment,
                 .header("cookie","B1SESSION=${session().sessionId}")
                 .build()
         return restTemplate.exchange(request, OData::class.java).body!!
+    }
+
+    fun getBy(doc : DocEntry) : OData {
+        return getById(doc.DocEntry ?: throw Exception("DocEntry não pode ser nulo"))
     }
 
     fun get(page : Pageable) : OData {

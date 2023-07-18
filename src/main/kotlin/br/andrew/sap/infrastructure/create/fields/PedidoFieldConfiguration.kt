@@ -51,9 +51,11 @@ class PedidoFieldConfiguration(val userFieldsMDService: UserFieldsMDService) {
         listOf(
             FieldMd("pix_textContent","Text Content - PIX","INV6", DbType.db_Memo),
             FieldMd("pix_link","Link - PIX","INV6", DbType.db_Memo),
-            FieldMd("pix_reference","Reference - PIX","INV6", DbType.db_Memo),
+            FieldMd("pix_reference","Reference - PIX","INV6", DbType.db_Alpha),
         ).forEach { userFieldsMDService.findOrCreate(it) }
 
+        userFieldsMDService.findOrCreate(
+            FieldMd("pix_reference","Reference - PIX","ORCT",DbType.db_Alpha))
 
         listOf(
             FieldMd("gerar_pix","Gerar Pix?","OPYM")

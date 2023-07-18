@@ -8,5 +8,6 @@ class ContaUzziPayPix {
     lateinit var privateKey : String
     lateinit var chavePix : String
     lateinit var consulta : String
+    lateinit var contabil : String
 }
 
