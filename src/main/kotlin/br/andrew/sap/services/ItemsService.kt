@@ -29,7 +29,7 @@ class ItemsService(env : SapEnvrioment,
     }
 
     fun getPriceBase(documentLine: Product): Double {
-        return getPriceBase(documentLine.ItemCode!!)
+        return getPriceBase(documentLine.ItemCode ?:throw Exception("ItemCode is null"))
     }
 }
 

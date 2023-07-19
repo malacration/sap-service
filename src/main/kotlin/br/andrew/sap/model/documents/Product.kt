@@ -12,6 +12,9 @@ import com.fasterxml.jackson.databind.annotation.JsonNaming
 class Product(itemCode : String, quantity : String, unitPrice : String, usage : Int = 9)
     : DocumentLines(unitPrice, quantity, usage){
 
+    init {
+        this.ItemCode = itemCode
+    }
     override fun Duplicate(): Product {
         return Product(ItemCode!!,Quantity,UnitPrice,Usage).also {
             it.TaxCode = TaxCode
