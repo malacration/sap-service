@@ -1,5 +1,6 @@
 package br.andrew.sap.model.documents
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.databind.PropertyNamingStrategy
@@ -15,6 +16,10 @@ class Product(itemCode : String, quantity : String, unitPrice : String, usage : 
     init {
         this.ItemCode = itemCode
     }
+
+    @JsonIgnore
+    val id = itemCode
+
     override fun Duplicate(): Product {
         return Product(ItemCode!!,Quantity,UnitPrice,Usage).also {
             it.TaxCode = TaxCode

@@ -14,6 +14,8 @@ import kotlin.reflect.jvm.javaField
 @JsonDeserialize(using = DocumentLinesDeserializer::class)
 abstract class DocumentLines(var UnitPrice : String, var Quantity : String, var Usage : Int = 9) {
 
+    var Commission: Double? = null
+    var u_idTabela : Int? = null
     var ItemCode : String? = null
     var LineNum : Int? = null
     var TaxCode : String? = null
@@ -32,9 +34,11 @@ abstract class DocumentLines(var UnitPrice : String, var Quantity : String, var 
         return (UnitPrice.toDouble() * Quantity.toDouble()) * (1-(DiscountPercent ?: 0.0)/100)
     }
 
-    fun aplicaBase(itemService: ItemsService) {
+    fun aplicaBase(precoBase : Double, idTabela : Int, comissao : Double) {
         if(this is Product)
-            this.U_preco_base = itemService.getPriceBase(this)
+            this.U_preco_base = precoBase
+        this.u_idTabela = idTabela
+        this.Commission = comissao
     }
 
     fun totalAntesDesconto() {

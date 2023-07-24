@@ -65,6 +65,20 @@ class PedidoFieldConfiguration(val userFieldsMDService: UserFieldsMDService) {
             },
         ).forEach { userFieldsMDService.findOrCreate(it)}
 
+        listOf(
+            FieldMd("publica_forca","Subir Força de venda?","OPLN")
+            .also {
+                it.ValidValuesMD = listOf(ValuesMd("0","NÃO"),ValuesMd("1","SIM"))
+                it.defaultValue = "0"
+            },
+        ).forEach { userFieldsMDService.findOrCreate(it) }
+
+
+        listOf(
+            FieldMd("idTabela","Id Tabela preco","INV1",DbType.db_Numeric),
+        ).forEach { userFieldsMDService.findOrCreate(it) }
+
+
 
     }
 }

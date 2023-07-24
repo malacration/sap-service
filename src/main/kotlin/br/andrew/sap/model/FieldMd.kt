@@ -9,7 +9,7 @@ import com.fasterxml.jackson.databind.annotation.JsonNaming
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
 class FieldMd(val name : String,
-              val description: String,
+              val description: String?,
               val tableName : String,
               val type : DbType = DbType.db_Alpha,
               val mandatory: String = "tNO") {
@@ -19,6 +19,8 @@ class FieldMd(val name : String,
     val subType : String? = if(type == DbType.db_Float) "st_Measurement" else null
     var defaultValue: String? = null
     var editSize : Int? = null
+
+    var linkedUDO : String? = null
 
 }
 

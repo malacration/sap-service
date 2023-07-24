@@ -19,6 +19,7 @@ class PedidoVenda(
 
     var frete: Double? = null
     var observacao : String? = null
+    var precoBase : Int? = null
 
     //TODO fazer parse de data
     var dataEntraga : String? = SimpleDateFormat("yyy-MM-dd").format(Date())
