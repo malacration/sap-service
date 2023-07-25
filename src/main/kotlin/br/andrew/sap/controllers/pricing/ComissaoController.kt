@@ -23,4 +23,9 @@ class ComissaoController(val service: ComissaoService) {
         return service.get(id)
     }
 
+    @GetMapping("/tabela/{id}")
+    fun getByIdTabela(@PathVariable id : Int) : Any{
+        return service.getByIdTabela(id)
+    }
+
 }

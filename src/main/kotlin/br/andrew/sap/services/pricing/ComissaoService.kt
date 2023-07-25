@@ -23,7 +23,7 @@ class ComissaoService(env : SapEnvrioment,
 
     @Caching
     fun get(id : Int): Comissao {
-        return getById(id).tryGetValue();
+        return getById("'$id'").tryGetValue();
     }
 
     fun getByIdTabela(idTabela: Int): Comissao {
