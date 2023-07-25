@@ -1,6 +1,7 @@
 package br.andrew.sap.model.documents
 
-import br.andrew.sap.model.Cancelled
+import br.andrew.sap.model.Comissao
+import br.andrew.sap.model.enums.Cancelled
 import br.andrew.sap.model.WarehouseDefault
 import br.andrew.sap.model.uzzipay.DataRetonroPixQrCode
 import br.andrew.sap.model.uzzipay.RequestPixDueDate
@@ -67,10 +68,6 @@ open class Document(val CardCode : String,
         return this.DocumentLines
                 .filter { it is Product && it.TaxCode != null && it.TaxCode!!.isNotEmpty() }
                 .groupBy { if(it is Product) it.TaxCode!! } as Map<String, List<Product>>
-    }
-
-    fun aplicaBase(itemService: ItemsService){
-        this.DocumentLines.forEach { it.aplicaBase(itemService) }
     }
 
     fun usaBrenchDefaultWarehouse(branchs : List<WarehouseDefault>){

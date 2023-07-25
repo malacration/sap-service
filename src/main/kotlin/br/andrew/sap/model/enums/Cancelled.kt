@@ -1,4 +1,4 @@
-package br.andrew.sap.model
+package br.andrew.sap.model.enums
 
 enum class Cancelled {
     tNO, tYES;

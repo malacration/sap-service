@@ -1,7 +1,8 @@
-package br.andrew.sap.services
+package br.andrew.sap.services.pricing
 
 
 import br.andrew.sap.model.envrioments.SapEnvrioment
+import br.andrew.sap.services.AuthService
 import br.andrew.sap.services.abstracts.EntitiesService
 import org.springframework.stereotype.Service
 import org.springframework.web.client.RestTemplate
@@ -9,7 +10,8 @@ import org.springframework.web.client.RestTemplate
 @Service
 class PriceListsService(env : SapEnvrioment,
                         restTemplate: RestTemplate,
-                        authService: AuthService)
+                        authService: AuthService
+)
     : EntitiesService<String>(env, restTemplate,authService) {
 
     override fun path(): String {
