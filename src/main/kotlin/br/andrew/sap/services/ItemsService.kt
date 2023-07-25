@@ -4,7 +4,6 @@ import br.andrew.sap.model.Item
 import br.andrew.sap.model.envrioments.SapEnvrioment
 import br.andrew.sap.model.documents.Product
 import br.andrew.sap.services.abstracts.EntitiesService
-import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Service
 import org.springframework.web.client.RestTemplate
 

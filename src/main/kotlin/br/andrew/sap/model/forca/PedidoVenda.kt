@@ -2,6 +2,8 @@ package br.andrew.sap.model.forca
 
 import br.andrew.sap.model.documents.AdditionalExpenses
 import br.andrew.sap.model.documents.OrderSales
+import br.andrew.sap.services.ItemsService
+import br.andrew.sap.services.pricing.ComissaoService
 import com.fasterxml.jackson.annotation.*
 import java.text.SimpleDateFormat
 import java.util.*
@@ -32,9 +34,9 @@ class PedidoVenda(
 
 
     @JsonIgnore
-    fun getOrder(): OrderSales {
+    fun getOrder(itemService: ItemsService, comissaoService: ComissaoService): OrderSales {
         return OrderSales(idCliente, dataEntraga,
-                produtos.map { it.getProduct(tipoPedido) },idEmpresa)
+                produtos.map { it.getProduct(tipoPedido,itemService,comissaoService) },idEmpresa)
                 .also {
                     it.paymentMethod = idFormaPagamento
                     it.discountPercent = desconto

@@ -1,5 +1,5 @@
 package br.andrew.sap.model.documents
-import br.andrew.sap.services.ItemsService
+import br.andrew.sap.model.Comissao
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.databind.*
@@ -34,11 +34,11 @@ abstract class DocumentLines(var UnitPrice : String, var Quantity : String, var 
         return (UnitPrice.toDouble() * Quantity.toDouble()) * (1-(DiscountPercent ?: 0.0)/100)
     }
 
-    fun aplicaBase(precoBase : Double, idTabela : Int, comissao : Double) {
+    fun aplicaBase(precoBase: Double, idTabela: Int, comissao: Comissao) {
         if(this is Product)
             this.U_preco_base = precoBase
         this.u_idTabela = idTabela
-        this.Commission = comissao
+        this.Commission = comissao.U_porcentagem
     }
 
     fun totalAntesDesconto() {

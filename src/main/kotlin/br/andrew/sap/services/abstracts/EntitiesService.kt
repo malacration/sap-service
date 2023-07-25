@@ -50,7 +50,7 @@ abstract class EntitiesService<T>(protected val env: SapEnvrioment,
         return restTemplate.exchange(request, OData::class.java).body
     }
 
-    fun get(filter : Filter = Filter(), order : OrderBy = OrderBy(), page : Pageable = Pageable.ofSize(20)) : OData {
+    open fun get(filter : Filter = Filter(), order : OrderBy = OrderBy(), page : Pageable = Pageable.ofSize(20)) : OData {
         val aditional = listOf(filter,order).filter { it.toString().isNotEmpty() }.joinToString(" ","&")
         val skip = (page.pageNumber*page.pageSize).toString()+"&\$inlinecount=allpages"
         val request = RequestEntity
@@ -68,7 +68,7 @@ abstract class EntitiesService<T>(protected val env: SapEnvrioment,
         return restTemplate.exchange(request, OData::class.java).body!!
     }
 
-    fun getById(id : Int) : OData {
+    open fun getById(id : Int) : OData {
         val request = RequestEntity
                 .get(env.host+this.path()+"(${id})")
                 .header("cookie","B1SESSION=${session().sessionId}")

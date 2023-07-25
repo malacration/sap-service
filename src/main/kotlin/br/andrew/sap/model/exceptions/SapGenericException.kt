@@ -2,7 +2,6 @@ package br.andrew.sap.model.exceptions
 
 import br.andrew.sap.infrastructure.configurations.EventPublisherSingleton
 import br.andrew.sap.model.SapError
-import br.andrew.sap.model.documents.Document
 import br.andrew.sap.model.documents.OrderSales
 import br.andrew.sap.model.forca.PedidoVenda
 
@@ -15,10 +14,7 @@ class CreditException(error: SapError, val location : String?, cause: Throwable?
     val idLocation : String = "(\\d+)(?=\\)$)".toRegex().find(location?:"")?.value ?: ""
 
     fun getOrderFake(pedido : PedidoVenda) : OrderSales{
-        return pedido.getOrder().also {
-            it.docNum = idLocation
-            it.docEntry = idLocation.toIntOrNull()
-        }
+        return OrderSales("CardCode", "", listOf(),"")
 
     }
 }

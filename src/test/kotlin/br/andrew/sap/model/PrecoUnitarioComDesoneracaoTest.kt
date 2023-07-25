@@ -1,12 +1,15 @@
 package br.andrew.sap.model
 
 import br.andrew.sap.model.forca.PedidoVenda
+import br.andrew.sap.services.ComissaoServiceMock
+import br.andrew.sap.services.ItemsService
+import br.andrew.sap.services.pricing.ComissaoService
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.kotlin.KotlinFeature
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.fasterxml.jackson.module.kotlin.jacksonTypeRef
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
+import org.mockito.Mockito.mock
 import java.math.BigDecimal
 
 class PrecoUnitarioComDesoneracaoTest {
@@ -73,8 +76,8 @@ class PrecoUnitarioComDesoneracaoTest {
     @Test
     fun pedidoDesonerado(){
         val mapper = ObjectMapper().registerModule(KotlinModule())
-        val pedidoBase = mapper.readValue(json, jacksonTypeRef<PedidoVenda>())
-        val orderBase = pedidoBase.getOrder()
+        val pedidoBase = mapper.readValue(json, jacksonTypeRef<PedidoVenda>()).also { it.produtos.forEach { it.listapreco = 5 } }
+        val orderBase = pedidoBase.getOrder(mock(ItemsService::class.java), ComissaoServiceMock.get())
 
         val imposto = SalesTaxAuthorities(0,
                 17.5,

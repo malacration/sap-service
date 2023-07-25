@@ -10,6 +10,7 @@ import br.andrew.sap.model.exceptions.CreditException
 import br.andrew.sap.model.forca.PedidoVenda
 import br.andrew.sap.services.*
 import br.andrew.sap.services.document.OrdersService
+import br.andrew.sap.services.pricing.ComissaoService
 import org.slf4j.LoggerFactory
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.web.bind.annotation.*
@@ -18,8 +19,8 @@ import java.util.*
 @RestController
 @RequestMapping("pedido-venda")
 class OrderSalesController(val ordersService: OrdersService,
-                           val businesPartner : BusinessPartnersService,
                            val itemService : ItemsService,
+                           val comissaoService: ComissaoService,
                            val applicationEventPublisher: ApplicationEventPublisher) {
 
     val logger = LoggerFactory.getLogger(OrderSalesController::class.java)
@@ -28,8 +29,7 @@ class OrderSalesController(val ordersService: OrdersService,
     fun save(@RequestBody pedido : PedidoVenda): Any {
         try {
             val order = ordersService.save(
-                    pedido.getOrder().also {
-                        it.aplicaBase(itemService)
+                    pedido.getOrder(itemService,comissaoService).also {
                         it.usaBrenchDefaultWarehouse(WarehouseDefaultConfig.warehouses)
                         it.setDistribuicaoCusto(DistribuicaoCustoByBranchConfig.distibucoesCustos)
                     }

@@ -14,7 +14,7 @@ class FieldMd(val name : String,
               val type : DbType = DbType.db_Alpha,
               val mandatory: String = "tNO") {
 
-    var size : Int? = 250
+    var size : Int? = type.size
     var ValidValuesMD : List<ValuesMd> = listOf()
     val subType : String? = if(type == DbType.db_Float) "st_Measurement" else null
     var defaultValue: String? = null
@@ -24,12 +24,12 @@ class FieldMd(val name : String,
 
 }
 
-enum class DbType {
-    db_Alpha,
-    db_Memo, //Observacao
-    db_Numeric,
-    db_Float,
-    db_Date;
+enum class DbType(val size : Int?){
+    db_Alpha(254),
+    db_Memo(null), //Observacao
+    db_Numeric(null),
+    db_Float(null),
+    db_Date(null);
 }
 
 @JsonNaming(PropertyNamingStrategy.UpperCamelCaseStrategy::class)
