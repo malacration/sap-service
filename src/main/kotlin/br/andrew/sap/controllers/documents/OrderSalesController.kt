@@ -1,6 +1,5 @@
 package br.andrew.sap.controllers.documents
 
-import br.andrew.sap.events.DraftOrderSalesSaveEvent
 import br.andrew.sap.events.OrderSalesSaveEvent
 import br.andrew.sap.infrastructure.WarehouseDefaultConfig
 import br.andrew.sap.infrastructure.configurations.DistribuicaoCustoByBranchConfig
@@ -38,7 +37,7 @@ class OrderSalesController(val ordersService: OrdersService,
             return order
         }catch (t : CreditException){
             logger.warn(t.message,t)
-            return t.getOrderFake(pedido).also { applicationEventPublisher.publishEvent(DraftOrderSalesSaveEvent(it)) }
+            return t.getOrderFake().also { applicationEventPublisher.publishEvent(t) }
         }
     }
 
