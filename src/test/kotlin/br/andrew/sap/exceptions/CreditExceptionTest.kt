@@ -35,4 +35,13 @@ class CreditExceptionTest {
         val exception = sapErro.getError()
         Assertions.assertTrue(exception is PixPaymentException)
     }
+
+    @Test
+    fun testOrderFake(){
+        val locationEntrada = "https://localhost:6666/b1s/v1/Drafts(5099)"
+        val sapErro = SapError(ErrorMsg("code", SapMessage("","")))
+        val excption = CreditException(sapErro,locationEntrada)
+        Assertions.assertEquals("5099",excption.idLocation)
+        Assertions.assertEquals(5099,excption.getOrderFake().docEntry)
+    }
 }
