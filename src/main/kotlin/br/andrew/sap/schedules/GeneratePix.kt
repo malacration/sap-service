@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component
 
 
 @Component
-//@ConditionalOnProperty(value = ["org.quartz.enable"], havingValue = "true", matchIfMissing = false)
+@ConditionalOnProperty(value = ["org.quartz.enable"], havingValue = "true", matchIfMissing = false)
 class GeneratePix(
         val invoiceService: InvoiceService,
         val approvalRequestsService : ApprovalRequestsService,
