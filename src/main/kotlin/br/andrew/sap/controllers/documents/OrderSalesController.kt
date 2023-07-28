@@ -26,18 +26,17 @@ class OrderSalesController(val ordersService: OrdersService,
 
     @PostMapping("")
     fun save(@RequestBody pedido : PedidoVenda): Any {
+        val order = pedido.getOrder(itemService,comissaoService).also {
+            it.usaBrenchDefaultWarehouse(WarehouseDefaultConfig.warehouses)
+            it.setDistribuicaoCusto(DistribuicaoCustoByBranchConfig.distibucoesCustos)
+        }
         try {
-            val order = ordersService.save(
-                    pedido.getOrder(itemService,comissaoService).also {
-                        it.usaBrenchDefaultWarehouse(WarehouseDefaultConfig.warehouses)
-                        it.setDistribuicaoCusto(DistribuicaoCustoByBranchConfig.distibucoesCustos)
-                    }
-            ).tryGetValue<OrderSales>()
-            applicationEventPublisher.publishEvent(OrderSalesSaveEvent(order))
-            return order
+            return ordersService.save(order).tryGetValue<OrderSales>().also {
+                applicationEventPublisher.publishEvent(OrderSalesSaveEvent(order))
+            }
         }catch (t : CreditException){
             logger.warn(t.message,t)
-            return t.getOrderFake().also { applicationEventPublisher.publishEvent(t) }
+            return t.getOrderFake(order).also { applicationEventPublisher.publishEvent(t) }
         }
     }
 
