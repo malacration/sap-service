@@ -21,5 +21,6 @@ enum class TbType {
     bott_MasterData,
     bott_NoObject,
     bott_Document,
-    bott_DocumentLines
+    bott_DocumentLines,
+    bott_MasterDataLines
 }

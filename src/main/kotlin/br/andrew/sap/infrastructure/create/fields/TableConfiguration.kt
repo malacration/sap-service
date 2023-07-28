@@ -30,5 +30,14 @@ class TableConfiguration(userFieldsMDService: UserFieldsMDService,
             FieldMd("tipoComissao","Selecionar Comissao","OPLN",DbType.db_Alpha)
                 .also { it.linkedUDO = "comissao" },
         ).forEach { userFieldsMDService.findOrCreate(it) }
+
+        tableService.findOrCreate(TableMd(
+            "condicoesFV","Linha condiçoes ",TbType.bott_MasterDataLines
+        ))
+        listOf(
+            FieldMd("desconto","Desconto (%)","@condicoesFV",DbType.db_Float),
+            FieldMd("juros","Juros (%)","@condicoesFV",DbType.db_Float),
+        ).forEach { userFieldsMDService.findOrCreate(it) }
+
     }
 }
