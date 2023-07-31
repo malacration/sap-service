@@ -2,6 +2,8 @@ package br.andrew.sap.infrastructure.create.views
 
 import br.andrew.sap.model.Query
 import br.andrew.sap.services.structs.QuerysServices
+import br.andrew.sap.services.structs.UserFieldsMDService
+import org.slf4j.LoggerFactory
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Profile
@@ -17,11 +19,19 @@ class ProvisioningConfiguration(val queryService: QuerysServices) {
         return ClassPathResource("views").file.listFiles()
     }
 
+    val logger = LoggerFactory.getLogger(ProvisioningConfiguration::class.java)
+
+
     @Bean
     fun createQuerys(): List<Query> {
         val files = getResourcesFiles()
         val querys = files.map { Query(it.name,it.name,it.readText()) }
-        querys.forEach { queryService.replace(it) }
+
+
+        querys.forEach {
+            logger.info("Atualizando view {${it.sqlName}")
+            queryService.replace(it)
+        }
         return querys
     }
 }

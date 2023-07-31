@@ -4,6 +4,8 @@ import br.andrew.sap.model.DbType
 import br.andrew.sap.model.FieldMd
 import br.andrew.sap.model.ValuesMd
 import br.andrew.sap.services.structs.UserFieldsMDService
+import br.andrew.sap.services.structs.UserTablesMDService
+import org.slf4j.LoggerFactory
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Profile
 
@@ -28,7 +30,7 @@ class PedidoFieldConfiguration(val userFieldsMDService: UserFieldsMDService) {
         val precoBase = FieldMd("preco_base","Preço base","DRF1", DbType.db_Float)
         userFieldsMDService.findOrCreate(precoBase)
 
-        val idForcaVendas = FieldMd("id_forca","Id Força de vendas","OCRD",DbType.db_Numeric)
+        val idForcaVendas = FieldMd("U_id_pedido_forca","Id Força de vendas","OCRD",DbType.db_Numeric)
                 .also {
                     it.size = null
                 }
