@@ -31,9 +31,9 @@ class OrderSalesController(val ordersService: OrdersService,
             it.setDistribuicaoCusto(DistribuicaoCustoByBranchConfig.distibucoesCustos)
         }
         try {
-            return ordersService.save(order).tryGetValue<OrderSales>().also {
-                applicationEventPublisher.publishEvent(OrderSalesSaveEvent(order))
-            }
+            val retorno = ordersService.save(order).tryGetValue<OrderSales>()
+            applicationEventPublisher.publishEvent(OrderSalesSaveEvent(retorno))
+            return retorno;
         }catch (t : CreditException){
             logger.warn(t.message,t)
             return t.getOrderFake(order).also { applicationEventPublisher.publishEvent(t) }
