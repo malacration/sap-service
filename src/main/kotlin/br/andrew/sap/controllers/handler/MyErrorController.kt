@@ -1,5 +1,7 @@
 package br.andrew.sap.controllers.handler
 
+import br.andrew.sap.model.telegram.TipoMensagem
+import br.andrew.sap.services.TelegramRequestService
 import jakarta.servlet.RequestDispatcher
 import jakarta.servlet.http.HttpServletRequest
 import org.slf4j.LoggerFactory
@@ -9,7 +11,7 @@ import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.RequestMapping
 import java.util.*
 
-class MyErrorController : ErrorController {
+class MyErrorController(val telegram : TelegramRequestService) : ErrorController {
 
     val log = LoggerFactory.getLogger(MyErrorController::class.java)
 
@@ -32,6 +34,8 @@ class MyErrorController : ErrorController {
             ErroDto(t.message ?: "Pagina Não encontrada",traceId,t)
         else
             ErroDto(t.message ?: "Erro inesperado",traceId,t)
+
+        telegram.send(t.message ?: "Sem mensagem",TipoMensagem.erros)
 
         return ResponseEntity
             .status(statusCode)
