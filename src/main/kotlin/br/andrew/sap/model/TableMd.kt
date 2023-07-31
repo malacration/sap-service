@@ -9,17 +9,18 @@ import com.fasterxml.jackson.databind.annotation.JsonNaming
 @JsonNaming(PropertyNamingStrategy.UpperCamelCaseStrategy::class)
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
-class TableMd(val tableName : String,
+class TableMd(tableName : String,
               val tableDescription: String,
               val tableType : TbType) {
 
     val archivable : YesNo = YesNo.tNO
-
+    val tableName = tableName.uppercase()
 }
 
 enum class TbType {
     bott_MasterData,
     bott_NoObject,
     bott_Document,
-    bott_DocumentLines
+    bott_DocumentLines,
+    bott_MasterDataLines
 }
