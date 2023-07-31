@@ -10,7 +10,7 @@ import com.fasterxml.jackson.databind.annotation.JsonNaming
 @JsonInclude(JsonInclude.Include.NON_NULL)
 class FieldMd(val name : String,
               val description: String?,
-              val tableName : String,
+               tableName : String,
               val type : DbType = DbType.db_Alpha,
               val mandatory: String = "tNO") {
 
@@ -21,6 +21,7 @@ class FieldMd(val name : String,
     var editSize : Int? = null
 
     var linkedUDO : String? = null
+    var tableName = tableName.uppercase()
 
 }
 
