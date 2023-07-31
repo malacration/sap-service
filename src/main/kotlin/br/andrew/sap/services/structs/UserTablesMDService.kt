@@ -1,5 +1,6 @@
 package br.andrew.sap.services.structs
 
+import br.andrew.sap.controllers.documents.InvoicesController
 import br.andrew.sap.infrastructure.odata.Condicao
 import br.andrew.sap.infrastructure.odata.Filter
 import br.andrew.sap.infrastructure.odata.Predicate
@@ -7,6 +8,7 @@ import br.andrew.sap.model.TableMd
 import br.andrew.sap.model.envrioments.SapEnvrioment
 import br.andrew.sap.services.AuthService
 import br.andrew.sap.services.abstracts.EntitiesService
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.web.client.RestTemplate
 
@@ -17,7 +19,10 @@ class UserTablesMDService(env: SapEnvrioment, restTemplate: RestTemplate,
         return "/b1s/v1/UserTablesMD"
     }
 
+    val logger = LoggerFactory.getLogger(UserTablesMDService::class.java)
+
     fun findOrCreate(table : TableMd){
+        logger.info("Verificando se a tabela ${table.tableName} existe")
         val predicates = listOf(
             Predicate("TableName",table.tableName, Condicao.EQUAL),
         )
