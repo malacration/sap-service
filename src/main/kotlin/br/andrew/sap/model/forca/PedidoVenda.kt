@@ -38,7 +38,11 @@ class PedidoVenda(
         return OrderSales(idCliente, dataEntraga,
                 produtos.map { it.getProduct(tipoPedido,itemService,comissaoService) },idEmpresa)
                 .also {
-                    it.paymentMethod = idFormaPagamento
+                    val formas = idFormaPagamento.split("_")
+                    if(formas.size > 1)
+                        it.paymentMethod = formas[1]
+                    else
+                        it.paymentMethod = idFormaPagamento
                     it.discountPercent = desconto
                     it.paymentGroupCode = idCondicaoPagamento
                     it.salesPersonCode = codVendedor
