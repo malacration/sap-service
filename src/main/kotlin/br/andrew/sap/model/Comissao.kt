@@ -5,6 +5,8 @@ import com.fasterxml.jackson.databind.PropertyNamingStrategy
 import com.fasterxml.jackson.databind.annotation.JsonNaming
 
 
+@JsonNaming(PropertyNamingStrategy.UpperCamelCaseStrategy::class)
+@JsonIgnoreProperties(ignoreUnknown = true)
 class Comissao(val Code : Int, val U_porcentagem : Double) {
 
     var descontoMaximo : Double? = null
@@ -23,6 +25,9 @@ class Comissao(val Code : Int, val U_porcentagem : Double) {
 
 
 //TODO nao pode existir comissao sem Prazo Pagamento
+
+@JsonNaming(PropertyNamingStrategy.UpperCamelCaseStrategy::class)
+@JsonIgnoreProperties(ignoreUnknown = true)
 class PrazoPagamento(){
     // idPrazoReal-idTabela
     val prazoPagamento = "LinkObjetoSAP"
@@ -30,10 +35,15 @@ class PrazoPagamento(){
     val juros = ""
 }
 
+@JsonNaming(PropertyNamingStrategy.UpperCamelCaseStrategy::class)
+@JsonIgnoreProperties(ignoreUnknown = true)
 class LiberadoPara(){
     var filial : String = "";
     var vendedor : String = "";
 }
+
+@JsonNaming(PropertyNamingStrategy.UpperCamelCaseStrategy::class)
+@JsonIgnoreProperties(ignoreUnknown = true)
 class DescontoRegressivo(val U_porcentagemDesconto : Double, val U_porcentagemComissao : Double)
 
 enum class TipoDesconto(){
