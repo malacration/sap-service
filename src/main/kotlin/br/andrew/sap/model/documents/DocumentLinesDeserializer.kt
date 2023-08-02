@@ -12,7 +12,7 @@ class DocumentLinesDeserializer : JsonDeserializer<DocumentLines>() {
     @Throws(IOException::class, JsonProcessingException::class)
     override fun deserialize(jp: JsonParser, ctxt: DeserializationContext): DocumentLines {
         val node: JsonNode = jp.codec.readTree(jp)
-        if(node.get("itemCode") == null) {
+        if(node.get("ItemCode") == null) {
             return Service(
                 node.get("UnitPrice")?.asText() ?: "0",
                 node.get("Quantity")?.asText() ?: "0"
@@ -20,7 +20,7 @@ class DocumentLinesDeserializer : JsonDeserializer<DocumentLines>() {
         }
         else {
             return Product(
-                node.get("itemCode").asText(),
+                node.get("ItemCode").asText(),
                 node.get("Quantity")?.asText() ?: "0",
                 node.get("UnitPrice")?.asText() ?: "0"
             )

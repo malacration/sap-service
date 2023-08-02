@@ -56,12 +56,9 @@ open class Document(val CardCode : String,
     }
 
     fun productsByTax(): Map<String, List<Product>> {
-        this.DocumentLines
-            .filter { it is Product && it.TaxCode != null && it.TaxCode!!.isNotEmpty() }
-
         return this.DocumentLines
                 .filter { it is Product && it.TaxCode != null && it.TaxCode!!.isNotEmpty() }
-                .groupBy { if(it is Product) it.TaxCode!! } as Map<String, List<Product>>
+                .groupBy { it.TaxCode!! } as Map<String, List<Product>>
     }
 
     fun usaBrenchDefaultWarehouse(branchs : List<WarehouseDefault>){
@@ -101,7 +98,7 @@ open class Document(val CardCode : String,
     }
 
     fun totalDespesaAdicional(): Double {
-        return documentAdditionalExpenses.sumOf { it.lineTotalSys }
+        return documentAdditionalExpenses.sumOf { it.LineTotal }
     }
 
     fun presumeDesonerado(rate : Double) : Double {
