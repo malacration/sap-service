@@ -19,6 +19,5 @@ class BussinesPlaceController(val bussinesPlaceService: BussinessPlaceService) {
         return bussinesPlaceService
             .get(Filter(Predicate("Disabled", Cancelled.tNO,Condicao.EQUAL)))
             .tryGetValues<BussinessPlace>()
-
     }
 }

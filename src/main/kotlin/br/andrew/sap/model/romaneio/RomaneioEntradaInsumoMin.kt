@@ -49,7 +49,7 @@ class RomaneioEntradaInsumoMin(
                 U_CodMotorista = motorista?.code
                 U_Motorista = motorista?.U_NomeCadastro
                 U_CodFazenda = fazenda.Code
-            U_DscFazenda = fazenda.U_DescriComp
+                U_DscFazenda = fazenda.U_DescriComp
 
                 U_CodTransportador = pesagem.u_CodTransportadora
                 //U_NomeTransportador = pesagem.trans "FAZENDA RIO MADEIRA | FAZENDA RIO MADEIRA"
@@ -61,7 +61,7 @@ class RomaneioEntradaInsumoMin(
         var U_PesoLiquidoDesc : Double = U_PesoLiquido
         var U_Diferenca : Double = U_PesoLiquido
 
-    var U_CodFazenda : String? = null
+        var U_CodFazenda : String? = null
         var U_DscFazenda : String? = null
 
         var U_CodVeiculo : String? = null
