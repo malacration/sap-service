@@ -7,12 +7,12 @@ import com.fasterxml.jackson.databind.annotation.JsonNaming
 
 @JsonNaming(PropertyNamingStrategy.UpperCamelCaseStrategy::class)
 @JsonIgnoreProperties(ignoreUnknown = true)
-class AdditionalExpenses(val expenseCode : Int, val lineTotalSys : Double){
+class AdditionalExpenses(val expenseCode : Int, val LineTotal : Double){
 
     val distributionMethod : String = "aedm_RowTotal"
-    val lineTotal : Double = lineTotalSys
-    val LineGross : Double = lineTotalSys
-    val LineGrossSys : Double = lineTotalSys
+//    val lineTotal : Double = lineTotalSys
+//    val LineGross : Double = lineTotalSys
+//    val LineGrossSys : Double = lineTotalSys
 
     companion object{
         @JsonIgnore

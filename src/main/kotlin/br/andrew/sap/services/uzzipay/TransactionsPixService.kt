@@ -16,14 +16,16 @@ class TransactionsPixService(val restTemplate: RestTemplate,
                              val bussinessPlaceService : BussinessPlaceService,
                              val envrioment: UzziPayEnvrioment) {
 
-    val url = envrioment.consultaHost+path()
+    fun url() : String {
+        return envrioment.consultaHost+path()
+    }
     fun path(): String {
         return "/api/transactions"
     }
 
     fun getBy(id : String, conta: ContaUzziPayPix): Transaction {
         val request = RequestEntity
-            .get(url+"?reference=$id")
+            .get(url()+"?reference=$id")
             .header("X-API-Key","${conta.consulta}")
             .build()
         return restTemplate.exchange(request, Transaction::class.java).body ?:

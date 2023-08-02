@@ -48,13 +48,7 @@ open class Document(val CardCode : String,
     var DocTotalFc : BigDecimal? = null
 
     val DocumentStatus : String? = null
-    //bost_Close
-    //bost_Open
-
-
-
     var documentAdditionalExpenses : List<AdditionalExpenses> = emptyList()
-    var frete: Double? = null
 
     @JsonProperty("BPL_IDAssignedToInvoice")
     fun getBPL_IDAssignedToInvoice(): String {
@@ -62,12 +56,9 @@ open class Document(val CardCode : String,
     }
 
     fun productsByTax(): Map<String, List<Product>> {
-        this.DocumentLines
-            .filter { it is Product && it.TaxCode != null && it.TaxCode!!.isNotEmpty() }
-
         return this.DocumentLines
                 .filter { it is Product && it.TaxCode != null && it.TaxCode!!.isNotEmpty() }
-                .groupBy { if(it is Product) it.TaxCode!! } as Map<String, List<Product>>
+                .groupBy { it.TaxCode!! } as Map<String, List<Product>>
     }
 
     fun usaBrenchDefaultWarehouse(branchs : List<WarehouseDefault>){
@@ -76,18 +67,13 @@ open class Document(val CardCode : String,
 
     }
     fun setDistribuicaoCusto(distCusto : List<DistribuicaoCustoByBranch>){
-
-
-
-
-
         distCusto.firstOrNull{it.branch == BPL_IDAssignedToInvoice}?.also { branch ->
             this.DocumentLines.forEach{
                 it.setDistribuicaoCusto( branch)
             }
         }
-
     }
+
     fun usaBrenchDefaultWarehouse(default : WarehouseDefault){
         if(default.defaultWarehouseID != null)
             DocumentLines
@@ -112,7 +98,7 @@ open class Document(val CardCode : String,
     }
 
     fun totalDespesaAdicional(): Double {
-        return documentAdditionalExpenses.sumOf { it.lineTotalSys }
+        return documentAdditionalExpenses.sumOf { it.LineTotal }
     }
 
     fun presumeDesonerado(rate : Double) : Double {

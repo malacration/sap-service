@@ -27,7 +27,7 @@ class OrdersService(env: SapEnvrioment, restTemplate: RestTemplate, authService:
     fun aplicaDesonerado(order : Document): Document {
         order.productsByTax().forEach{
             val taxCodeDesonerado = taxCodeService.getById("'${it.key}'").tryGetValue<SalesTaxCode>()
-                    .salesTaxCodes_Lines.firstOrNull { it.STAType == 25 }
+                    .salesTaxCodes_Lines.firstOrNull { it.STAType == 25 || it.STAType == 28 }
             if(taxCodeDesonerado != null) {
                 var taxParam = taxAuthoritiesService.get(taxCodeDesonerado)
                         .tryGetValue<SalesTaxAuthorities>()
