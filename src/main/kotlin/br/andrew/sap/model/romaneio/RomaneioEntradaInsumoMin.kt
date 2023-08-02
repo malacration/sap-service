@@ -23,7 +23,7 @@ class RomaneioEntradaInsumoMin(
         val U_NumeroBoletim : String? = "006",
 ){
         constructor(pesagem : RomaneioPesagem,
-                    compra : RegistroCompraInsumo,
+                    compra : RegistroCompraInsumo?,
                     motorista : MotoristaPecuaria?,
                     fazenda : Fazenda) : this(
                 Date(),
@@ -40,11 +40,12 @@ class RomaneioEntradaInsumoMin(
                 tipoAnalise = pesagem.tipoAnalise
                 U_CodVeiculo = pesagem.U_CodVeiculo
 
-                U_CodFazenda = compra.U_CodParceiroNegocio
-                U_DscFazenda = compra.U_NomParceiroNegocio
-                U_CodRegistroCompra = compra.code.toString()
-                U_CodDeposito = compra.U_CodDeposito
-
+                if(compra != null){
+                    U_CodFazenda = compra.U_CodParceiroNegocio
+                    U_DscFazenda = compra.U_NomParceiroNegocio
+                    U_CodRegistroCompra = compra.code.toString()
+                    U_CodDeposito = compra.U_CodDeposito
+                }
                 U_CodMotorista = motorista?.code
                 U_Motorista = motorista?.U_NomeCadastro
                 U_CodFazenda = fazenda.Code

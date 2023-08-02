@@ -3,7 +3,7 @@ package br.andrew.sap.model
 import br.andrew.sap.model.documents.Document
 import br.andrew.sap.model.exceptions.BusinessPartnerNotAssignedException
 import br.andrew.sap.model.exceptions.CreditException
-import br.andrew.sap.model.exceptions.LinkedPaymentMethodException
+import br.andrew.sap.model.exceptions.PixPaymentException
 import br.andrew.sap.model.exceptions.SapGenericException
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatusCode
@@ -38,7 +38,9 @@ class ErrorMsg(val code : String, val message : SapMessage) {
 class SapMessage(val lang : String, val value : String) {
     fun getError(error: SapError): Throwable? {
         return if(value.contains("Linked payment method"))
-            LinkedPaymentMethodException(error)
+            PixPaymentException(error)
+        else if(value.contains("Esse codigo de pix ja recebeu pagamento"))
+            PixPaymentException(error)
         else if(error.error.code == "-2028" && error.hedears?.get("Location")?.get(0)?.contains("/b1s/v1/Drafts") == true)
             CreditException(error,error.hedears?.get("Location")?.get(0))
         else if(error.error.message.value.contains("Select business partner assigned to specified branch") && error.entry is Document)

@@ -1,6 +1,6 @@
 package br.andrew.sap.infrastructure.odata
 
-import br.andrew.sap.model.Cancelled
+import br.andrew.sap.model.enums.Cancelled
 
 
 class Filter(val propertie : List<Predicate>) {
@@ -24,7 +24,7 @@ class Filter(val propertie : List<Predicate>) {
 }
 
 class Predicate(val coluna: String, val value: Any, val condicao: Condicao){
-    constructor(cancelado: Cancelled,condicao: Condicao) : this(Cancelled.column,cancelado,condicao)
+    constructor(cancelado: Cancelled, condicao: Condicao) : this(Cancelled.column,cancelado,condicao)
 
     override fun toString(): String {
         return if(value is Int)

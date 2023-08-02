@@ -2,6 +2,8 @@ package br.andrew.sap.model.forca
 
 import br.andrew.sap.model.documents.AdditionalExpenses
 import br.andrew.sap.model.documents.OrderSales
+import br.andrew.sap.services.ItemsService
+import br.andrew.sap.services.pricing.ComissaoService
 import com.fasterxml.jackson.annotation.*
 import java.text.SimpleDateFormat
 import java.util.*
@@ -19,6 +21,7 @@ class PedidoVenda(
 
     var frete: Double? = null
     var observacao : String? = null
+    var precoBase : Int? = null
 
     //TODO fazer parse de data
     var dataEntraga : String? = SimpleDateFormat("yyy-MM-dd").format(Date())
@@ -31,11 +34,15 @@ class PedidoVenda(
 
 
     @JsonIgnore
-    fun getOrder(): OrderSales {
+    fun getOrder(itemService: ItemsService, comissaoService: ComissaoService): OrderSales {
         return OrderSales(idCliente, dataEntraga,
-                produtos.map { it.getProduct(tipoPedido) },idEmpresa)
+                produtos.map { it.getProduct(tipoPedido,itemService,comissaoService) },idEmpresa)
                 .also {
-                    it.paymentMethod = idFormaPagamento
+                    val formas = idFormaPagamento.split("_")
+                    if(formas.size > 1)
+                        it.paymentMethod = formas[1]
+                    else
+                        it.paymentMethod = idFormaPagamento
                     it.discountPercent = desconto
                     it.paymentGroupCode = idCondicaoPagamento
                     it.salesPersonCode = codVendedor

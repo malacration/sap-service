@@ -1,12 +1,9 @@
 package br.andrew.sap.services
 
 import br.andrew.sap.model.Item
-import br.andrew.sap.model.MotoristaContrato
-import br.andrew.sap.model.SapEnvrioment
+import br.andrew.sap.model.envrioments.SapEnvrioment
 import br.andrew.sap.model.documents.Product
-import br.andrew.sap.model.price.ItemPrice
 import br.andrew.sap.services.abstracts.EntitiesService
-import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Service
 import org.springframework.web.client.RestTemplate
 
@@ -14,7 +11,6 @@ import org.springframework.web.client.RestTemplate
 class ItemsService(env : SapEnvrioment,
                    restTemplate: RestTemplate,
                    authService: AuthService,
-                   @Qualifier("base.price.list.id") val priceListId : String,
         )
     : EntitiesService<Item>(env, restTemplate,authService) {
 
@@ -22,16 +18,15 @@ class ItemsService(env : SapEnvrioment,
         return "/b1s/v1/Items"
     }
 
-    fun getPriceBase(itemCode: String): Double {
-        if(priceListId == "none")
-            return 0.0
-        return getById("'$itemCode'")
-            .tryGetValue<Item>().itemPrices.first { it.PriceList == priceListId }?.Price ?: 0.0
-
+    fun getPriceBase(itemCode: Product, priceListId : Int): Double {
+        return getPriceBase(itemCode.id, priceListId)
     }
 
-    fun getPriceBase(documentLine: Product): Double {
-        return getPriceBase(documentLine.ItemCode!!)
+    fun getPriceBase(itemCode: String, priceListId : Int): Double {
+        return getById("'$itemCode'")
+            .tryGetValue<Item>()
+            .itemPrices.filter { it.PriceList == priceListId }
+            .firstOrNull()?.Price ?: throw Exception("Price[$priceListId] not found; ItemCode[$itemCode]")
     }
 }
 

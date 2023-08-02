@@ -1,6 +1,6 @@
 package br.andrew.sap.model.partner
 
-import br.andrew.sap.model.Cancelled
+import br.andrew.sap.model.enums.Cancelled
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.databind.PropertyNamingStrategy

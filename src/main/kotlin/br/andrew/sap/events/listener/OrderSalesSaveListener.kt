@@ -1,10 +1,10 @@
 package br.andrew.sap.events.listener
 
-import br.andrew.sap.events.DraftOrderSalesSaveEvent
 import br.andrew.sap.events.OrderSalesSaveEvent
-import br.andrew.sap.model.SapEnvrioment
+import br.andrew.sap.model.envrioments.SapEnvrioment
 import br.andrew.sap.model.documents.Document
 import br.andrew.sap.model.documents.OrderSales
+import br.andrew.sap.model.exceptions.CreditException
 import br.andrew.sap.model.telegram.TipoMensagem
 import br.andrew.sap.services.DraftsService
 import br.andrew.sap.services.document.OrdersService
@@ -28,14 +28,12 @@ class OrderSalesSaveListener(val telegramRequest : TelegramRequestService,
     }
 
     @EventListener
-    fun draftOrder(event: DraftOrderSalesSaveEvent) {
-        if(event.order.docEntry == null) {
-            val msg = "Erro ao atualizar um rascunho no procedimento de autorização, docEntry null - Num = ${event.order.docNum}"
-            telegramRequest.send(msg,TipoMensagem.erros)
-            throw Exception(msg)
-        }
-        val draft = draftsService.getById(event.order.docEntry!!).tryGetValue<Document>()
+    fun draftOrder(event: CreditException) {
+        val draft = draftsService.getById(event.idLocation).tryGetValue<Document>()
         val order = ordersService.aplicaDesonerado(draft)
         draftsService.update(order,order.docEntry.toString())
+        val msg = "Rascunho do pedido para ${order.cardName ?: "semCardName"} [DocNum:${order.docNum ?: "Sem docNum"}] foi recebido com sucesso! " +
+                "Porem esta em um procedimento de autorização - [Base:${sapEnvrioment.companyDB}]"
+        telegramRequest.send(msg,TipoMensagem.autorizacao)
     }
 }

@@ -1,7 +1,7 @@
 package br.andrew.sap.services
 
 import br.andrew.sap.model.MotoristaContrato
-import br.andrew.sap.model.SapEnvrioment
+import br.andrew.sap.model.envrioments.SapEnvrioment
 import br.andrew.sap.services.abstracts.EntitiesService
 import org.springframework.stereotype.Service
 import org.springframework.web.client.RestTemplate

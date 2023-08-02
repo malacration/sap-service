@@ -14,7 +14,7 @@ class PedidoVendaJsonTest {
     @Test
     fun test(){
         val mapper = ObjectMapper().registerModule(KotlinModule())
-        val produtos = listOf<Produto>(Produto("PRO0001",10.5,10.0))
+        val produtos = listOf<Produto>(Produto("PRO0001",10.5,10.0,0))
         val pedido = PedidoVenda("CLI0001","18",
                 "avista",
                 "15", produtos,"5",2)
@@ -24,25 +24,25 @@ class PedidoVendaJsonTest {
     @Test
     fun testeJsonCliente(){
         val mapper = ObjectMapper().registerModule(KotlinModule())
-        val obj = mapper.readValue(json, jacksonTypeRef<PedidoVenda>())
+        mapper.readValue(json, jacksonTypeRef<PedidoVenda>())
     }
 
     @Test
     fun testeJson2Cliente(){
         val mapper = ObjectMapper().registerModule(KotlinModule())
-        val obj = mapper.readValue(json2, jacksonTypeRef<PedidoVenda>())
+        mapper.readValue(json2, jacksonTypeRef<PedidoVenda>())
     }
 
     @Test
     fun testeJsonSingleToList(){
         val mapper = ObjectMapper().registerModule(KotlinModule())
-        val obj = mapper.readValue(json2, jacksonTypeRef<PedidoVenda>())
+        mapper.readValue(json2, jacksonTypeRef<PedidoVenda>())
     }
 
     @Test
     fun jsonExtend(){
         val mapper = ObjectMapper().registerModule(KotlinModule())
-        val produtos = listOf<Produto>(Produto("PRO0001",10.5,10.0)
+        val produtos = listOf<Produto>(Produto("PRO0001",10.5,10.0,0)
                 .also { it.desconto = 100.0 })
         val pedido = PedidoVenda("CLI0001","18",
                 "avista",

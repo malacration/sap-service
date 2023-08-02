@@ -1,5 +1,6 @@
 package br.andrew.sap.controllers.handler
 
+import br.andrew.sap.services.TelegramRequestService
 import jakarta.servlet.http.HttpServletRequest
 import org.slf4j.LoggerFactory.getLogger
 import org.springframework.context.ApplicationEventPublisher
@@ -11,13 +12,15 @@ import org.springframework.web.bind.annotation.ExceptionHandler
 
 @ControllerAdvice
 @Order(Ordered.LOWEST_PRECEDENCE)
-class ControllerAdviceExceptionHandler(val eventPublisher: ApplicationEventPublisher) {
+class ControllerAdviceExceptionHandler(
+    val telegram : TelegramRequestService,
+    val eventPublisher: ApplicationEventPublisher) {
 
     private val log = getLogger(ControllerAdviceExceptionHandler::class.java)
 
     @ExceptionHandler(Throwable::class)
     fun handleException(response: HttpServletRequest, e: Exception): ResponseEntity<ErroDto> {
         eventPublisher.publishEvent(e)
-        return MyErrorController().handleError(response,e)
+        return MyErrorController(telegram).handleError(response,e)
     }
 }

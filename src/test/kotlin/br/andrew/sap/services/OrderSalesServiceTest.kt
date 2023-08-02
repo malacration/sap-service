@@ -6,11 +6,11 @@ import br.andrew.sap.model.documents.OrderSales
 import br.andrew.sap.model.documents.Product
 import br.andrew.sap.model.forca.PedidoVenda
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.kotlin.KotlinFeature
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.fasterxml.jackson.module.kotlin.jacksonTypeRef
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
+import org.mockito.Mockito
 
 
 class OrderSalesServiceTest {
@@ -19,8 +19,11 @@ class OrderSalesServiceTest {
     fun test(){
         val json = "{\"dataEntraga\":\"2023-04-28\",\"observacao\":\"TESTE\",\"idCliente\":\"CLI0003017\",\"desconto\":0,\"produtos\":{\"precoUnitario\":108.9,\"idProduto\":\"PAC0000042\",\"desconto\":10,\"valorTabela\":121,\"quantidade\":5},\"idCondicaoPagamento\":16,\"frete\":10,\"idEmpresa\":2,\"tipoPedido\":9,\"codVendedor\":58,\"idPedido\":106,\"idFormaPagamento\":\"AVISTA\"}"
         val mapper = ObjectMapper().registerModule(KotlinModule())
-        val pedidoBase = mapper.readValue(json, jacksonTypeRef<PedidoVenda>())
-        val orderBase = pedidoBase.getOrder()
+        val pedidoBase = mapper.readValue(json, jacksonTypeRef<PedidoVenda>()).also { it.produtos.forEach { it.listapreco = 5 } }
+        val orderBase = pedidoBase.getOrder(
+            Mockito.mock(ItemsService::class.java),
+            ComissaoServiceMock.get()
+        )
 
         val negociadoEsperado = 544.50
 
@@ -37,7 +40,7 @@ class OrderSalesServiceTest {
             it.UnitPrice = PrecoUnitarioComDesoneracao()
                     .calculaPreco(it, SalesTaxAuthorities(-1,17.5,0.0,0.0,100.0)).toString()
         }
-        val totalDesonerado = orderBase.total()-orderBase.presumeDesonerado(17.5)
+        orderBase.total()-orderBase.presumeDesonerado(17.5)
 
         Assertions.assertEquals(670.0006,orderBase.total())
         Assertions.assertEquals(544.50,orderBase.totalNegociado())

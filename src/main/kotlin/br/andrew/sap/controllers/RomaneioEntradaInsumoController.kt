@@ -10,6 +10,7 @@ import br.andrew.sap.services.romaneio.RomaneioEntradaInsumoService
 import br.andrew.sap.services.romaneio.RomaneioPesagemService
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.client.RestTemplate
+import javax.xml.catalog.Catalog
 
 @RestController
 @RequestMapping("romaneio-entrada-insumo")
@@ -21,6 +22,7 @@ class RomaneioEntradaInsumoController(
         val motoristaContratoService: MotoristaContratoService,
         val motoristaPecuariaService: MotoristaPecuariaService,
         val telegram : TelegramRequestService,
+        val alternateCatService: AlternateCatService,
         val restTemplate : RestTemplate) {
 
 
@@ -33,12 +35,22 @@ class RomaneioEntradaInsumoController(
     fun draft(@PathVariable idRomaneioPesagem : Int) : RomaneioEntradaInsumoMin{
         val romaneioPesagem = romaneioPesagemService
                 .getById(idRomaneioPesagem).tryGetValue<RomaneioPesagem>()
+        val item =
+            if(romaneioPesagem.u_CodItem == null)
+                ""
+            else if(romaneioPesagem.u_CodParceiro == null)
+                romaneioPesagem.u_CodItem
+            else {
+                alternateCatService
+                    .get(romaneioPesagem.u_CodItem, romaneioPesagem.u_CodParceiro)
+                    ?.substitute
+                    ?: romaneioPesagem.u_CodItem
+            }
 
         val contrato = registroCompraInsumoService
-                .getByPn(romaneioPesagem.u_CodParceiro!!)
+                .getByItemAndPn(item,romaneioPesagem.u_CodParceiro?:"")
                 .tryGetValues<RegistroCompraInsumo>()
-                .ifEmpty { listOf(RegistroCompraInsumo(null,null)) }
-                .first()
+                .firstOrNull() ?: RegistroCompraInsumo(null,null)
 
         val motoristaContrato = if(romaneioPesagem.u_CodMotorista == null ) null else
             motoristaContratoService.getById("'${romaneioPesagem.u_CodMotorista}'")
@@ -47,7 +59,7 @@ class RomaneioEntradaInsumoController(
         val motoristaPecuaria = if(motoristaContrato == null || motoristaContrato.U_RegistroCNH == null) null else
             motoristaPecuariaService.getByCnh(motoristaContrato.U_RegistroCNH)
                 .tryGetValues<MotoristaPecuaria>()
-                .ifEmpty { listOf(MotoristaPecuaria(null,null,null)) }.first()
+                .firstOrNull() ?: MotoristaPecuaria(null,null,null)
 
         val fazenda =
                 if (contrato.U_CodigoFazenda == null)

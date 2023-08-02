@@ -1,11 +1,9 @@
 package br.andrew.sap.services.structs
 
-import br.andrew.sap.infrastructure.odata.*
 import br.andrew.sap.model.Query
-import br.andrew.sap.model.SapEnvrioment
+import br.andrew.sap.model.envrioments.SapEnvrioment
 import br.andrew.sap.services.AuthService
 import br.andrew.sap.services.abstracts.EntitiesService
-import org.springframework.http.RequestEntity
 import org.springframework.stereotype.Service
 import org.springframework.web.client.HttpClientErrorException
 import org.springframework.web.client.RestTemplate

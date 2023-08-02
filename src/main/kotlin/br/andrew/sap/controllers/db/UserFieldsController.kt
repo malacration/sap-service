@@ -1,4 +1,4 @@
-package br.andrew.sap.controllers
+package br.andrew.sap.controllers.db
 
 import br.andrew.sap.infrastructure.odata.Condicao
 import br.andrew.sap.infrastructure.odata.Filter
@@ -16,7 +16,9 @@ class UserFieldsController(val userFieldsMDService: UserFieldsMDService) {
 
     @GetMapping()
     fun get(page : Pageable) : Any{
-        val filter = Filter(listOf(Predicate("Name","B1SYS_IV",Condicao.STARTS_WITH)))
+        val filter = Filter(
+
+        )
         return userFieldsMDService.get(filter,page)
     }
 }

@@ -1,6 +1,5 @@
 package br.andrew.sap.controllers.documents
 
-import br.andrew.sap.events.DraftOrderSalesSaveEvent
 import br.andrew.sap.events.OrderSalesSaveEvent
 import br.andrew.sap.infrastructure.WarehouseDefaultConfig
 import br.andrew.sap.infrastructure.configurations.DistribuicaoCustoByBranchConfig
@@ -10,6 +9,7 @@ import br.andrew.sap.model.exceptions.CreditException
 import br.andrew.sap.model.forca.PedidoVenda
 import br.andrew.sap.services.*
 import br.andrew.sap.services.document.OrdersService
+import br.andrew.sap.services.pricing.ComissaoService
 import org.slf4j.LoggerFactory
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.web.bind.annotation.*
@@ -18,27 +18,25 @@ import java.util.*
 @RestController
 @RequestMapping("pedido-venda")
 class OrderSalesController(val ordersService: OrdersService,
-                           val businesPartner : BusinessPartnersService,
                            val itemService : ItemsService,
+                           val comissaoService: ComissaoService,
                            val applicationEventPublisher: ApplicationEventPublisher) {
 
     val logger = LoggerFactory.getLogger(OrderSalesController::class.java)
 
     @PostMapping("")
     fun save(@RequestBody pedido : PedidoVenda): Any {
+        val order = pedido.getOrder(itemService,comissaoService).also {
+            it.usaBrenchDefaultWarehouse(WarehouseDefaultConfig.warehouses)
+            it.setDistribuicaoCusto(DistribuicaoCustoByBranchConfig.distibucoesCustos)
+        }
         try {
-            val order = ordersService.save(
-                    pedido.getOrder().also {
-                        it.aplicaBase(itemService)
-                        it.usaBrenchDefaultWarehouse(WarehouseDefaultConfig.warehouses)
-                        it.setDistribuicaoCusto(DistribuicaoCustoByBranchConfig.distibucoesCustos)
-                    }
-            ).tryGetValue<OrderSales>()
-            applicationEventPublisher.publishEvent(OrderSalesSaveEvent(order))
-            return order
+            val retorno = ordersService.save(order).tryGetValue<OrderSales>()
+            applicationEventPublisher.publishEvent(OrderSalesSaveEvent(retorno))
+            return retorno;
         }catch (t : CreditException){
             logger.warn(t.message,t)
-            return t.getOrderFake(pedido).also { applicationEventPublisher.publishEvent(DraftOrderSalesSaveEvent(it)) }
+            return t.getOrderFake(order).also { applicationEventPublisher.publishEvent(t) }
         }
     }
 

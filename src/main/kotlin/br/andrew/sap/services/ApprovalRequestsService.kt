@@ -1,10 +1,8 @@
 package br.andrew.sap.services
 
-import br.andrew.sap.infrastructure.odata.Filter
-import br.andrew.sap.infrastructure.odata.OData
 import br.andrew.sap.model.ApprovalRequests
 import br.andrew.sap.model.Decision
-import br.andrew.sap.model.SapEnvrioment
+import br.andrew.sap.model.envrioments.SapEnvrioment
 import br.andrew.sap.model.documents.Document
 import br.andrew.sap.model.documents.OrderSales
 import br.andrew.sap.services.abstracts.EntitiesService

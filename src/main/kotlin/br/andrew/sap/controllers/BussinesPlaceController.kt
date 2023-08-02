@@ -3,7 +3,7 @@ package br.andrew.sap.controllers
 import br.andrew.sap.infrastructure.odata.Condicao
 import br.andrew.sap.infrastructure.odata.Filter
 import br.andrew.sap.infrastructure.odata.Predicate
-import br.andrew.sap.model.Cancelled
+import br.andrew.sap.model.enums.Cancelled
 import br.andrew.sap.services.BussinessPlaceService
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
@@ -16,7 +16,7 @@ class BussinesPlaceController(val bussinesPlaceService: BussinessPlaceService) {
     @GetMapping()
     fun get(): Any {
         return bussinesPlaceService
-            .get(Filter(Predicate("Disabled",Cancelled.tNO,Condicao.EQUAL)))
+            .get(Filter(Predicate("Disabled", Cancelled.tNO,Condicao.EQUAL)))
 
     }
 }
