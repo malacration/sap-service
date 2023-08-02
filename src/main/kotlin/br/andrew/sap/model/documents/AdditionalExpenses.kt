@@ -11,8 +11,8 @@ class AdditionalExpenses(val expenseCode : Int, val lineTotalSys : Double){
 
     val distributionMethod : String = "aedm_RowTotal"
     val lineTotal : Double = lineTotalSys
-    val LineGross : Double = lineTotalSys
-    val LineGrossSys : Double = lineTotalSys
+//    val LineGross : Double = lineTotalSys
+//    val LineGrossSys : Double = lineTotalSys
 
     companion object{
         @JsonIgnore
