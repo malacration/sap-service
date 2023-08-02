@@ -48,13 +48,7 @@ open class Document(val CardCode : String,
     var DocTotalFc : BigDecimal? = null
 
     val DocumentStatus : String? = null
-    //bost_Close
-    //bost_Open
-
-
-
     var documentAdditionalExpenses : List<AdditionalExpenses> = emptyList()
-    var frete: Double? = null
 
     @JsonProperty("BPL_IDAssignedToInvoice")
     fun getBPL_IDAssignedToInvoice(): String {
@@ -76,18 +70,13 @@ open class Document(val CardCode : String,
 
     }
     fun setDistribuicaoCusto(distCusto : List<DistribuicaoCustoByBranch>){
-
-
-
-
-
         distCusto.firstOrNull{it.branch == BPL_IDAssignedToInvoice}?.also { branch ->
             this.DocumentLines.forEach{
                 it.setDistribuicaoCusto( branch)
             }
         }
-
     }
+
     fun usaBrenchDefaultWarehouse(default : WarehouseDefault){
         if(default.defaultWarehouseID != null)
             DocumentLines

@@ -27,6 +27,7 @@ class OrderSaleJsonTest {
         Assertions.assertTrue(json.contains("\"U_id_pedido_forca\":\"666\""))
         Assertions.assertTrue(json.contains("\"U_preco_negociado\":123.0"))
         Assertions.assertTrue(json.contains("\"U_preco_base\":555.0"))
+        Assertions.assertTrue(json.contains("\"UnitPrice\":\"10.0\""))
     }
 
     @Test
@@ -41,6 +42,7 @@ class OrderSaleJsonTest {
         Assertions.assertTrue(!json.contains("U_id_Pedido_Forca"))
         Assertions.assertTrue(!json.contains("U_preco_negociado"))
         Assertions.assertTrue(!json.contains("U_preco_base"))
+        Assertions.assertTrue(json.contains("\"UnitPrice\":\"10.0\""))
     }
 
 

@@ -2,12 +2,16 @@ package br.andrew.sap.json
 
 import br.andrew.sap.model.forca.PedidoVenda
 import br.andrew.sap.model.forca.Produto
+import br.andrew.sap.services.ComissaoServiceMock
+import br.andrew.sap.services.ItemsService
+import br.andrew.sap.services.pricing.ComissaoService
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinFeature
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.fasterxml.jackson.module.kotlin.jacksonTypeRef
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
+import org.mockito.Mockito
 
 class PedidoVendaJsonTest {
 
@@ -76,6 +80,17 @@ class PedidoVendaJsonTest {
         Assertions.assertEquals("898",obj.produtos.get(0).idItem)
     }
 
+    @Test
+    fun json77UnitPrice() {
+        val mapper = ObjectMapper().registerModule(KotlinModule())
+        val obj = mapper.readValue(json77, jacksonTypeRef<PedidoVenda>())
+        Assertions.assertEquals(131.67,obj.produtos.get(0).precoUnitario)
+        val order = obj.getOrder(Mockito.mock(ItemsService::class.java), ComissaoServiceMock.get())
+        Assertions.assertEquals("138.6",order.DocumentLines.get(0).UnitPrice)
+        Assertions.assertEquals(5.0,order.DocumentLines.get(0).DiscountPercent)
+        Assertions.assertEquals("19",order.paymentGroupCode)
+    }
+
     val jsonDataNull = "{\"dataEntraga\":null,\"observacao\":\"RETIRAR NA FABRICA\\nFRETE A R\$12,00/SC\",\"idCliente\":\"CLI0001475\",\"desconto\":0,\"produtos\":{\"precoUnitario\":113.19,\"idProduto\":\"PAC0000121\",\"desconto\":0,\"valorTabela\":113.19,\"quantidade\":30},\"idCondicaoPagamento\":20,\"frete\":360,\"idEmpresa\":2,\"tipoPedido\":9,\"codVendedor\":65,\"idPedido\":52,\"idFormaPagamento\":\"BB-RC-BOL-1199\"}"
 
     val json = "{\n" +
@@ -118,5 +133,6 @@ class PedidoVendaJsonTest {
 
     val jsonPrecos = "{\"dataEntraga\":\"2023-04-17\",\"observacao\":\"\",\"idCliente\":\"CLI0002773\",\"desconto\":0,\"produtos\":{\"precoUnitario\":140.0,\"idProduto\":\"PAC0000105\",\"desconto\":0,\"valorTabela\":141.5,\"quantidade\":1},\"idCondicaoPagamento\":15,\"frete\":0,\"idEmpresa\":2,\"tipoPedido\":16,\"codVendedor\":54,\"idPedido\":49,\"idFormaPagamento\":\"BB-RC-BOL-1199\"}\n"
 
+    val json77 = "{\"dataEntraga\":\"2023-08-01\",\"observacao\":\"TESTE\",\"idCliente\":\"CLI0002058\",\"desconto\":0,\"produtos\":{\"precoUnitario\":131.67,\"listapreco\":4,\"idProduto\":\"PAC0000118\",\"desconto\":5,\"valorTabela\":138.6,\"quantidade\":2,\"idItem\":106},\"idCondicaoPagamento\":\"1_19\",\"frete\":10,\"idEmpresa\":2,\"tipoPedido\":16,\"codVendedor\":38,\"idPedido\":73,\"idFormaPagamento\":\"BB-RC-BOL-1199\"}"
     val jsonIdItem = "{\"dataEntraga\":\"2023-06-02\",\"observacao\":\"DESCONTO 4% TABELA MAIS 15% REVENDA \\nFRETE R\$ 5,00 O SACO COMBINADO COM A GERENCIA \\nTRAZER CHAPAS DE COLORADO \\nENTREGA NA JABURU AGROPECUARIA\",\"idCliente\":\"CLI0000428\",\"desconto\":0,\"produtos\":{\"precoUnitario\":77.63,\"idProduto\":\"PAC0000100\",\"desconto\":9.1409176,\"valorTabela\":85.44,\"quantidade\":50,\"idItem\":898},\"idCondicaoPagamento\":2,\"frete\":0,\"idEmpresa\":2,\"tipoPedido\":16,\"codVendedor\":5,\"idPedido\":629,\"idFormaPagamento\":\"AVISTA\"}"
 }
