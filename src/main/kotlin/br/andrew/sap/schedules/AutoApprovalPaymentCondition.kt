@@ -7,8 +7,9 @@ import br.andrew.sap.infrastructure.odata.Predicate
 import br.andrew.sap.model.ApprovalRequests
 import br.andrew.sap.model.User
 import br.andrew.sap.model.documents.OrderSales
-import br.andrew.sap.services.ApprovalRequestsService
+import br.andrew.sap.services.approval.ApprovalRequestsService
 import br.andrew.sap.services.DraftsService
+import br.andrew.sap.services.approval.ApprovalStagesService
 import org.quartz.DisallowConcurrentExecution
 import org.quartz.Job
 import org.quartz.JobExecutionContext
@@ -22,9 +23,10 @@ import org.springframework.stereotype.Component
 @ConditionalOnProperty(value = ["org.quartz.enable"], havingValue = "true", matchIfMissing = false)
 @DisallowConcurrentExecution
 class AutoApprovalPaymentCondition(
-        val approvalRequestsService : ApprovalRequestsService,
-        val draftsService: DraftsService,
-        val currentUser : User) : Job {
+    val approvalRequestsService : ApprovalRequestsService,
+    val draftsService: DraftsService,
+    val apro : ApprovalStagesService,
+    val currentUser : User) : Job {
 
     val logger: Logger = LoggerFactory.getLogger(AutoApprovalPaymentCondition::class.java)
 
