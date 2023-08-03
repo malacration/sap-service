@@ -16,6 +16,8 @@ enum class Condicao(val value: String) {
             EQUAL -> "${coluna} eq ${value}"
             NOT_EQUAL -> "${coluna} ne ${value}"
             CONTAINS -> "contains(${coluna}, ${value})"
+            GREAT -> "${coluna} gt ${value}"
+            GREAT_EQUAL -> "${coluna} ge ${value}"
             else -> "Tipo de dado é invalido para a condição"
         }
     }
