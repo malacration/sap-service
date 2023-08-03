@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.mock
 import java.math.BigDecimal
+import java.math.RoundingMode
 
 class PrecoUnitarioComDesoneracaoTest {
 
@@ -26,6 +27,25 @@ class PrecoUnitarioComDesoneracaoTest {
         val valorEsperado = BigDecimal("113.5152")
         val resultado = PrecoUnitarioComDesoneracao().calculaPreco(precoAlvo,imposto)
         Assertions.assertEquals(valorEsperado, resultado)
+    }
+
+    @Test
+    fun disconto(){
+        val precoAlvo = BigDecimal("131.6700")
+        val imposto = SalesTaxAuthorities(0,
+            17.5,
+            0.0,
+            0.0,
+            100.0)
+        val valorEsperado = BigDecimal("168.0000").setScale(4)
+        val desconto = BigDecimal("5")
+        val resultado = PrecoUnitarioComDesoneracao().calculaPreco(precoAlvo,imposto,desconto)
+        var desonerado = resultado.multiply(BigDecimal("0.175"))
+        Assertions.assertEquals(valorEsperado, resultado)
+        Assertions.assertEquals(precoAlvo.setScale(2),
+            resultado.minus(desonerado)
+                .multiply(BigDecimal("0.95"))
+                .setScale(2,RoundingMode.UP))
     }
 
     @Test

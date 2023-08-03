@@ -4,8 +4,6 @@ import br.andrew.sap.model.DbType
 import br.andrew.sap.model.FieldMd
 import br.andrew.sap.model.ValuesMd
 import br.andrew.sap.services.structs.UserFieldsMDService
-import br.andrew.sap.services.structs.UserTablesMDService
-import org.slf4j.LoggerFactory
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Profile
 
@@ -81,6 +79,10 @@ class PedidoFieldConfiguration(val userFieldsMDService: UserFieldsMDService) {
         ).forEach { userFieldsMDService.findOrCreate(it) }
 
 
-
+        userFieldsMDService.findOrCreate(FieldMd("aprovacao_comercial","Comercial Apv?","OINV")
+            .also {
+                it.ValidValuesMD = listOf(ValuesMd("0","NÃO"),ValuesMd("1","SIM"))
+                it.defaultValue = "0";
+            })
     }
 }
