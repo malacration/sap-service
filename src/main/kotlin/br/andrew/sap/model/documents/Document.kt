@@ -41,7 +41,6 @@ open class Document(val CardCode : String,
 
     var discountPercent : Double? = null
     var totalDiscount : String? = null
-    var TotalDiscountSC: String? = null
 
     @JsonProperty("U_id_pedido_forca")
     var u_id_pedido_forca: String? = null
@@ -51,7 +50,6 @@ open class Document(val CardCode : String,
     var model : Int? = null
     var docType: String? = null
     var docObjectCode : String? = null
-    var DocTotalFc : Double? = null
 
     val DocumentStatus : String? = null
     var documentAdditionalExpenses : List<AdditionalExpenses> = emptyList()
@@ -139,24 +137,12 @@ open class Document(val CardCode : String,
     fun aplicaDescontoDesonerado() {
         this.totalDiscount = null
         this.discountPercent = null
-        this.DocTotalFc = null;
         val desonerado = DocumentLines.sumOf { it.valorDesonerado }.setScale(4,RoundingMode.HALF_UP)
         val totalAntesDesconto = BigDecimal(total()).setScale(2,RoundingMode.HALF_UP)
         this.discountPercent = desonerado.divide(totalAntesDesconto, 6,RoundingMode.HALF_UP)
             .multiply(BigDecimal(100)).toDouble()
         //desonerado.divide(totalAntesDesconto, 4,RoundingMode.DOWN).multiply(BigDecimal(100)).setScale(7,RoundingMode.HALF_UP).toDouble()
     }
-
-    fun avisoRemoverDisconto(): Document {
-        this.comments = "O desconto precisa ser removido para o calculo funcionar adequadamente"
-        this.u_pedido_update = "0"
-        this.totalDiscount = null
-        this.discountPercent = null
-        this.DocTotalFc = null
-        this.TotalDiscountSC = "0.0"
-        return this;
-    }
-
 
 }
 
