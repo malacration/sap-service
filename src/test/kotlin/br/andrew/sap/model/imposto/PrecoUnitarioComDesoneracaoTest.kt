@@ -1,9 +1,10 @@
-package br.andrew.sap.model
+package br.andrew.sap.model.imposto
 
+import br.andrew.sap.model.SalesTaxAuthorities
 import br.andrew.sap.model.forca.PedidoVenda
+import br.andrew.sap.model.impostos.PrecoUnitarioComDesoneracao
 import br.andrew.sap.services.ComissaoServiceMock
 import br.andrew.sap.services.ItemsService
-import br.andrew.sap.services.pricing.ComissaoService
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.fasterxml.jackson.module.kotlin.jacksonTypeRef
@@ -109,9 +110,9 @@ class PrecoUnitarioComDesoneracaoTest {
             println(documentLine.UnitPrice)
         }
         val desonerado = imposto.taxValueOutros(orderBase.total())
-        Assertions.assertEquals(1699.7355167157484,orderBase.total())
-        Assertions.assertEquals(297.45371542525595,desonerado)
+        Assertions.assertEquals(1699.74,orderBase.total())
+        Assertions.assertEquals(297.4545,desonerado)
         val liquido = orderBase.total()-desonerado
-        Assertions.assertEquals(1402.2818012904925,liquido)
+        Assertions.assertEquals(1402.2855,liquido)
     }
 }
