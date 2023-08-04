@@ -8,12 +8,14 @@ import br.andrew.sap.model.uzzipay.RequestPixDueDate
 import br.andrew.sap.model.uzzipay.Transaction
 import br.andrew.sap.services.ItemsService
 import com.fasterxml.jackson.annotation.JsonFormat
+import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.PropertyNamingStrategy
 import com.fasterxml.jackson.databind.annotation.JsonNaming
 import java.math.BigDecimal
+import java.math.RoundingMode
 
 @JsonNaming(PropertyNamingStrategy.UpperCamelCaseStrategy::class)
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -24,6 +26,7 @@ open class Document(val CardCode : String,
                     val DocumentLines : List<DocumentLines>,
                     private val BPL_IDAssignedToInvoice : String) {
 
+
     var comments: String? = null
     var docDate :String? = null
     var salesPersonCode: Int = -1
@@ -31,11 +34,14 @@ open class Document(val CardCode : String,
     var docEntry : Int? = null
     var docNum : String? = null
     var paymentMethod : String? = null
-    var discountPercent : Double = 0.0
     var documentInstallments : List<Installment>? = null
     var journalMemo : String? = null
     var Cancelled : Cancelled? = null
     var u_pedido_update : String? = "0"
+
+    var discountPercent : Double? = null
+    var totalDiscount : String? = null
+    var TotalDiscountSC: String? = null
 
     @JsonProperty("U_id_pedido_forca")
     var u_id_pedido_forca: String? = null
@@ -45,7 +51,7 @@ open class Document(val CardCode : String,
     var model : Int? = null
     var docType: String? = null
     var docObjectCode : String? = null
-    var DocTotalFc : BigDecimal? = null
+    var DocTotalFc : Double? = null
 
     val DocumentStatus : String? = null
     var documentAdditionalExpenses : List<AdditionalExpenses> = emptyList()
@@ -89,16 +95,19 @@ open class Document(val CardCode : String,
         return u_pedido_update == "1"
     }
 
+    @JsonIgnore
     fun total() : Double {
-        return DocumentLines.sumOf { it.total() }.plus(totalDespesaAdicional())
+        return DocumentLines.sumOf { it.total().setScale(2,RoundingMode.HALF_UP) }
+            .plus(totalDespesaAdicional())
+            .setScale(2,RoundingMode.HALF_UP).toDouble()
     }
 
     fun totalNegociado() : Double {
         return DocumentLines.sumOf { it.totalNegociado() }
     }
 
-    fun totalDespesaAdicional(): Double {
-        return documentAdditionalExpenses.sumOf { it.LineTotal }
+    fun totalDespesaAdicional(): BigDecimal {
+        return documentAdditionalExpenses.sumOf { BigDecimal(it.LineTotal) }
     }
 
     fun presumeDesonerado(rate : Double) : Double {
@@ -125,6 +134,27 @@ open class Document(val CardCode : String,
         if(parcelas.size > 1)
             throw Exception("Existe mais de uma parcela para baixar")
         return parcelas.firstOrNull()
+    }
+
+    fun aplicaDescontoDesonerado() {
+        this.totalDiscount = null
+        this.discountPercent = null
+        this.DocTotalFc = null;
+        val desonerado = DocumentLines.sumOf { it.valorDesonerado }.setScale(4,RoundingMode.HALF_UP)
+        val totalAntesDesconto = BigDecimal(total()).setScale(2,RoundingMode.HALF_UP)
+        this.discountPercent = desonerado.divide(totalAntesDesconto, 6,RoundingMode.HALF_UP)
+            .multiply(BigDecimal(100)).toDouble()
+        //desonerado.divide(totalAntesDesconto, 4,RoundingMode.DOWN).multiply(BigDecimal(100)).setScale(7,RoundingMode.HALF_UP).toDouble()
+    }
+
+    fun avisoRemoverDisconto(): Document {
+        this.comments = "O desconto precisa ser removido para o calculo funcionar adequadamente"
+        this.u_pedido_update = "0"
+        this.totalDiscount = null
+        this.discountPercent = null
+        this.DocTotalFc = null
+        this.TotalDiscountSC = "0.0"
+        return this;
     }
 
 
