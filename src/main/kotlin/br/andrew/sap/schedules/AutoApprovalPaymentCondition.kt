@@ -19,9 +19,9 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.stereotype.Component
 
 
-//@Component
-//@ConditionalOnProperty(value = ["org.quartz.enable"], havingValue = "true", matchIfMissing = false)
-//@DisallowConcurrentExecution
+@Component
+@ConditionalOnProperty(value = ["org.quartz.enable"], havingValue = "true", matchIfMissing = false)
+@DisallowConcurrentExecution
 class AutoApprovalPaymentCondition(
     val approvalRequestsService : ApprovalRequestsService,
     val draftsService: DraftsService,
