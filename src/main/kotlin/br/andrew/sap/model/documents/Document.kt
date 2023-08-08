@@ -141,7 +141,6 @@ open class Document(val CardCode : String,
         val totalAntesDesconto = BigDecimal(total()).setScale(2,RoundingMode.HALF_UP)
         this.discountPercent = desonerado.divide(totalAntesDesconto, 6,RoundingMode.HALF_UP)
             .multiply(BigDecimal(100)).toDouble()
-        //desonerado.divide(totalAntesDesconto, 4,RoundingMode.DOWN).multiply(BigDecimal(100)).setScale(7,RoundingMode.HALF_UP).toDouble()
     }
 
 }
