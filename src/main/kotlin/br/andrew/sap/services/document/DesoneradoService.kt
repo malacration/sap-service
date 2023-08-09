@@ -21,7 +21,7 @@ class DesoneradoService(val taxCodeService: SalesTaxCodeService,
                     .tryGetValue<SalesTaxAuthorities>()
                 it.value.forEach { p ->
                     p.UnitPrice = PrecoUnitarioComDesoneracao().calculaPreco(p, taxParam).toString()
-                    if(p.Usage == 16)
+                    if(taxCodeDesonerado.STAType == 28)
                         p.valorDesonerado = taxParam.valorImposto(p)
                 }
             }

@@ -9,6 +9,7 @@ import br.andrew.sap.model.User
 import br.andrew.sap.model.documents.OrderSales
 import br.andrew.sap.services.approval.ApprovalRequestsService
 import br.andrew.sap.services.DraftsService
+import br.andrew.sap.services.TelegramRequestService
 import br.andrew.sap.services.approval.ApprovalStagesService
 import org.quartz.DisallowConcurrentExecution
 import org.quartz.Job
@@ -16,49 +17,50 @@ import org.quartz.JobExecutionContext
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
+import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
 
 
 @Component
 @ConditionalOnProperty(value = ["org.quartz.enable"], havingValue = "true", matchIfMissing = false)
-@DisallowConcurrentExecution
 class AutoApprovalPaymentCondition(
     val approvalRequestsService : ApprovalRequestsService,
-    val draftsService: DraftsService,
-    val apro : ApprovalStagesService,
-    val currentUser : User) : Job {
+    val telegramRequestService: TelegramRequestService,
+    val currentUser : User) {
 
     val logger: Logger = LoggerFactory.getLogger(AutoApprovalPaymentCondition::class.java)
 
 
-    override fun execute(context : JobExecutionContext) {
-        try{
+    @Scheduled(fixedDelay = 300000)
+    fun execute() {
+        try {
             val predicados = listOf(
-                    Predicate("OriginatorID",currentUser.internalKey, Condicao.EQUAL),
-                    Predicate("ObjectType","17", Condicao.EQUAL),
-                    Predicate("IsDraft","Y", Condicao.EQUAL),
-                    Predicate("Status", listOf("arsApproved","arsPending"), Condicao.IN),
-                    )
-            var requests : OData? = null
-            do {
-                requests = if(requests == null)
+                Predicate("OriginatorID", currentUser.internalKey, Condicao.EQUAL),
+                Predicate("ObjectType", "17", Condicao.EQUAL),
+                Predicate("IsDraft", "Y", Condicao.EQUAL),
+                Predicate("CreationDate", "2023-08-07", Condicao.GREAT),
+                Predicate("Status", listOf("arsApproved", "arsPending"), Condicao.IN),
+            )
+            var requests: OData? = null
+                do {
+                    requests = if (requests == null)
                         approvalRequestsService.get(Filter(predicados))
                     else
                         approvalRequestsService.next(requests)
-                val approval = requests.tryGetValues<ApprovalRequests>()
-                approval.filter { it.draftEntry != null }
-                        .map { draftsService.getById(it.draftEntry!!).tryGetValue<OrderSales>()  }
+                    requests.tryGetValues<ApprovalRequests>()
+                        .filter { it.draftEntry != null && !it.isReprovado(currentUser.internalKey) }
                         .forEach {
-                            try{
-                                approvalRequestsService.aprovaEhCria(it,approval.first{r -> r.draftEntry == it.docEntry})
-                            }catch (t : Throwable){
-                                logger.error("Erro ao aprovar e draft entry ${it.docEntry} num ${it.docNum}",t)
+                            try {
+                                approvalRequestsService.aprovaEhCria(it)
+                            } catch (t: Throwable) {
+                                if((t.message ?: "").contains("Enter a discount percentage of less than 100"))
+                                    telegramRequestService.send("Remova o disconto da draft ${it.draftEntry} e solicite o calculo da desoneracao de ICMS!")
+                                logger.error("Erro ao aprovar e draft entry ${it.draftEntry}", t)
                             }
                         }
-            } while (requests!!.hasNext())
-
-        }catch (t : Throwable){
-            logger.error(t.message,t)
+                } while (requests!!.hasNext())
+        } catch (t : Throwable){
+            logger.error(t.message, t)
         }
 
     }

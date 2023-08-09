@@ -21,7 +21,7 @@ class GeneratePix(
 
     val logger: Logger = LoggerFactory.getLogger(GeneratePix::class.java)
 
-    @Scheduled(fixedRate = 15000)
+    @Scheduled(fixedDelay = 15000)
     fun execute() {
         try{
             invoiceService.pendenteGerarPix().forEach {
