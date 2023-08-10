@@ -35,11 +35,11 @@ class SapErrorListener(val telegramRequest : TelegramRequestService,
         telegramRequest.send(msg,TipoMensagem.erros)
     }
 
-    @EventListener
+//    @EventListener
+    //TODO disable logs de erros, depois ativo?
     fun error(error: ErrorMsg) {
         val msg = "Erro no SAP-Service ao chamar o SAP o servidor diz: ${error.code} ${error.message.value} - [Base:${sapEnvrioment.companyDB}]"
         telegramRequest.send(msg,TipoMensagem.erros)
-
     }
 
     @EventListener

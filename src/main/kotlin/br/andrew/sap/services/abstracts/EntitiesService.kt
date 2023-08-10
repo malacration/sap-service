@@ -34,7 +34,7 @@ abstract class EntitiesService<T>(protected val env: SapEnvrioment,
         }
     }
 
-    fun update(entry : T & Any, id : String): OData?{
+    fun update(entry : Any, id : String): OData?{
         val request = RequestEntity
                 .patch(env.host+this.path()+"($id)")
                 .header("cookie","B1SESSION=${session().sessionId}")

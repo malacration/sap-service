@@ -6,10 +6,13 @@ import br.andrew.sap.model.documents.Document
 import br.andrew.sap.model.documents.OrderSales
 import br.andrew.sap.model.exceptions.CreditException
 import br.andrew.sap.model.telegram.TipoMensagem
+import br.andrew.sap.schedules.GeneratePix
 import br.andrew.sap.services.DraftsService
 import br.andrew.sap.services.document.OrdersService
 import br.andrew.sap.services.TelegramRequestService
 import br.andrew.sap.services.document.DesoneradoService
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.springframework.context.event.EventListener
 import org.springframework.stereotype.Component
 
@@ -20,6 +23,9 @@ class OrderSalesSaveListener(val telegramRequest : TelegramRequestService,
                              val ordersService: OrdersService,
                              val desoneradoService: DesoneradoService
 ) {
+
+    val logger: Logger = LoggerFactory.getLogger(OrderSalesSaveListener::class.java)
+
     @EventListener
     fun aplicaDesonerado(event: OrderSalesSaveEvent) {
         val order = desoneradoService.aplicaDesonerado(event.order)
@@ -33,6 +39,7 @@ class OrderSalesSaveListener(val telegramRequest : TelegramRequestService,
     fun draftOrder(event: CreditException) {
         val draft = draftsService.getById(event.idLocation).tryGetValue<Document>()
         val order = desoneradoService.aplicaDesonerado(draft)
+        logger.info("Draft ${order.docEntry} Foi atualiza som desoneracao de ICMS!")
         draftsService.update(order,order.docEntry.toString())
         val msg = "Rascunho do pedido para ${order.cardName ?: "semCardName"} [DocNum:${order.docNum ?: "Sem docNum"}] foi recebido com sucesso! " +
                 "Porem esta em um procedimento de autorização - [Base:${sapEnvrioment.companyDB}]"

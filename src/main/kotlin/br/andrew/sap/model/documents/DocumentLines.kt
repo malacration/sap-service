@@ -1,9 +1,12 @@
 package br.andrew.sap.model.documents
 import br.andrew.sap.model.Comissao
+import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.databind.*
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
+import java.math.BigDecimal
+import java.math.RoundingMode
 import kotlin.reflect.KMutableProperty
 import kotlin.reflect.full.memberProperties
 import kotlin.reflect.jvm.javaField
@@ -28,10 +31,14 @@ abstract class DocumentLines(var UnitPrice : String, var Quantity : String, var 
     var CostingCode2: String? =null
     var AccountCode : String? = null
 
+    @JsonIgnore
+    var valorDesonerado : BigDecimal = BigDecimal(0)
+
     abstract fun Duplicate() : DocumentLines
 
-    fun total(): Double {
-        return (UnitPrice.toDouble() * Quantity.toDouble()) * (1-(DiscountPercent ?: 0.0)/100)
+    fun total(): BigDecimal {
+        val desconto = BigDecimal(1 -(DiscountPercent ?: 0.0)/100)
+        return BigDecimal(UnitPrice.toDouble()).setScale(4,RoundingMode.UP).multiply(BigDecimal(Quantity).multiply(desconto))
     }
 
     fun aplicaBase(precoBase: Double, idTabela: Int, comissao: Comissao) {
@@ -50,7 +57,7 @@ abstract class DocumentLines(var UnitPrice : String, var Quantity : String, var 
     }
 
     fun presumeDesonerado(rate: Double): Double {
-        return total()*rate/100
+        return total().toDouble()*rate/100
     }
 
     fun setDistribuicaoCusto(branch: DistribuicaoCustoByBranch) {
