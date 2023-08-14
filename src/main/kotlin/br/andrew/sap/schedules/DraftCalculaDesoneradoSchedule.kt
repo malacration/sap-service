@@ -3,9 +3,11 @@ package br.andrew.sap.schedules
 import br.andrew.sap.infrastructure.odata.Condicao
 import br.andrew.sap.infrastructure.odata.Filter
 import br.andrew.sap.infrastructure.odata.Predicate
+import br.andrew.sap.model.User
 import br.andrew.sap.model.documents.Document
+import br.andrew.sap.services.DraftsService
+import br.andrew.sap.services.UserService
 import br.andrew.sap.services.document.DesoneradoService
-import br.andrew.sap.services.document.QuotationsService
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.databind.PropertyNamingStrategy
@@ -19,9 +21,10 @@ import org.springframework.stereotype.Component
 
 @Component
 @ConditionalOnProperty(value = ["org.quartz.enable"], havingValue = "true", matchIfMissing = false)
-class QuotationCalculaDesoneradoSchedule(
+class DraftCalculaDesoneradoSchedule(
     val desoneradoService: DesoneradoService,
-    val quotationService : QuotationsService) {
+    val draftService : DraftsService,val currentUser : User
+) {
 
     val logger: Logger = LoggerFactory.getLogger(DraftCalculaDesoneradoSchedule::class.java)
 
@@ -31,23 +34,15 @@ class QuotationCalculaDesoneradoSchedule(
             Predicate("U_pedido_update", "1", Condicao.EQUAL),
             Predicate("DocDate", "2023-07-01", Condicao.GREAT),
             Predicate("DocumentStatus", "bost_Open", Condicao.EQUAL),
+            Predicate("UserSign", currentUser.internalKey, Condicao.NOT_EQUAL),
         )
-        val resultado = quotationService.get(filter).tryGetValues<Document>()
+        val resultado = draftService.get(filter).tryGetValues<Document>()
         resultado.forEach {
             val update = if(it.discountPercent == null || it.discountPercent!! == 0.0)
                 desoneradoService.aplicaDesonerado(it)
             else
                 FalhaAoCalcularDesonerado()
-            quotationService.update(update,it.docEntry.toString())
+            draftService.update(update,it.docEntry.toString())
         }
     }
-}
-
-
-@JsonNaming(PropertyNamingStrategy.UpperCamelCaseStrategy::class)
-@JsonIgnoreProperties(ignoreUnknown = true)
-@JsonInclude(JsonInclude.Include.NON_NULL)
-class FalhaAoCalcularDesonerado(){
-    var comments = "O desconto precisa ser removido para o calculo funcionar adequadamente"
-    var u_pedido_update = "0"
 }

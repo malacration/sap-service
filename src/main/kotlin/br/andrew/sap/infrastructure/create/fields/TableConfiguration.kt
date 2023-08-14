@@ -44,7 +44,8 @@ class TableConfiguration(val userFieldsMDService: UserFieldsMDService,
                 .also { it.ValidValuesMD = listOf(
                     ValuesMd("2","SUSTENNUTRI NUTRICAO ANIMAL"),
                     ValuesMd("4","SUSTENNUTRI NUTRICAO ANIMAL LTDA - FILIAL- AC"),
-                    ValuesMd("11","SUSTENNUTRI NUTRICAO ANIMAL LTDA - Filial - RO")
+                    ValuesMd("11","SUSTENNUTRI NUTRICAO ANIMAL LTDA - Filial - RO"),
+                    ValuesMd("0","Nenhuma")
                 ) },
         ).forEach { userFieldsMDService.findOrCreate(it) }
 
