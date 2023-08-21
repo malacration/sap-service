@@ -19,11 +19,10 @@ class PrecoUnitarioComDesoneracao {
         val sem = BigDecimal(100)
         val one = BigDecimal(1)
         val rate = one
-                .minus(BigDecimal(tax.Rate).divide(sem))
+            .minus(tax.rateBaseOutro())
         val minusDiscont = one.minus(discountPercent.divide(sem))
-        val base = BigDecimal(tax.u_Outros).divide(sem)
-        return if(base > BigDecimal(0.0))
-            base.multiply(valorAlvo)
+        return if(tax.u_Outros > 0)
+            valorAlvo
                     .divide(minusDiscont,4,RoundingMode.UP)
                     .divide(rate,4, RoundingMode.UP)
         else
