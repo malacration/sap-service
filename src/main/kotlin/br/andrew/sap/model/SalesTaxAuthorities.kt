@@ -18,7 +18,17 @@ class SalesTaxAuthorities(val type : Int, val Rate : Double,
         return (Rate/100)*(u_Outros/100)*base
     }
 
+    fun rateBaseOutro(): BigDecimal {
+        val sem = BigDecimal(100)
+        val base = BigDecimal(u_Outros).divide(sem)
+        return base.multiply(BigDecimal(Rate)).divide(sem,4, RoundingMode.HALF_UP)
+    }
+
     fun valorImposto(p : Product): BigDecimal {
-        return p.total().multiply(BigDecimal(this.Rate)).divide(BigDecimal(100),2, RoundingMode.HALF_UP)
+        return valorImposto(p.total())
+    }
+
+    fun valorImposto(total : BigDecimal): BigDecimal {
+        return total.multiply(rateBaseOutro()).setScale(2, RoundingMode.HALF_UP)
     }
 }
