@@ -3,11 +3,18 @@ package br.andrew.sap.model
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.databind.PropertyNamingStrategy
 import com.fasterxml.jackson.databind.annotation.JsonNaming
+import org.apache.hc.client5.http.utils.Base64
+import java.io.File
+import java.util.*
 
 
 @JsonNaming(PropertyNamingStrategy.UpperCamelCaseStrategy::class)
 @JsonIgnoreProperties(ignoreUnknown = true)
-class Attachment {
+class Attachment() {
+    constructor(file : File) : this(){
+        file64 = Base64.encodeBase64String(file.readBytes())
+        fileName = file.nameWithoutExtension
+    }
 
     var fileName : String? = null
     var absoluteEntry : Int? = null

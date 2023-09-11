@@ -5,13 +5,16 @@ import br.andrew.sap.infrastructure.odata.Order
 import br.andrew.sap.infrastructure.odata.OrderBy
 import br.andrew.sap.model.Attachment
 import br.andrew.sap.services.AttachmentService
+import br.andrew.sap.services.StorageService
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 
 @RestController
 @RequestMapping("attachment")
-class AttachmentController(val service: AttachmentService) {
+class AttachmentController(
+    val service: AttachmentService,
+    val storageService: StorageService) {
 
 
     @GetMapping()
@@ -30,5 +33,10 @@ class AttachmentController(val service: AttachmentService) {
     @PostMapping("business-partners/{cardCode}")
     fun upload(@RequestBody attachment: Attachment, @PathVariable cardCode : String){
         service.appendFile(cardCode,attachment)
+    }
+
+    @GetMapping("business-partners/{cardCode}/{file}")
+    fun moveAnexoToSap(@PathVariable cardCode : String, @PathVariable file : String){
+        upload(storageService.get(file),cardCode)
     }
 }

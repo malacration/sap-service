@@ -7,3 +7,7 @@ services:
       dockerfile: Dockerfile
     volumes:
       - ./src/main/resources/application.properties:/app/application.properties
+      - anexo:/app/anexo
+volumes:
+  anexo:
+    name: anexo
