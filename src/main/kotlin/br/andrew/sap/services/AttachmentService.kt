@@ -52,11 +52,11 @@ class AttachmentService(env: SapEnvrioment, val bpService: BusinessPartnersServi
             val extension = MimeTypes.getDefaultMimeTypes().forName(mimeType).extension
             val fileName = attachment.fileName+" - "+cardCode+extension
 
-            val body =
+            var body =
                 "--$boundary\n"+
                         "Content-Disposition: form-data; name=\"$fileName\"; filename=\"$fileName\"\n" +
                         "Content-Type: $mimeType\n\n"+
-                        "${Base64.decodeBase64(attachment.file64)}\n"+
+                        "${attachment.file64}\n"+
                         "--$boundary--"
             request
                 .header("Content-Type","multipart/form-data; boundary=$boundary")

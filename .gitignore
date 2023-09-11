@@ -35,6 +35,7 @@ out/
 /dist/
 /nbdist/
 /.nb-gradle/
+anexo
 
 ### VS Code ###
 .vscode/
