@@ -2,8 +2,8 @@ package br.andrew.sap.services
 
 import br.andrew.sap.infrastructure.odata.OData
 import br.andrew.sap.model.Attachment
-import br.andrew.sap.model.envrioments.SapEnvrioment
 import br.andrew.sap.model.SapError
+import br.andrew.sap.model.envrioments.SapEnvrioment
 import br.andrew.sap.model.partner.BusinessPartner
 import br.andrew.sap.services.abstracts.EntitiesService
 import org.apache.hc.client5.http.utils.Base64
@@ -52,15 +52,17 @@ class AttachmentService(env: SapEnvrioment, val bpService: BusinessPartnersServi
             val extension = MimeTypes.getDefaultMimeTypes().forName(mimeType).extension
             val fileName = attachment.fileName+" - "+cardCode+extension
 
-            var body =
-                "--$boundary\n"+
-                        "Content-Disposition: form-data; name=\"$fileName\"; filename=\"$fileName\"\n" +
-                        "Content-Type: $mimeType\n\n"+
-                        "${attachment.file64}\n"+
-                        "--$boundary--"
+            val headeyBoundary = ("--$boundary\n"+
+                    "Content-Disposition: form-data; name=\"$fileName\"; filename=\"$fileName\"\n" +
+                    "Content-Type: $mimeType\n\n").toByteArray()
+            val file = Base64.decodeBase64(attachment.file64).plus("\n".toByteArray())
+            val footer = "--$boundary--".toByteArray()
+            var body = headeyBoundary.plus(file.plus(footer))
+
             request
-                .header("Content-Type","multipart/form-data; boundary=$boundary")
+                .header("Content-Type","multipart/form-data;boundary=$boundary")
                 .header("cookie","B1SESSION=${session().sessionId}")
+                .header("Content-Length",body.size.toString())
             val retorno = restTemplate.exchange(request.body(body), OData::class.java)
 
             if(partner.attachmentEntry == null){

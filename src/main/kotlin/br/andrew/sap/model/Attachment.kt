@@ -12,10 +12,12 @@ import java.util.*
 @JsonIgnoreProperties(ignoreUnknown = true)
 class Attachment() {
     constructor(file : File) : this(){
+        body = file.readBytes()
         file64 = Base64.encodeBase64String(file.readBytes())
         fileName = file.nameWithoutExtension
     }
 
+    var body: ByteArray? = null
     var fileName : String? = null
     var absoluteEntry : Int? = null
     var file64 : String? = null
