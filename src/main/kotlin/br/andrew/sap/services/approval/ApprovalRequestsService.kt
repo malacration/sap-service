@@ -60,6 +60,7 @@ class ApprovalRequestsService(env : SapEnvrioment,
 
     fun aprovaEhCria(it: ApprovalRequests) {
         val draft = draftsService.getById(it.draftEntry!!).tryGetValue<OrderSales>()
-        return aprovaEhCria(draft,it)
+        if(!draft.isCalculaDesonaerado())
+            aprovaEhCria(draft,it)
     }
 }
