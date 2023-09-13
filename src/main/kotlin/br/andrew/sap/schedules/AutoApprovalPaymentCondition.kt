@@ -54,7 +54,7 @@ class AutoApprovalPaymentCondition(
                                 approvalRequestsService.aprovaEhCria(it)
                             } catch (t: Throwable) {
                                 if((t.message ?: "").contains("Enter a discount percentage of less than 100"))
-                                    telegramRequestService.send("Remova o disconto da draft ${it.draftEntry} e solicite o calculo da desoneracao de ICMS!")
+                                    telegramRequestService.send("Remova o desconto do rascunho ${it.draftEntry} e solicite o calculo da desoneracao de ICMS!")
                                 logger.error("Erro ao aprovar e draft entry ${it.draftEntry}", t)
                             }
                         }
