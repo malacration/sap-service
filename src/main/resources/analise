@@ -1,0 +1,44 @@
+Assinatura no cadastro
+    - Gerar contrato
+    - Governo
+
+
+Recebimento de pedidos
+    - Enviar notificao de 2 factor para comprador informado no cadastro
+
+
+Cliente tem titulo em aberto
+    - Bloquear pedidos em aberto
+
+
+Fazer validação no seraza no cadastro ou pedidod e venda
+    - Bloquear entrada do pedido com sersa indanimplente
+    - Verificar basedo valor
+
+
+
+Alerta de pedidos com mais de 7 dias
+ - Provavelmente vamos ter que voltar
+
+
+
+---- Critico chefe
+
+- Compras no via nuvem. Gera trabalho duplicado;
+-
+
+
+--- Endereço de entrega;
+- Selecionar endereço de entrega
+- Cadastrar varios endereço de cadastro;
+
+-- atualização cadastral
+Marcar clientes para verificar se estao integros
+
+
+-- Cadastrar estrutura dos vendedors
+Representante sem nenhum vendedor cadastrado na nossa base
+
+
+
+
