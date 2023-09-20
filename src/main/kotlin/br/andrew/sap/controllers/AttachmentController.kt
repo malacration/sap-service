@@ -39,4 +39,12 @@ class AttachmentController(
     fun moveAnexoToSap(@PathVariable cardCode : String, @PathVariable file : String){
         upload(storageService.get(file),cardCode)
     }
+
+    @PostMapping("business-partners")
+    fun save(@RequestBody upload : UploadDto){
+        moveAnexoToSap(upload.cardCode,upload.file)
+    }
+
+
 }
+class UploadDto(val cardCode : String, val file : String)
