@@ -1,7 +1,6 @@
 package br.andrew.sap.model.bank
 
-import br.andrew.sap.model.documents.Document
-import br.andrew.sap.model.documents.PurchaseInvoice
+import br.andrew.sap.model.documents.base.Document
 import br.andrew.sap.model.uzzipay.ContaUzziPayPix
 import br.andrew.sap.model.uzzipay.Transaction
 import com.fasterxml.jackson.annotation.JsonFormat

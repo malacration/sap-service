@@ -1,12 +1,10 @@
-package br.andrew.sap.model.documents
+package br.andrew.sap.model.documents.base
 
-import br.andrew.sap.model.Comissao
 import br.andrew.sap.model.enums.Cancelled
 import br.andrew.sap.model.WarehouseDefault
 import br.andrew.sap.model.uzzipay.DataRetonroPixQrCode
 import br.andrew.sap.model.uzzipay.RequestPixDueDate
 import br.andrew.sap.model.uzzipay.Transaction
-import br.andrew.sap.services.ItemsService
 import com.fasterxml.jackson.annotation.JsonFormat
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties

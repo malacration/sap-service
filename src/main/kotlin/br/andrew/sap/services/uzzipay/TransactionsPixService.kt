@@ -2,7 +2,7 @@ package br.andrew.sap.services.uzzipay
 
 import br.andrew.sap.infrastructure.configurations.uzzipay.UzziPayEnvrioment
 import br.andrew.sap.model.BussinessPlace
-import br.andrew.sap.model.documents.Installment
+import br.andrew.sap.model.documents.base.Installment
 import br.andrew.sap.model.documents.Invoice
 import br.andrew.sap.model.uzzipay.ContaUzziPayPix
 import br.andrew.sap.model.uzzipay.Transaction
@@ -46,7 +46,7 @@ class TransactionsPixService(val restTemplate: RestTemplate,
         return installment.filter { it.U_pix_reference != null }.map { getBy(it,conta) }
     }
 
-    fun getBy(installment : Installment,conta: ContaUzziPayPix): Transaction {
+    fun getBy(installment : Installment, conta: ContaUzziPayPix): Transaction {
         return getBy(installment.U_pix_reference ?: throw Exception("Nao tem referencia pix"),conta)
     }
 

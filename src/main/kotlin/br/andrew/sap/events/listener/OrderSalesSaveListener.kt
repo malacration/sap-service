@@ -2,11 +2,10 @@ package br.andrew.sap.events.listener
 
 import br.andrew.sap.events.OrderSalesSaveEvent
 import br.andrew.sap.model.envrioments.SapEnvrioment
-import br.andrew.sap.model.documents.Document
+import br.andrew.sap.model.documents.base.Document
 import br.andrew.sap.model.documents.OrderSales
 import br.andrew.sap.model.exceptions.CreditException
 import br.andrew.sap.model.telegram.TipoMensagem
-import br.andrew.sap.schedules.GeneratePix
 import br.andrew.sap.services.DraftsService
 import br.andrew.sap.services.document.OrdersService
 import br.andrew.sap.services.TelegramRequestService

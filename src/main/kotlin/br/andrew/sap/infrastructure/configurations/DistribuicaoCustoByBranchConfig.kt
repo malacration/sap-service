@@ -1,7 +1,6 @@
 package br.andrew.sap.infrastructure.configurations
 
-import br.andrew.sap.model.WarehouseDefault
-import br.andrew.sap.model.documents.DistribuicaoCustoByBranch
+import br.andrew.sap.model.documents.base.DistribuicaoCustoByBranch
 
 class DistribuicaoCustoByBranchConfig {
 

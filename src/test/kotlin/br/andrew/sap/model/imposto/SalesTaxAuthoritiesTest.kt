@@ -1,13 +1,12 @@
 package br.andrew.sap.model.imposto
 
 import br.andrew.sap.model.SalesTaxAuthorities
-import br.andrew.sap.model.documents.AdditionalExpenses
+import br.andrew.sap.model.documents.base.AdditionalExpenses
 import br.andrew.sap.model.documents.OrderSales
-import br.andrew.sap.model.documents.Product
+import br.andrew.sap.model.documents.base.Product
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import java.math.BigDecimal
-import java.math.RoundingMode
 
 class SalesTaxAuthoritiesTest {
 

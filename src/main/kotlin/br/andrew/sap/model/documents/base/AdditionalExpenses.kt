@@ -1,4 +1,4 @@
-package br.andrew.sap.model.documents
+package br.andrew.sap.model.documents.base
 
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
@@ -23,7 +23,7 @@ class AdditionalExpenses(val expenseCode : Int, val LineTotal : Double){
 
     companion object{
         @JsonIgnore
-        fun frete(valor : Double) : AdditionalExpenses{
+        fun frete(valor : Double) : AdditionalExpenses {
             return AdditionalExpenses(1,valor)
         }
     }

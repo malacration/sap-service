@@ -1,7 +1,9 @@
 package br.andrew.sap.model.forca
 
-import br.andrew.sap.model.documents.AdditionalExpenses
+import br.andrew.sap.model.documents.base.AdditionalExpenses
 import br.andrew.sap.model.documents.OrderSales
+import br.andrew.sap.model.documents.Quotation
+import br.andrew.sap.model.documents.base.Document
 import br.andrew.sap.services.ItemsService
 import br.andrew.sap.services.pricing.ComissaoService
 import com.fasterxml.jackson.annotation.*
@@ -32,30 +34,39 @@ class PedidoVenda(
     var tipoPedido : Int = 9
     var desconto : Double = 0.0
 
-
     @JsonIgnore
     fun getOrder(itemService: ItemsService, comissaoService: ComissaoService): OrderSales {
-        return OrderSales(idCliente, dataEntraga,
-                produtos.map { it.getProduct(tipoPedido,itemService,comissaoService) },idEmpresa)
-                .also {
-                    val condicao = idCondicaoPagamento.split("_")
-                    it.paymentMethod = idFormaPagamento
-                    it.discountPercent = desconto
+        return build(OrderSales(idCliente,dataEntraga,
+            produtos.map { it.getProduct(tipoPedido,itemService,comissaoService) }, idEmpresa))
 
-                    it.paymentGroupCode = if(condicao.size > 1)
-                        condicao[1]
-                    else
-                        idCondicaoPagamento
-
-                    it.salesPersonCode = codVendedor
-                    it.u_pedido_update = "1"
-                    it.comments = observacao
-                    it.OpeningRemarks = observacao
-
-                    it.u_id_pedido_forca = idPedido
-                    if(this.frete != null)
-                        it.documentAdditionalExpenses = listOf(AdditionalExpenses.frete(this.frete!!))
-                }
     }
+    @JsonIgnore
+    fun getQuotation(itemService: ItemsService, comissaoService: ComissaoService): Quotation {
+        return build(Quotation(idCliente, dataEntraga,
+            produtos.map { it.getProduct(tipoPedido,itemService,comissaoService) },idEmpresa))
+
+    }
+
+    fun <T : Document> build(document : T) : T{
+        return document.also {
+            val condicao = idCondicaoPagamento.split("_")
+            it.paymentMethod = idFormaPagamento
+            it.discountPercent = desconto
+            it.paymentGroupCode = if(condicao.size > 1)
+                condicao[1]
+            else
+                idCondicaoPagamento
+
+            it.salesPersonCode = codVendedor
+            it.u_pedido_update = "1"
+            it.comments = observacao
+            it.OpeningRemarks = observacao
+            it.u_id_pedido_forca = idPedido
+            if(frete != null)
+                it.documentAdditionalExpenses = listOf(AdditionalExpenses.frete(frete!!))
+        }
+    }
+
+
 }
 
