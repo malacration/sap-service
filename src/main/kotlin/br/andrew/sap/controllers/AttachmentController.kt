@@ -41,8 +41,9 @@ class AttachmentController(
     }
 
     @PostMapping("business-partners")
-    fun save(@RequestBody upload : UploadDto){
+    fun save(@RequestBody upload : UploadDto): String {
         moveAnexoToSap(upload.cardCode,upload.file)
+        return "{ \"status\": 200 }"
     }
 
 
