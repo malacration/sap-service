@@ -1,6 +1,8 @@
 package br.andrew.sap.model.documents
 
 import br.andrew.sap.infrastructure.NfeModelDefaultBean
+import br.andrew.sap.model.documents.base.Document
+import br.andrew.sap.model.documents.base.DocumentLines
 
 class PurchaseInvoice(CardCode: String,
                       DocDueDate: String?,

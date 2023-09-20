@@ -1,5 +1,7 @@
 package br.andrew.sap.model.documents
 
+import br.andrew.sap.model.documents.base.Document
+import br.andrew.sap.model.documents.base.DocumentLines
 import com.fasterxml.jackson.annotation.JsonFormat
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonInclude

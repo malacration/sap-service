@@ -1,4 +1,4 @@
-package br.andrew.sap.model.documents
+package br.andrew.sap.model.documents.base
 
 import com.fasterxml.jackson.core.JsonParser
 import com.fasterxml.jackson.core.JsonProcessingException

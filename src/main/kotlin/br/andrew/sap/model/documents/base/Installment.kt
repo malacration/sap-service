@@ -1,6 +1,7 @@
-package br.andrew.sap.model.documents
+package br.andrew.sap.model.documents.base
 
 import br.andrew.sap.model.bankplus.Boleto
+import br.andrew.sap.model.documents.base.Document
 import br.andrew.sap.model.uzzipay.Transaction
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonInclude

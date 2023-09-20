@@ -2,10 +2,8 @@ package br.andrew.sap.services.approval
 
 import br.andrew.sap.infrastructure.odata.OData
 import br.andrew.sap.model.ApprovalRequests
-import br.andrew.sap.model.Decision
 import br.andrew.sap.model.envrioments.SapEnvrioment
-import br.andrew.sap.model.documents.Document
-import br.andrew.sap.model.documents.Installment
+import br.andrew.sap.model.documents.base.Document
 import br.andrew.sap.model.documents.OrderSales
 import br.andrew.sap.services.AuthService
 import br.andrew.sap.services.DraftsService
@@ -16,8 +14,6 @@ import org.springframework.data.domain.Page
 import org.springframework.http.RequestEntity
 import org.springframework.stereotype.Service
 import org.springframework.web.client.RestTemplate
-import java.text.SimpleDateFormat
-import java.util.*
 
 
 @Service

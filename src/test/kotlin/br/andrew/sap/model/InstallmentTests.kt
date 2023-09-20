@@ -1,6 +1,6 @@
 package br.andrew.sap.model
 
-import br.andrew.sap.model.documents.Installment
+import br.andrew.sap.model.documents.base.Installment
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import java.util.*

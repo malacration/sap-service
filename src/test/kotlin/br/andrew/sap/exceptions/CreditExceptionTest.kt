@@ -42,6 +42,6 @@ class CreditExceptionTest {
         val sapErro = SapError(ErrorMsg("code", SapMessage("","")))
         val excption = CreditException(sapErro,locationEntrada)
         Assertions.assertEquals("5099",excption.idLocation)
-        Assertions.assertEquals(5099,excption.getOrderFake().docEntry)
+        Assertions.assertEquals(5099,excption.getDocumentFake().docEntry)
     }
 }

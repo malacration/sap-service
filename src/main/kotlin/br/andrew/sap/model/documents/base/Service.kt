@@ -1,4 +1,4 @@
-package br.andrew.sap.model.documents
+package br.andrew.sap.model.documents.base
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonInclude

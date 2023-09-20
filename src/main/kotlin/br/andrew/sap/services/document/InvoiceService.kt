@@ -6,7 +6,7 @@ import br.andrew.sap.model.DocEntry
 import br.andrew.sap.model.bank.Payment
 import br.andrew.sap.model.bank.PaymentInvoice
 import br.andrew.sap.model.envrioments.SapEnvrioment
-import br.andrew.sap.model.documents.Installment
+import br.andrew.sap.model.documents.base.Installment
 import br.andrew.sap.model.documents.Invoice
 import br.andrew.sap.model.exceptions.PixPaymentException
 import br.andrew.sap.model.partner.BusinessPartner

@@ -3,9 +3,8 @@ package br.andrew.sap.json
 import br.andrew.sap.infrastructure.odata.OData
 import br.andrew.sap.model.DocEntry
 import br.andrew.sap.model.documents.OrderSales
-import br.andrew.sap.model.documents.Product
+import br.andrew.sap.model.documents.base.Product
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.kotlin.KotlinFeature
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.fasterxml.jackson.module.kotlin.jacksonTypeRef
 import org.junit.jupiter.api.Assertions
