@@ -106,6 +106,7 @@ open class Document(val CardCode : String,
         return documentAdditionalExpenses.sumOf { BigDecimal(it.LineTotal) }
     }
 
+
     fun presumeDesonerado(rate : Double) : Double {
         return DocumentLines.sumOf { it.presumeDesonerado(rate) }
     }
