@@ -3,13 +3,11 @@ package br.andrew.sap.services
 import br.andrew.sap.services.MailService.Companion.copyDefault
 import jakarta.mail.internet.InternetAddress
 import jakarta.mail.internet.MimeMessage
-import org.springframework.mail.MailMessage
 import org.springframework.mail.SimpleMailMessage
 import org.springframework.mail.javamail.JavaMailSender
 import org.springframework.mail.javamail.MimeMessageHelper
 import org.springframework.stereotype.Service
 import org.thymeleaf.TemplateEngine
-import org.thymeleaf.context.Context
 
 
 @Service
