@@ -29,7 +29,7 @@ class ProvisioningConfiguration(val queryService: QuerysServices) {
 
 
         querys.forEach {
-            logger.info("Atualizando view {${it.sqlName}")
+            logger.info("Atualizando view {${it.sqlName}}")
             queryService.replace(it)
         }
         return querys

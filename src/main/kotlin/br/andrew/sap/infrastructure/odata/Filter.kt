@@ -7,6 +7,7 @@ class Filter(val propertie : List<Predicate>) {
     constructor() : this(listOf())
     //constructor(predicate: Predicate) : this(listOf(predicate))
     constructor(vararg predicate: Predicate) : this(predicate.toList())
+    constructor(coluna: String, value: Any, condition : Condicao) : this(listOf(Predicate(coluna,value,condition)))
 
     override fun toString(): String {
         if(propertie.isEmpty())
