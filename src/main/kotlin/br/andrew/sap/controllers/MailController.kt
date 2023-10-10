@@ -16,7 +16,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 
 @RestController
-@RequestMapping("mail")
+@RequestMapping("l")
 class MailController(val mailService: MailService,
                      val templateEngine : TemplateEngine,
                      val salesService : SalesPersonsService,

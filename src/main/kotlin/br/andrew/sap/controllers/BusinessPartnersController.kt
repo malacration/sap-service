@@ -26,6 +26,24 @@ class BusinessPartnersController(val service : BusinessPartnersService) {
         return service.getById("'$id'")
     }
 
+    @GetMapping("/key/{hashcode}")
+    fun getHashUpdat(@PathVariable hashcode : String): OData {
+        //TODO fazer metodo que busca hash do cliente para verificar atualizacao
+        return service.getById("'$hashcode'")
+    }
+
+    @PostMapping("/key/{hashcode}")
+    fun setHashUpdat(@RequestBody bp : BusinessPartner): OData? {
+        //TODO fazer metodo que busca hash do cliente para verificar atualizacao
+
+        bp.clearDataNotAllowUpdated()
+//        var b = bp.let { BusinessPartner().also { it.setAddresses(bp.getAddresses().filter { it.RowNum == null }) } }
+//        b.cardCode = bp.cardCode
+//        service.update(b,"'${bp.cardCode}'")
+////bp
+        return service.update(bp,"'${bp.cardCode}'")
+    }
+
     @PostMapping("")
     fun salvar(@RequestBody bp : Cliente): BusinessPartner {
         return service.save(bp.getBusinessPartner()).tryGetValue()

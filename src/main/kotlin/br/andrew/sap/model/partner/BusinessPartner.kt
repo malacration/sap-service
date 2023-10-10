@@ -37,6 +37,7 @@ class BusinessPartner() {
     var u_id_forca: String? = null
     var emailAddress: String? = null
     var phone1: String? = null
+    var phone2: String? = null
     var cardName : String? = null
     var cardType : BusinessPartnerType? = null
     var cardCode : String? = null
@@ -46,6 +47,13 @@ class BusinessPartner() {
 //    var BPLID : String? = null
 //    var DisabledForBP : String? = null
     var series : Int? = 77
+    var ContactEmployees : MutableList<ContactBp> = mutableListOf()
+
+
+
+
+    var U_Rov_Data_Nascimento : String? = null
+    var U_Rov_Nome_Mae : String? = null
 
 
 
@@ -100,5 +108,11 @@ class BusinessPartner() {
 
     override fun toString(): String {
         return "$cardCode - CNPJ($BPFiscalTaxIDCollection)"
+    }
+
+    fun clearDataNotAllowUpdated() {
+        this.BPBranchAssignment = null
+        BPFiscalTaxIDCollection = null
+        BPPaymentMethods = listOf()
     }
 }

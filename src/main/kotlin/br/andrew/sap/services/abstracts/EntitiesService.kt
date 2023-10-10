@@ -110,6 +110,17 @@ abstract class EntitiesService<T>(protected val env: SapEnvrioment,
         return restTemplate.exchange(request, OData::class.java).body!!
     }
 
+    inline fun <reified T> getAll(filter: Filter = Filter()): List<T> {
+        var content : MutableList<T> = mutableListOf()
+        var odata : OData = get(filter)
+        content.addAll(odata.tryGetValues())
+        while (odata.hasNext()){
+            odata = next(odata)
+            content.addAll(odata.tryGetValues())
+        }
+        return content;
+    }
+
     fun cru(body: String): OData {
         val request = RequestEntity
                 .post(env.host+this.path())
@@ -125,7 +136,6 @@ abstract class EntitiesService<T>(protected val env: SapEnvrioment,
                 .body(body)
         return restTemplate.exchange(request, OData::class.java).body!!
     }
-
 }
 
 

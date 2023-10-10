@@ -9,10 +9,16 @@ import java.util.*
 
 
 @RestController
-class IndexController(val version : Version) {
+class IndexController(val version : Version, val serasaService: SerasaService) {
 
     @GetMapping("/")
     fun index() : Version{
         return version
     }
+
+    @GetMapping("/test")
+    fun test() : Any? {
+        return serasaService.test()
+    }
+
 }
