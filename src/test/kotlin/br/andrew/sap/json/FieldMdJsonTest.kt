@@ -1,11 +1,10 @@
 package br.andrew.sap.json
 
-import br.andrew.sap.model.FieldMd
+import br.andrew.sap.model.entity.FieldMd
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
-import java.util.*
 
 class FieldMdJsonTest {
 

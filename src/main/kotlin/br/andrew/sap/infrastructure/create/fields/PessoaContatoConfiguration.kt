@@ -9,14 +9,19 @@ import org.springframework.context.annotation.Profile
 
 @Configuration
 @Profile("!test")
-class VendedorConfiguration(val userFieldsMDService: UserFieldsMDService) {
+class PessoaContatoConfiguration(val userFieldsMDService: UserFieldsMDService) {
 
     init {
+
         userFieldsMDService.findOrCreate(
-            FieldMd("envia_relatorio","Envia Relatorio?","OSLP")
+            FieldMd("tipoPessoa","Tipo Pessoa","OCPR")
             .also {
-                it.ValidValuesMD = listOf(ValuesMd("0","NÃO"), ValuesMd("1","SIM"))
-                it.defaultValue = "0";
+                it.ValidValuesMD = listOf(
+                    ValuesMd("-1","SELECIONE"),
+                    ValuesMd("conjuge","Cônjuge"),
+                    ValuesMd("colaborador","Colaborador")
+                )
+                it.defaultValue = "-1";
             })
     }
 }

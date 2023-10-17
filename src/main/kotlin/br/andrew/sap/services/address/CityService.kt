@@ -1,32 +1,32 @@
-package br.andrew.sap.services
+package br.andrew.sap.services.address
 
 import br.andrew.sap.infrastructure.odata.OData
 import br.andrew.sap.model.ParcelasAberto
 import br.andrew.sap.model.Session
+import br.andrew.sap.model.address.City
 import br.andrew.sap.model.envrioments.SapEnvrioment
+import br.andrew.sap.model.romaneio.TipoAnalise
+import br.andrew.sap.services.AuthService
+import br.andrew.sap.services.abstracts.EntitiesService
+import org.springframework.cache.annotation.Cacheable
 import org.springframework.http.RequestEntity
 import org.springframework.stereotype.Service
 import org.springframework.web.client.RestTemplate
-import java.time.LocalDate
-import java.time.LocalDateTime
-import java.util.Date
 
 @Service
-class ParcelasAbertoService(val env : SapEnvrioment,
-                            val restTemplate: RestTemplate,
-                            val authService: AuthService,
-        ) {
+class CityService(val env : SapEnvrioment,
+                  val restTemplate: RestTemplate,
+                  val authService: AuthService)  {
 
     fun session() : Session {
         return authService.getToken(env.getLogin())
     }
 
-    fun getAllBySql(slpCode : Int) : List<ParcelasAberto> {
+    @Cacheable("citys")
+    fun get(estado : String) : List<City> {
         val url = env.host+"/b1s/v1/"
-        val time =  LocalDate.now().plusDays(-3)
-
-        var uri = "${url}SQLQueries('titulos.sql')/List?\$skip=${0}&slpCode=${slpCode}&data='${time}'"
-        val resultado : MutableList<ParcelasAberto> = mutableListOf()
+        var uri = "${url}SQLQueries('cidades.sql')/List?\$skip=${0}&estado='${estado}'"
+        val resultado : MutableList<City> = mutableListOf()
         do{
             val request = RequestEntity
                 .get(uri)
@@ -34,11 +34,10 @@ class ParcelasAbertoService(val env : SapEnvrioment,
                 .build()
             val odata = restTemplate.exchange(request, OData::class.java).body
             uri = (url + odata?.nextLink())
-            resultado.addAll(odata?.tryGetValues() ?: listOf())
+            resultado.addAll(odata!!.tryGetValues())
         } while (odata?.hasNext() ?: false)
 
-        return resultado.sortedBy { "${it.CardCode}-${it.Serial}-${it.InstlmntID}" }
+        return resultado
     }
+
 }
-
-

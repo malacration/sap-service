@@ -1,8 +1,8 @@
 package br.andrew.sap.infrastructure.create.fields
 
-import br.andrew.sap.model.DbType
-import br.andrew.sap.model.FieldMd
-import br.andrew.sap.model.ValuesMd
+import br.andrew.sap.model.entity.DbType
+import br.andrew.sap.model.entity.FieldMd
+import br.andrew.sap.model.entity.ValuesMd
 import br.andrew.sap.services.structs.UserFieldsMDService
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Profile
@@ -14,7 +14,7 @@ class PedidoFieldConfiguration(val userFieldsMDService: UserFieldsMDService) {
 
     init {
         val updatePedido = FieldMd("pedido_update","Atualização pedido","ORDR")
-                .also { it.ValidValuesMD = listOf(ValuesMd("0","NÃO"),ValuesMd("1","SIM")) }
+                .also { it.ValidValuesMD = listOf(ValuesMd("0","NÃO"), ValuesMd("1","SIM")) }
         userFieldsMDService.findOrCreate(updatePedido)
 
         val idPedidoForca = FieldMd("id_pedido_forca","Id Pedido Venda","ORDR").also {
@@ -28,7 +28,7 @@ class PedidoFieldConfiguration(val userFieldsMDService: UserFieldsMDService) {
         val precoBase = FieldMd("preco_base","Preço base","DRF1", DbType.db_Float)
         userFieldsMDService.findOrCreate(precoBase)
 
-        val idForcaVendas = FieldMd("U_id_pedido_forca","Id Força de vendas","OCRD",DbType.db_Numeric)
+        val idForcaVendas = FieldMd("U_id_pedido_forca","Id Força de vendas","OCRD", DbType.db_Numeric)
                 .also {
                     it.size = null
                 }
@@ -42,7 +42,7 @@ class PedidoFieldConfiguration(val userFieldsMDService: UserFieldsMDService) {
 
         val fluxoVendaPrazo = FieldMd("fazer_fluxo_prazo","Fazer Fluxo Prazo?","OCRD")
                 .also {
-                    it.ValidValuesMD = listOf(ValuesMd("0","NÃO"),ValuesMd("1","SIM"))
+                    it.ValidValuesMD = listOf(ValuesMd("0","NÃO"), ValuesMd("1","SIM"))
                     it.defaultValue = "0"
                 }
         userFieldsMDService.findOrCreate(fluxoVendaPrazo)
@@ -55,12 +55,13 @@ class PedidoFieldConfiguration(val userFieldsMDService: UserFieldsMDService) {
         ).forEach { userFieldsMDService.findOrCreate(it) }
 
         userFieldsMDService.findOrCreate(
-            FieldMd("pix_reference","Reference - PIX","ORCT",DbType.db_Alpha))
+            FieldMd("pix_reference","Reference - PIX","ORCT", DbType.db_Alpha)
+        )
 
         listOf(
             FieldMd("gerar_pix","Gerar Pix?","OPYM")
                 .also {
-                it.ValidValuesMD = listOf(ValuesMd("0","NÃO"),ValuesMd("1","SIM"))
+                it.ValidValuesMD = listOf(ValuesMd("0","NÃO"), ValuesMd("1","SIM"))
                 it.defaultValue = "0"
             },
         ).forEach { userFieldsMDService.findOrCreate(it)}
@@ -68,20 +69,21 @@ class PedidoFieldConfiguration(val userFieldsMDService: UserFieldsMDService) {
         listOf(
             FieldMd("publica_forca","Subir Força de venda?","OPLN")
             .also {
-                it.ValidValuesMD = listOf(ValuesMd("0","NÃO"),ValuesMd("1","SIM"))
+                it.ValidValuesMD = listOf(ValuesMd("0","NÃO"), ValuesMd("1","SIM"))
                 it.defaultValue = "0"
             },
         ).forEach { userFieldsMDService.findOrCreate(it) }
 
 
         listOf(
-            FieldMd("idTabela","Id Tabela preco","INV1",DbType.db_Numeric),
+            FieldMd("idTabela","Id Tabela preco","INV1", DbType.db_Numeric),
         ).forEach { userFieldsMDService.findOrCreate(it) }
 
 
-        userFieldsMDService.findOrCreate(FieldMd("aprovacao_comercial","Comercial Apv?","OINV")
+        userFieldsMDService.findOrCreate(
+            FieldMd("aprovacao_comercial","Comercial Apv?","OINV")
             .also {
-                it.ValidValuesMD = listOf(ValuesMd("0","NÃO"),ValuesMd("1","SIM"))
+                it.ValidValuesMD = listOf(ValuesMd("0","NÃO"), ValuesMd("1","SIM"))
                 it.defaultValue = "0";
             })
     }
