@@ -15,7 +15,7 @@ import org.springframework.web.client.RestTemplate
 
 @Service
 class SalesPersonsService(env: SapEnvrioment, restTemplate: RestTemplate, authService: AuthService) :
-        EntitiesService<BusinessPartner>(env, restTemplate, authService) {
+        EntitiesService<SalePerson>(env, restTemplate, authService) {
     override fun path(): String {
         return "/b1s/v1/SalesPersons"
     }

@@ -1,5 +1,6 @@
-package br.andrew.sap.model
+package br.andrew.sap.model.entity
 
+import br.andrew.sap.model.enums.YesNo
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.databind.PropertyNamingStrategy
@@ -10,9 +11,9 @@ import com.fasterxml.jackson.databind.annotation.JsonNaming
 @JsonInclude(JsonInclude.Include.NON_NULL)
 class FieldMd(val name : String,
               val description: String?,
-               tableName : String,
+              tableName : String,
               val type : DbType = DbType.db_Alpha,
-              val mandatory: String = "tNO") {
+              val mandatory: YesNo = YesNo.tNO) {
 
     var size : Int? = type.size
     var ValidValuesMD : List<ValuesMd> = listOf()

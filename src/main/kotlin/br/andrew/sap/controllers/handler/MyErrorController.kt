@@ -1,5 +1,6 @@
 package br.andrew.sap.controllers.handler
 
+import br.andrew.sap.model.SapError
 import br.andrew.sap.model.telegram.TipoMensagem
 import br.andrew.sap.services.TelegramRequestService
 import jakarta.servlet.RequestDispatcher
@@ -9,6 +10,7 @@ import org.springframework.boot.web.servlet.error.ErrorController
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.client.HttpClientErrorException
 import java.util.*
 
 class MyErrorController(val telegram : TelegramRequestService) : ErrorController {
@@ -32,6 +34,10 @@ class MyErrorController(val telegram : TelegramRequestService) : ErrorController
             ErroDto("Acesso Negado",traceId)
         else if(statusCode == HttpStatus.NOT_FOUND.value())
             ErroDto(t.message ?: "Pagina Não encontrada",traceId,t)
+        else if(t is HttpClientErrorException){
+            val msg = t.getResponseBodyAs(SapError::class.java)?.error?.message?.value ?: "Erro inesperado"
+            ErroDto(msg,traceId,t)
+        }
         else
             ErroDto(t.message ?: "Erro inesperado",traceId,t)
 

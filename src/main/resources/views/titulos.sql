@@ -19,6 +19,6 @@ WHERE
     NS."DocStatus" = 'O'
     AND NS."BPLId" in (2,4,11,17)
     AND P."InsTotal" <> '0'
-    AND P."DueDate" >= NOW()
+    AND P."DueDate" <= :data
     AND (CR."DocNum" IS NULL AND (OCR."Canceled" = 'N' OR OCR."Canceled" IS NULL))
     AND V."SlpCode" = :slpCode

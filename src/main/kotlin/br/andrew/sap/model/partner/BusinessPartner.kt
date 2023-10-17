@@ -7,6 +7,7 @@ import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.PropertyNamingStrategy
 import com.fasterxml.jackson.databind.annotation.JsonNaming
+import java.security.MessageDigest
 
 
 @JsonNaming(PropertyNamingStrategy.UpperCamelCaseStrategy::class)
@@ -32,7 +33,7 @@ class BusinessPartner() {
     }
 
 
-
+    var referencias: ReferenciaComercial? = null
     var freeText: String? = null
     var u_id_forca: String? = null
     var emailAddress: String? = null
@@ -44,16 +45,16 @@ class BusinessPartner() {
     var salesPersonCode : Int? = null
     var U_fazer_fluxo_prazo : String? = "0"
     var attachmentEntry : Int? = null
+
+    var RemoveContacts : List<Int>? = null
 //    var BPLID : String? = null
 //    var DisabledForBP : String? = null
     var series : Int? = 77
-    var ContactEmployees : MutableList<ContactBp> = mutableListOf()
-
-
-
-
+    var ContactEmployees : MutableList<Person> = mutableListOf()
     var U_Rov_Data_Nascimento : String? = null
     var U_Rov_Nome_Mae : String? = null
+
+    var U_keyUpdate : String? = null
 
 
 
@@ -114,5 +115,15 @@ class BusinessPartner() {
         this.BPBranchAssignment = null
         BPFiscalTaxIDCollection = null
         BPPaymentMethods = listOf()
+        this.RemoveContacts = null
+        this.referencias = null
+        this.U_keyUpdate = ""
+    }
+
+    fun generateKey(md : MessageDigest): String {
+        val timesTamp = "${cardCode}-${System.currentTimeMillis()}"
+        val bytes = timesTamp.toByteArray()
+        val digest = md.digest(bytes)
+        return digest.fold("") { str, it -> str + "%02x".format(it) }
     }
 }

@@ -11,7 +11,8 @@ import org.thymeleaf.TemplateEngine
 
 
 @Service
-class MailService(val mailSender: JavaMailSender, val templateEngine : TemplateEngine) {
+class MailService(val mailSender: JavaMailSender,
+                  val templateEngine : TemplateEngine) {
 
     fun sendEmail(mailMessage : MyMailMessage, html : Boolean = false) {
         if(html)

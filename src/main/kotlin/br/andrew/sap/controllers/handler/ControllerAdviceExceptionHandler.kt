@@ -1,5 +1,6 @@
 package br.andrew.sap.controllers.handler
 
+import br.andrew.sap.model.SapError
 import br.andrew.sap.services.TelegramRequestService
 import jakarta.servlet.http.HttpServletRequest
 import org.slf4j.LoggerFactory.getLogger
@@ -9,6 +10,7 @@ import org.springframework.core.annotation.Order
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.ControllerAdvice
 import org.springframework.web.bind.annotation.ExceptionHandler
+import org.springframework.web.client.HttpClientErrorException
 
 @ControllerAdvice
 @Order(Ordered.LOWEST_PRECEDENCE)

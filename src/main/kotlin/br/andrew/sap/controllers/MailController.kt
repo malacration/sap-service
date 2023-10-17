@@ -1,8 +1,7 @@
 package br.andrew.sap.controllers
 
 import br.andrew.sap.infrastructure.odata.*
-import br.andrew.sap.model.Version
-import br.andrew.sap.schedules.ReportSchedule
+import br.andrew.sap.model.SalePerson
 import br.andrew.sap.services.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -16,7 +15,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 
 @RestController
-@RequestMapping("l")
+@RequestMapping("mail")
 class MailController(val mailService: MailService,
                      val templateEngine : TemplateEngine,
                      val salesService : SalesPersonsService,
@@ -24,6 +23,18 @@ class MailController(val mailService: MailService,
 
 
     val logger: Logger = LoggerFactory.getLogger(MailController::class.java)
+
+
+    @GetMapping("/inadimplencia/teste/{slpCode}")
+    fun testarEmail(@PathVariable slpCode : Int): String {
+        val vendedor = salesService.getById(slpCode).tryGetValue<SalePerson>()
+        val titulos = service.getAllBySql(vendedor.SalesEmployeeCode)
+        return this.templateEngine.process("relatorio-inadiplencia",
+            Context().also {
+                it.setVariables(mapOf("titulos" to titulos))
+                it.setVariables(mapOf("mail" to vendedor.getEmailAddress()))
+            })
+    }
 
     @GetMapping("/enviar")
     fun enviarInadimplencia() {
@@ -35,7 +46,7 @@ class MailController(val mailService: MailService,
                 )
                 val data = SimpleDateFormat("dd/MM/yyy").format(Date())
                 val titulo = "Relatório de Inadimplência do vendedor ${it.SalesEmployeeName} - ${data}"
-                mailService.sendEmail(MyMailMessage(it.getEmail(),titulo,body, From.COMERCIAL),true)
+                mailService.sendEmail(MyMailMessage(it.getEmailAddress(),titulo,body, From.COMERCIAL),true)
             }catch (e : Exception){
                 logger.error("Erro ao enviar relatório de inadimplência para o vendedor ${it.SalesEmployeeCode}",e)
             }

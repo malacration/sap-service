@@ -4,6 +4,7 @@ import br.andrew.sap.services.my.UserJwtService
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.http.HttpMethod
 import org.springframework.security.authentication.AuthenticationProvider
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
@@ -13,6 +14,7 @@ import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.security.web.DefaultSecurityFilterChain
 import org.springframework.security.web.SecurityFilterChain
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter
+import org.springframework.security.web.util.matcher.RequestMatchers
 
 
 @Configuration
@@ -20,6 +22,7 @@ class SecurityWebConf(@Value("\${spring.security.disable:false}") val disable: B
 
     val filter : JwtAuthenticationFilter = JwtAuthenticationFilter()
     val userService = UserJwtService()
+
     @Bean
     fun authorizationRequestRepository(http : HttpSecurity): DefaultSecurityFilterChain {
         return if(disable) {
@@ -35,6 +38,18 @@ class SecurityWebConf(@Value("\${spring.security.disable:false}") val disable: B
             http.sessionManagement{it.sessionCreationPolicy(SessionCreationPolicy.STATELESS)}
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(filter, UsernamePasswordAuthenticationFilter::class.java)
+                .csrf { it.disable() }
+                .cors{ it.disable() }
+                .authorizeHttpRequests { it
+                    .requestMatchers(
+                        "/state**",
+                        "/city**/**",
+                        "/business-partners/key/**"
+                    ).permitAll()
+                    .requestMatchers(HttpMethod.POST,"/business-partners/key/**")
+                    .permitAll()
+                    .anyRequest().authenticated()
+                }
                 .build()
         }
     }

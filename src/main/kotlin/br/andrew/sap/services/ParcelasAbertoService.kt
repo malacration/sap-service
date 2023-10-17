@@ -7,6 +7,9 @@ import br.andrew.sap.model.envrioments.SapEnvrioment
 import org.springframework.http.RequestEntity
 import org.springframework.stereotype.Service
 import org.springframework.web.client.RestTemplate
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.util.Date
 
 @Service
 class ParcelasAbertoService(val env : SapEnvrioment,
@@ -20,7 +23,9 @@ class ParcelasAbertoService(val env : SapEnvrioment,
 
     fun getAllBySql(slpCode : Int) : List<ParcelasAberto> {
         val url = env.host+"/b1s/v1/"
-        var uri = "${url}SQLQueries('titulos.sql')/List?\$skip=${0}&slpCode=${slpCode}"
+        val time =  LocalDate.now().plusDays(-3)
+
+        var uri = "${url}SQLQueries('titulos.sql')/List?\$skip=${0}&slpCode=${slpCode}&data='${time}'"
         val resultado : MutableList<ParcelasAberto> = mutableListOf()
         do{
             val request = RequestEntity
