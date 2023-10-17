@@ -14,7 +14,7 @@ class ReferenciaComercialService(env: SapEnvrioment, restTemplate: RestTemplate,
         EntitiesService<ReferenciaComercial>(env, restTemplate, authService) {
 
     override fun path(): String {
-        return "/b1s/v1/refComercial"
+        return "/b1s/v1/referencia"
     }
 
     fun getByCardCode(cardCode: String): ReferenciaComercial? {
