@@ -1,5 +1,6 @@
 package br.andrew.sap.controllers.documents
 
+import br.andrew.sap.events.OrderSalesSaveEvent
 import br.andrew.sap.infrastructure.WarehouseDefaultConfig
 import br.andrew.sap.infrastructure.configurations.DistribuicaoCustoByBranchConfig
 import br.andrew.sap.infrastructure.odata.*
@@ -29,7 +30,9 @@ class QuotationsController(val quotationsService: QuotationsService,
             it.usaBrenchDefaultWarehouse(WarehouseDefaultConfig.warehouses)
             it.setDistribuicaoCusto(DistribuicaoCustoByBranchConfig.distibucoesCustos)
         }
-        return quotationsService.save(quotation).tryGetValue<OrderSales>()
+        return quotationsService.save(quotation).tryGetValue<OrderSales>().also {
+            applicationEventPublisher.publishEvent(OrderSalesSaveEvent(it))
+        }
     }
 
     @GetMapping("")

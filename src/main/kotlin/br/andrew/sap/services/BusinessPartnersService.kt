@@ -36,6 +36,9 @@ class BusinessPartnersService(env: SapEnvrioment, restTemplate: RestTemplate, au
     }
 
     fun atualizaKey(key: String, bp: BusinessPartner): OData? {
-        return update("{ \"U_keyUpdate\" : \"$key\"}","'${bp.cardCode}'")
+        return update("{" +
+                " \"U_keyUpdate\" : \"$key\", " +
+                " \"U_fazer_fluxo_prazo\" : 0 "+
+                "}","'${bp.cardCode}'")
     }
 }
