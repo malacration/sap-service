@@ -1,11 +1,10 @@
 package br.andrew.sap.controllers.documents
 
-import br.andrew.sap.events.OrderSalesSaveEvent
 import br.andrew.sap.infrastructure.WarehouseDefaultConfig
 import br.andrew.sap.infrastructure.configurations.DistribuicaoCustoByBranchConfig
 import br.andrew.sap.infrastructure.odata.*
 import br.andrew.sap.model.documents.OrderSales
-import br.andrew.sap.model.exceptions.CreditException
+import br.andrew.sap.model.documents.base.Document
 import br.andrew.sap.model.forca.PedidoVenda
 import br.andrew.sap.services.*
 import br.andrew.sap.services.document.QuotationsService
@@ -30,8 +29,12 @@ class QuotationsController(val quotationsService: QuotationsService,
             it.usaBrenchDefaultWarehouse(WarehouseDefaultConfig.warehouses)
             it.setDistribuicaoCusto(DistribuicaoCustoByBranchConfig.distibucoesCustos)
         }
-        return quotationsService.save(quotation).tryGetValue<OrderSales>().also {
-            applicationEventPublisher.publishEvent(OrderSalesSaveEvent(it))
+        return quotationsService.save(quotation).tryGetValue<Document>().also {
+            try{
+                applicationEventPublisher.publishEvent(it)
+            }catch (e : Exception){
+                logger.error(e.message,e)
+            }
         }
     }
 
