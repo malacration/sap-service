@@ -48,16 +48,13 @@ class AttachmentService(env: SapEnvrioment, val bpService: BusinessPartnersServi
                     .patch(env.host+this.path()+"(${partner.attachmentEntry})")
 
             val boundary = "WebKitFormBoundaryUmZoXOtOBNCTLyxT"
-            val mimeType: String = Tika().detect(Base64.decodeBase64(attachment.file64))
-            val extension = MimeTypes.getDefaultMimeTypes().forName(mimeType).extension
-            val fileName = attachment.fileName+" - "+cardCode+extension
+                val fileName = attachment.fileName+" - "+cardCode
 
             val headeyBoundary = ("--$boundary\n"+
-                    "Content-Disposition: form-data; name=\"$fileName\"; filename=\"$fileName\"\n" +
-                    "Content-Type: $mimeType\n\n").toByteArray()
-            val file = Base64.decodeBase64(attachment.file64).plus("\n".toByteArray())
-            val footer = "--$boundary--".toByteArray()
-            var body = headeyBoundary.plus(file.plus(footer))
+                    "Content-Disposition: form-data; name=\"$fileName\"; filename=\"${fileName}.${attachment.getExtension()}\"\n" +
+                    "Content-Type: ${attachment.getMimeType()}\n\n").toByteArray()
+            val footer = "\n--$boundary--".toByteArray()
+            var body = headeyBoundary.plus(attachment.body!!.plus(footer))
 
             request
                 .header("Content-Type","multipart/form-data;boundary=$boundary")
