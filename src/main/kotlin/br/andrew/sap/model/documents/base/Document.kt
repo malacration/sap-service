@@ -2,6 +2,7 @@ package br.andrew.sap.model.documents.base
 
 import br.andrew.sap.model.enums.Cancelled
 import br.andrew.sap.model.WarehouseDefault
+import br.andrew.sap.model.forca.EnderecoId
 import br.andrew.sap.model.uzzipay.DataRetonroPixQrCode
 import br.andrew.sap.model.uzzipay.RequestPixDueDate
 import br.andrew.sap.model.uzzipay.Transaction
@@ -51,6 +52,7 @@ open class Document(val CardCode : String,
 
     val DocumentStatus : String? = null
     var documentAdditionalExpenses : List<AdditionalExpenses> = emptyList()
+    var shipToCode : String? = null
 
     @JsonProperty("BPL_IDAssignedToInvoice")
     fun getBPL_IDAssignedToInvoice(): String {
@@ -140,6 +142,10 @@ open class Document(val CardCode : String,
         val totalAntesDesconto = BigDecimal(total()).setScale(2,RoundingMode.HALF_UP)
         this.discountPercent = desonerado.divide(totalAntesDesconto, 6,RoundingMode.HALF_UP)
             .multiply(BigDecimal(100)).toDouble()
+    }
+
+    fun associaEndereco(endereco: EnderecoId){
+        this.shipToCode = endereco.code
     }
 
 }

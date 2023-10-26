@@ -24,6 +24,7 @@ class PedidoVenda(
     var frete: Double? = null
     var observacao : String? = null
     var precoBase : Int? = null
+    var endereco : String? = null
 
     //TODO fazer parse de data
     var dataEntraga : String? = SimpleDateFormat("yyy-MM-dd").format(Date())
@@ -56,7 +57,12 @@ class PedidoVenda(
                 condicao[1]
             else
                 idCondicaoPagamento
-
+            try {
+                if(endereco != null)
+                    it.shipToCode = getEnderecoEntrega().code
+            }catch (e : Exception ){
+                e.printStackTrace()
+            }
             it.salesPersonCode = codVendedor
             it.u_pedido_update = "1"
             it.comments = observacao
@@ -65,6 +71,11 @@ class PedidoVenda(
             if(frete != null)
                 it.documentAdditionalExpenses = listOf(AdditionalExpenses.frete(frete!!))
         }
+    }
+
+    @JsonIgnore
+    fun getEnderecoEntrega(): EnderecoId {
+        return EnderecoId(endereco!!)
     }
 
 
