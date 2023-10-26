@@ -29,5 +29,15 @@ class PedidoVendaTest {
         Assertions.assertEquals("-1",order.paymentGroupCode)
     }
 
+    @Test
+    fun getEnderecoId(){
+        val pedido = PedidoVenda("cli","2020-01-01", "forma", "5_-1",
+            listOf(), "1", ).also { it.endereco = "CLI555-B-COBRANCA" }
+        val idEndereco = pedido.getEnderecoEntrega()
+        Assertions.assertEquals("CLI555",idEndereco.cliente)
+        Assertions.assertEquals("B",idEndereco.tipo)
+        Assertions.assertEquals("COBRANCA",idEndereco.code)
+    }
+
 
 }
