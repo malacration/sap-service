@@ -38,8 +38,7 @@ class FluxoPrazoFluxo(
     @Scheduled(fixedDelay = 300000)
     fun execute() {
         val predicados = listOf(
-            Predicate("U_fazer_fluxo_prazo", "1", Condicao.EQUAL),
-            Predicate("CardCode", "CLI0003130", Condicao.EQUAL),
+            Predicate("U_fazer_fluxo_prazo", "1", Condicao.EQUAL)
         )
         businessPartnersService
             .get(Filter(predicados)).tryGetValues<BusinessPartner>()

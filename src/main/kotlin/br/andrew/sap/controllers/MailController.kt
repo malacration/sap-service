@@ -2,6 +2,7 @@ package br.andrew.sap.controllers
 
 import br.andrew.sap.infrastructure.odata.*
 import br.andrew.sap.model.SalePerson
+import br.andrew.sap.model.telegram.TipoMensagem
 import br.andrew.sap.services.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -19,6 +20,7 @@ import java.util.Date
 class MailController(val mailService: MailService,
                      val templateEngine : TemplateEngine,
                      val salesService : SalesPersonsService,
+                     val telegramMsg: TelegramRequestService,
                      val service: ParcelasAbertoService) {
 
 
@@ -46,7 +48,8 @@ class MailController(val mailService: MailService,
                 )
                 val data = SimpleDateFormat("dd/MM/yyy").format(Date())
                 val titulo = "Relatório de Inadimplência do vendedor ${it.SalesEmployeeName} - ${data}"
-                mailService.sendEmail(MyMailMessage(it.getEmailAddress(),titulo,body, From.COMERCIAL),true)
+                mailService.sendEmail(MyMailMessage(listOf(EmailAdrres(it.getEmailAddress())),titulo,body, From.COMERCIAL),true)
+                telegramMsg.send("${titulo} enviado com sucesso",TipoMensagem.eventos)
             }catch (e : Exception){
                 logger.error("Erro ao enviar relatório de inadimplência para o vendedor ${it.SalesEmployeeCode}",e)
             }

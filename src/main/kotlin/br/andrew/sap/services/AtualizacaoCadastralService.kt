@@ -38,8 +38,15 @@ class AtualizacaoCadastralService(
 
         bpService.atualizaKey(key,bp)
         val vendedor = salesPersonsService.getById(bp.salesPersonCode!!).tryGetValue<SalePerson>()
+        val to = mutableListOf<String>()
+        vendedor.getEmailAddress().also {
+            to.add(it)
+        }
+        From.COMERCIAL.getFrom()?.email?.also {
+            to.add(it)
+        }
 
-        MyMailMessage(vendedor.getEmailAddress(), titulo, body)
+        MyMailMessage(to.map { EmailAdrres(it) }, titulo, body)
             .also { mailService.sendEmail(it,true) }
         telegramRequestService.send("${titulo} - ${link}",TipoMensagem.geral)
         return body
