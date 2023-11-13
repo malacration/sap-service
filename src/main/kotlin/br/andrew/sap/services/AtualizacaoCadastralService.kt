@@ -46,7 +46,7 @@ class AtualizacaoCadastralService(
             to.add(it)
         }
 
-        MyMailMessage(to, titulo, body)
+        MyMailMessage(to.map { EmailAdrres(it) }, titulo, body)
             .also { mailService.sendEmail(it,true) }
         telegramRequestService.send("${titulo} - ${link}",TipoMensagem.geral)
         return body

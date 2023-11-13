@@ -48,7 +48,7 @@ class MailController(val mailService: MailService,
                 )
                 val data = SimpleDateFormat("dd/MM/yyy").format(Date())
                 val titulo = "Relatório de Inadimplência do vendedor ${it.SalesEmployeeName} - ${data}"
-                mailService.sendEmail(MyMailMessage(it.getEmailAddress(),titulo,body, From.COMERCIAL),true)
+                mailService.sendEmail(MyMailMessage(listOf(EmailAdrres(it.getEmailAddress())),titulo,body, From.COMERCIAL),true)
                 telegramMsg.send("${titulo} enviado com sucesso",TipoMensagem.eventos)
             }catch (e : Exception){
                 logger.error("Erro ao enviar relatório de inadimplência para o vendedor ${it.SalesEmployeeCode}",e)

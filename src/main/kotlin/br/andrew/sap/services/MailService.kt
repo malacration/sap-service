@@ -27,11 +27,9 @@ class MailService(val mailSender: JavaMailSender,
 }
 
 class MyMailMessage(val to : List<EmailAdrres>, val subject : String, val body : String, val from : From = From.DEFAULT){
+
     constructor(to : String, subject : String, body : String, from : From = From.DEFAULT)
             : this(listOf(EmailAdrres(to)), subject, body, from)
-
-    constructor(to : List<String>, subject : String, body : String, from : From = From.DEFAULT)
-            : this(to.map { EmailAdrres(it) }, subject, body, from)
 
     fun simpleMailMessage(): SimpleMailMessage {
         return SimpleMailMessage().also {
