@@ -26,15 +26,18 @@ class MailService(val mailSender: JavaMailSender,
     }
 }
 
-class MyMailMessage(val to : EmailAdrres, val subject : String, val body : String, val from : From = From.DEFAULT){
+class MyMailMessage(val to : List<EmailAdrres>, val subject : String, val body : String, val from : From = From.DEFAULT){
     constructor(to : String, subject : String, body : String, from : From = From.DEFAULT)
-            : this(EmailAdrres(to), subject, body, from)
+            : this(listOf(EmailAdrres(to)), subject, body, from)
+
+    constructor(to : List<String>, subject : String, body : String, from : From = From.DEFAULT)
+            : this(to.map { EmailAdrres(it) }, subject, body, from)
 
     fun simpleMailMessage(): SimpleMailMessage {
         return SimpleMailMessage().also {
             it.replyTo = From.getFrom(from)?.toString()
             it.from = From.getFrom(from)?.toString()
-            it.setTo(to.email)
+            it.setTo(*to.map { it.email }.toTypedArray())
             it.subject = subject
             it.text = body
         }
@@ -44,7 +47,7 @@ class MyMailMessage(val to : EmailAdrres, val subject : String, val body : Strin
         return MimeMessageHelper(createMimeMessage, true).also {
             if(From.getFrom(from) != null)
                 it.setFrom(From.getFrom(from)!!.getInternetAddress())
-            it.setTo(mutableListOf<String>(to.email).also { it.addAll(copyDefault) }.toTypedArray())
+            it.setTo(mutableListOf<String>(*to.map { it.email }.toTypedArray()).also { it.addAll(copyDefault) }.toTypedArray())
             it.setSubject(subject)
             it.setText(body, true)
         }.mimeMessage
@@ -54,6 +57,10 @@ class MyMailMessage(val to : EmailAdrres, val subject : String, val body : Strin
 enum class From{
     DEFAULT,
     COMERCIAL;
+
+    fun getFrom(): EmailAdrres? {
+        return From.getFrom(this)
+    }
     companion object{
         val mailList : MutableList<EmailAdrres> = mutableListOf()
         fun getFrom(from: From) : EmailAdrres?{
