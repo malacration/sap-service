@@ -15,7 +15,7 @@ class BusinessPartnersFieldsConfiguration(
 ) {
 
     init {
-        listOf(FieldMd("keyUpdate","Atualização pedido","OCRD",DbType.db_Memo))
+        listOf(FieldMd("keyUpdate","Atualização pedido","OCRD",DbType.db_Alpha))
             .forEach { userFieldsMDService.findOrCreate(it) }
     }
 }

@@ -40,7 +40,7 @@ class BusinessPartnersController(
 
     @GetMapping("/key/{hashcode}")
     fun getPnByHashUpdate(@PathVariable hashcode : String): BusinessPartner {
-        return service.get(Filter(Predicate("U_keyUpdate","'$hashcode'",Condicao.STARTS_WITH)))
+        return service.get(Filter(Predicate("U_keyUpdate","$hashcode",Condicao.EQUAL)))
             .tryGetValues<BusinessPartner>()
             .firstOrNull()?.also {
                 if(hashcode != it.U_keyUpdate)
