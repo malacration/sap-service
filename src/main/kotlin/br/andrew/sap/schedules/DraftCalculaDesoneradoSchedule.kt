@@ -27,7 +27,7 @@ class DraftCalculaDesoneradoSchedule(
     fun execute() {
         val filter = Filter(
             Predicate("U_pedido_update", "1", Condicao.EQUAL),
-            Predicate("DocDate", "2023-07-01", Condicao.GREAT),
+            Predicate("DocDate", "2023-10-01", Condicao.GREAT),
             Predicate("DocumentStatus", "bost_Open", Condicao.EQUAL),
             Predicate("UserSign", currentUser.internalKey, Condicao.NOT_EQUAL),
         )
