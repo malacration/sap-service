@@ -10,7 +10,6 @@ class SoapConfig(val envrioment : SoftExpertEnvrioment) {
     @Bean
     fun soapConnector(): SOAPConnector {
         val client = SOAPConnector(envrioment)
-        RequestTest()
         return client
     }
 }

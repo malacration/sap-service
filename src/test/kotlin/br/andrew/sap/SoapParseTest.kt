@@ -1,7 +1,6 @@
 package br.andrew.sap
 
 import br.andrew.sap.infrastructure.configurations.softexpert.Envelope
-import br.andrew.sap.infrastructure.configurations.softexpert.RequestTest
 import br.andrew.sap.infrastructure.configurations.softexpert.SOAPConnector
 import br.andrew.sap.infrastructure.configurations.softexpert.SoftExpertEnvrioment
 import jakarta.xml.bind.JAXBContext
@@ -12,7 +11,6 @@ import softexpert.GetWorkflowRequestType
 import softexpert.ObjectFactory
 import java.lang.Boolean
 import kotlin.Any
-import kotlin.String
 import kotlin.also
 
 class SoapParseTest {
