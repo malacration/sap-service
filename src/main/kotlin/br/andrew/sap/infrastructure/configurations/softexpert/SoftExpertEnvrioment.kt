@@ -8,6 +8,7 @@ import org.springframework.context.annotation.Configuration
 @Configuration
 class SoftExpertEnvrioment(
     @Value("\${soft.expert.host:windson}") val host : String,
-    @Value("\${soft.expert.token:windson}") val token : String) {
+    @Value("\${soft.expert.user:windson}") val user : String,
+    @Value("\${soft.expert.password:windson}") val password : String) {
 
 }
