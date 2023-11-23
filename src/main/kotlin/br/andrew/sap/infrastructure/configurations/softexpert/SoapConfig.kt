@@ -1,8 +1,8 @@
 package br.andrew.sap.infrastructure.configurations.softexpert
 
-import br.andrew.sap.WorkflowBindingStub
-import br.andrew.sap.WorkflowLocator
-import br.andrew.sap.WorkflowPortType
+import br.andrew.sap.workflow.WorkflowBindingStub
+import br.andrew.sap.workflow.WorkflowLocator
+import br.andrew.sap.workflow.WorkflowPortType
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import java.net.URL

@@ -1,8 +1,7 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
-val jaxws by configurations.creating
-
 plugins {
+	`java-library`
 	id("java")
 	id("org.springframework.boot") version "3.1.2"
 	id("io.spring.dependency-management") version "1.1.2"
@@ -11,39 +10,12 @@ plugins {
 	kotlin("plugin.spring") version "1.8.22"
 }
 
-java.sourceCompatibility = JavaVersion.VERSION_17
-
 group = "br.andrew.sap"
 version = "0.0.1-SNAPSHOT"
 java.sourceCompatibility = JavaVersion.VERSION_17
 
 repositories {
 	mavenCentral()
-}
-
-
-val wsdlDir = "$projectDir/src/generated/java"
-
-val generateClientClasses by tasks.registering(JavaExec::class) {
-	// "http://sei.tjro.jus.br/sei/controlador_ws.php?servico=sei"
-	val packagePrefix = "br.andrew.sap"
-	main = "org.apache.axis.wsdl.WSDL2Java"
-//	configurations.implementation.isCanBeResolved = true
-	classpath = files(
-		configurations.runtimeClasspath.get().files,
-//		configurations.implementation.get().files,
-		configurations.annotationProcessor.get().files
-	)
-	args = listOf(
-		"-o", wsdlDir,
-		"-p", packagePrefix,
-		"src/main/resources/ws_se.wsdl"
-	)
-	doFirst {
-		if(System.getenv("debug") == "true") {
-			println("Classpath: ${classpath.joinToString(separator = "\n")}")
-		}
-	}
 }
 
 dependencies {
@@ -54,25 +26,6 @@ dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-security")
 	implementation("org.springframework.boot:spring-boot-starter-mail")
 	implementation("org.springframework.boot:spring-boot-starter-thymeleaf")
-
-//	implementation("org.springframework.boot:spring-boot-starter-web-services") {
-//		exclude(group = "org.springframework.boot", module = "spring-boot-starter-tomcat")
-//	}
-//
-//	implementation("com.sun.xml.ws:jaxws-tools:4.0.1")
-//	implementation("jakarta.xml.ws:jakarta.xml.ws-api:4.0.1")
-//	implementation("jakarta.xml.bind:jakarta.xml.bind-api:4.0.1")
-//	implementation("jakarta.activation:jakarta.activation-api:2.1.2")
-//	implementation("com.sun.xml.ws:jaxws-rt:4.0.1")
-//	implementation("org.glassfish.jaxb:jaxb-runtime:4.0.4")
-
-
-//	jaxws("com.sun.xml.ws:jaxws-tools:4.0.1",)
-//	jaxws("jakarta.xml.ws:jakarta.xml.ws-api:4.0.1")
-//	jaxws("jakarta.xml.bind:jakarta.xml.bind-api:4.0.1")
-//	jaxws("jakarta.activation:jakarta.activation-api:2.1.2")
-//	jaxws("com.sun.xml.ws:jaxws-rt:4.0.1")
-
 
 	implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.1.0")
 	implementation("org.springdoc:springdoc-openapi-ui:1.7.0")
@@ -99,19 +52,9 @@ dependencies {
 	implementation("org.apache.commons:commons-lang3:3.9")
 	implementation("org.apache.ws.commons.axiom:axiom-api:1.2.13")
 	implementation("org.apache.ws.commons.axiom:axiom-impl:1.2.13")
-	implementation("javax.mail:mail:1.4")
 	implementation("javax.activation:activation:1.1")
-//	implementation("commons-logging:commons-logging:1.2")
-	testImplementation("com.willowtreeapps.assertk:assertk:0.25")
-	//**  SAP
-}
-
-
-tasks.withType<KotlinCompile> {
-	kotlinOptions {
-		freeCompilerArgs = listOf("-Xjsr305=strict")
-		jvmTarget = "17"
-	}
+//	testImplementation("com.willowtreeapps.assertk:assertk:0.25")
+	//**  SOAP
 }
 
 tasks.withType<Test> {
@@ -142,6 +85,37 @@ tasks.named("jacocoTestReport", JacocoReport::class) {
 	)
 	executionData.from(files("${project.buildDir}/jacoco/test.exec"))
 }
+
+
+val wsdlDir = "$projectDir/src/generated/java"
+
+tasks.register("import-ws") {
+	val packgePrefix = "br.andrew.sap"
+	fileTree("src/main/resources/wsdl").forEach{ file ->
+		doLast {
+			javaexec {
+				mainClass.set("org.apache.axis.wsdl.WSDL2Java")
+				configurations.implementation.get().isCanBeResolved = true
+				classpath = files(
+					configurations.runtimeClasspath.get().files,
+					configurations.implementation.get().files,
+					configurations.annotationProcessor.get().files
+				)
+				args = listOf("-o","$wsdlDir", "-p","$packgePrefix.${file.name}", file.absolutePath,)
+			}
+		}
+	}
+
+}
+
+tasks.withType<KotlinCompile> {
+	kotlinOptions {
+		freeCompilerArgs = listOf("-Xjsr305=strict")
+		jvmTarget = "17"
+	}
+	dependsOn(tasks.named("import-ws"))
+}
+
 
 configurations.all {
 	resolutionStrategy {
