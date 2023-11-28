@@ -35,6 +35,7 @@ class Pedido4Assinatura {
         val itens = listOf(
             Product("Code-1","5","10.20").also{
                 it.MeasureUnit = "Saco 30KG"
+                it.ItemDescription = "Produto 1"
             }
         )
         val document = Document("1","", itens,"").also {
