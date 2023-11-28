@@ -1,7 +1,5 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
-val jaxws by configurations.creating
-
 plugins {
 	id("java")
 	id("org.springframework.boot") version "3.1.2"
@@ -10,8 +8,6 @@ plugins {
 	kotlin("jvm") version "1.8.22"
 	kotlin("plugin.spring") version "1.8.22"
 }
-
-java.sourceCompatibility = JavaVersion.VERSION_17
 
 group = "br.andrew.sap"
 version = "0.0.1-SNAPSHOT"
@@ -29,25 +25,6 @@ dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-security")
 	implementation("org.springframework.boot:spring-boot-starter-mail")
 	implementation("org.springframework.boot:spring-boot-starter-thymeleaf")
-
-//	implementation("org.springframework.boot:spring-boot-starter-web-services") {
-//		exclude(group = "org.springframework.boot", module = "spring-boot-starter-tomcat")
-//	}
-//
-//	implementation("com.sun.xml.ws:jaxws-tools:4.0.1")
-//	implementation("jakarta.xml.ws:jakarta.xml.ws-api:4.0.1")
-//	implementation("jakarta.xml.bind:jakarta.xml.bind-api:4.0.1")
-//	implementation("jakarta.activation:jakarta.activation-api:2.1.2")
-//	implementation("com.sun.xml.ws:jaxws-rt:4.0.1")
-//	implementation("org.glassfish.jaxb:jaxb-runtime:4.0.4")
-
-
-//	jaxws("com.sun.xml.ws:jaxws-tools:4.0.1",)
-//	jaxws("jakarta.xml.ws:jakarta.xml.ws-api:4.0.1")
-//	jaxws("jakarta.xml.bind:jakarta.xml.bind-api:4.0.1")
-//	jaxws("jakarta.activation:jakarta.activation-api:2.1.2")
-//	jaxws("com.sun.xml.ws:jaxws-rt:4.0.1")
-
 
 	implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.1.0")
 	implementation("org.springdoc:springdoc-openapi-ui:1.7.0")
@@ -81,14 +58,10 @@ dependencies {
 //	implementation("commons-logging:commons-logging:1.2")
 //	testImplementation("com.willowtreeapps.assertk:assertk:0.25")
 	//**  SAP
-}
 
+	implementation("com.itextpdf:itext-core:8.0.2")
+	implementation("com.itextpdf:html2pdf:5.0.2")
 
-tasks.withType<KotlinCompile> {
-	kotlinOptions {
-		freeCompilerArgs = listOf("-Xjsr305=strict")
-		jvmTarget = "17"
-	}
 }
 
 tasks.withType<Test> {
@@ -123,26 +96,41 @@ tasks.named("jacocoTestReport", JacocoReport::class) {
 
 val wsdlDir = "$projectDir/src/generated/java"
 
-val generateClientClasses by tasks.registering(JavaExec::class) {
-	var greeting: Property<String>
-
-
-	val packagePrefix = "br.andrew.sap"
-	mainClass.set("org.apache.axis.wsdl.WSDL2Java")
-	configurations.implementation.get().isCanBeResolved = true
-	classpath = files(
-		configurations.runtimeClasspath.get().files,
-		configurations.implementation.get().files,
-		configurations.annotationProcessor.get().files
-	)
-	args = listOf(
-		"-o", wsdlDir,
-		"-p", packagePrefix,
-		"src/main/resources/softexpert/wf_se.wsdl"
-	)
-	doFirst {
-		println("Classpath: ${classpath.joinToString(separator = "\n")}")
+tasks.register("import-ws") {
+	val packgePrefix = "br.andrew.sap"
+	fileTree("src/main/resources/wsdl").forEach{ file ->
+		doLast {
+			javaexec {
+				mainClass.set("org.apache.axis.wsdl.WSDL2Java")
+//				configurations.implementation.get().isCanBeResolved = true
+				classpath = files(
+					configurations.runtimeClasspath.get().files,
+//					configurations.implementation.get().files,
+					configurations.annotationProcessor.get().files
+				)
+				args = listOf("-o","$wsdlDir", "-p","$packgePrefix.${file.name}", file.absolutePath,)
+			}
+		}
 	}
+
+}
+
+
+tasks.named("assemble") {
+	dependsOn(tasks.named("import-ws"))
+}
+
+tasks.buildDependents {
+	dependsOn(tasks.named("import-ws"))
+}
+
+
+tasks.withType<KotlinCompile> {
+	kotlinOptions {
+		freeCompilerArgs = listOf("-Xjsr305=strict")
+		jvmTarget = "17"
+	}
+	dependsOn(tasks.named("import-ws"))
 }
 
 configurations.all {
@@ -161,8 +149,4 @@ sourceSets {
 			srcDirs(wsdlDir)
 		}
 	}
-}
-
-tasks.named("compileKotlin") {
-	dependsOn(generateClientClasses)
 }
