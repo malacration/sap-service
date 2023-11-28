@@ -37,7 +37,7 @@ open class Document(val CardCode : String,
     var journalMemo : String? = null
     var Cancelled : Cancelled? = null
     var u_pedido_update : String? = "0"
-
+    var DocTotal : String? = null
     var discountPercent : Double? = null
     var totalDiscount : String? = null
 
@@ -53,6 +53,8 @@ open class Document(val CardCode : String,
     val DocumentStatus : String? = null
     var documentAdditionalExpenses : List<AdditionalExpenses> = emptyList()
     var shipToCode : String? = null
+    var Address : String? = null
+    var U_assinatura : String = "0"
 
     @JsonProperty("BPL_IDAssignedToInvoice")
     fun getBPL_IDAssignedToInvoice(): String {
@@ -138,6 +140,8 @@ open class Document(val CardCode : String,
     fun aplicaDescontoDesonerado() {
         this.totalDiscount = null
         this.discountPercent = null
+        this.DocTotal = null
+        this.Address = null
         val desonerado = DocumentLines.sumOf { it.valorDesonerado }.setScale(4,RoundingMode.HALF_UP)
         val totalAntesDesconto = BigDecimal(total()).setScale(2,RoundingMode.HALF_UP)
         this.discountPercent = desonerado.divide(totalAntesDesconto, 6,RoundingMode.HALF_UP)

@@ -1,6 +1,6 @@
 package br.andrew.sap.model.partner
 
-import br.andrew.sap.model.PaymentMethod
+import br.andrew.sap.model.bank.PaymentMethod
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonInclude

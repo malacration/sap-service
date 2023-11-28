@@ -17,6 +17,7 @@ import kotlin.reflect.jvm.javaField
 @JsonDeserialize(using = DocumentLinesDeserializer::class)
 abstract class DocumentLines(var UnitPrice : String, var Quantity : String, var Usage : Int = 9) {
 
+    var ItemDescription: String? = null
     var CommisionPercent: Double? = null
     var u_idTabela : Int? = null
     var ItemCode : String? = null
@@ -30,6 +31,7 @@ abstract class DocumentLines(var UnitPrice : String, var Quantity : String, var 
     var CostingCode: String? = null
     var CostingCode2: String? =null
     var AccountCode : String? = null
+    var MeasureUnit : String? = null
 
     @JsonIgnore
     var valorDesonerado : BigDecimal = BigDecimal(0)

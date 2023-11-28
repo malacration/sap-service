@@ -11,12 +11,17 @@ import org.springframework.context.annotation.Profile
 
 @Configuration
 @Profile("!test")
-class BusinessPartnersFieldsConfiguration(
+class DocumentConfiguration(
     val userFieldsMDService: UserFieldsMDService
 ) {
 
     init {
-        listOf(FieldMd("keyUpdate","Atualização pedido","OCRD",DbType.db_Alpha))
-            .forEach { userFieldsMDService.findOrCreate(it) }
+        FieldMd("assinatura","Envia Assinatura","ORDR")
+            .also {
+                it.ValidValuesMD = listOf(ValuesMd("0","NÃO"), ValuesMd("1","SIM"))
+                it.defaultValue = "0"
+                userFieldsMDService.findOrCreate(it)
+            }
+
     }
 }

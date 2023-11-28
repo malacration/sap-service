@@ -1,0 +1,1828 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<definitions xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:SOAP-ENC="http://schemas.xmlsoap.org/soap/encoding/" xmlns:tns="urn:document" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" xmlns="http://schemas.xmlsoap.org/wsdl/" targetNamespace="urn:document">
+    <types>
+        <xsd:schema elementFormDefault="qualified" targetNamespace="urn:document"
+        >
+            <xsd:import namespace="http://schemas.xmlsoap.org/soap/encoding/" />
+            <xsd:import namespace="http://schemas.xmlsoap.org/wsdl/" />
+            <xsd:complexType name="newCaptureInstanceRequestType">
+                <xsd:all>
+                    <xsd:element name="processid" type="xsd:string"/>
+                    <xsd:element name="workflowtitle" type="xsd:string"/>
+                    <xsd:element name="documentbatchid" type="xsd:string"/>
+                    <xsd:element name="userid" type="xsd:string"/>
+                    <xsd:element name="captbatchid" type="xsd:string"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="newCaptureInstanceResponseType">
+                <xsd:all>
+                    <xsd:element name="Status" type="xsd:string"/>
+                    <xsd:element name="Code" type="xsd:long"/>
+                    <xsd:element name="Detail" type="xsd:string"/>
+                    <xsd:element name="RecordKey" type="xsd:string"/>
+                    <xsd:element name="RecordID" type="xsd:string"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="cancelDocumentRequestType">
+                <xsd:all>
+                    <xsd:element name="iddocument" type="xsd:string"/>
+                    <xsd:element name="iduser" type="xsd:string"/>
+                    <xsd:element name="dscancel" type="xsd:string"/>
+                    <xsd:element name="idcategory" type="xsd:string"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="cancelDocumentResponseType">
+                <xsd:all>
+                    <xsd:element name="return" type="xsd:string"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="checkAccessPermissionRequestType">
+                <xsd:all>
+                    <xsd:element name="iddocument" type="xsd:string"/>
+                    <xsd:element name="iduser" type="xsd:string"/>
+                    <xsd:element name="permissiontype" type="xsd:int"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="checkAccessPermissionResponseType">
+                <xsd:all>
+                    <xsd:element name="return" type="xsd:string"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="deleteAccessPermissionRequestType">
+                <xsd:all>
+                    <xsd:element name="iddocument" type="xsd:string"/>
+                    <xsd:element name="iduser" type="xsd:string"/>
+                    <xsd:element name="usertype" type="xsd:int"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="deleteAccessPermissionResponseType">
+                <xsd:all>
+                    <xsd:element name="return" type="xsd:string"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="deleteDocumentRequestType">
+                <xsd:all>
+                    <xsd:element name="idcategory" type="xsd:string"/>
+                    <xsd:element name="iddocument" type="xsd:string"/>
+                    <xsd:element name="iduser" type="xsd:string"/>
+                    <xsd:element name="justify" type="xsd:string"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="deleteDocumentResponseType">
+                <xsd:all>
+                    <xsd:element name="return" type="xsd:string"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="deleteRevisionRequestType">
+                <xsd:all>
+                    <xsd:element name="iddocument" type="xsd:string"/>
+                    <xsd:element name="idrevision" type="xsd:string"/>
+                    <xsd:element name="iduser" type="xsd:string"/>
+                    <xsd:element name="justify" type="xsd:string"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="deleteRevisionResponseType">
+                <xsd:all>
+                    <xsd:element name="return" type="xsd:string"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="downloadEletronicFileRequestType">
+                <xsd:all>
+                    <xsd:element name="iddocument" type="xsd:string"/>
+                    <xsd:element name="idrevision" type="xsd:string"/>
+                    <xsd:element name="iduser" type="xsd:string"/>
+                    <xsd:element name="fgconverttopdf" type="xsd:string"/>
+                    <xsd:element name="idcategory" type="xsd:string"/>
+                    <xsd:element name="fgwatermark" type="xsd:string"/>
+                    <xsd:element name="nmfile" type="xsd:string"/>
+                    <xsd:element name="fgfilelink" type="xsd:string"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="downloadEletronicFileResponseType">
+                <xsd:all>
+                    <xsd:element name="return" type="tns:eletronicFileArray"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="editDocumentRequestType">
+                <xsd:all>
+                    <xsd:element name="idcategory" type="xsd:string"/>
+                    <xsd:element name="iddocument" type="xsd:string"/>
+                    <xsd:element name="iduser" type="xsd:string"/>
+                    <xsd:element name="idrevision" type="xsd:string"/>
+                    <xsd:element name="title" type="xsd:string"/>
+                    <xsd:element name="summary" type="xsd:string"/>
+                    <xsd:element name="iduserresp" type="xsd:string"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="editDocumentResponseType">
+                <xsd:all>
+                    <xsd:element name="return" type="xsd:string"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="getKeyWordsRequestType">
+                <xsd:all>
+                    <xsd:element name="letters" type="tns:ArrayOfstring"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="getKeyWordsResponseType">
+                <xsd:all>
+                    <xsd:element name="return" type="tns:ArrayOfstring"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="getKeyWordsDataRequestType">
+                <xsd:all>
+                    <xsd:element name="words" type="tns:ArrayOfstring"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="getKeyWordsDataResponseType">
+                <xsd:all>
+                    <xsd:element name="return" type="tns:wordPropertiesArray"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="listAccessPermissionRequestType">
+                <xsd:all>
+                    <xsd:element name="iddocument" type="xsd:string"/>
+                    <xsd:element name="iduser" type="xsd:string"/>
+                    <xsd:element name="idcategory" type="xsd:string"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="listAccessPermissionResponseType">
+                <xsd:all>
+                    <xsd:element name="return" type="tns:ArrayOfstring"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="listPendencyDocumentRequestType">
+                <xsd:all>
+                    <xsd:element name="iduser" type="xsd:string"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="listPendencyDocumentResponseType">
+                <xsd:all>
+                    <xsd:element name="return" type="tns:listPendencyDocumentArray"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="newAccessPermissionRequestType">
+                <xsd:all>
+                    <xsd:element name="iddocument" type="xsd:string"/>
+                    <xsd:element name="iduser" type="xsd:string"/>
+                    <xsd:element name="usertype" type="xsd:int"/>
+                    <xsd:element name="permission" type="xsd:string"/>
+                    <xsd:element name="permissionstype" type="xsd:int"/>
+                    <xsd:element name="fgaddlowerlevel" type="xsd:string"/>
+                    <xsd:element name="idcategory" type="xsd:string"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="newAccessPermissionResponseType">
+                <xsd:all>
+                    <xsd:element name="return" type="xsd:string"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="newDocumentRequestType">
+                <xsd:all>
+                    <xsd:element name="idcategory" type="xsd:string"/>
+                    <xsd:element name="iddocument" type="xsd:string"/>
+                    <xsd:element name="title" type="xsd:string"/>
+                    <xsd:element name="dsresume" type="xsd:string"/>
+                    <xsd:element name="dtdocument" type="xsd:string"/>
+                    <xsd:element name="attributes" type="xsd:string"/>
+                    <xsd:element name="iduser" type="xsd:string"/>
+                    <xsd:element name="participants" type="tns:participantsArray"/>
+                    <xsd:element name="fgmodel" type="xsd:string"/>
+                    <xsd:element name="file" type="tns:eletronicFileArray"/>
+                    <xsd:element name="keyword" type="tns:keyWordArray"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="newDocumentResponseType">
+                <xsd:all>
+                    <xsd:element name="return" type="xsd:string"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="newDocument2RequestType">
+                <xsd:all>
+                    <xsd:element name="CategoryID" type="xsd:string"/>
+                    <xsd:element name="DocumentID" type="xsd:string"/>
+                    <xsd:element name="Title" type="xsd:string"/>
+                    <xsd:element name="Summary" type="xsd:string"/>
+                    <xsd:element name="Date" type="xsd:string"/>
+                    <xsd:element name="Attributes" type="tns:AttributesArray"/>
+                    <xsd:element name="ResponsibleUserID" type="xsd:string"/>
+                    <xsd:element name="RevisionMembers" type="tns:RevisionMembersArray"/>
+                    <xsd:element name="TemplateID" type="xsd:string"/>
+                    <xsd:element name="Files" type="tns:FileArray"/>
+                    <xsd:element name="Keywords" type="tns:keyWordArray"/>
+                    <xsd:element name="LanguageID" type="xsd:string"/>
+                    <xsd:element name="RevisionID" type="xsd:string"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="newDocument2ResponseType">
+                <xsd:all>
+                    <xsd:element name="Status" type="xsd:string"/>
+                    <xsd:element name="Code" type="xsd:long"/>
+                    <xsd:element name="Detail" type="xsd:string"/>
+                    <xsd:element name="RecordID" type="xsd:string"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="shareDocumentRequestType">
+                <xsd:all>
+                    <xsd:element name="DocumentID" type="xsd:string"/>
+                    <xsd:element name="CategoryID" type="xsd:string"/>
+                    <xsd:element name="Recreate" type="xsd:int"/>
+                    <xsd:element name="Public" type="xsd:int"/>
+                    <xsd:element name="Download" type="xsd:int"/>
+                    <xsd:element name="Original" type="xsd:int"/>
+                    <xsd:element name="ValidityDate" type="xsd:string"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="shareDocumentResponseType">
+                <xsd:all>
+                    <xsd:element name="Status" type="xsd:string"/>
+                    <xsd:element name="Code" type="xsd:long"/>
+                    <xsd:element name="Detail" type="xsd:string"/>
+                    <xsd:element name="RecordID" type="xsd:string"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="attribValue">
+                <xsd:sequence>
+                    <xsd:element name="Value" type="xsd:string"/>
+                </xsd:sequence>
+            </xsd:complexType>
+            <xsd:complexType name="attribItem">
+                <xsd:sequence>
+                    <xsd:element name="item" type="tns:attribValue" minOccurs="0" maxOccurs="1000"/>
+                </xsd:sequence>
+            </xsd:complexType>
+            <xsd:complexType name="attribData">
+                <xsd:all>
+                    <xsd:element name="ID" type="xsd:string"/>
+                    <xsd:element name="Values" type="tns:attribItem"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="AttributesArray">
+                <xsd:sequence>
+                    <xsd:element name="item" type="tns:attribData" minOccurs="0" maxOccurs="1000"/>
+                </xsd:sequence>
+            </xsd:complexType>
+            <xsd:complexType name="MembersData">
+                <xsd:all>
+                    <xsd:element name="MemberType" type="xsd:int"/>
+                    <xsd:element name="MemberID" type="xsd:string"/>
+                    <xsd:element name="Step" type="xsd:string"/>
+                    <xsd:element name="Sequence" type="xsd:int"/>
+                    <xsd:element name="Deadline" type="xsd:int"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="RevisionMembersArray">
+                <xsd:sequence>
+                    <xsd:element name="item" type="tns:MembersData" minOccurs="0" maxOccurs="1000"/>
+                </xsd:sequence>
+            </xsd:complexType>
+            <xsd:complexType name="File">
+                <xsd:all>
+                    <xsd:element name="Name" type="xsd:string"/>
+                    <xsd:element name="Content" type="xsd:base64Binary"/>
+                    <xsd:element name="Container" type="xsd:string"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="FileArray">
+                <xsd:sequence>
+                    <xsd:element name="item" type="tns:File" minOccurs="0" maxOccurs="1000"/>
+                </xsd:sequence>
+            </xsd:complexType>
+            <xsd:complexType name="newRevisionRequestType">
+                <xsd:all>
+                    <xsd:element name="iddocument" type="xsd:string"/>
+                    <xsd:element name="iduser" type="xsd:string"/>
+                    <xsd:element name="participants" type="tns:participantsArray"/>
+                    <xsd:element name="documentdata" type="tns:documentData"/>
+                    <xsd:element name="file" type="tns:eletronicFileArray"/>
+                    <xsd:element name="fgstatus" type="xsd:int"/>
+                    <xsd:element name="dsjustify" type="xsd:string"/>
+                    <xsd:element name="idcategory" type="xsd:string"/>
+                    <xsd:element name="idrevision" type="xsd:string"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="newRevisionResponseType">
+                <xsd:all>
+                    <xsd:element name="return" type="xsd:string"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="releasePendencyDocumentRequestType">
+                <xsd:all>
+                    <xsd:element name="iddocument" type="xsd:string"/>
+                    <xsd:element name="iduser" type="xsd:string"/>
+                    <xsd:element name="approv" type="xsd:int"/>
+                    <xsd:element name="justify" type="xsd:string"/>
+                    <xsd:element name="idcategory" type="xsd:string"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="releasePendencyDocumentResponseType">
+                <xsd:all>
+                    <xsd:element name="return" type="tns:releasePendencyDocumentArray"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="searchAccessAuditRequestType">
+                <xsd:all>
+                    <xsd:element name="iddocument" type="xsd:string"/>
+                    <xsd:element name="iduser" type="xsd:string"/>
+                    <xsd:element name="periodbegin" type="xsd:string"/>
+                    <xsd:element name="periodend" type="xsd:string"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="searchAccessAuditResponseType">
+                <xsd:all>
+                    <xsd:element name="return" type="tns:listAuditSystemArray"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="searchCategoryRequestType"/>
+            <xsd:complexType name="searchCategoryResponseType">
+                <xsd:all>
+                    <xsd:element name="return" type="tns:searchCategoryReturn"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="searchDocumentRequestType">
+                <xsd:all>
+                    <xsd:element name="filters" type="tns:searchDocumentFilter"/>
+                    <xsd:element name="iduser" type="xsd:string"/>
+                    <xsd:element name="attributes" type="tns:arrayOfAttribute"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="searchDocumentResponseType">
+                <xsd:all>
+                    <xsd:element name="return" type="tns:searchDocumentReturn"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="setAttributeValueRequestType">
+                <xsd:all>
+                    <xsd:element name="iddocument" type="xsd:string"/>
+                    <xsd:element name="idrevision" type="xsd:string"/>
+                    <xsd:element name="idattribute" type="xsd:string"/>
+                    <xsd:element name="vlattribute" type="xsd:string"/>
+                    <xsd:element name="separator" type="xsd:string"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="setAttributeValueResponseType">
+                <xsd:all>
+                    <xsd:element name="return" type="xsd:string"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="uploadEletronicFileRequestType">
+                <xsd:all>
+                    <xsd:element name="iddocument" type="xsd:string"/>
+                    <xsd:element name="idrevision" type="xsd:string"/>
+                    <xsd:element name="iduser" type="xsd:string"/>
+                    <xsd:element name="file" type="tns:eletronicFileArray"/>
+                    <xsd:element name="container" type="xsd:string"/>
+                    <xsd:element name="idcategory" type="xsd:string"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="uploadEletronicFileResponseType">
+                <xsd:all>
+                    <xsd:element name="return" type="xsd:string"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="viewDocumentDataRequestType">
+                <xsd:all>
+                    <xsd:element name="iddocument" type="xsd:string"/>
+                    <xsd:element name="idrevision" type="xsd:string"/>
+                    <xsd:element name="iduser" type="xsd:string"/>
+                    <xsd:element name="idcategory" type="xsd:string"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="viewDocumentDataResponseType">
+                <xsd:all>
+                    <xsd:element name="return" type="tns:documentDataReturn"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="newDocumentContainerAssociationRequestType">
+                <xsd:all>
+                    <xsd:element name="UpperLevelCategoryID" type="xsd:string"/>
+                    <xsd:element name="UpperLevelDocumentID" type="xsd:string"/>
+                    <xsd:element name="RevisionID" type="xsd:string"/>
+                    <xsd:element name="StructID" type="xsd:string"/>
+                    <xsd:element name="LowerLevelCategoryID" type="xsd:string"/>
+                    <xsd:element name="LowerLevelDocumentID" type="xsd:string"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="newDocumentContainerAssociationResponseType">
+                <xsd:all>
+                    <xsd:element name="Status" type="xsd:string"/>
+                    <xsd:element name="Code" type="xsd:long"/>
+                    <xsd:element name="Detail" type="xsd:string"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="deleteDocumentContainerAssociationRequestType">
+                <xsd:all>
+                    <xsd:element name="UpperLevelCategoryID" type="xsd:string"/>
+                    <xsd:element name="UpperLevelDocumentID" type="xsd:string"/>
+                    <xsd:element name="RevisionID" type="xsd:string"/>
+                    <xsd:element name="StructID" type="xsd:string"/>
+                    <xsd:element name="LowerLevelCategoryID" type="xsd:string"/>
+                    <xsd:element name="LowerLevelDocumentID" type="xsd:string"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="deleteDocumentContainerAssociationResponseType">
+                <xsd:all>
+                    <xsd:element name="Status" type="xsd:string"/>
+                    <xsd:element name="Code" type="xsd:long"/>
+                    <xsd:element name="Detail" type="xsd:string"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="associateProcessRequestType">
+                <xsd:all>
+                    <xsd:element name="DocumentID" type="xsd:string"/>
+                    <xsd:element name="CategoryID" type="xsd:string"/>
+                    <xsd:element name="ProcessID" type="xsd:string"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="associateProcessResponseType">
+                <xsd:all>
+                    <xsd:element name="Status" type="xsd:string"/>
+                    <xsd:element name="Code" type="xsd:long"/>
+                    <xsd:element name="Detail" type="xsd:string"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="changeCopyStationStatusRequestType">
+                <xsd:all>
+                    <xsd:element name="CopyStationID" type="xsd:string"/>
+                    <xsd:element name="Status" type="xsd:string"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="changeCopyStationStatusResponseType">
+                <xsd:all>
+                    <xsd:element name="Status" type="xsd:string"/>
+                    <xsd:element name="Code" type="xsd:long"/>
+                    <xsd:element name="Detail" type="xsd:string"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="newCopyStationRequestType">
+                <xsd:all>
+                    <xsd:element name="CopyStationID" type="xsd:string"/>
+                    <xsd:element name="CopyStationName" type="xsd:string"/>
+                    <xsd:element name="CopyStationOwnerID" type="xsd:string"/>
+                    <xsd:element name="TeamID" type="xsd:string"/>
+                    <xsd:element name="UserID" type="xsd:string"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="newCopyStationResponseType">
+                <xsd:all>
+                    <xsd:element name="Status" type="xsd:string"/>
+                    <xsd:element name="Code" type="xsd:long"/>
+                    <xsd:element name="Detail" type="xsd:string"/>
+                    <xsd:element name="RecordID" type="xsd:string"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="editCopyStationRequestType">
+                <xsd:all>
+                    <xsd:element name="CopyStationID" type="xsd:string"/>
+                    <xsd:element name="CopyStationName" type="xsd:string"/>
+                    <xsd:element name="CopyStationOwnerID" type="xsd:string"/>
+                    <xsd:element name="TeamID" type="xsd:string"/>
+                    <xsd:element name="UserID" type="xsd:string"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="editCopyStationResponseType">
+                <xsd:all>
+                    <xsd:element name="Status" type="xsd:string"/>
+                    <xsd:element name="Code" type="xsd:long"/>
+                    <xsd:element name="Detail" type="xsd:string"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="relateCopyStationRequestType">
+                <xsd:all>
+                    <xsd:element name="DocumentID" type="xsd:string"/>
+                    <xsd:element name="CategoryID" type="xsd:string"/>
+                    <xsd:element name="CopyStationID" type="xsd:string"/>
+                    <xsd:element name="Quantity" type="xsd:int"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="relateCopyStationResponseType">
+                <xsd:all>
+                    <xsd:element name="Status" type="xsd:string"/>
+                    <xsd:element name="Code" type="xsd:long"/>
+                    <xsd:element name="Detail" type="xsd:string"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="deleteCopyStationRequestType">
+                <xsd:all>
+                    <xsd:element name="CopyStationID" type="xsd:string"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="deleteCopyStationResponseType">
+                <xsd:all>
+                    <xsd:element name="Status" type="xsd:string"/>
+                    <xsd:element name="Code" type="xsd:long"/>
+                    <xsd:element name="Detail" type="xsd:string"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="newCopyStationRespRequestType">
+                <xsd:all>
+                    <xsd:element name="CopyStationID" type="xsd:string"/>
+                    <xsd:element name="UserID" type="xsd:string"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="newCopyStationRespResponseType">
+                <xsd:all>
+                    <xsd:element name="Status" type="xsd:string"/>
+                    <xsd:element name="Code" type="xsd:long"/>
+                    <xsd:element name="Detail" type="xsd:string"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="deleteRespCopyStationRequestType">
+                <xsd:all>
+                    <xsd:element name="CopyStationID" type="xsd:string"/>
+                    <xsd:element name="UserID" type="xsd:string"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="deleteRespCopyStationResponseType">
+                <xsd:all>
+                    <xsd:element name="Status" type="xsd:string"/>
+                    <xsd:element name="Code" type="xsd:long"/>
+                    <xsd:element name="Detail" type="xsd:string"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="newProtocolPrintedCopyRequestType">
+                <xsd:all>
+                    <xsd:element name="ProtocolID" type="xsd:string"/>
+                    <xsd:element name="Copytype" type="xsd:string"/>
+                    <xsd:element name="Date" type="xsd:string"/>
+                    <xsd:element name="ReasonID" type="xsd:string"/>
+                    <xsd:element name="Responsible" type="xsd:string"/>
+                    <xsd:element name="CopyStationID" type="xsd:string"/>
+                    <xsd:element name="Copystationresp" type="xsd:string"/>
+                    <xsd:element name="Company" type="xsd:string"/>
+                    <xsd:element name="Companyresp" type="xsd:string"/>
+                    <xsd:element name="Observation" type="xsd:string"/>
+                    <xsd:element name="Status" type="xsd:string"/>
+                    <xsd:element name="Receivingresp" type="xsd:string"/>
+                    <xsd:element name="Receivingdate" type="xsd:string"/>
+                    <xsd:element name="DocumentsList" type="tns:DocumentsArray"/>
+                    <xsd:element name="DestType" type="xsd:string"/>
+                    <xsd:element name="CtrlTeam" type="xsd:string"/>
+                    <xsd:element name="DepartmentId" type="xsd:string"/>
+                    <xsd:element name="UserId" type="xsd:string"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="newProtocolPrintedCopyResponseType">
+                <xsd:all>
+                    <xsd:element name="Status" type="xsd:string"/>
+                    <xsd:element name="Code" type="xsd:long"/>
+                    <xsd:element name="Detail" type="xsd:string"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="documentsData">
+                <xsd:all>
+                    <xsd:element name="DocumentID" type="xsd:string"/>
+                    <xsd:element name="RevisionID" type="xsd:string"/>
+                    <xsd:element name="CategoryID" type="xsd:string"/>
+                    <xsd:element name="QtdCopy" type="xsd:int"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="DocumentsArray">
+                <xsd:sequence>
+                    <xsd:element name="Documents" type="tns:documentsData" minOccurs="0" maxOccurs="unbounded"/>
+                </xsd:sequence>
+            </xsd:complexType>
+            <xsd:complexType name="participantsData">
+                <xsd:all>
+                    <xsd:element name="CONTROL" type="xsd:int"/>
+                    <xsd:element name="ENTCONTROL" type="xsd:string"/>
+                    <xsd:element name="STEP" type="xsd:string"/>
+                    <xsd:element name="SEQUENCE" type="xsd:int"/>
+                    <xsd:element name="QTDEADLINE" type="xsd:int"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="participantsArray">
+                <xsd:sequence>
+                    <xsd:element name="item" type="tns:participantsData" minOccurs="0" maxOccurs="1000"/>
+                </xsd:sequence>
+            </xsd:complexType>
+            <xsd:complexType name="eletronicFile">
+                <xsd:all>
+                    <xsd:element name="NMFILE" type="xsd:string"/>
+                    <xsd:element name="BINFILE" type="xsd:base64Binary"/>
+                    <xsd:element name="CONTAINER" type="xsd:string"/>
+                    <xsd:element name="ERROR" type="xsd:string"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="eletronicFileArray">
+                <xsd:sequence>
+                    <xsd:element name="item" type="tns:eletronicFile" minOccurs="0" maxOccurs="1000"/>
+                </xsd:sequence>
+            </xsd:complexType>
+            <xsd:complexType name="searchDocumentFilter">
+                <xsd:all>
+                    <xsd:element name="IDCATEGORY" type="xsd:string"/>
+                    <xsd:element name="IDDOCUMENT" type="xsd:string"/>
+                    <xsd:element name="NMTITLE" type="xsd:string"/>
+                    <xsd:element name="NMAUTHOR" type="xsd:string"/>
+                    <xsd:element name="CONTENT" type="xsd:string"/>
+                    <xsd:element name="SYNONYM" type="xsd:string"/>
+                    <xsd:element name="STATUS" type="xsd:string"/>
+                    <xsd:element name="PERMISSION" type="xsd:string"/>
+                    <xsd:element name="IDUSERPERM" type="xsd:string"/>
+                    <xsd:element name="DEPARTMENTPERM" type="xsd:string"/>
+                    <xsd:element name="IDUSERREGISTER" type="xsd:string"/>
+                    <xsd:element name="FUNCTIONPERM" type="xsd:string"/>
+                    <xsd:element name="KEYWORD" type="xsd:string"/>
+                    <xsd:element name="OPKEYWORD" type="xsd:int"/>
+                    <xsd:element name="DTDOCLASTDAY" type="xsd:string"/>
+                    <xsd:element name="DTDOCBEGIN" type="xsd:string"/>
+                    <xsd:element name="DTDOCEND" type="xsd:string"/>
+                    <xsd:element name="DTREGLASTDAY" type="xsd:string"/>
+                    <xsd:element name="DTREGBEGIN" type="xsd:string"/>
+                    <xsd:element name="DTREGEND" type="xsd:string"/>
+                    <xsd:element name="DTVALIDBEGIN" type="xsd:string"/>
+                    <xsd:element name="DTVALIDEND" type="xsd:string"/>
+                    <xsd:element name="DTREVLASTDAY" type="xsd:string"/>
+                    <xsd:element name="DTREVBEGIN" type="xsd:string"/>
+                    <xsd:element name="DTREVEND" type="xsd:string"/>
+                    <xsd:element name="IDPROJECT" type="xsd:string"/>
+                    <xsd:element name="NMPROJECT" type="xsd:string"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="documentDataReturn">
+                <xsd:all>
+                    <xsd:element name="IDDOCUMENT" type="xsd:string"/>
+                    <xsd:element name="NMTITLE" type="xsd:string"/>
+                    <xsd:element name="IDCATEGORY" type="xsd:string"/>
+                    <xsd:element name="NMCATEGORY" type="xsd:string"/>
+                    <xsd:element name="STATUS" type="xsd:string"/>
+                    <xsd:element name="NRHITS" type="xsd:int"/>
+                    <xsd:element name="NMAUTHOR" type="xsd:string"/>
+                    <xsd:element name="IDREVISION" type="xsd:string"/>
+                    <xsd:element name="DTDOCUMENT" type="xsd:string"/>
+                    <xsd:element name="QTVALIDITY" type="xsd:int"/>
+                    <xsd:element name="FGMEASVALID" type="xsd:string"/>
+                    <xsd:element name="REVALIDATION" type="xsd:string"/>
+                    <xsd:element name="DTVALIDITY" type="xsd:string"/>
+                    <xsd:element name="RESUME" type="xsd:string"/>
+                    <xsd:element name="CANCELREASON" type="xsd:string"/>
+                    <xsd:element name="URL" type="xsd:string"/>
+                    <xsd:element name="LINKSHARE" type="xsd:string"/>
+                    <xsd:element name="ATTRIBUTTES" type="tns:attributtesArray"/>
+                    <xsd:element name="ELECTRONICFILE" type="tns:electronicFileArray"/>
+                    <xsd:element name="ERROR" type="xsd:string"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="documentReturn">
+                <xsd:all>
+                    <xsd:element name="IDDOCUMENT" type="xsd:string"/>
+                    <xsd:element name="NMTITLE" type="xsd:string"/>
+                    <xsd:element name="IDREVISION" type="xsd:string"/>
+                    <xsd:element name="DTDOCUMENT" type="xsd:string"/>
+                    <xsd:element name="IDCATEGORY" type="xsd:string"/>
+                    <xsd:element name="NMCATEGORY" type="xsd:string"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="categoryReturn">
+                <xsd:all>
+                    <xsd:element name="CDCATEGORY" type="xsd:int"/>
+                    <xsd:element name="CDCATEGORYOWNER" type="xsd:int"/>
+                    <xsd:element name="IDCATEGORY" type="xsd:string"/>
+                    <xsd:element name="NMCATEGORY" type="xsd:string"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="searchResultsArray">
+                <xsd:sequence>
+                    <xsd:element name="item" type="tns:documentReturn" minOccurs="0" maxOccurs="1000"/>
+                </xsd:sequence>
+            </xsd:complexType>
+            <xsd:complexType name="searchCategoryArray">
+                <xsd:sequence>
+                    <xsd:element name="item" type="tns:categoryReturn" minOccurs="0" maxOccurs="1000"/>
+                </xsd:sequence>
+            </xsd:complexType>
+            <xsd:complexType name="searchDocumentReturn">
+                <xsd:all>
+                    <xsd:element name="RESULTS" type="tns:searchResultsArray"/>
+                    <xsd:element name="ADHESION" type="xsd:int"/>
+                    <xsd:element name="ERROR" type="xsd:string"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="searchCategoryReturn">
+                <xsd:all>
+                    <xsd:element name="RESULTARRAY" type="tns:searchCategoryArray"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="ArrayOfstring">
+                <xsd:sequence>
+                    <xsd:element name="document" type="xsd:string" minOccurs="0" maxOccurs="1000"/>
+                </xsd:sequence>
+            </xsd:complexType>
+            <xsd:complexType name="attributtes">
+                <xsd:all>
+                    <xsd:element name="ATTRIBUTTENAME" type="xsd:string"/>
+                    <xsd:element name="ATTRIBUTTEVALUE" type="tns:ArrayOfstring"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="electronicFile">
+                <xsd:all>
+                    <xsd:element name="FILENAME" type="xsd:string"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="documentData">
+                <xsd:all>
+                    <xsd:element name="NMTITLE" type="xsd:string"/>
+                    <xsd:element name="ATTRIBUTTES" type="xsd:string"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="attributtesArray">
+                <xsd:sequence>
+                    <xsd:element name="item" type="tns:attributtes" minOccurs="0" maxOccurs="1000"/>
+                </xsd:sequence>
+            </xsd:complexType>
+            <xsd:complexType name="electronicFileArray">
+                <xsd:sequence>
+                    <xsd:element name="item" type="tns:electronicFile" minOccurs="0" maxOccurs="1000"/>
+                </xsd:sequence>
+            </xsd:complexType>
+            <xsd:complexType name="listPendencyDocumentReturn">
+                <xsd:all>
+                    <xsd:element name="IDDOCUMENT" type="xsd:string"/>
+                    <xsd:element name="IDREVISION" type="xsd:string"/>
+                    <xsd:element name="PENDENCYTYPE" type="xsd:int"/>
+                    <xsd:element name="ERROR" type="xsd:string"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="listPendencyDocumentArray">
+                <xsd:sequence>
+                    <xsd:element name="item" type="tns:listPendencyDocumentReturn" minOccurs="0" maxOccurs="1000"/>
+                </xsd:sequence>
+            </xsd:complexType>
+            <xsd:complexType name="releasePendencyDocumentReturn">
+                <xsd:all>
+                    <xsd:element name="IDUSER" type="xsd:string"/>
+                    <xsd:element name="USERTYPE" type="xsd:int"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="releasePendencyDocumentArray">
+                <xsd:sequence>
+                    <xsd:element name="item" type="tns:releasePendencyDocumentReturn" minOccurs="0" maxOccurs="1000"/>
+                </xsd:sequence>
+            </xsd:complexType>
+            <xsd:complexType name="listAuditSystem">
+                <xsd:all>
+                    <xsd:element name="TYPEAUDIT" type="xsd:string"/>
+                    <xsd:element name="DTACCESS" type="xsd:string"/>
+                    <xsd:element name="TMACCESS" type="xsd:string"/>
+                    <xsd:element name="IDCATEGORY" type="xsd:string"/>
+                    <xsd:element name="IDDOCUMENT" type="xsd:string"/>
+                    <xsd:element name="IDREVISION" type="xsd:string"/>
+                    <xsd:element name="IDUSER" type="xsd:string"/>
+                    <xsd:element name="NMHOST" type="xsd:string"/>
+                    <xsd:element name="IPADDRESS" type="xsd:string"/>
+                    <xsd:element name="NMTITLE" type="xsd:string"/>
+                    <xsd:element name="NMDEPARTAMENT" type="xsd:string"/>
+                    <xsd:element name="ERROR" type="xsd:string"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="listAuditSystemArray">
+                <xsd:sequence>
+                    <xsd:element name="item" type="tns:listAuditSystem" minOccurs="0" maxOccurs="1000"/>
+                </xsd:sequence>
+            </xsd:complexType>
+            <xsd:complexType name="wordProperties">
+                <xsd:all>
+                    <xsd:element name="IDKEYWORD" type="xsd:string"/>
+                    <xsd:element name="NMKEYWORD" type="xsd:string"/>
+                    <xsd:element name="SYNONYMS" type="tns:ArrayOfstring"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="wordPropertiesArray">
+                <xsd:sequence>
+                    <xsd:element name="item" type="tns:wordProperties" minOccurs="0" maxOccurs="1000"/>
+                </xsd:sequence>
+            </xsd:complexType>
+            <xsd:complexType name="attributeData">
+                <xsd:all>
+                    <xsd:element name="IDATTRIBUTE" type="xsd:string"/>
+                    <xsd:element name="VLATTRIBUTE" type="xsd:string"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="arrayOfAttribute">
+                <xsd:sequence>
+                    <xsd:element name="item" type="tns:attributeData" minOccurs="0" maxOccurs="1000"/>
+                </xsd:sequence>
+            </xsd:complexType>
+            <xsd:complexType name="keyWordData">
+                <xsd:all>
+                    <xsd:element name="KeywordID" type="xsd:string"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="keyWordArray">
+                <xsd:sequence>
+                    <xsd:element name="item" type="tns:keyWordData" minOccurs="0" maxOccurs="1000"/>
+                </xsd:sequence>
+            </xsd:complexType>
+            <xsd:element name="newCaptureInstance" type="tns:newCaptureInstanceRequestType"/>
+            <xsd:element name="newCaptureInstanceResponse" type="tns:newCaptureInstanceResponseType"/>
+            <xsd:element name="cancelDocument" type="tns:cancelDocumentRequestType"/>
+            <xsd:element name="cancelDocumentResponse" type="tns:cancelDocumentResponseType"/>
+            <xsd:element name="checkAccessPermission" type="tns:checkAccessPermissionRequestType"/>
+            <xsd:element name="checkAccessPermissionResponse" type="tns:checkAccessPermissionResponseType"/>
+            <xsd:element name="deleteAccessPermission" type="tns:deleteAccessPermissionRequestType"/>
+            <xsd:element name="deleteAccessPermissionResponse" type="tns:deleteAccessPermissionResponseType"/>
+            <xsd:element name="deleteDocument" type="tns:deleteDocumentRequestType"/>
+            <xsd:element name="deleteDocumentResponse" type="tns:deleteDocumentResponseType"/>
+            <xsd:element name="deleteRevision" type="tns:deleteRevisionRequestType"/>
+            <xsd:element name="deleteRevisionResponse" type="tns:deleteRevisionResponseType"/>
+            <xsd:element name="downloadEletronicFile" type="tns:downloadEletronicFileRequestType"/>
+            <xsd:element name="downloadEletronicFileResponse" type="tns:downloadEletronicFileResponseType"/>
+            <xsd:element name="editDocument" type="tns:editDocumentRequestType"/>
+            <xsd:element name="editDocumentResponse" type="tns:editDocumentResponseType"/>
+            <xsd:element name="getKeyWords" type="tns:getKeyWordsRequestType"/>
+            <xsd:element name="getKeyWordsResponse" type="tns:getKeyWordsResponseType"/>
+            <xsd:element name="getKeyWordsData" type="tns:getKeyWordsDataRequestType"/>
+            <xsd:element name="getKeyWordsDataResponse" type="tns:getKeyWordsDataResponseType"/>
+            <xsd:element name="listAccessPermission" type="tns:listAccessPermissionRequestType"/>
+            <xsd:element name="listAccessPermissionResponse" type="tns:listAccessPermissionResponseType"/>
+            <xsd:element name="listPendencyDocument" type="tns:listPendencyDocumentRequestType"/>
+            <xsd:element name="listPendencyDocumentResponse" type="tns:listPendencyDocumentResponseType"/>
+            <xsd:element name="newAccessPermission" type="tns:newAccessPermissionRequestType"/>
+            <xsd:element name="newAccessPermissionResponse" type="tns:newAccessPermissionResponseType"/>
+            <xsd:element name="newDocument" type="tns:newDocumentRequestType"/>
+            <xsd:element name="newDocumentResponse" type="tns:newDocumentResponseType"/>
+            <xsd:element name="newDocument2" type="tns:newDocument2RequestType"/>
+            <xsd:element name="newDocument2Response" type="tns:newDocument2ResponseType"/>
+            <xsd:element name="shareDocument" type="tns:shareDocumentRequestType"/>
+            <xsd:element name="shareDocumentResponse" type="tns:shareDocumentResponseType"/>
+            <xsd:element name="newRevision" type="tns:newRevisionRequestType"/>
+            <xsd:element name="newRevisionResponse" type="tns:newRevisionResponseType"/>
+            <xsd:element name="releasePendencyDocument" type="tns:releasePendencyDocumentRequestType"/>
+            <xsd:element name="releasePendencyDocumentResponse" type="tns:releasePendencyDocumentResponseType"/>
+            <xsd:element name="searchAccessAudit" type="tns:searchAccessAuditRequestType"/>
+            <xsd:element name="searchAccessAuditResponse" type="tns:searchAccessAuditResponseType"/>
+            <xsd:element name="searchCategory" type="tns:searchCategoryRequestType"/>
+            <xsd:element name="searchCategoryResponse" type="tns:searchCategoryResponseType"/>
+            <xsd:element name="searchDocument" type="tns:searchDocumentRequestType"/>
+            <xsd:element name="searchDocumentResponse" type="tns:searchDocumentResponseType"/>
+            <xsd:element name="setAttributeValue" type="tns:setAttributeValueRequestType"/>
+            <xsd:element name="setAttributeValueResponse" type="tns:setAttributeValueResponseType"/>
+            <xsd:element name="uploadEletronicFile" type="tns:uploadEletronicFileRequestType"/>
+            <xsd:element name="uploadEletronicFileResponse" type="tns:uploadEletronicFileResponseType"/>
+            <xsd:element name="viewDocumentData" type="tns:viewDocumentDataRequestType"/>
+            <xsd:element name="viewDocumentDataResponse" type="tns:viewDocumentDataResponseType"/>
+            <xsd:element name="newDocumentContainerAssociation" type="tns:newDocumentContainerAssociationRequestType"/>
+            <xsd:element name="newDocumentContainerAssociationResponse" type="tns:newDocumentContainerAssociationResponseType"/>
+            <xsd:element name="deleteDocumentContainerAssociation" type="tns:deleteDocumentContainerAssociationRequestType"/>
+            <xsd:element name="deleteDocumentContainerAssociationResponse" type="tns:deleteDocumentContainerAssociationResponseType"/>
+            <xsd:element name="associateProcess" type="tns:associateProcessRequestType"/>
+            <xsd:element name="associateProcessResponse" type="tns:associateProcessResponseType"/>
+            <xsd:element name="changeCopyStationStatus" type="tns:changeCopyStationStatusRequestType"/>
+            <xsd:element name="changeCopyStationStatusResponse" type="tns:changeCopyStationStatusResponseType"/>
+            <xsd:element name="newCopyStation" type="tns:newCopyStationRequestType"/>
+            <xsd:element name="newCopyStationResponse" type="tns:newCopyStationResponseType"/>
+            <xsd:element name="editCopyStation" type="tns:editCopyStationRequestType"/>
+            <xsd:element name="editCopyStationResponse" type="tns:editCopyStationResponseType"/>
+            <xsd:element name="relateCopyStation" type="tns:relateCopyStationRequestType"/>
+            <xsd:element name="relateCopyStationResponse" type="tns:relateCopyStationResponseType"/>
+            <xsd:element name="deleteCopyStation" type="tns:deleteCopyStationRequestType"/>
+            <xsd:element name="deleteCopyStationResponse" type="tns:deleteCopyStationResponseType"/>
+            <xsd:element name="newCopyStationResp" type="tns:newCopyStationRespRequestType"/>
+            <xsd:element name="newCopyStationRespResponse" type="tns:newCopyStationRespResponseType"/>
+            <xsd:element name="deleteRespCopyStation" type="tns:deleteRespCopyStationRequestType"/>
+            <xsd:element name="deleteRespCopyStationResponse" type="tns:deleteRespCopyStationResponseType"/>
+            <xsd:element name="newProtocolPrintedCopy" type="tns:newProtocolPrintedCopyRequestType"/>
+            <xsd:element name="newProtocolPrintedCopyResponse" type="tns:newProtocolPrintedCopyResponseType"/>
+        </xsd:schema>
+    </types>
+    <message name="newCaptureInstanceRequest">
+        <part name="parameters" element="tns:newCaptureInstance" /></message>
+    <message name="newCaptureInstanceResponse">
+        <part name="parameters" element="tns:newCaptureInstanceResponse" /></message>
+    <message name="cancelDocumentRequest">
+        <part name="parameters" element="tns:cancelDocument" /></message>
+    <message name="cancelDocumentResponse">
+        <part name="parameters" element="tns:cancelDocumentResponse" /></message>
+    <message name="checkAccessPermissionRequest">
+        <part name="parameters" element="tns:checkAccessPermission" /></message>
+    <message name="checkAccessPermissionResponse">
+        <part name="parameters" element="tns:checkAccessPermissionResponse" /></message>
+    <message name="deleteAccessPermissionRequest">
+        <part name="parameters" element="tns:deleteAccessPermission" /></message>
+    <message name="deleteAccessPermissionResponse">
+        <part name="parameters" element="tns:deleteAccessPermissionResponse" /></message>
+    <message name="deleteDocumentRequest">
+        <part name="parameters" element="tns:deleteDocument" /></message>
+    <message name="deleteDocumentResponse">
+        <part name="parameters" element="tns:deleteDocumentResponse" /></message>
+    <message name="deleteRevisionRequest">
+        <part name="parameters" element="tns:deleteRevision" /></message>
+    <message name="deleteRevisionResponse">
+        <part name="parameters" element="tns:deleteRevisionResponse" /></message>
+    <message name="downloadEletronicFileRequest">
+        <part name="parameters" element="tns:downloadEletronicFile" /></message>
+    <message name="downloadEletronicFileResponse">
+        <part name="parameters" element="tns:downloadEletronicFileResponse" /></message>
+    <message name="editDocumentRequest">
+        <part name="parameters" element="tns:editDocument" /></message>
+    <message name="editDocumentResponse">
+        <part name="parameters" element="tns:editDocumentResponse" /></message>
+    <message name="getKeyWordsRequest">
+        <part name="parameters" element="tns:getKeyWords" /></message>
+    <message name="getKeyWordsResponse">
+        <part name="parameters" element="tns:getKeyWordsResponse" /></message>
+    <message name="getKeyWordsDataRequest">
+        <part name="parameters" element="tns:getKeyWordsData" /></message>
+    <message name="getKeyWordsDataResponse">
+        <part name="parameters" element="tns:getKeyWordsDataResponse" /></message>
+    <message name="listAccessPermissionRequest">
+        <part name="parameters" element="tns:listAccessPermission" /></message>
+    <message name="listAccessPermissionResponse">
+        <part name="parameters" element="tns:listAccessPermissionResponse" /></message>
+    <message name="listPendencyDocumentRequest">
+        <part name="parameters" element="tns:listPendencyDocument" /></message>
+    <message name="listPendencyDocumentResponse">
+        <part name="parameters" element="tns:listPendencyDocumentResponse" /></message>
+    <message name="newAccessPermissionRequest">
+        <part name="parameters" element="tns:newAccessPermission" /></message>
+    <message name="newAccessPermissionResponse">
+        <part name="parameters" element="tns:newAccessPermissionResponse" /></message>
+    <message name="newDocumentRequest">
+        <part name="parameters" element="tns:newDocument" /></message>
+    <message name="newDocumentResponse">
+        <part name="parameters" element="tns:newDocumentResponse" /></message>
+    <message name="newDocument2Request">
+        <part name="parameters" element="tns:newDocument2" /></message>
+    <message name="newDocument2Response">
+        <part name="parameters" element="tns:newDocument2Response" /></message>
+    <message name="shareDocumentRequest">
+        <part name="parameters" element="tns:shareDocument" /></message>
+    <message name="shareDocumentResponse">
+        <part name="parameters" element="tns:shareDocumentResponse" /></message>
+    <message name="newRevisionRequest">
+        <part name="parameters" element="tns:newRevision" /></message>
+    <message name="newRevisionResponse">
+        <part name="parameters" element="tns:newRevisionResponse" /></message>
+    <message name="releasePendencyDocumentRequest">
+        <part name="parameters" element="tns:releasePendencyDocument" /></message>
+    <message name="releasePendencyDocumentResponse">
+        <part name="parameters" element="tns:releasePendencyDocumentResponse" /></message>
+    <message name="searchAccessAuditRequest">
+        <part name="parameters" element="tns:searchAccessAudit" /></message>
+    <message name="searchAccessAuditResponse">
+        <part name="parameters" element="tns:searchAccessAuditResponse" /></message>
+    <message name="searchCategoryRequest">
+        <part name="parameters" element="tns:searchCategory" /></message>
+    <message name="searchCategoryResponse">
+        <part name="parameters" element="tns:searchCategoryResponse" /></message>
+    <message name="searchDocumentRequest">
+        <part name="parameters" element="tns:searchDocument" /></message>
+    <message name="searchDocumentResponse">
+        <part name="parameters" element="tns:searchDocumentResponse" /></message>
+    <message name="setAttributeValueRequest">
+        <part name="parameters" element="tns:setAttributeValue" /></message>
+    <message name="setAttributeValueResponse">
+        <part name="parameters" element="tns:setAttributeValueResponse" /></message>
+    <message name="uploadEletronicFileRequest">
+        <part name="parameters" element="tns:uploadEletronicFile" /></message>
+    <message name="uploadEletronicFileResponse">
+        <part name="parameters" element="tns:uploadEletronicFileResponse" /></message>
+    <message name="viewDocumentDataRequest">
+        <part name="parameters" element="tns:viewDocumentData" /></message>
+    <message name="viewDocumentDataResponse">
+        <part name="parameters" element="tns:viewDocumentDataResponse" /></message>
+    <message name="newDocumentContainerAssociationRequest">
+        <part name="parameters" element="tns:newDocumentContainerAssociation" /></message>
+    <message name="newDocumentContainerAssociationResponse">
+        <part name="parameters" element="tns:newDocumentContainerAssociationResponse" /></message>
+    <message name="deleteDocumentContainerAssociationRequest">
+        <part name="parameters" element="tns:deleteDocumentContainerAssociation" /></message>
+    <message name="deleteDocumentContainerAssociationResponse">
+        <part name="parameters" element="tns:deleteDocumentContainerAssociationResponse" /></message>
+    <message name="associateProcessRequest">
+        <part name="parameters" element="tns:associateProcess" /></message>
+    <message name="associateProcessResponse">
+        <part name="parameters" element="tns:associateProcessResponse" /></message>
+    <message name="changeCopyStationStatusRequest">
+        <part name="parameters" element="tns:changeCopyStationStatus" /></message>
+    <message name="changeCopyStationStatusResponse">
+        <part name="parameters" element="tns:changeCopyStationStatusResponse" /></message>
+    <message name="newCopyStationRequest">
+        <part name="parameters" element="tns:newCopyStation" /></message>
+    <message name="newCopyStationResponse">
+        <part name="parameters" element="tns:newCopyStationResponse" /></message>
+    <message name="editCopyStationRequest">
+        <part name="parameters" element="tns:editCopyStation" /></message>
+    <message name="editCopyStationResponse">
+        <part name="parameters" element="tns:editCopyStationResponse" /></message>
+    <message name="relateCopyStationRequest">
+        <part name="parameters" element="tns:relateCopyStation" /></message>
+    <message name="relateCopyStationResponse">
+        <part name="parameters" element="tns:relateCopyStationResponse" /></message>
+    <message name="deleteCopyStationRequest">
+        <part name="parameters" element="tns:deleteCopyStation" /></message>
+    <message name="deleteCopyStationResponse">
+        <part name="parameters" element="tns:deleteCopyStationResponse" /></message>
+    <message name="newCopyStationRespRequest">
+        <part name="parameters" element="tns:newCopyStationResp" /></message>
+    <message name="newCopyStationRespResponse">
+        <part name="parameters" element="tns:newCopyStationRespResponse" /></message>
+    <message name="deleteRespCopyStationRequest">
+        <part name="parameters" element="tns:deleteRespCopyStation" /></message>
+    <message name="deleteRespCopyStationResponse">
+        <part name="parameters" element="tns:deleteRespCopyStationResponse" /></message>
+    <message name="newProtocolPrintedCopyRequest">
+        <part name="parameters" element="tns:newProtocolPrintedCopy" /></message>
+    <message name="newProtocolPrintedCopyResponse">
+        <part name="parameters" element="tns:newProtocolPrintedCopyResponse" /></message>
+    <portType name="DocumentoPortType">
+        <operation name="newCaptureInstance">
+            <documentation>Dados do processo. &lt;BR&gt;
+                PROCESSID         -&gt; Identificador do processo*;&lt;BR&gt;
+                WORKFLOWTITLE     -&gt; Título;&lt;BR&gt;
+                DOCUMENTBATCHID   -&gt; Identificador do documento;&lt;BR&gt;
+                USERID            -&gt; Identificador do usuário*;&lt;BR&gt;
+                Em caso de SUCESSO: Retorna uma mensagem de ´1: Operação realizada com sucesso.´. &lt;BR&gt;Em caso de FALHA, retorna uma mensagem com o erro ocorrido. &lt;BR&gt;
+                *Requerido.&lt;BR&gt;</documentation>
+            <input message="tns:newCaptureInstanceRequest"/>
+            <output message="tns:newCaptureInstanceResponse"/>
+        </operation>
+        <operation name="cancelDocument">
+            <documentation>Cancelamento de documento. &lt;BR&gt;
+                IDDOCUMENT     -&gt; Identificador do documento*;&lt;BR&gt;
+                IDUSER         -&gt; Identificador do usuário;&lt;BR&gt;
+                DSCANCEL       -&gt; Descrição do cancelamento*;&lt;BR&gt;
+                IDCATEGORY     -&gt; Identificador da categoria;&lt;BR&gt;
+                Em caso de SUCESSO: Retorna uma mensagem de ´1: Operação realizada com sucesso.´. &lt;BR&gt;Em caso de FALHA, retorna uma mensagem com o erro ocorrido. &lt;BR&gt;
+                *Requerido.&lt;BR&gt;</documentation>
+            <input message="tns:cancelDocumentRequest"/>
+            <output message="tns:cancelDocumentResponse"/>
+        </operation>
+        <operation name="checkAccessPermission">
+            <documentation>Verifica se o usuário possui permissão em um documento&lt;BR&gt;
+                IDDOCUMENT     -&gt; Identificador do documento*;&lt;BR&gt;
+                IDUSER         -&gt; Identificador do usuário*;&lt;BR&gt;
+                PERMISSIONSTYPE-&gt; Tipo de permissão*(1 =&gt; Alterar;
+                2 =&gt; Excluir;
+                3 =&gt; Revisar;
+                4 =&gt; Conhecimento;
+                5 =&gt; Distribuir cópia;
+                6 =&gt; Visualizar;
+                7 =&gt; Cancelar;
+                8 =&gt; Arquivar;
+                9 =&gt; Imprimir;
+                10 =&gt; Treinamento;
+                11 =&gt; Registrar treinamento;
+                12 =&gt; Salvar localmente;
+                13 =&gt; Assinar;
+                14 =&gt; Notificação;
+                15 =&gt; Incluir comentário;
+                16 =&gt; Avaliar aplicabilidade)&lt;BR&gt;
+                Em caso de SUCESSO: Retorna uma mensagem de ´1: Acesso permitido´. &lt;BR&gt;Em caso de FALHA, retorna uma mensagem com o erro ocorrido.&lt;BR&gt;
+                *Requerido.&lt;BR&gt;</documentation>
+            <input message="tns:checkAccessPermissionRequest"/>
+            <output message="tns:checkAccessPermissionResponse"/>
+        </operation>
+        <operation name="deleteAccessPermission">
+            <documentation>Remove permissão de acesso de um determinado documento.&lt;BR&gt;
+                IDDOCUMENT     -&gt; Identificador do documento*;&lt;BR&gt;
+                IDUSER         -&gt; Identificador do usuário*;&lt;BR&gt;
+                USERTYPE       -&gt; Tipo de usuário(1 =&gt; Usuário; 2 =&gt; Área; 3 =&gt; Função; 4=&gt;Área/Função; 5 =&gt; Equipe; 6 =&gt; Todos)*;&lt;BR&gt;
+                Em caso de SUCESSO: Retorna uma mensagem de ´1: Operação realizada com sucesso.´. &lt;BR&gt;Em caso de FALHA, retorna uma mensagem com o erro ocorrido.&lt;BR&gt;
+                *Requerido.&lt;BR&gt;</documentation>
+            <input message="tns:deleteAccessPermissionRequest"/>
+            <output message="tns:deleteAccessPermissionResponse"/>
+        </operation>
+        <operation name="deleteDocument">
+            <documentation>Excluir Documento. &lt;BR&gt;
+                IDCATEGORY     -&gt; Identificador da categoria*;&lt;BR&gt;
+                IDDOCUMENT     -&gt; Identificador do documento*;&lt;BR&gt;
+                IDUSER         -&gt; Identificador do usuário;&lt;BR&gt;
+                JUSTIFY        -&gt; Justificativa*;&lt;BR&gt;
+                Em caso de SUCESSO: Retorna uma mensagem de ´1: Operação realizada com sucesso.´. &lt;BR&gt;Em caso de FALHA, retorna uma mensagem com o erro ocorrido. &lt;BR&gt;
+                *Requerido.&lt;BR&gt;</documentation>
+            <input message="tns:deleteDocumentRequest"/>
+            <output message="tns:deleteDocumentResponse"/>
+        </operation>
+        <operation name="deleteRevision">
+            <documentation>Exclusão de revisão.&lt;BR&gt;
+                IDDOCUMENT     -&gt; Identificador do documento*;&lt;BR&gt;
+                IDREVISION     -&gt; Identificador da revisão*;&lt;BR&gt;
+                IDUSER         -&gt; Identificador do usuário;&lt;BR&gt;
+                JUSTIFY        -&gt; Justificativa;&lt;BR&gt;
+                Em caso de SUCESSO: Retorna uma mensagem de ´1: Operação realizada com sucesso.´.&lt;BR&gt;Em caso de FALHA, retorna uma mensagem com o erro ocorrido.&lt;BR&gt;
+                *Requerido.&lt;BR&gt;</documentation>
+            <input message="tns:deleteRevisionRequest"/>
+            <output message="tns:deleteRevisionResponse"/>
+        </operation>
+        <operation name="downloadEletronicFile">
+            <documentation>Download de arquivo eletrônico.&lt;BR&gt;
+                IDDOCUMENT     -&gt; Identificador do documento*;&lt;BR&gt;
+                IDREVISION     -&gt; Identificador da revisão;&lt;BR&gt;
+                IDUSER         -&gt; Identificador do usuário;&lt;BR&gt;
+                FGCONVERTOPDF  -&gt; Informar o valor 1 para baixar o arquivo em PDF, se existir, caso contrário baixa o arquivo original.;&lt;BR&gt;
+                IDCATEGORY     -&gt; Identificador da categoria;&lt;BR&gt;
+                FGWATERMARK    -&gt; Marca d´água;&lt;BR&gt;
+                NMFILE         -&gt; Nome do arquivo;&lt;BR&gt;
+                FGFILELINK     -&gt; Informar 1 para retornar o link para download do arquivo eletrônico. Caso contrário, será retornado o conteúdo do arquivo;&lt;BR&gt;
+                Em caso de SUCESSO: Retorna um arquivo eletrônico.&lt;BR&gt;Em caso de FALHA, retorna uma mensagem com o erro ocorrido.&lt;BR&gt;
+                *Requerido.&lt;BR&gt;</documentation>
+            <input message="tns:downloadEletronicFileRequest"/>
+            <output message="tns:downloadEletronicFileResponse"/>
+        </operation>
+        <operation name="editDocument">
+            <documentation>Editar Documento. &lt;BR&gt;
+                IDCATEGORY     -&gt; Identificador da categoria*;&lt;BR&gt;
+                IDDOCUMENT     -&gt; Identificador do documento*;&lt;BR&gt;
+                IDUSER         -&gt; Identificador do usuário;&lt;BR&gt;
+                IDREVISION     -&gt; Identificador da revisão;&lt;BR&gt;
+                TITLE          -&gt; Título do documento;&lt;BR&gt;
+                SUMMARY        -&gt; Resumo do documento;&lt;BR&gt;
+                IDUSERRESP     -&gt; Usuário responsável;&lt;BR&gt;
+                Em caso de SUCESSO: Retorna uma mensagem de ´1: Operação realizada com sucesso.´. &lt;BR&gt;Em caso de FALHA, retorna uma mensagem com o erro ocorrido. &lt;BR&gt;
+                *Requerido.&lt;BR&gt;</documentation>
+            <input message="tns:editDocumentRequest"/>
+            <output message="tns:editDocumentResponse"/>
+        </operation>
+        <operation name="getKeyWords">
+            <documentation>Busca por palavras-chave.. &lt;BR&gt;
+                LETTERS     -&gt; Matriz com as letras iniciais das palavras-chave a serem buscadas, poderá ser usado o caracter ´*´ como curinga.*;&lt;BR&gt;
+                Em caso de sucesso, uma matriz com as palavras-chave é retornada.&lt;BR&gt;
+                Em caso de FALHA, retorna uma mensagem com o erro ocorrido.&lt;BR&gt;
+                *Requerido.&lt;BR&gt;</documentation>
+            <input message="tns:getKeyWordsRequest"/>
+            <output message="tns:getKeyWordsResponse"/>
+        </operation>
+        <operation name="getKeyWordsData">
+            <documentation>Busca por palavras-chave, seus significados e sinônimos.. &lt;BR&gt;
+                WORDS     -&gt; Matriz com as palavras-chave a serem buscadas.*;&lt;BR&gt;
+                Em caso de sucesso, uma matriz de objetos com os seguintes índices é retornada: &lt;BR&gt;
+                IDKEYWORD      -&gt; Palavra-chave&lt;BR&gt;
+                NMKEYWORD      -&gt; Significado da palavra-chave.&lt;BR&gt;
+                SYNONYMS       -&gt; Matriz de strings com os sinônimos da palavra-chave.&lt;BR&gt;
+                Em caso de FALHA, retorna uma mensagem com o erro ocorrido.&lt;BR&gt;
+                *Requerido.&lt;BR&gt;</documentation>
+            <input message="tns:getKeyWordsDataRequest"/>
+            <output message="tns:getKeyWordsDataResponse"/>
+        </operation>
+        <operation name="listAccessPermission">
+            <documentation>Retorna os tipos de acessos que o usuário possui em um documento&lt;BR&gt;
+                IDDOCUMENT     -&gt; Identificador do documento*;&lt;BR&gt;
+                IDUSER         -&gt; Identificador do usuário*;&lt;BR&gt;
+                IDCATEGORY     -&gt; Identificador da categoria;&lt;BR&gt;
+                Em caso de SUCESSO: Retorna os tipos de permissões.&lt;BR&gt;Em caso de FALHA, retorna uma mensagem com o erro ocorrido.&lt;BR&gt;
+                Tipo de permissão*(1 =&gt; Alterar;
+                2 =&gt; Excluir;
+                3 =&gt; Revisar;
+                4 =&gt; Conhecimento;
+                5 =&gt; Distribuir cópia;
+                6 =&gt; Visualizar;
+                7 =&gt; Cancelar;
+                8 =&gt; Arquivar;
+                9 =&gt; Imprimir;
+                10 =&gt; Treinamento;
+                11 =&gt; Registrar treinamento;
+                12 =&gt; Salvar localmente;
+                13 =&gt; Assinar;
+                14 =&gt; Notificação;
+                15 =&gt; Incluir comentário;
+                16 =&gt; Avaliar aplicabilidade)&lt;BR&gt;
+                *Requerido.&lt;BR&gt;</documentation>
+            <input message="tns:listAccessPermissionRequest"/>
+            <output message="tns:listAccessPermissionResponse"/>
+        </operation>
+        <operation name="listPendencyDocument">
+            <documentation>Lista documentos pendentes em elaboração, consenso, aprovação ou homologação.&lt;BR&gt;
+                IDUSER         -&gt; Identificador do usuário*;&lt;BR&gt;
+                Em caso de SUCESSO: Retorna identificador do documento, revisão, tipo da tarefa.&lt;BR&gt;Em caso de FALHA, retorna uma mensagem com o erro ocorrido.&lt;BR&gt;
+                *Requerido.&lt;BR&gt;</documentation>
+            <input message="tns:listPendencyDocumentRequest"/>
+            <output message="tns:listPendencyDocumentResponse"/>
+        </operation>
+        <operation name="newAccessPermission">
+            <documentation>Inclui permissão de acesso a um determinado documento.&lt;BR&gt;
+                IDDOCUMENT     -&gt; Identificador do documento*;&lt;BR&gt;
+                IDUSER         -&gt; Identificador do usuário*;&lt;BR&gt;
+                USERTYPE       -&gt; Tipo de usuário(1 =&gt; Usuário; 2 =&gt; Área; 3 =&gt; Função; 4=&gt;Área/Função; 5 =&gt; Equipe; 6 =&gt; Todos)*;&lt;BR&gt;
+                PERMISSION     -&gt; Tipo de permissão(1 =&gt; Alterar;
+                2 =&gt; Excluir;
+                3 =&gt; Revisar;
+                4 =&gt; Conhecimento;
+                5 =&gt; Distribuir cópia;
+                6 =&gt; Visualizar;
+                7 =&gt; Cancelar;
+                8 =&gt; Arquivar;
+                9 =&gt; Imprimir;
+                10 =&gt; Treinamento;
+                11 =&gt; Registrar treinamento;
+                12 =&gt; Salvar localmente;
+                13 =&gt; Assinar;
+                14 =&gt; Notificação;
+                15 =&gt; Incluir comentário;
+                16 =&gt; Avaliar aplicabilidade). Ex: 1,2,3 *;&lt;BR&gt;
+                PERMISSIONSTYPE-&gt; Tipo de ação (1 =&gt; Permitir; 2 =&gt; Negar)*;&lt;BR&gt;
+                FGADDLOWERLEVEL-&gt; Considerar subníveis (1 =&gt; Sim; 2 =&gt; Não);&lt;BR&gt;
+                IDCATEGORY     -&gt; Identificador da categoria;&lt;BR&gt;
+                Em caso de SUCESSO: Retorna uma mensagem de ´1: Operação realizada com sucesso.´.&lt;BR&gt;Em caso de FALHA, retorna uma mensagem com o erro ocorrido.&lt;BR&gt;
+                *Requerido.&lt;BR&gt;</documentation>
+            <input message="tns:newAccessPermissionRequest"/>
+            <output message="tns:newAccessPermissionResponse"/>
+        </operation>
+        <operation name="newDocument">
+            <documentation>Incluir novo documento. &lt;BR&gt;
+                IDCATEGORY     -&gt; Identificador da categoria*;&lt;BR&gt;
+                IDDOCUMENT     -&gt; Identificador do documento; &lt;BR&gt;
+                TITLE          -&gt; Título do documento*;&lt;BR&gt;
+                DSRESUME       -&gt; Resumo do documento;&lt;BR&gt;
+                DTDOCUMENT     -&gt; Data do documento;O formato da data deve ser A-M-D (Ano-Mês-Dia);
+                ATTRIBUTES     -&gt; Atributo do documento. Ex: IDENTIFICADOR_DO_ATRIBUTO1=VALOR_DO_ATRIBUTO1;IDENTIFICADOR_DO_ATRIBUTO2=VALOR_DO_ATRIBUTO2;;&lt;BR&gt;
+                Exemplo com atributo multivalorado (Observe que o separador para os valores dos atributos multivalorados é a ´,´): IDENTIFICADOR_DO_ATRIBUTO1=VALOR1_DO_ATRIBUTO1,VALOR2_DO_ATRIBUTO1,VALOR3_DO_ATRIBUTO1.&lt;br&gt;
+                OBS: Para atributos com valor numérico, o separador de casas decimais deve ser o ´.´. Para campos de data, o valor deve ter o formato &quot;Y-M-D&quot; (Ano-Mês-Dia).&lt;br&gt;
+                IDUSER         -&gt; Identificador do usuário;&lt;BR&gt;
+                PARTICIPANTS   -&gt; Participantes da revisão.&lt;BR&gt;
+                CONTROL: Tipo de controle
+                1 -&gt; Usuário;
+                2 -&gt; Área;
+                3 -&gt; Função;
+                4 -&gt; Área/Função;
+                5 -&gt; Equipe;
+                ENTCONTROL: Identificador da entidade de controle. Ex: Identificador para controle por usuário.
+                STEP: Etapa Ex: 1,2,3,4
+                1 -&gt; Elaboração;
+                2 -&gt; Consenso;
+                3 -&gt; Aprovação;
+                4 -&gt; Homologação;
+                SEQUENCE: Sequência. Ex: 2, 2, 2, 2
+                QTDEADLINE: Prazo (dias). Ex: 5;
+                FGMODEL        -&gt; Flag Arquivo modelo''. Ex: 1 = Marcado / 2 = Desmarcado &lt;BR&gt;
+                FILE           -&gt; Array Arquivos; &lt;BR&gt;
+                NMFILE: String; Nome do arquivo;
+                BINFILE: Stream; Binário do arquivo eletrônico;
+                CONTAINER: String; Identificador do container de arquivo complexo;&lt;BR&gt;
+                KEYWORD -&gt;    Array Palavra-chave; &lt;BR&gt;
+                Em caso de SUCESSO: Retorna uma mensagem de ´1: Operação realizada com sucesso.´. &lt;BR&gt;Em caso de FALHA, retorna uma mensagem com o erro ocorrido. &lt;BR&gt;
+                *Requerido. &lt;BR&gt;</documentation>
+            <input message="tns:newDocumentRequest"/>
+            <output message="tns:newDocumentResponse"/>
+        </operation>
+        <operation name="newDocument2">
+            <documentation>Incluir novo documento. &lt;BR&gt;
+                CategoryID     =&gt; Identificador da categoria*;&lt;BR&gt;
+                DocumentID     =&gt; Identificador do documento; &lt;BR&gt;
+                Title          =&gt; Título do documento*;&lt;BR&gt;
+                Summary        =&gt; Resumo do documento;&lt;BR&gt;
+                Date           =&gt; Data do documento;O formato da data deve ser A-M-D (Ano-Mês-Dia);
+                Attributes     =&gt; Atributo do documento;&lt;BR&gt;
+                OBS: Para atributos com valor numérico, o separador de casas decimais deve ser o ´.´. Para campos de data, o valor deve ter o formato &quot;Y-M-D&quot; (Ano-Mês-Dia).&lt;br&gt;
+                ResponsibleUserID =&gt; Identificador do usuário;&lt;BR&gt;
+                RevisionMembers   =&gt; Participantes da revisão.&lt;BR&gt;
+                MemberType: Tipo de participante
+                1 =&gt; Usuário;
+                2 =&gt; Área;
+                3 =&gt; Função;
+                4 =&gt; Área/Função;
+                5 =&gt; Equipe;
+                MemberID: Identificador da entidade de controle. Ex: Identificador para controle por usuário.
+                Step: Etapa Ex: 1,2,3,4
+                1 =&gt; Elaboração;
+                2 =&gt; Consenso;
+                3 =&gt; Aprovação;
+                4 =&gt; Homologação;
+                Sequence: Sequência. Ex: 2, 2, 2, 2
+                Deadline: Prazo (dias). Ex: 5;
+                TemplateID      =&gt; Flag Arquivo modelo''. Ex: 1 = Marcado / 2 = Desmarcado &lt;BR&gt;
+                Files           =&gt; Array Arquivos; &lt;BR&gt;
+                Name:      String; Nome do arquivo;
+                Content:   Stream; Binário do arquivo eletrônico;
+                Container: String; Identificador do container de arquivo complexo;&lt;BR&gt;
+                Keywords =&gt;    Array Palavra-chave; &lt;BR&gt;
+                KeywordID:  String; Identificador da palavra-chave; &lt;BR&gt;
+                * Requerido. &lt;BR&gt;
+                LanguageID      =&gt; Flag Idioma do documento &lt;BR&gt;
+                RevisionID      =&gt; Flag Identificador da revisão &lt;BR&gt;</documentation>
+            <input message="tns:newDocument2Request"/>
+            <output message="tns:newDocument2Response"/>
+        </operation>
+        <operation name="shareDocument">
+            <documentation>Link para compartilhamento. &lt;BR&gt;
+                DocumentID   =&gt; Identificador do documento*; &lt;BR&gt;
+                CategoryID   =&gt; Identificador da categoria; &lt;BR&gt;
+                Recreate     =&gt; Recriar link de compartilhamento (1 - Sim; 2 - Não)*; &lt;BR&gt;
+                Public       =&gt; Tornar público (1 - Sim; 2 - Não)*; &lt;BR&gt;
+                Download     =&gt; Salvar localmente (1 - Sim; 2 - Não); &lt;BR&gt;
+                Original     =&gt; Utilizar arquivo original (1 - Sim; 2 - Não); &lt;BR&gt;
+                ValidityDate =&gt; Data de validade; O formato da data deve ser A-M-D (Ano-Mês-Dia); &lt;BR&gt;
+                * Requerido &lt;BR&gt;
+            </documentation>
+            <input message="tns:shareDocumentRequest"/>
+            <output message="tns:shareDocumentResponse"/>
+        </operation>
+        <operation name="newRevision">
+            <documentation>Incluir nova revisão.&lt;BR&gt;
+                IDDOCUMENT     -&gt; Identificador do documento*;&lt;BR&gt;
+                IDUSER         -&gt; Identificador do usuário;&lt;BR&gt;
+                PARTICIPANTS   -&gt; Participantes da revisão.&lt;BR&gt;
+                CONTROL: Tipo de controle
+                1 -&gt; Usuário;
+                2 -&gt; Área;
+                3 -&gt; Função;
+                4 -&gt; Área/Função;
+                5 -&gt; Equipe;
+                ENTCONTROL: Identificador da entidade de controle. Ex: Identificador para controle por usuário.
+                STEP: Etapa. Ex: 1,2,3,4
+                1 -&gt; Elaboração;
+                2 -&gt; Consenso;
+                3 -&gt; Aprovação;
+                4 -&gt; Homologação;
+                SEQUENCE: Sequência. Ex: 2, 2, 2, 2
+                QTDEADLINE: Prazo (dias). Ex: 5;&lt;BR&gt;
+                DOCUMENTDATA: Matriz; Dados do documento;
+                NMTITLE: String; Título do documento;
+                ATTRIBUTTES: String; Atributo do documento;
+                Ex: IDENTIFICADOR_DO_ATRIBUTO1=VALOR_DO_ATRIBUTO1;IDENTIFICADOR_DO_ATRIBUTO2=VALOR_DO_ATRIBUTO2;;
+
+                Exemplo com atributo multivalorado (Observe que o separador para os valores dos atributos multivalorados é a ´,´): IDENTIFICADOR_DO_ATRIBUTO1=VALOR1_DO_ATRIBUTO1,VALOR2_DO_ATRIBUTO1,VALOR3_DO_ATRIBUTO1.
+
+                OBS: Para atributos com valor numérico, o separador de casas decimais deve ser o ´.´. Para campos de data, o valor deve ter o formato &quot;Y-M-D&quot; (Ano-Mês-Dia).&lt;BR&gt;
+                FILE: Matriz; Arquivos;
+                NMFILE: String; Nome do arquivo;
+                BINFILE: Stream; Binário do arquivo eletrônico;&lt;BR&gt;
+                FGSTATUS: Deseja encerrar a revisão?
+                0 -&gt; Revisão;
+                1 -&gt; Encerrado;&lt;BR&gt;
+                DSJUSTIFY: String; Justificativa;&lt;BR&gt;
+                IDCATEGORY     -&gt; Identificador da categoria;&lt;BR&gt;
+                IDREVISION     -&gt; Identificador da revisão;&lt;BR&gt;
+                Em caso de SUCESSO: Retorna uma mensagem de ´1: Operação realizada com sucesso.´.&lt;BR&gt;Em caso de FALHA, retorna uma mensagem com o erro ocorrido.&lt;BR&gt;
+                *Requerido.&lt;BR&gt;</documentation>
+            <input message="tns:newRevisionRequest"/>
+            <output message="tns:newRevisionResponse"/>
+        </operation>
+        <operation name="releasePendencyDocument">
+            <documentation>Libera tarefa de um usuário. &lt;BR&gt;
+                IDDOCUMENT     -&gt; Identificador do documento*;&lt;BR&gt;
+                IDUSER         -&gt; Identificador do usuário*;&lt;BR&gt;
+                APPROV         -&gt; Flag 1 = Aprovado 2 = Reprovado*;&lt;BR&gt;
+                JUSTIFY        -&gt; Justificativa, Obrigatório quando reprovado;&lt;BR&gt;
+                Em caso de SUCESSO: Retorna identificador do próximo usuário pendente, tipo de usuário.&lt;BR&gt;
+                Em caso de FALHA, retorna uma mensagem com o erro ocorrido.&lt;BR&gt;
+                Retorno:
+                IDUSER     -&gt; Identificador do usuário da sequência
+                USERTYPE       -&gt; Tipo de usuário(1 =&gt; Usuário; 2 =&gt; Área; 3 =&gt; Função; 4=&gt;Área/Função; 5 =&gt; Equipe; 6 =&gt; Todos)*;&lt;BR&gt;
+                *Requerido.&lt;BR&gt;
+                IDCATEGORY     -&gt; Identificador da categoria*;&lt;BR&gt;</documentation>
+            <input message="tns:releasePendencyDocumentRequest"/>
+            <output message="tns:releasePendencyDocumentResponse"/>
+        </operation>
+        <operation name="searchAccessAudit">
+            <documentation>Consulta auditoria de acessos.&lt;BR&gt;
+                IDDOCUMENT     -&gt; Identificador do documento*;&lt;BR&gt;
+                IDUSER         -&gt; Identificador do usuário*;&lt;BR&gt;
+                PERIODBEGIN    -&gt; Data de início do período. O formato da data deve ser A-M-D (Ano-Mês-Dia)*;&lt;BR&gt;
+                PERIODEND      -&gt; Data de término do período. O formato da data deve ser A-M-D (Ano-Mês-Dia)*;&lt;BR&gt;
+                Em caso de SUCESSO: Retorna dados da auditoria.&lt;BR&gt;
+                Em caso de FALHA, retorna uma mensagem com o erro ocorrido.&lt;BR&gt;
+                Legenda: TYPEAUDIT (1 - Visualização de documento, 2 - Documento cadastrado, 3 - Documento removido, 4 - Revisão cadastrada, 5 - Revisão removida, 6 - Revisão encerrada, 7 - Cópia controlada impressa, 8 - Cópia não controlada impressa, 9 - Quantidade de cópias programadas alterada,
+                11 - Documento cancelado, 12 - Documento liberado, 13 - Exclusão de arquivo eletrônico, 14 - Arquivamento registrado, 15 - Arquivamento cancelado, 16 - Assinatura digital, 17 - Inclusão de arquivo eletrônico, 18 - Inclusão de versão PDF para arquivo eletrônico, 19 - Exclusão de versão PDF para arquivo eletrônico)
+                *Requerido.&lt;BR&gt;</documentation>
+            <input message="tns:searchAccessAuditRequest"/>
+            <output message="tns:searchAccessAuditResponse"/>
+        </operation>
+        <operation name="searchCategory">
+            <documentation>Categorias de documento.&lt;BR&gt;
+                RESULTARRAY: Matriz; Resultado da pesquisa;&lt;BR&gt;
+                CDCATEGORY: Integer; Código da categoria;&lt;BR&gt;
+                CDCATEGORYOWNER: Integer; Código da categoria;&lt;BR&gt;
+                IDCATEGORY: String; Identificador da categoria;&lt;BR&gt;
+                NMCATEGORY: String; Nome da categoria;</documentation>
+            <input message="tns:searchCategoryRequest"/>
+            <output message="tns:searchCategoryResponse"/>
+        </operation>
+        <operation name="searchDocument">
+            <documentation>Consulta de documentos.&lt;BR&gt;
+                FILTERS    -&gt; Filtros de consulta*;&lt;BR&gt;
+                IDCATEGORY: String; Identificador da categoria;&lt;BR&gt;
+                IDDOCUMENT: String; Identificador do documento;&lt;BR&gt;
+                NMTITLE: String; Título do documento;&lt;BR&gt;
+                NMAUTHOR: String; Autor;&lt;BR&gt;
+                CONTENT: String; Conteúdo;&lt;BR&gt;
+                SYNONYM: String; Procurar por sinônimo;&lt;BR&gt;
+                STATUS: String; Situação do documento. Ex: 1,2,3,4;&lt;BR&gt;
+                1: Emissão;
+                2: Homologado;
+                3: Revisão;
+                4: Cancelado;&lt;BR&gt;
+                PERMISSION: String; Permissões do documento. Ex: 1,2,3,4,5;&lt;BR&gt;
+                1: Incluir;
+                2: Alterar;
+                3: Excluir;
+                4: Revisar;
+                5: Conhecimento;
+                6: Distribuir cópia;
+                7: Visualizar;
+                8: Cancelar;
+                9: Arquivar;
+                10: Imprimir;
+                11: Treinamento;
+                12: Registrar treinamento;
+                13: Salvar localmente;
+                14: Assinar;
+                15: Notificação;&lt;BR&gt;
+                IDUSERPERM: String; Identificador do usuário da permissão;&lt;BR&gt;
+                DEPARTMENTPERM: String; Identificador da área da permissão;&lt;BR&gt;
+                IDUSERREGISTER: String; Identificador do usuário de cadastro;&lt;BR&gt;
+                FUNCTIONPERM: String; Identificador da função da permissão;&lt;BR&gt;
+                KEYWORD: String; Palavra-chave;&lt;BR&gt;
+                OPKEYWORD: Integer; Operador da palavra chave;&lt;BR&gt;
+                1: E;
+                2: OU;&lt;BR&gt;
+                DTDOCLASTDAY: String; Número de dias referente à data do documento (últimos dias);&lt;BR&gt;
+                DTDOCBEGIN: String; Data de início para período do documento;&lt;BR&gt;
+                DTDOCEND: String; Data final para período do documento;&lt;BR&gt;
+                DTREGLASTDAY: String; Número de dias referente à data de cadastro do documento (últimos dias);&lt;BR&gt;
+                DTREGBEGIN: String; Data inicial para período da data de cadastro do documento;&lt;BR&gt;
+                DTREGEND: String; Data final para período da data de cadastro do documento;&lt;BR&gt;
+                DTVALIDBEGIN: String; Data de início para filtro por data de validade;&lt;BR&gt;
+                DTVALIDEND: String; Data final para filtro por data de validade;&lt;BR&gt;
+                DTREVLASTDAY: String; Número de dias referente à data da revisão do documento (últimos dias);&lt;BR&gt;
+                DTREVBEGIN: String; Data de início para período da revisão do documento;&lt;BR&gt;
+                DTREVEND: String; Data final para período da revisão do documento;&lt;BR&gt;
+                IDPROJECT: String; Identificador do projeto;&lt;BR&gt;
+                NMPROJECT: String; Nome do projeto;&lt;BR&gt;
+                ATTRIBUTTES: String; Atributos do documento;&lt;BR&gt;
+                Ex: IDENTIFICADOR_DO_ATRIBUTO1=VALOR_DO_ATRIBUTO1;IDENTIFICADOR_DO_ATRIBUTO2=VALOR_DO_ATRIBUTO2;;
+                Exemplo com atributo multivalorado (Observe que o separador para os valores dos atributos multivalorados é a ´,´): IDENTIFICADOR_DO_ATRIBUTO1=VALOR1_DO_ATRIBUTO1,VALOR2_DO_ATRIBUTO1,VALOR3_DO_ATRIBUTO1.
+
+                OBS: Para atributos com valor numérico, o separador de casas decimais deve ser o ´.´. Para campos de data, o valor deve ter o formato &quot;Y-M-D&quot; (Ano-Mês-Dia).&lt;BR&gt;
+                IDUSER     -&gt; Identificador do usuário*;&lt;BR&gt;
+                Em caso de SUCESSO: Retorna uma matriz com o resultado da pesquisa e o percentual de aderência à pesquisa.&lt;BR&gt;
+                RESULTS: Matriz; Resultado da pesquisa;
+                IDDOCUMENT: String; Identificador do documento;
+                NMTITLE: String; Título do documento;&lt;BR&gt;
+                ADHESION: Integer; Percentual de aderência à pesquisa;
+                Em caso de FALHA, retorna uma mensagem com o erro ocorrido.&lt;BR&gt;
+                *Requerido.&lt;BR&gt;</documentation>
+            <input message="tns:searchDocumentRequest"/>
+            <output message="tns:searchDocumentResponse"/>
+        </operation>
+        <operation name="setAttributeValue">
+            <documentation>Atribui valor a um atributo de determinado documento. Caso o atributo não esteja associado a um documento, este será associado. &lt;BR&gt;
+                IDDOCUMENT     -&gt; Identificador do documento*;&lt;BR&gt;
+                IDREVISION     -&gt; Identificador da revisão;&lt;BR&gt;
+                IDATTRIBUTE    -&gt; Identificador do atributo*;&lt;BR&gt;
+                VLATTRIBUTE    -&gt; Valor do atributo*;&lt;BR&gt;
+                SEPARATOR      -&gt; Separador*;&lt;BR&gt;
+
+                Em caso de SUCESSO, retorna uma mensagem de ´1´ significando que o atributo foi alterado com sucesso. Em caso de FALHA, retorna um Array com a mensagem do erro ocorrido. *Parâmetro requerido.
+
+                **Caso não informado, será considerada a revisão vigente. &lt;BR&gt;</documentation>
+            <input message="tns:setAttributeValueRequest"/>
+            <output message="tns:setAttributeValueResponse"/>
+        </operation>
+        <operation name="uploadEletronicFile">
+            <documentation>Upload de arquivo. &lt;BR&gt;
+                IDDOCUMENT     -&gt; Identificador do documento*; &lt;BR&gt;
+                IDREVISION     -&gt; Identificador da revisão; &lt;BR&gt;
+                IDUSER         -&gt; Identificador do usuário; &lt;BR&gt;
+                IDCATEGORY     -&gt; Identificador da categoria; &lt;BR&gt;
+                FILE           -&gt; Array Arquivos*; &lt;BR&gt;
+                NMFILE: String; Nome do arquivo;
+                BINFILE: Stream; Binário do arquivo eletrônico;
+                CONTAINER: String; Identificador do container de arquivo complexo;&lt;BR&gt;
+                Em caso de SUCESSO: Retorna uma mensagem de ´1: Operação realizada com sucesso.´. &lt;BR&gt;Em caso de FALHA, retorna uma mensagem com o erro ocorrido. &lt;BR&gt;
+                *Requerido. &lt;BR&gt;</documentation>
+            <input message="tns:uploadEletronicFileRequest"/>
+            <output message="tns:uploadEletronicFileResponse"/>
+        </operation>
+        <operation name="viewDocumentData">
+            <documentation>Consulta de documentos. &lt;BR&gt;
+                IDDOCUMENT     -&gt; Identificador do documento*;&lt;BR&gt;
+                IDREVISION     -&gt; Identificador da revisão;&lt;BR&gt;
+                Em caso de SUCESSO: Retorna os metadados.&lt;BR&gt;
+                IDDOCUMENT: String; Identificador do documento;&lt;BR&gt;
+                NMTITLE: String; Título do documento;&lt;BR&gt;
+                IDCATEGORY: String; Identificador da categoria;&lt;BR&gt;
+                NMCATEGORY: String; Nome da categoria;&lt;BR&gt;
+                STATUS: String; Situação do documento: 1: Emissão, 2: Homologado, 3: Revisão, 4: Cancelado, 5: Indexação, 6: Aprovação, 7: Contrato encerrado&lt;BR&gt;
+                NRHITS: Integer; Hits;&lt;BR&gt;
+                NMAUTHOR: String; Autor;&lt;BR&gt;
+                IDREVISION: String; Identificador da revisão;&lt;BR&gt;
+                DTDOCUMENT: String; Data do documento;&lt;BR&gt;
+                QTVALIDITY: Integer; Validade;&lt;BR&gt;
+                FGMEASVALID: String; Medida para a validade;
+                1: Dias;
+                2: Meses;
+                3: Anos;&lt;BR&gt;
+                REVALIDATION: String; Revalidação;&lt;BR&gt;
+                DTVALIDITY: String; Data de validade;&lt;BR&gt;
+                RESUME: String; Resumo do documento;&lt;BR&gt;
+                CANCELREASON: String; Motivo do cancelamento;&lt;BR&gt;
+                URL: String;&lt;BR&gt;
+                ATTRIBUTTES: Matriz; Atributos do documento.&lt;BR&gt;
+                ATTRIBUTTENAME: String; Identificador do atributo;&lt;BR&gt;
+                ATTRIBUTTEVALUE: vetor; Valor do atributo;&lt;BR&gt;
+                ELECTRONICFILE: Matriz; Arquivo eletrônico.&lt;BR&gt;
+                FILENAME: String; Nome do arquivo;&lt;BR&gt;
+                Em caso de FALHA, retorna uma mensagem com o erro ocorrido.&lt;BR&gt;
+                *Requerido&lt;BR&gt;</documentation>
+            <input message="tns:viewDocumentDataRequest"/>
+            <output message="tns:viewDocumentDataResponse"/>
+        </operation>
+        <operation name="newDocumentContainerAssociation">
+            <documentation>Associação de documentos na estrutura do container. &lt;BR&gt;
+                UpperLevelCategoryID -&gt; Identificador da categoria superior*;&lt;BR&gt;
+                UpperLevelDocumentID -&gt; Identificador do documento superior*;&lt;BR&gt;
+                RevisionID           -&gt; Identificador da revisão;&lt;BR&gt;
+                StructID             -&gt; Identificador do documento superior*;&lt;BR&gt;
+                LowerLevelCategoryID -&gt; Identificador da categoria inferior*;&lt;BR&gt;
+                LowerLevelDocumentID -&gt; Identificador do documento inferior*;&lt;BR&gt;
+                *Requerido.</documentation>
+            <input message="tns:newDocumentContainerAssociationRequest"/>
+            <output message="tns:newDocumentContainerAssociationResponse"/>
+        </operation>
+        <operation name="deleteDocumentContainerAssociation">
+            <documentation>Desassociação de documentos na estrutura do container. &lt;BR&gt;
+                UpperLevelCategoryID -&gt; Identificador da categoria superior*;&lt;BR&gt;
+                UpperLevelDocumentID -&gt; Identificador do documento superior*;&lt;BR&gt;
+                RevisionID           -&gt; Identificador da revisão;&lt;BR&gt;
+                StructID             -&gt; Identificador do documento superior*;&lt;BR&gt;
+                LowerLevelCategoryID -&gt; Identificador da categoria inferior*;&lt;BR&gt;
+                LowerLevelDocumentID -&gt; Identificador do documento inferior*;&lt;BR&gt;
+                *Requerido.</documentation>
+            <input message="tns:deleteDocumentContainerAssociationRequest"/>
+            <output message="tns:deleteDocumentContainerAssociationResponse"/>
+        </operation>
+        <operation name="associateProcess">
+            <documentation>Cancelamento de documento. &lt;BR&gt;
+                DocumentID -&gt; Identificador do documento*;&lt;BR&gt;
+                CategoryID -&gt; Identificador da categoria;&lt;BR&gt;
+                ProcessID  -&gt; Identificador do processo*;&lt;BR&gt;
+                *Requerido.&lt;BR&gt;</documentation>
+            <input message="tns:associateProcessRequest"/>
+            <output message="tns:associateProcessResponse"/>
+        </operation>
+        <operation name="changeCopyStationStatus">
+            <documentation>Alterar situação. &lt;BR&gt;
+                CopyStationID -&gt; Identificador do posto de cópias*;&lt;BR&gt;
+                Status        -&gt; Status;&lt;BR&gt;
+                *Requerido.&lt;BR&gt;</documentation>
+            <input message="tns:changeCopyStationStatusRequest"/>
+            <output message="tns:changeCopyStationStatusResponse"/>
+        </operation>
+        <operation name="newCopyStation">
+            <documentation>Incluir posto de cópias. &lt;BR&gt;
+                CopyStationID      -&gt; Identificador*;&lt;BR&gt;
+                CopyStationName    -&gt; Nome*;&lt;BR&gt;
+                CopyStationOwnerID -&gt; Posto superior (Identificador);&lt;BR&gt;
+                TeamID             -&gt; Equipe responsável pelo envio (Identificador);&lt;BR&gt;
+                UserID             -&gt; Responsável recebimento (padrão) (Matrícula)*;&lt;BR&gt;
+                *Requerido.&lt;BR&gt;</documentation>
+            <input message="tns:newCopyStationRequest"/>
+            <output message="tns:newCopyStationResponse"/>
+        </operation>
+        <operation name="editCopyStation">
+            <documentation>Editar posto de cópias. &lt;BR&gt;
+                CopyStationID      -&gt; Identificador*;&lt;BR&gt;
+                CopyStationName    -&gt; Nome*;&lt;BR&gt;
+                CopyStationOwnerID -&gt; Posto superior (Identificador);&lt;BR&gt;
+                TeamID             -&gt; Equipe responsável pelo envio (Identificador);&lt;BR&gt;
+                UserID             -&gt; Responsável recebimento (padrão) (Matrícula)*;&lt;BR&gt;
+                *Requerido.&lt;BR&gt;</documentation>
+            <input message="tns:editCopyStationRequest"/>
+            <output message="tns:editCopyStationResponse"/>
+        </operation>
+        <operation name="relateCopyStation">
+            <documentation>Cancelamento de documento. &lt;BR&gt;
+                DocumentID    -&gt; Identificador do documento*;&lt;BR&gt;
+                CategoryID    -&gt; Identificador da categoria;&lt;BR&gt;
+                CopyStationID -&gt; Identificador do posto de cópias*;&lt;BR&gt;
+                Quantity      -&gt; Quantidade de cópias: ;&lt;BR&gt;
+                Em caso de SUCESSO: Retorna uma mensagem de ´1: Operação realizada com sucesso.´. &lt;BR&gt;Em caso de FALHA, retorna uma mensagem com o erro ocorrido. &lt;BR&gt;
+                *Requerido.&lt;BR&gt;</documentation>
+            <input message="tns:relateCopyStationRequest"/>
+            <output message="tns:relateCopyStationResponse"/>
+        </operation>
+        <operation name="deleteCopyStation">
+            <documentation>Alterar situação. &lt;BR&gt;
+                CopyStationID -&gt; Identificador do posto de cópias*;&lt;BR&gt;
+                *Requerido.&lt;BR&gt;</documentation>
+            <input message="tns:deleteCopyStationRequest"/>
+            <output message="tns:deleteCopyStationResponse"/>
+        </operation>
+        <operation name="newCopyStationResp">
+            <documentation>Inserir responsável do posto de cópias. &lt;BR&gt;
+                CopyStationID -&gt; Identificador*;&lt;BR&gt;
+                UserID        -&gt; Responsável (Matrícula)*;&lt;BR&gt;
+                *Requerido.&lt;BR&gt;</documentation>
+            <input message="tns:newCopyStationRespRequest"/>
+            <output message="tns:newCopyStationRespResponse"/>
+        </operation>
+        <operation name="deleteRespCopyStation">
+            <documentation>Cancelamento de documento. &lt;BR&gt;
+                CopyStationID -&gt; Identificador do posto de cópias*;&lt;BR&gt;
+                UserID        -&gt; Matrícula do usuário*;&lt;BR&gt;
+                Em caso de SUCESSO: Retorna uma mensagem de ´1: Operação realizada com sucesso.´. &lt;BR&gt;Em caso de FALHA, retorna uma mensagem com o erro ocorrido. &lt;BR&gt;
+                *Requerido.&lt;BR&gt;</documentation>
+            <input message="tns:deleteRespCopyStationRequest"/>
+            <output message="tns:deleteRespCopyStationResponse"/>
+        </operation>
+        <operation name="newProtocolPrintedCopy">
+            <documentation>Cancelamento de documento. &lt;BR&gt;
+                ProtocolID      -&gt; Identificador do protocolo*;&lt;BR&gt;
+                Copytype        -&gt; Tipo de cópia*;&lt;BR&gt;
+                Date            -&gt; Data*;&lt;BR&gt;
+                ReasonID        -&gt; Motivo*;&lt;BR&gt;
+                Responsible     -&gt; Identificador do usuário emissor*;&lt;BR&gt;
+                CopyStationID   -&gt; Identificador do posto de cópias*;&lt;BR&gt;
+                Copystationresp -&gt; Responsável pelo posto de cópias*;&lt;BR&gt;
+                Company         -&gt; Empresa*;&lt;BR&gt;
+                Companyresp     -&gt; Responsável pela empresa*;&lt;BR&gt;
+                Observation     -&gt; Responsável recebimento (padrão)*;&lt;BR&gt;
+                Status          -&gt; Status*;&lt;BR&gt;
+                Receivingresp   -&gt; Responsável pelo recebimento*;&lt;BR&gt;
+                Receivingdate   -&gt; Data de recebimento*;&lt;BR&gt;
+                DestType        -&gt; Tipo de destinatário [1 - Posto de cópias, 2 - Área, 3 - Usuário]*;&lt;BR&gt;
+                CtrlTeam        -&gt; Equipe de controle padrão*;&lt;BR&gt;
+                UserId          -&gt; Usuário*;&lt;BR&gt;
+                DepartmentId    -&gt; Unidade organizacional*;&lt;BR&gt;
+                Em caso de SUCESSO: Retorna uma mensagem de ´1: Operação realizada com sucesso.´. &lt;BR&gt;Em caso de FALHA, retorna uma mensagem com o erro ocorrido. &lt;BR&gt;
+                *Requerido.&lt;BR&gt;</documentation>
+            <input message="tns:newProtocolPrintedCopyRequest"/>
+            <output message="tns:newProtocolPrintedCopyResponse"/>
+        </operation>
+    </portType>
+    <binding name="DocumentoBinding" type="tns:DocumentoPortType">
+        <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+        <operation name="newCaptureInstance">
+            <soap:operation soapAction="urn:document#newCaptureInstance" style="document"/>
+            <input><soap:body use="literal" namespace="urn:document"/></input>
+            <output><soap:body use="literal" namespace="urn:document"/></output>
+        </operation>
+        <operation name="cancelDocument">
+            <soap:operation soapAction="urn:document#cancelDocument" style="document"/>
+            <input><soap:body use="literal" namespace="urn:document"/></input>
+            <output><soap:body use="literal" namespace="urn:document"/></output>
+        </operation>
+        <operation name="checkAccessPermission">
+            <soap:operation soapAction="urn:document#checkAccessPermission" style="document"/>
+            <input><soap:body use="literal" namespace="urn:document"/></input>
+            <output><soap:body use="literal" namespace="urn:document"/></output>
+        </operation>
+        <operation name="deleteAccessPermission">
+            <soap:operation soapAction="urn:document#deleteAccessPermission" style="document"/>
+            <input><soap:body use="literal" namespace="urn:document"/></input>
+            <output><soap:body use="literal" namespace="urn:document"/></output>
+        </operation>
+        <operation name="deleteDocument">
+            <soap:operation soapAction="urn:document#deleteDocument" style="document"/>
+            <input><soap:body use="literal" namespace="urn:document"/></input>
+            <output><soap:body use="literal" namespace="urn:document"/></output>
+        </operation>
+        <operation name="deleteRevision">
+            <soap:operation soapAction="urn:document#deleteRevision" style="document"/>
+            <input><soap:body use="literal" namespace="urn:document"/></input>
+            <output><soap:body use="literal" namespace="urn:document"/></output>
+        </operation>
+        <operation name="downloadEletronicFile">
+            <soap:operation soapAction="urn:document#downloadEletronicFile" style="document"/>
+            <input><soap:body use="literal" namespace="urn:document"/></input>
+            <output><soap:body use="literal" namespace="urn:document"/></output>
+        </operation>
+        <operation name="editDocument">
+            <soap:operation soapAction="urn:document#editDocument" style="document"/>
+            <input><soap:body use="literal" namespace="urn:document"/></input>
+            <output><soap:body use="literal" namespace="urn:document"/></output>
+        </operation>
+        <operation name="getKeyWords">
+            <soap:operation soapAction="urn:document#getKeyWords" style="document"/>
+            <input><soap:body use="literal" namespace="urn:document"/></input>
+            <output><soap:body use="literal" namespace="urn:document"/></output>
+        </operation>
+        <operation name="getKeyWordsData">
+            <soap:operation soapAction="urn:document#getKeyWordsData" style="document"/>
+            <input><soap:body use="literal" namespace="urn:document"/></input>
+            <output><soap:body use="literal" namespace="urn:document"/></output>
+        </operation>
+        <operation name="listAccessPermission">
+            <soap:operation soapAction="urn:document#listAccessPermission" style="document"/>
+            <input><soap:body use="literal" namespace="urn:document"/></input>
+            <output><soap:body use="literal" namespace="urn:document"/></output>
+        </operation>
+        <operation name="listPendencyDocument">
+            <soap:operation soapAction="urn:document#listPendencyDocument" style="document"/>
+            <input><soap:body use="literal" namespace="urn:document"/></input>
+            <output><soap:body use="literal" namespace="urn:document"/></output>
+        </operation>
+        <operation name="newAccessPermission">
+            <soap:operation soapAction="urn:document#newAccessPermission" style="document"/>
+            <input><soap:body use="literal" namespace="urn:document"/></input>
+            <output><soap:body use="literal" namespace="urn:document"/></output>
+        </operation>
+        <operation name="newDocument">
+            <soap:operation soapAction="urn:document#newDocument" style="document"/>
+            <input><soap:body use="literal" namespace="urn:document"/></input>
+            <output><soap:body use="literal" namespace="urn:document"/></output>
+        </operation>
+        <operation name="newDocument2">
+            <soap:operation soapAction="urn:document#newDocument2" style="document"/>
+            <input><soap:body use="literal" namespace="urn:document"/></input>
+            <output><soap:body use="literal" namespace="urn:document"/></output>
+        </operation>
+        <operation name="shareDocument">
+            <soap:operation soapAction="urn:document#shareDocument" style="document"/>
+            <input><soap:body use="literal" namespace="urn:document"/></input>
+            <output><soap:body use="literal" namespace="urn:document"/></output>
+        </operation>
+        <operation name="newRevision">
+            <soap:operation soapAction="urn:document#newRevision" style="document"/>
+            <input><soap:body use="literal" namespace="urn:document"/></input>
+            <output><soap:body use="literal" namespace="urn:document"/></output>
+        </operation>
+        <operation name="releasePendencyDocument">
+            <soap:operation soapAction="urn:document#releasePendencyDocument" style="document"/>
+            <input><soap:body use="literal" namespace="urn:document"/></input>
+            <output><soap:body use="literal" namespace="urn:document"/></output>
+        </operation>
+        <operation name="searchAccessAudit">
+            <soap:operation soapAction="urn:document#searchAccessAudit" style="document"/>
+            <input><soap:body use="literal" namespace="urn:document"/></input>
+            <output><soap:body use="literal" namespace="urn:document"/></output>
+        </operation>
+        <operation name="searchCategory">
+            <soap:operation soapAction="urn:document#searchCategory" style="document"/>
+            <input><soap:body use="literal" namespace="urn:document"/></input>
+            <output><soap:body use="literal" namespace="urn:document"/></output>
+        </operation>
+        <operation name="searchDocument">
+            <soap:operation soapAction="urn:document#searchDocument" style="document"/>
+            <input><soap:body use="literal" namespace="urn:document"/></input>
+            <output><soap:body use="literal" namespace="urn:document"/></output>
+        </operation>
+        <operation name="setAttributeValue">
+            <soap:operation soapAction="urn:document#setAttributeValue" style="document"/>
+            <input><soap:body use="literal" namespace="urn:document"/></input>
+            <output><soap:body use="literal" namespace="urn:document"/></output>
+        </operation>
+        <operation name="uploadEletronicFile">
+            <soap:operation soapAction="urn:document#uploadEletronicFile" style="document"/>
+            <input><soap:body use="literal" namespace="urn:document"/></input>
+            <output><soap:body use="literal" namespace="urn:document"/></output>
+        </operation>
+        <operation name="viewDocumentData">
+            <soap:operation soapAction="urn:document#viewDocumentData" style="document"/>
+            <input><soap:body use="literal" namespace="urn:document"/></input>
+            <output><soap:body use="literal" namespace="urn:document"/></output>
+        </operation>
+        <operation name="newDocumentContainerAssociation">
+            <soap:operation soapAction="urn:document#newDocumentContainerAssociation" style="document"/>
+            <input><soap:body use="literal" namespace="urn:document"/></input>
+            <output><soap:body use="literal" namespace="urn:document"/></output>
+        </operation>
+        <operation name="deleteDocumentContainerAssociation">
+            <soap:operation soapAction="urn:document#deleteDocumentContainerAssociation" style="document"/>
+            <input><soap:body use="literal" namespace="urn:document"/></input>
+            <output><soap:body use="literal" namespace="urn:document"/></output>
+        </operation>
+        <operation name="associateProcess">
+            <soap:operation soapAction="urn:document#associateProcess" style="document"/>
+            <input><soap:body use="literal" namespace="urn:document"/></input>
+            <output><soap:body use="literal" namespace="urn:document"/></output>
+        </operation>
+        <operation name="changeCopyStationStatus">
+            <soap:operation soapAction="urn:document#changeCopyStationStatus" style="document"/>
+            <input><soap:body use="literal" namespace="urn:document"/></input>
+            <output><soap:body use="literal" namespace="urn:document"/></output>
+        </operation>
+        <operation name="newCopyStation">
+            <soap:operation soapAction="urn:document#newCopyStation" style="document"/>
+            <input><soap:body use="literal" namespace="urn:document"/></input>
+            <output><soap:body use="literal" namespace="urn:document"/></output>
+        </operation>
+        <operation name="editCopyStation">
+            <soap:operation soapAction="urn:document#editCopyStation" style="document"/>
+            <input><soap:body use="literal" namespace="urn:document"/></input>
+            <output><soap:body use="literal" namespace="urn:document"/></output>
+        </operation>
+        <operation name="relateCopyStation">
+            <soap:operation soapAction="urn:document#relateCopyStation" style="document"/>
+            <input><soap:body use="literal" namespace="urn:document"/></input>
+            <output><soap:body use="literal" namespace="urn:document"/></output>
+        </operation>
+        <operation name="deleteCopyStation">
+            <soap:operation soapAction="urn:document#deleteCopyStation" style="document"/>
+            <input><soap:body use="literal" namespace="urn:document"/></input>
+            <output><soap:body use="literal" namespace="urn:document"/></output>
+        </operation>
+        <operation name="newCopyStationResp">
+            <soap:operation soapAction="urn:document#newCopyStationResp" style="document"/>
+            <input><soap:body use="literal" namespace="urn:document"/></input>
+            <output><soap:body use="literal" namespace="urn:document"/></output>
+        </operation>
+        <operation name="deleteRespCopyStation">
+            <soap:operation soapAction="urn:document#deleteRespCopyStation" style="document"/>
+            <input><soap:body use="literal" namespace="urn:document"/></input>
+            <output><soap:body use="literal" namespace="urn:document"/></output>
+        </operation>
+        <operation name="newProtocolPrintedCopy">
+            <soap:operation soapAction="urn:document#newProtocolPrintedCopy" style="document"/>
+            <input><soap:body use="literal" namespace="urn:document"/></input>
+            <output><soap:body use="literal" namespace="urn:document"/></output>
+        </operation>
+    </binding>
+    <service name="Documento">
+        <port name="DocumentoPort" binding="tns:DocumentoBinding">
+            <soap:address location="https://se.gruporovema.com.br/apigateway/se/ws/dc_ws.php"/>
+        </port>
+    </service>
+</definitions>
