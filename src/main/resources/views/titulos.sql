@@ -14,7 +14,7 @@ FROM OINV NS
     INNER JOIN INV6 P ON P."DocEntry" = NS."DocEntry"
     INNER JOIN OSLP V ON V."SlpCode" = NS."SlpCode"
     LEFT  JOIN RCT2 CR ON CR."DocEntry" = NS."DocEntry" AND CR."DocTransId" = NS."TransId" AND CR."InstId" = P."InstlmntID"
-    LEFT  JOIN ORCT OCR ON CR."DocEntry" = OCR."DocEntry"
+    LEFT  JOIN ORCT OCR ON CR."DocNum" = OCR."DocEntry"
 WHERE
     NS."DocStatus" = 'O'
     AND NS."BPLId" in (2,4,11,17)
