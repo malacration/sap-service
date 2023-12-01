@@ -2,6 +2,7 @@ package br.andrew.sap.json
 
 import br.andrew.sap.infrastructure.odata.OData
 import br.andrew.sap.model.DocEntry
+import br.andrew.sap.model.documents.DocumentStatus
 import br.andrew.sap.model.documents.OrderSales
 import br.andrew.sap.model.documents.base.Product
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -52,6 +53,7 @@ class OrderSaleJsonTest {
         val obj = mapper.readValue(String(file), jacksonTypeRef<OData>())
         val order = obj.tryGetValue<OrderSales>()
         order.DocumentLines.forEach { Assertions.assertEquals("500.01",it.WarehouseCode) }
+        Assertions.assertEquals(DocumentStatus.bost_Open,order.DocumentStatus)
 
     }
 
