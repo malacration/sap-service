@@ -60,6 +60,15 @@ class BankPlusService(val envrioment: BankPlusEnvrioment, val restTemplate: Rest
             invoice.docEntry?.toString() ?: throw Exception("Doc Entry nao pode estar nulo"))
     }
 
+
+    fun getPdf(id : String): Any? {
+        return restTemplate.exchange(
+            RequestEntity
+                .get("$url/api/v2/${envrioment.base}/cobranca/boletos/${id}/pdf")
+                .header("Authorization", envrioment.token)
+                .build(),ByteArray::class.java).body
+    }
+
     companion object{
         var empresas : List<Empresa> = listOf()
     }

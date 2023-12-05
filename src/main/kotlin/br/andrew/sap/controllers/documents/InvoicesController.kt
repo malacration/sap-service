@@ -61,6 +61,13 @@ class InvoicesController(
             invoice.docEntry.toString())
     }
 
+    @GetMapping("/{id}/parcela/{idParcela}", produces = ["application/pdf"])
+    fun getPdf(@PathVariable id : String, @PathVariable idParcela : String) : Any? {
+        val boletos = getBoleto(id)
+        val boleto = boletos.firstOrNull{ it.numeroDaParcela.toString() == idParcela } ?: throw Exception("Boleto nao encontrado")
+        return bankPlusService.getPdf(boleto.id.toString())
+    }
+
     @GetMapping("pix")
     fun teste() : Any{
         return invoice.getAllPixs();

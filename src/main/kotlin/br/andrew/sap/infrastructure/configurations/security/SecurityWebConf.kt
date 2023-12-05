@@ -44,7 +44,11 @@ class SecurityWebConf(@Value("\${spring.security.disable:false}") val disable: B
                     .requestMatchers(
                         "/state**",
                         "/city**/**",
-                        "/business-partners/key/**"
+                        "/business-partners/key/**",
+                        "/business-partners/cpf-cnpj/**",
+                        "/invoice/cardcode/*/payment/**",
+                        "/installment/*/paid",
+                        "/invoice/*/parcela/**",
                     ).permitAll()
                     .requestMatchers(HttpMethod.POST,"/business-partners/key/**")
                     .permitAll()

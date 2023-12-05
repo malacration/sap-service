@@ -25,6 +25,9 @@ class IncomingPaymentService(env: SapEnvrioment, restTemplate: RestTemplate, aut
             RequestEntity
                 .get("$url('parcelas-pagas.sql')/List?docEntryInvoice=$docEntry")
                 .header("cookie","B1SESSION=${session().sessionId}")
-                .build(), OData::class.java).body!!.tryGetValues<DocEntry>()
+                .build(), OData::class.java).body!!.tryGetValues<Teste>()
     }
+
 }
+
+class Teste(val DocNum : String, val InstId : String)
