@@ -2,6 +2,7 @@ package br.andrew.sap.model.documents.base
 
 import br.andrew.sap.model.enums.Cancelled
 import br.andrew.sap.model.WarehouseDefault
+import br.andrew.sap.model.documents.DocumentStatus
 import br.andrew.sap.model.forca.EnderecoId
 import br.andrew.sap.model.uzzipay.DataRetonroPixQrCode
 import br.andrew.sap.model.uzzipay.RequestPixDueDate
@@ -11,7 +12,9 @@ import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.fasterxml.jackson.databind.EnumNamingStrategy
 import com.fasterxml.jackson.databind.PropertyNamingStrategy
+import com.fasterxml.jackson.databind.annotation.EnumNaming
 import com.fasterxml.jackson.databind.annotation.JsonNaming
 import java.math.BigDecimal
 import java.math.RoundingMode
@@ -40,6 +43,7 @@ open class Document(val CardCode : String,
     var DocTotal : String? = null
     var discountPercent : Double? = null
     var totalDiscount : String? = null
+    var SequenceSerial : String? = null
 
     @JsonProperty("U_id_pedido_forca")
     var u_id_pedido_forca: String? = null
@@ -50,7 +54,8 @@ open class Document(val CardCode : String,
     var docType: String? = null
     var docObjectCode : String? = null
 
-    val DocumentStatus : String? = null
+    @JsonProperty("DocumentStatus")
+    val DocumentStatus : DocumentStatus? = null
     var documentAdditionalExpenses : List<AdditionalExpenses> = emptyList()
     var shipToCode : String? = null
     var Address : String? = null

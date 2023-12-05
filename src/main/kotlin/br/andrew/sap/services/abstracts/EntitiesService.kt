@@ -64,6 +64,7 @@ abstract class EntitiesService<T>(protected val env: SapEnvrioment,
         val request = RequestEntity
                 .get(env.host+this.path()+"?\$skip=${skip}"+aditional)
                 .header("cookie","B1SESSION=${session().sessionId}")
+                .header("Prefer",  "odata.maxpagesize=${page.pageSize}")
                 .build()
         return restTemplate.exchange(request, OData::class.java).body ?: OData()
     }

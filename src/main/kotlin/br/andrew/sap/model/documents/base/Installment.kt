@@ -19,6 +19,7 @@ class Installment(@JsonProperty("DueDate") private val _dueDate : Date?, val tot
     var InstallmentId : Int? = null
     var PaymentOrdered : String? = null
     var Percentage : String? = null
+    val TotalFC : Double? = null
     var U_QrCodePix : String? = null
     var U_pix_textContent : String? = null
     var U_pix_link : String? = null

@@ -85,4 +85,9 @@ class BusinessPartnersController(
     fun save(@RequestBody bp : Cliente): BusinessPartner {
         return salvar(bp)
     }
+
+    @GetMapping("/cpf-cnpj/{cpfCnpj}")
+    fun getBy(@PathVariable cpfCnpj : String): BusinessPartner {
+        return service.getByCpfCnpj(cpfCnpj)
+    }
 }
