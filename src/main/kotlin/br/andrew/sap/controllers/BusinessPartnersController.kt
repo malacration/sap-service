@@ -7,9 +7,11 @@ import br.andrew.sap.infrastructure.odata.Predicate
 import br.andrew.sap.model.Attachment
 import br.andrew.sap.model.forca.Cliente
 import br.andrew.sap.model.partner.*
+import br.andrew.sap.model.partner.BusinessPartnerType.cCustomer
 import br.andrew.sap.services.AtualizacaoCadastralService
 import br.andrew.sap.services.BusinessPartnersService
 import br.andrew.sap.services.ReferenciaComercialService
+import io.swagger.v3.oas.annotations.Parameter
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
@@ -87,7 +89,7 @@ class BusinessPartnersController(
     }
 
     @GetMapping("/cpf-cnpj/{cpfCnpj}")
-    fun getBy(@PathVariable cpfCnpj : String): BusinessPartner {
-        return service.getByCpfCnpj(cpfCnpj)
+    fun getBy(@PathVariable cpfCnpj : String, @RequestParam(name = "type", defaultValue = "cCustomer") tipo : BusinessPartnerType): BusinessPartner {
+        return service.getByCpfCnpj(cpfCnpj,tipo)
     }
 }

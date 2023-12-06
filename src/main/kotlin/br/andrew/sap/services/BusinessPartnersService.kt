@@ -7,6 +7,7 @@ import br.andrew.sap.model.partner.BusinessPartner
 import br.andrew.sap.model.bank.PaymentMethod
 import br.andrew.sap.model.envrioments.SapEnvrioment
 import br.andrew.sap.model.partner.BPBranchAssignment
+import br.andrew.sap.model.partner.BusinessPartnerType
 import br.andrew.sap.model.partner.CpfCnpj
 import br.andrew.sap.services.abstracts.EntitiesService
 import org.springframework.http.RequestEntity
@@ -46,9 +47,9 @@ class BusinessPartnersService(env: SapEnvrioment, restTemplate: RestTemplate, au
                 "}","'${bp.cardCode}'")
     }
 
-    fun getByCpfCnpj(cpfCnpj: String): BusinessPartner {
+    fun getByCpfCnpj(cpfCnpj: String, type : BusinessPartnerType): BusinessPartner {
         val url = env.host+"/b1s/v1/"
-        var uri = "${url}SQLQueries('parceiro.sql')/List?valor='${CpfCnpj(cpfCnpj).getWithMask()}'"
+        var uri = "${url}SQLQueries('parceiro.sql')/List?valor='${CpfCnpj(cpfCnpj).getWithMask()}'&type='${type.getForSql()}'"
         val request = RequestEntity
             .get(uri)
             .header("cookie","B1SESSION=${session().sessionId}")
