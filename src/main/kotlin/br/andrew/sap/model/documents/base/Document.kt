@@ -47,6 +47,10 @@ open class Document(val CardCode : String,
 
     @JsonProperty("U_id_pedido_forca")
     var u_id_pedido_forca: String? = null
+
+    @JsonProperty("U_uuid_forca")
+    var u_uuid_forca: String? = null
+
     var cardName: String? = null
     var OpeningRemarks: String? = null
     var controlAccount: String? = null

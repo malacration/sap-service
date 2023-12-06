@@ -23,5 +23,8 @@ class DocumentConfiguration(
                 userFieldsMDService.findOrCreate(it)
             }
 
+        listOf(
+            FieldMd("uuid_forca","UUID Força de Vendas","OINV")
+        ).forEach { userFieldsMDService.findOrCreate(it) }
     }
 }
