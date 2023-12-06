@@ -25,6 +25,7 @@ class PedidoVenda(
     var observacao : String? = null
     var precoBase : Int? = null
     var endereco : String? = null
+    var uuid : String? = null
 
     //TODO fazer parse de data
     var dataEntraga : String? = SimpleDateFormat("yyy-MM-dd").format(Date())
@@ -41,11 +42,11 @@ class PedidoVenda(
             produtos.map { it.getProduct(tipoPedido,itemService,comissaoService) }, idEmpresa))
 
     }
+
     @JsonIgnore
     fun getQuotation(itemService: ItemsService, comissaoService: ComissaoService): Quotation {
         return build(Quotation(idCliente, dataEntraga,
             produtos.map { it.getProduct(tipoPedido,itemService,comissaoService) },idEmpresa))
-
     }
 
     fun <T : Document> build(document : T) : T{
@@ -68,6 +69,7 @@ class PedidoVenda(
             it.comments = observacao
             it.OpeningRemarks = observacao
             it.u_id_pedido_forca = idPedido
+            it.u_uuid_forca = uuid
             if(frete != null)
                 it.documentAdditionalExpenses = listOf(AdditionalExpenses.frete(frete!!))
         }
