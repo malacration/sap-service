@@ -24,8 +24,8 @@ class InvoicesController(
     val logger = LoggerFactory.getLogger(InvoicesController::class.java)
 
     @GetMapping("")
-    fun get(): Any {
-        return invoice.get(OrderBy(mapOf("DocEntry" to Order.DESC))).tryGetValues<Invoice>()
+    fun get(pages : Pageable): Any {
+        return invoice.get(Filter(),OrderBy(mapOf("DocEntry" to Order.DESC)),pages).tryGetPageValues<Invoice>()
     }
 
     @GetMapping("{id}")

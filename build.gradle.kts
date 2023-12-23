@@ -31,6 +31,13 @@ dependencies {
 
 	implementation("org.apache.tika:tika-core:2.8.0")
 
+	//Data Base hibernate
+	//implementation("org.springframework.boot:spring-boot-starter-data-jpa")
+	//implementation("org.liquibase:liquibase-core")
+	//implementation("com.sap.cloud.db.jdbc:ngdbc:2.19.15")
+	//implementation("org.liquibase.ext:liquibase-hanadb:4.0.0")
+
+
 	implementation("org.apache.httpcomponents.client5:httpclient5:5.2.1")
 	implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
 	implementation("org.jetbrains.kotlin:kotlin-reflect")
