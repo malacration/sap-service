@@ -13,7 +13,7 @@ import org.springframework.context.annotation.Configuration
 
 @Configuration
 class MailConfig(@Value("\${mail.list:[{ \"email\": \"windson@windson\", \"name\": \"windson\", \"type\": \"DEFAULT\"}]}") val mail : String,
-                 @Value("\${mail.copy:windson@windson}") copyDefault : String){
+                 @Value("\${mail.copy:windson@windson}") copyDefault : List<String>){
 
 
     init {
@@ -21,7 +21,7 @@ class MailConfig(@Value("\${mail.list:[{ \"email\": \"windson@windson\", \"name\
         val lista = mapper.readValue(mail, jacksonTypeRef<List<EmailAdrres>>())
         lista.firstOrNull()?.let { SalePerson.emailDefault = it.email }
         lista.find { it.type == From.COMERCIAL }?.let { SalePerson.emailDefault = it.email }
-        MailService.copyDefault.also { it.clear() }.add(copyDefault)
+        MailService.copyDefault.also { it.clear() }.addAll(copyDefault)
         From.mailList.addAll(lista)
     }
 }

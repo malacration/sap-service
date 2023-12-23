@@ -61,4 +61,15 @@ class BusinessPartnersService(env: SapEnvrioment, restTemplate: RestTemplate, au
         )
             .tryGetValue<BusinessPartner>()
     }
+
+    fun normalizeAddressName(bp: BusinessPartner) {
+        bp.getAddresses().forEach {
+            it.addressName = it.normalize()
+        }
+        val novo = BusinessPartner().also {
+            it.setAddresses(bp.getAddresses())
+        }
+        update(novo,"'${bp.cardCode}'")
+
+    }
 }
