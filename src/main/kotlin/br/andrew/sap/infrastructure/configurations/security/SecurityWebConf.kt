@@ -42,7 +42,7 @@ class SecurityWebConf(@Value("\${spring.security.disable:false}") val disable: B
                 .cors{ it.disable() }
                 .authorizeHttpRequests { it
                     .requestMatchers(
-                        "/state**",
+                        "/state**/**",
                         "/city**/**",
                         "/business-partners/key/**",
                         "/business-partners/cpf-cnpj/**",
