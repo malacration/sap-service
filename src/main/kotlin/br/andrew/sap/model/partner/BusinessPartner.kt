@@ -8,6 +8,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.PropertyNamingStrategy
 import com.fasterxml.jackson.databind.annotation.JsonNaming
 import java.security.MessageDigest
+import java.util.Date
 
 
 @JsonNaming(PropertyNamingStrategy.UpperCamelCaseStrategy::class)
@@ -55,6 +56,7 @@ class BusinessPartner() {
     var U_Rov_Nome_Mae : String? = null
 
     var U_keyUpdate : String? = null
+    var U_dataSerasa : Date? = null
 
 
 

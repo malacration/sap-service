@@ -1,12 +1,12 @@
 SELECT
-    "CardCode",
-    "TaxId0",
-    "TaxId4"
+    CRD7."CardCode",
+    CRD7."TaxId0",
+    CRD7."TaxId4"
 FROM
     CRD7
     INNER JOIN OCRD ON CRD7."CardCode" = OCRD."CardCode"
 WHERE
-    "TaxId0" = :valor or "TaxId4" = :valor
+    CRD7."TaxId0" = :valor or CRD7."TaxId4" = :valor
     AND OCRD."CardType" = :type
 
 
