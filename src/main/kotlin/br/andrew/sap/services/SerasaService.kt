@@ -49,7 +49,7 @@ class SerasaService(@Value("\${serasa.url:http://localhost:8081}") val serasaUrl
     }
 
     fun atualizaSerasa(cpfCnpj: CpfCnpj): ResponseEntity<String> {
-        var uri = "${serasaUrl}/serasa/${cpfCnpj.value}"
+        var uri = "${serasaUrl}/serasa/${cpfCnpj.value}/score"
         val request = RequestEntity
             .get(uri)
             .build()
