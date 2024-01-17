@@ -13,7 +13,10 @@ import br.andrew.sap.services.abstracts.EntitiesService
 import org.springframework.http.RequestEntity
 import org.springframework.stereotype.Service
 import org.springframework.web.client.RestTemplate
+import java.text.SimpleDateFormat
 import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import java.util.*
 
 @Service
 class BusinessPartnersService(env: SapEnvrioment, restTemplate: RestTemplate, authService: AuthService) :
@@ -44,6 +47,13 @@ class BusinessPartnersService(env: SapEnvrioment, restTemplate: RestTemplate, au
         return update("{" +
                 " \"U_keyUpdate\" : \"$key\", " +
                 " \"U_fazer_fluxo_prazo\" : 0 "+
+                "}","'${bp.cardCode}'")
+    }
+
+    fun atualizaDataSerasa(date : Date,bp: BusinessPartner): OData? {
+        val strDate = SimpleDateFormat("yyyy-MM-dd").format(date)
+        return update("{" +
+                " \"U_dataSerasa\" : \"$strDate\" "+
                 "}","'${bp.cardCode}'")
     }
 

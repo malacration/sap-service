@@ -51,7 +51,9 @@ class MailController(val mailService: MailService,
                 mailService.sendEmail(MyMailMessage(listOf(EmailAdrres(it.getEmailAddress())),titulo,body, From.COMERCIAL),true)
                 telegramMsg.send("${titulo} enviado com sucesso",TipoMensagem.eventos)
             }catch (e : Exception){
-                logger.error("Erro ao enviar relatório de inadimplência para o vendedor ${it.SalesEmployeeCode}",e)
+                val erro = "Erro ao enviar relatório de inadimplência para o vendedor ${it.SalesEmployeeCode}"
+                telegramMsg.send(erro,TipoMensagem.eventos)
+                logger.error(erro,e)
             }
         }
     }
