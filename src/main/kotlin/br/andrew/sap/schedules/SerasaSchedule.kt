@@ -28,11 +28,9 @@ class SerasaSchedule(
         bps.forEach {
             try {
                 val bp = bpService.getById("'$it'").tryGetValue<BusinessPartner>()
-                if(bp.getCpfCnpj().isCnpj()){
-                    telegramService.send("Execucao do serasa: cpf: ${bp.getCpfCnpj().value}")
-                    service.atualizaSerasa(bp.getCpfCnpj())
-                    bpService.atualizaDataSerasa(Date(),bp)
-                }
+                telegramService.send("Execucao do serasa: cpf: ${bp.getCpfCnpj().value}")
+                service.atualizaSerasa(bp.getCpfCnpj())
+                bpService.atualizaDataSerasa(Date(),bp)
             }catch (e : Exception){
                 telegramService.send("Erro ao executar serasa! ${e.message}")
                 logger.error("Erro ao executar serasa! ${e.message}",e)
