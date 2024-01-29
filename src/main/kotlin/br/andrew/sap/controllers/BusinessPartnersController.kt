@@ -5,13 +5,16 @@ import br.andrew.sap.infrastructure.odata.Filter
 import br.andrew.sap.infrastructure.odata.OData
 import br.andrew.sap.infrastructure.odata.Predicate
 import br.andrew.sap.model.Attachment
+import br.andrew.sap.model.ContactOpaque
 import br.andrew.sap.model.forca.Cliente
 import br.andrew.sap.model.partner.*
 import br.andrew.sap.model.partner.BusinessPartnerType.cCustomer
-import br.andrew.sap.services.AtualizacaoCadastralService
-import br.andrew.sap.services.BusinessPartnersService
-import br.andrew.sap.services.ReferenciaComercialService
+import br.andrew.sap.services.*
 import io.swagger.v3.oas.annotations.Parameter
+import org.apache.tomcat.util.http.parser.Authorization
+import org.springframework.security.access.prepost.PostAuthorize
+import org.springframework.security.access.prepost.PreAuthorize
+import org.springframework.security.core.Authentication
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
@@ -27,7 +30,8 @@ class BusinessPartnersController(
     val service : BusinessPartnersService,
     val refService : ReferenciaComercialService,
     val atualizacao: AtualizacaoCadastralService,
-    val anexoController : AttachmentController
+    val anexoController : AttachmentController,
+    val otpService: OneTimePasswordService
 ) {
 
     @GetMapping()
@@ -89,7 +93,14 @@ class BusinessPartnersController(
     }
 
     @GetMapping("/cpf-cnpj/{cpfCnpj}")
-    fun getBy(@PathVariable cpfCnpj : String, @RequestParam(name = "type", defaultValue = "cCustomer") tipo : BusinessPartnerType): BusinessPartner {
+    @PostAuthorize("@authz.acessoCliente(#root)")
+    fun getBy(@PathVariable cpfCnpj : String,
+              @RequestParam(name = "type", defaultValue = "cCustomer") tipo : BusinessPartnerType): BusinessPartner {
         return service.getByCpfCnpj(cpfCnpj,tipo)
+    }
+
+    @GetMapping("/cpf-cnpj/contact/{cpfCnpj}")
+    fun contact(@PathVariable cpfCnpj : String, @RequestParam(name = "type", defaultValue = "cCustomer") tipo : BusinessPartnerType): List<ContactOpaque> {
+        return service.getByCpfCnpj(cpfCnpj,tipo).getContactOpaque()
     }
 }

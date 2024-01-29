@@ -47,4 +47,8 @@ class CpfCnpj(value : String) {
             else -> value
         }
     }
+
+    fun equals(cpf : String): Boolean {
+        return CpfCnpj(cpf).value == this.value
+    }
 }

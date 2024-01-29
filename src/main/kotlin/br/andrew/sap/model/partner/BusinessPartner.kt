@@ -1,5 +1,6 @@
 package br.andrew.sap.model.partner
 
+import br.andrew.sap.model.ContactOpaque
 import br.andrew.sap.model.bank.PaymentMethod
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
@@ -127,5 +128,11 @@ class BusinessPartner() {
         val bytes = timesTamp.toByteArray()
         val digest = md.digest(bytes)
         return digest.fold("") { str, it -> str + "%02x".format(it) }
+    }
+
+    fun getContactOpaque(): List<ContactOpaque> {
+        return listOf(
+            ContactOpaque(emailAddress?: "")
+        )
     }
 }
