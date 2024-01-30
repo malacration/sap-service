@@ -11,6 +11,7 @@ import org.springframework.context.annotation.Profile
 
 @Configuration
 @Profile("!test")
+@ConditionalOnProperty(value = ["fields"], havingValue = "true", matchIfMissing = true)
 class DocumentConfiguration(
     val userFieldsMDService: UserFieldsMDService
 ) {
