@@ -1,10 +1,9 @@
-package br.andrew.sap.infrastructure.configurations.security.filter
+package br.andrew.sap.infrastructure.configurations.security.otp
 
-import br.andrew.sap.model.bank.Payment
+import br.andrew.sap.infrastructure.configurations.security.jwt.JwtHandler
 import br.andrew.sap.services.OneTimePasswordService
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
-import com.fasterxml.jackson.module.kotlin.readValue
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import org.springframework.security.authentication.AuthenticationManager
@@ -16,8 +15,9 @@ import org.springframework.security.web.util.matcher.AntPathRequestMatcher
 import java.util.stream.Collectors
 
 
-class PhoneNumberAuthenticationFilter(authManager: AuthenticationManager,
-                                      val otpService : OneTimePasswordService) : AbstractAuthenticationProcessingFilter(
+class OneTimePasswordAuthenticationFilter(authManager: AuthenticationManager,
+                                          jwtHandler: JwtHandler,
+                                          val otpService : OneTimePasswordService) : AbstractAuthenticationProcessingFilter(
         AntPathRequestMatcher(
         "/otp/login",
         "POST"
@@ -25,28 +25,31 @@ class PhoneNumberAuthenticationFilter(authManager: AuthenticationManager,
 ) {
     init {
         this.authenticationManager = authManager
-        this.setAuthenticationSuccessHandler(PhoneNumberAuthenticationSuccessHandler())
+        this.setAuthenticationSuccessHandler(OneTimePasswordAuthenticationSuccessHandler(jwtHandler))
     }
 
     override fun attemptAuthentication(request: HttpServletRequest?, response: HttpServletResponse?): Authentication? {
-        val auth = User("andrew","andrew nome", listOf<SimpleGrantedAuthority>())
-        if ("POST" == request?.method) {
-            val json = request.reader.lines().collect(Collectors.joining(System.lineSeparator()))
-            val mapper = ObjectMapper().registerModule(KotlinModule())
-            val otpData = mapper.readValue<OtpCpfCnpj>(json,OtpCpfCnpj::class.java)
-            return getAuthenticationManager().authenticate(auth)
-        }
-        return getAuthenticationManager().authenticate(auth)
+        val json = request!!.reader.lines().collect(Collectors.joining(System.lineSeparator()))
+        val mapper = ObjectMapper().registerModule(KotlinModule())
+        val user = mapper.readValue(json,OtpCpfCnpj::class.java).getUser()
+        if(!otpService.checkPassword(user))
+            throw Exception("Erro ao validar OTP")
+        return getAuthenticationManager().authenticate(user)
     }
 }
 
-class OtpCpfCnpj(val cpfCnpj : String, val otp : String)
+class OtpCpfCnpj(val cpfCnpj : String, val otp : Int){
+    fun getUser() : User{
+        return User(cpfCnpj,"Cliente", listOf()).also { it.otp = otp }
+    }
+}
 
 class User(val id : String,
            private val name : String,
            private val authorities : List<SimpleGrantedAuthority>) : Authentication{
 
     private var authenticated = true
+    var otp : Int? = null
     override fun getName(): String {
          return "Andrew"
     }

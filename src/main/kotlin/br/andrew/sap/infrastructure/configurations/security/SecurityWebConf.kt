@@ -1,8 +1,10 @@
 package br.andrew.sap.infrastructure.configurations.security
 
-import br.andrew.sap.infrastructure.configurations.security.authprovider.PhoneNumberAuthenticationProvider
-import br.andrew.sap.infrastructure.configurations.security.filter.JwtFilter
-import br.andrew.sap.infrastructure.configurations.security.filter.PhoneNumberAuthenticationFilter
+import br.andrew.sap.infrastructure.configurations.security.otp.OneTimePasswordAuthenticationProvider
+import br.andrew.sap.infrastructure.configurations.security.jwt.JwtAuthenticationFilter
+import br.andrew.sap.infrastructure.configurations.security.jwt.JwtHandler
+import br.andrew.sap.infrastructure.configurations.security.jwt.JwtSecretBean
+import br.andrew.sap.infrastructure.configurations.security.otp.OneTimePasswordAuthenticationFilter
 import br.andrew.sap.services.OneTimePasswordService
 import br.andrew.sap.services.my.UserJwtService
 import org.springframework.beans.factory.annotation.Value
@@ -26,15 +28,15 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @EnableWebSecurity
 class SecurityWebConf(
     @Value("\${spring.security.disable:false}") val disable: Boolean,
-    val otpService : OneTimePasswordService)  {
+    jwtSecretBean : JwtSecretBean,
+    private val otpService : OneTimePasswordService)  {
 
-    val jwtFilter : JwtAuthenticationFilter = JwtAuthenticationFilter()
-
-    val userService = UserJwtService()
+    private val jwtHandler = JwtHandler(jwtSecretBean)
+    private val userService = UserJwtService()
 
     @Bean
     fun authorizationRequestRepository(http : HttpSecurity): DefaultSecurityFilterChain {
-        val authManager : AuthenticationManager = ProviderManager(PhoneNumberAuthenticationProvider())
+        val authManager : AuthenticationManager = ProviderManager(OneTimePasswordAuthenticationProvider())
         return if(disable) {
             http.cors{
                 it.disable()
@@ -46,9 +48,9 @@ class SecurityWebConf(
         }
         else{
             http.sessionManagement{it.sessionCreationPolicy(SessionCreationPolicy.STATELESS)}
-                .authenticationProvider(PhoneNumberAuthenticationProvider())
-                .addFilterBefore(PhoneNumberAuthenticationFilter(authManager,otpService),UsernamePasswordAuthenticationFilter::class.java)
-                .addFilterBefore(JwtFilter(),PhoneNumberAuthenticationFilter::class.java)
+                .authenticationProvider(OneTimePasswordAuthenticationProvider())
+                .addFilterBefore(OneTimePasswordAuthenticationFilter(authManager,jwtHandler,otpService),UsernamePasswordAuthenticationFilter::class.java)
+                .addFilterBefore(JwtAuthenticationFilter(jwtHandler),OneTimePasswordAuthenticationFilter::class.java)
                 .authorizeHttpRequests { it
                     .requestMatchers(
                         "/state**/**",

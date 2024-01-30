@@ -1,5 +1,6 @@
 package br.andrew.sap.services
 
+import br.andrew.sap.infrastructure.configurations.security.otp.User
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.cache.CacheManager
 import org.springframework.cache.annotation.CachePut
@@ -25,6 +26,13 @@ class OneTimePasswordService(private val cacheManager : CacheManager,
         val recoveryPassword : Any? = cacheManager.getCache(cacheName)?.get(key)?.get()
         return if(recoveryPassword is OneTimePassword)
             recoveryPassword.passwrod == password
+        else
+            false
+    }
+
+    fun checkPassword(user: User): Boolean {
+        return if(user.otp != null)
+            checkPassword(user.id,user.otp!!)
         else
             false
     }

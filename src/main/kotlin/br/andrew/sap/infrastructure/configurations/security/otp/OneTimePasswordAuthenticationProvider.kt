@@ -1,11 +1,11 @@
-package br.andrew.sap.infrastructure.configurations.security.authprovider
+package br.andrew.sap.infrastructure.configurations.security.otp
 
 import org.springframework.security.authentication.AuthenticationProvider
 import org.springframework.security.core.Authentication
 import org.springframework.security.core.context.SecurityContextHolder
 
 
-class PhoneNumberAuthenticationProvider : AuthenticationProvider {
+class OneTimePasswordAuthenticationProvider : AuthenticationProvider {
 
     override fun authenticate(authentication: Authentication): Authentication {
         SecurityContextHolder.getContext().authentication = authentication

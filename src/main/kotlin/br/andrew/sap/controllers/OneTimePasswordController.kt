@@ -23,7 +23,7 @@ class OneTimePasswordController(val bpService : BusinessPartnersService,
             .firstOrNull() ?: throw Exception("Erro ao localizar o contato")
         val password = otpService.getOneTimePassword(cpfCnpj).passwrod
         mailService
-            .sendEmail(MyMailMessage("andrewc3po@gmail.com","Codigo de acesso","seu codigo é: $password, ${contato.getTrueValue()}"))
+            .sendEmail(MyMailMessage(contato.getTrueValue(),"Codigo de acesso","seu codigo é: $password"))
         telegramService.send("Gerando OTP para: $cpfCnpj com codigo de ${password}")
 
     }

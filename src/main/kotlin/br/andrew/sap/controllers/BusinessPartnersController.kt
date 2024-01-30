@@ -1,5 +1,6 @@
 package br.andrew.sap.controllers
 
+import br.andrew.sap.infrastructure.configurations.security.otp.User
 import br.andrew.sap.infrastructure.odata.Condicao
 import br.andrew.sap.infrastructure.odata.Filter
 import br.andrew.sap.infrastructure.odata.OData
@@ -12,6 +13,7 @@ import br.andrew.sap.model.partner.BusinessPartnerType.cCustomer
 import br.andrew.sap.services.*
 import io.swagger.v3.oas.annotations.Parameter
 import org.apache.tomcat.util.http.parser.Authorization
+import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PostAuthorize
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.security.core.Authentication
@@ -92,11 +94,15 @@ class BusinessPartnersController(
         return salvar(bp)
     }
 
-    @GetMapping("/cpf-cnpj/{cpfCnpj}")
+    @GetMapping("/cpf-cnpj")
     @PostAuthorize("@authz.acessoCliente(#root)")
-    fun getBy(@PathVariable cpfCnpj : String,
-              @RequestParam(name = "type", defaultValue = "cCustomer") tipo : BusinessPartnerType): BusinessPartner {
-        return service.getByCpfCnpj(cpfCnpj,tipo)
+    fun getBy(auth : Authentication,
+              @RequestParam(name = "type", defaultValue = "cCustomer") tipo : BusinessPartnerType): ResponseEntity<BusinessPartner> {
+        return if(auth is User)
+            ResponseEntity.ok(service.getByCpfCnpj(auth.id,tipo))
+        else
+            ResponseEntity.noContent().build()
+
     }
 
     @GetMapping("/cpf-cnpj/contact/{cpfCnpj}")
