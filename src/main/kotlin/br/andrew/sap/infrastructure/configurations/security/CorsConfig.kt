@@ -13,7 +13,7 @@ import java.util.*
 
 
 @Configuration
-class CorsConfig(@Value("\${cors.origins:http://localhost:4200}") val corsAppendAllow : List<String>) {
+class CorsConfig(@Value("\${cors.origins:http://localhost:4200}") val corsAppendAllow : List<String> = arrayListOf()) {
 
     val allowedOrigins = mutableListOf(
         "http://localhost:[*]",
