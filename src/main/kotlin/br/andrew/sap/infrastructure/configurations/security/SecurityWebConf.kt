@@ -38,13 +38,14 @@ class SecurityWebConf(
     fun authorizationRequestRepository(http : HttpSecurity): DefaultSecurityFilterChain {
         val authManager : AuthenticationManager = ProviderManager(OneTimePasswordAuthenticationProvider())
         return if(disable) {
-            http.cors{
-                it.disable()
-            }.csrf {
-                it.disable()
-            }.authorizeHttpRequests {
-                it.anyRequest().permitAll()
-            }.build()
+            http.csrf {
+                    it.disable()
+                }.authorizeHttpRequests {
+                    it.anyRequest().permitAll()
+                }.addFilterBefore(DisableOneTimePasswordAuthenticationFilter(authManager,jwtHandler),UsernamePasswordAuthenticationFilter::class.java)
+                .addFilterBefore(JwtAuthenticationFilter(jwtHandler),DisableOneTimePasswordAuthenticationFilter::class.java)
+                .cors(CorsConfig().customizer)
+                .build()
         }
         else{
             http.sessionManagement{it.sessionCreationPolicy(SessionCreationPolicy.STATELESS)}
@@ -53,6 +54,7 @@ class SecurityWebConf(
                 .addFilterBefore(JwtAuthenticationFilter(jwtHandler),OneTimePasswordAuthenticationFilter::class.java)
                 .authorizeHttpRequests { it
                     .requestMatchers(
+                        "/otp/login",
                         "/state**/**",
                         "/city**/**",
                         "/otp/cpf-cnpj/**",
@@ -62,7 +64,9 @@ class SecurityWebConf(
                         "/installment/*/paid",
                         "/invoice/*/parcela/**",
                     ).permitAll()
-                    .requestMatchers(HttpMethod.POST,"/business-partners/key/**")
+                    .requestMatchers(HttpMethod.POST,
+                        "/business-partners/key/**",
+                        "/otp/login")
                     .permitAll()
                     .requestMatchers(HttpMethod.OPTIONS,"/**")
                     .permitAll()

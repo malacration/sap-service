@@ -17,6 +17,7 @@ class OneTimePasswordAuthenticationSuccessHandler(
         response: HttpServletResponse,
         user: Authentication
     ) {
+        response.setHeader("Access-Control-Allow-Origin","*")
         if(user is User) {
             response.writer?.print(jwtHandler.getToken(user))
         }

@@ -21,17 +21,17 @@ class DesoneradoService(val taxCodeService: SalesTaxCodeService,
 
     fun aplicaDesonerado(order : Document): Document {
         order.productsByTax().forEach{
-            val taxCodeDesonerado = taxCodeService.getById("'${it.key}'").tryGetValue<SalesTaxCode>()
-                .salesTaxCodes_Lines.firstOrNull { allImpotos.contains(it.STAType) }
-            if(taxCodeDesonerado != null) {
-                var taxParam = taxAuthoritiesService.get(taxCodeDesonerado)
-                    .tryGetValue<SalesTaxAuthorities>()
-                it.value.forEach { p ->
-                    p.UnitPrice = PrecoUnitarioComDesoneracao().calculaPreco(p, taxParam).toString()
-                    if(tipoImpostoFuturo.contains(taxCodeDesonerado.STAType))
-                        p.valorDesonerado = taxParam.valorImposto(p)
+            taxCodeService.getById("'${it.key}'").tryGetValue<SalesTaxCode>()
+                .salesTaxCodes_Lines.filter { allImpotos.contains(it.STAType) }
+                .forEach{ tax ->
+                    var taxParam = taxAuthoritiesService.get(tax)
+                        .tryGetValue<SalesTaxAuthorities>()
+                    it.value.forEach { p ->
+                        p.UnitPrice = PrecoUnitarioComDesoneracao().calculaPreco(p, taxParam).toString()
+                        if(tipoImpostoFuturo.contains(tax.STAType))
+                            p.valorDesonerado = taxParam.valorImposto(p)
+                    }
                 }
-            }
         }
         order.aplicaDescontoDesonerado()
         order.u_pedido_update = "0"
