@@ -1,5 +1,6 @@
 package br.andrew.sap.infrastructure.configurations.security
 
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.security.config.Customizer;
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -12,14 +13,20 @@ import java.util.*
 
 
 @Configuration
-class CorsConfig {
+class CorsConfig(@Value("\${cors.origins:http://localhost:4200}") val corsAppendAllow : List<String> = arrayListOf()) {
 
     val allowedOrigins = mutableListOf(
+        "http://localhost:[*]",
+        "http://localhost:4200/",
+        "http://localhost:4200",
         "http://*localhost:[*]",
         "http://172.18.30.147:4200/*",
         "http://172.18.30.147:4200",
         "http://172.18.30.147:4200/"
-    )
+    ).also {
+        it.addAll(corsAppendAllow)
+    }
+
     val allowedMethods = mutableListOf("HEAD", "GET", "POST", "PUT", "DELETE", "PATCH")
 
     val allowedHeaders = mutableListOf("Authorization",

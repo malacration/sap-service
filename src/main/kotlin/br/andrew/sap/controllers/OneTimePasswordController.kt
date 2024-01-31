@@ -27,4 +27,11 @@ class OneTimePasswordController(val bpService : BusinessPartnersService,
         telegramService.send("Gerando OTP para: $cpfCnpj com codigo de ${password}")
 
     }
+
+    @PostMapping("/login")
+    fun forCorsOrigin() {
+        println("EndPoint for optionals login")
+    }
+
+
 }
