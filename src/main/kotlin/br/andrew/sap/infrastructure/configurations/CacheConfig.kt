@@ -51,11 +51,14 @@ class CacheConfig(val properties: CacheConfigurationProperties) {
 @Configuration
 class CacheConfigurationProperties(@Value("\${otp.ttl:300}") val otpTTL : Long) {
     private val minutos = 60L
-    val timeoutSeconds: Long = 5 * minutos
+    val timeoutSeconds: Long = 60 * minutos
     private val cacheExpirations: MutableMap<String, Long> = HashMap()
 
+    //Cache in secondes
     init {
         cacheExpirations[OneTimePasswordService.cacheName] = otpTTL
+        cacheExpirations["states"] = timeoutSeconds
+        cacheExpirations["citys"] = timeoutSeconds
     }
 
     fun getCacheExpirations(): Map<String, Long> {
