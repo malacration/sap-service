@@ -130,6 +130,7 @@ class BusinessPartner() {
         return digest.fold("") { str, it -> str + "%02x".format(it) }
     }
 
+    @JsonIgnore
     fun getContactOpaque(): List<ContactOpaque> {
         return listOf(
             ContactOpaque(emailAddress?: "")
