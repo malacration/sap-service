@@ -14,7 +14,7 @@ import java.io.File
 
 @Configuration
 @Profile("!test")
-@ConditionalOnProperty(value = ["fields"], havingValue = "true", matchIfMissing = true)
+@ConditionalOnProperty(value = ["sql"], havingValue = "true", matchIfMissing = true)
 class ProvisioningConfiguration(val queryService: QuerysServices) {
 
     fun getResourcesFiles(): Array<out File> {

@@ -2,6 +2,7 @@ package br.andrew.sap.infrastructure.configurations.security
 
 import br.andrew.sap.infrastructure.configurations.security.otp.User
 import br.andrew.sap.model.partner.BusinessPartner
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.ResponseEntity
 import org.springframework.security.access.expression.method.MethodSecurityExpressionOperations
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity
@@ -9,7 +10,9 @@ import org.springframework.stereotype.Component
 
 @Component("authz")
 @EnableMethodSecurity
-class MethodSecurityConfig{
+class MethodSecurityConfig(
+    @Value("\${spring.security.disable:false}") val disable: Boolean,
+){
 
     fun decide(operations: MethodSecurityExpressionOperations): Boolean {
         val usuario = operations.authentication
@@ -17,6 +20,8 @@ class MethodSecurityConfig{
     }
 
     fun acessoCliente(operations: MethodSecurityExpressionOperations): Boolean {
+        if(disable)
+            return disable
         val usuario = operations.authentication as User
         val retorno = getRetorno(operations)
         return if(retorno is BusinessPartner){

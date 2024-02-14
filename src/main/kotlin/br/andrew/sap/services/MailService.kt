@@ -3,6 +3,7 @@ package br.andrew.sap.services
 import br.andrew.sap.services.MailService.Companion.copyDefault
 import jakarta.mail.internet.InternetAddress
 import jakarta.mail.internet.MimeMessage
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.mail.SimpleMailMessage
 import org.springframework.mail.javamail.JavaMailSender
 import org.springframework.mail.javamail.MimeMessageHelper
@@ -12,9 +13,12 @@ import org.thymeleaf.TemplateEngine
 
 @Service
 class MailService(val mailSender: JavaMailSender,
+                  @Value("\${mail.disable:false}") val disable : Boolean = false,
                   val templateEngine : TemplateEngine) {
 
     fun sendEmail(mailMessage : MyMailMessage, html : Boolean = false) {
+        if(disable)
+            return
         if(html)
             mailSender.send(mailMessage.get(mailSender.createMimeMessage()))
         else

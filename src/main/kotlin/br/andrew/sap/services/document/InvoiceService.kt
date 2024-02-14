@@ -21,6 +21,7 @@ import br.andrew.sap.services.abstracts.EntitiesService
 import br.andrew.sap.services.bank.IncomingPaymentService
 import br.andrew.sap.services.uzzipay.DynamicPixQrCodeService
 import br.andrew.sap.services.uzzipay.TransactionsPixService
+import org.springframework.data.domain.Pageable
 import org.springframework.http.RequestEntity
 import org.springframework.stereotype.Service
 import org.springframework.web.client.RestTemplate
@@ -59,7 +60,7 @@ class InvoiceService(env: SapEnvrioment, restTemplate: RestTemplate, authService
             .get("$url('invoice-by-pix-reference.sql')/List?reference='${reference}'")
             .header("cookie","B1SESSION=${session().sessionId}")
             .build(), OData::class.java).body
-            ?.tryGetPageValues<DocEntry>()
+            ?.tryGetPageValues<DocEntry>(Pageable.unpaged())
             ?.mapNotNull { getBy(it).tryGetValue<Invoice>() } ?: listOf()
         if(list.size > 1) throw Exception("Mais de uma fatura encontrada para o pix ${reference}")
         return list.firstOrNull() ?: throw Exception("Nenhuma fatura encontrada para o pix ${reference}")
@@ -80,7 +81,7 @@ class InvoiceService(env: SapEnvrioment, restTemplate: RestTemplate, authService
             .get("$url('installment-gerar-pix.sql')/List?now='${now}'")
             .header("cookie","B1SESSION=${session().sessionId}")
             .build(), OData::class.java).body
-            ?.tryGetPageValues<Installment>()
+            ?.tryGetPageValues<Installment>(Pageable.unpaged())
             ?.mapNotNull { it.DocEntry }?.toList() ?: listOf()
     }
 

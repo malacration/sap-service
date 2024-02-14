@@ -11,6 +11,7 @@ import br.andrew.sap.services.TelegramRequestService
 import br.andrew.sap.services.abstracts.EntitiesService
 import br.andrew.sap.services.document.DesoneradoService
 import org.springframework.data.domain.Page
+import org.springframework.data.domain.Pageable
 import org.springframework.http.RequestEntity
 import org.springframework.stereotype.Service
 import org.springframework.web.client.RestTemplate
@@ -36,7 +37,7 @@ class ApprovalRequestsService(env : SapEnvrioment,
                 .get("$url('autorizacao.sql')/List'")
                 .header("cookie","B1SESSION=${session().sessionId}")
                 .build(), OData::class.java).body
-            ?.tryGetPageValues() ?: Page.empty()
+            ?.tryGetPageValues(Pageable.unpaged()) ?: Page.empty()
     }
 
     fun aprovaEhCria(draft : Document, approvalRequest : ApprovalRequests) {
