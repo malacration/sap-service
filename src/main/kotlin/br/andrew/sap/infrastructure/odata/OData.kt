@@ -43,8 +43,8 @@ class OData : LinkedHashMap<String,Any>(){
         throw Exception("Não foi possivel fazer o parse")
     }
 
-    inline fun <reified T> tryGetPageValues(): Page<T> {
-        return PageImpl<T>(tryGetValues<T>(), Pageable.unpaged(),count() ?:100)
+    inline fun <reified T> tryGetPageValues(page : Pageable): Page<T> {
+        return PageImpl<T>(tryGetValues<T>(), page,count() ?:100)
     }
 
     fun nextLink() : String{

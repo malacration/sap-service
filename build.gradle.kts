@@ -2,11 +2,11 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
 	id("java")
-	id("org.springframework.boot") version "3.1.2"
-	id("io.spring.dependency-management") version "1.1.2"
+	id("org.springframework.boot") version "3.2.2"
+	id("io.spring.dependency-management") version "1.1.4"
 	id("jacoco")
-	kotlin("jvm") version "1.8.22"
-	kotlin("plugin.spring") version "1.8.22"
+	kotlin("jvm") version "1.9.22"
+	kotlin("plugin.spring") version "1.9.22"
 }
 
 group = "br.andrew.sap"
@@ -18,8 +18,13 @@ repositories {
 }
 
 dependencies {
+
+
+
 	implementation("org.springframework.boot:spring-boot-starter")
-	implementation("org.springframework.boot:spring-boot-starter-web")
+	implementation("org.springframework.boot:spring-boot-starter-web"){
+		exclude("commons-logging")
+	}
 	implementation("org.springframework.boot:spring-boot-starter-data-rest")
 	implementation("org.springframework.boot:spring-boot-starter-quartz")
 	implementation("org.springframework.boot:spring-boot-starter-security")
@@ -37,6 +42,12 @@ dependencies {
 	implementation("io.jsonwebtoken:jjwt-jackson:0.12.4")
 
 
+	//** Observability
+	implementation("org.springframework.boot:spring-boot-starter-actuator")
+	//implementation("org.springframework.boot:spring-boot-starter-log4j2")
+	implementation("biz.paluch.logging:logstash-gelf:1.15.1")
+
+	implementation("io.micrometer:micrometer-tracing-bridge-brave")
 	implementation("com.github.ben-manes.caffeine:caffeine:3.1.8")
 
 	implementation("org.apache.httpcomponents.client5:httpclient5:5.2.1")
@@ -52,11 +63,19 @@ dependencies {
 	implementation("org.apache.axis:axis-saaj:1.4")
 	implementation("axis:axis-wsdl4j:1.5.1")
 	implementation("javax.xml:jaxrpc-api:1.1")
-	implementation("commons-discovery:commons-discovery:0.5")
+	implementation("commons-discovery:commons-discovery:0.5"){
+		exclude("commons-logging")
+	}
 
 	implementation("org.apache.commons:commons-lang3:3.9")
-	implementation("org.apache.ws.commons.axiom:axiom-api:1.2.13")
-	implementation("org.apache.ws.commons.axiom:axiom-impl:1.2.13")
+
+//	implementation("org.apache.ws.commons.axiom:axiom-api:1.2.13"){
+//		exclude("commons-logging","commons-logging")
+//		exclude("commons-logging")
+//	}
+//	implementation("org.apache.ws.commons.axiom:axiom-impl:1.2.13"){
+//		exclude("commons-logging")
+//	}
 
 //	implementation("javax.mail:mail:1.4")
 //	implementation("javax.activation:activation:1.1")

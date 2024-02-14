@@ -1,0 +1,46 @@
+<!DOCTYPE configuration>
+
+<configuration>
+    <contextName>test</contextName>
+    <jmxConfigurator/>
+
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d [%thread] %-5level  %logger{35} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <appender name="gelf" class="biz.paluch.logging.gelf.logback.GelfLogbackAppender">
+        <host>udp:172.18.10.76</host>
+        <port>12201</port>
+        <version>1.1</version>
+        <facility>java-test</facility>
+        <extractStackTrace>true</extractStackTrace>
+        <filterStackTrace>true</filterStackTrace>
+        <mdcProfiling>true</mdcProfiling>
+        <timestampPattern>yyyy-MM-dd HH:mm:ss,SSS</timestampPattern>
+        <maximumMessageSize>8192</maximumMessageSize>
+
+        <!-- This are static fields -->
+        <additionalFields>fieldName1=fieldValue1,fieldName2=fieldValue2</additionalFields>
+
+        <!-- This are fields using MDC -->
+        <mdcFields>mdcField1,mdcField2</mdcFields>
+        <dynamicMdcFields>mdc.*,(mdc|MDC)fields</dynamicMdcFields>
+        <includeFullMdc>true</includeFullMdc>
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>INFO</level>
+        </filter>
+    </appender>
+
+    <logger name="br.andrew" level="INFO" additivity="false">
+        <appender-ref ref="gelf"/>
+        <appender-ref ref="STDOUT"/>
+    </logger>
+
+    <root level="INFO">
+        <appender-ref ref="gelf" />
+        <appender-ref ref="STDOUT" />
+    </root>
+
+</configuration>

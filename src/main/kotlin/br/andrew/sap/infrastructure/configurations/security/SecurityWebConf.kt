@@ -4,6 +4,7 @@ import br.andrew.sap.infrastructure.configurations.security.otp.OneTimePasswordA
 import br.andrew.sap.infrastructure.configurations.security.jwt.JwtAuthenticationFilter
 import br.andrew.sap.infrastructure.configurations.security.jwt.JwtHandler
 import br.andrew.sap.infrastructure.configurations.security.jwt.JwtSecretBean
+import br.andrew.sap.infrastructure.configurations.security.otp.DisableOneTimePasswordAuthenticationFilter
 import br.andrew.sap.infrastructure.configurations.security.otp.OneTimePasswordAuthenticationFilter
 import br.andrew.sap.services.OneTimePasswordService
 import br.andrew.sap.services.my.UserJwtService
@@ -43,7 +44,7 @@ class SecurityWebConf(
                 }.authorizeHttpRequests {
                     it.anyRequest().permitAll()
                 }.addFilterBefore(DisableOneTimePasswordAuthenticationFilter(authManager,jwtHandler),UsernamePasswordAuthenticationFilter::class.java)
-                .addFilterBefore(JwtAuthenticationFilter(jwtHandler),DisableOneTimePasswordAuthenticationFilter::class.java)
+                .addFilterBefore(JwtAuthenticationFilter(jwtHandler), DisableOneTimePasswordAuthenticationFilter::class.java)
                 .cors(CorsConfig().customizer)
                 .build()
         }

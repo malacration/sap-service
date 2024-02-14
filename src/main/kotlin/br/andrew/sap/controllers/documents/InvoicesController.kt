@@ -25,7 +25,7 @@ class InvoicesController(
 
     @GetMapping("")
     fun get(pages : Pageable): Any {
-        return invoice.get(Filter(),OrderBy(mapOf("DocEntry" to Order.DESC)),pages).tryGetPageValues<Invoice>()
+        return invoice.get(Filter(),OrderBy(mapOf("DocEntry" to Order.DESC)),pages).tryGetPageValues<Invoice>(pages)
     }
 
     @GetMapping("{id}")
@@ -40,7 +40,7 @@ class InvoicesController(
             Predicate("DocumentStatus", DocumentStatus.bost_Open,Condicao.EQUAL)
         )
         return invoice.get(filter, page)
-            .tryGetPageValues<Document>().map { Fatura(it) }
+            .tryGetPageValues<Document>(page).map { Fatura(it) }
     }
 
     @GetMapping("{id}/create-pix")

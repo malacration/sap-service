@@ -106,7 +106,7 @@ class BusinessPartnersController(
     }
 
     @GetMapping("/cpf-cnpj/contact/{cpfCnpj}")
-    fun contact(@PathVariable cpfCnpj : String, @RequestParam(name = "type", defaultValue = "cCustomer") tipo : BusinessPartnerType): List<ContactOpaque> {
+    fun contact(@PathVariable cpfCnpj : String, @RequestParam(name = "type", defaultValue = "C") tipo : BusinessPartnerType): List<ContactOpaque> {
         return service.getByCpfCnpj(cpfCnpj,tipo).getContactOpaque()
     }
 }
