@@ -61,6 +61,7 @@ class SecurityWebConf(
                         "/otp/cpf-cnpj/**",
                         "/business-partners/key/**",
                         "/business-partners/cpf-cnpj/contact/**",
+                        "/business-partners/key/**/attachment",
                         "/invoice/cardcode/*/payment/**",
                         "/installment/*/paid",
                         "/invoice/*/parcela/**",
