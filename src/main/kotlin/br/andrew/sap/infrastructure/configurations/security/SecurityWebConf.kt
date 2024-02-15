@@ -61,14 +61,14 @@ class SecurityWebConf(
                         "/otp/cpf-cnpj/**",
                         "/business-partners/key/**",
                         "/business-partners/cpf-cnpj/contact/**",
-                        "/business-partners/key/**/attachment",
+                        "/business-partners/key/*/attachment",
                         "/invoice/cardcode/*/payment/**",
                         "/installment/*/paid",
                         "/invoice/*/parcela/**",
                     ).permitAll()
                     .requestMatchers(HttpMethod.POST,
                         "/business-partners/key/**",
-                        "/business-partners/key/**/attachment",
+                        "/business-partners/key/*/attachment",
                         "/otp/login")
                     .permitAll()
                     .requestMatchers(HttpMethod.OPTIONS,"/**")
