@@ -68,6 +68,7 @@ class SecurityWebConf(
                     ).permitAll()
                     .requestMatchers(HttpMethod.POST,
                         "/business-partners/key/**",
+                        "/business-partners/key/**/attachment",
                         "/otp/login")
                     .permitAll()
                     .requestMatchers(HttpMethod.OPTIONS,"/**")
