@@ -1,4 +1,4 @@
-package br.andrew.sap.services
+package br.andrew.sap.services.security
 
 import java.util.Random
 import java.util.function.Supplier

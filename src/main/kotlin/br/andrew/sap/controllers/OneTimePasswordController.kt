@@ -2,6 +2,7 @@ package br.andrew.sap.controllers
 
 import br.andrew.sap.model.partner.BusinessPartnerType
 import br.andrew.sap.services.*
+import br.andrew.sap.services.security.OneTimePasswordService
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.web.bind.annotation.*
 
@@ -11,7 +12,8 @@ class OneTimePasswordController(val bpService : BusinessPartnersService,
                                 @Value("\${spring.security.disable:false}") val disable: Boolean,
                                 val mailService: MailService,
                                 val telegramService : TelegramRequestService,
-                                val otpService : OneTimePasswordService) {
+                                val otpService : OneTimePasswordService
+) {
 
     @GetMapping("/cpf-cnpj/{cpfCnpj}")
     fun getBy(@PathVariable cpfCnpj : String,

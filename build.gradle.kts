@@ -42,6 +42,10 @@ dependencies {
 	implementation("io.jsonwebtoken:jjwt-jackson:0.12.4")
 
 
+	implementation("com.squareup.okhttp3:okhttp:4.12.0")
+
+
+
 	//** Observability
 	implementation("org.springframework.boot:spring-boot-starter-actuator")
 	//implementation("org.springframework.boot:spring-boot-starter-log4j2")

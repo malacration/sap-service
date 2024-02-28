@@ -1,12 +1,12 @@
-package br.andrew.sap.infrastructure.configurations.bankplus
+package br.andrew.sap.infrastructure.configurations.invent
 
 import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.context.annotation.Configuration
 
 
 @Configuration
-@ConfigurationProperties(prefix = "bankplus", ignoreInvalidFields = true, ignoreUnknownFields = true)
-class BankPlusEnvrioment {
+@ConfigurationProperties(prefix = "taxplus.nfe", ignoreInvalidFields = true, ignoreUnknownFields = true)
+class TaxNfeEnvrioment {
     var host : String = ""
     var token : String  = ""
     var base : String  = ""

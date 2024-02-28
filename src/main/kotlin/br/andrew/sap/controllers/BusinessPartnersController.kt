@@ -9,13 +9,10 @@ import br.andrew.sap.model.Attachment
 import br.andrew.sap.model.ContactOpaque
 import br.andrew.sap.model.forca.Cliente
 import br.andrew.sap.model.partner.*
-import br.andrew.sap.model.partner.BusinessPartnerType.cCustomer
 import br.andrew.sap.services.*
-import io.swagger.v3.oas.annotations.Parameter
-import org.apache.tomcat.util.http.parser.Authorization
+import br.andrew.sap.services.security.OneTimePasswordService
 import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PostAuthorize
-import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.security.core.Authentication
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable

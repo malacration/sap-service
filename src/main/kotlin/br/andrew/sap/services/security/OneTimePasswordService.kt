@@ -1,4 +1,4 @@
-package br.andrew.sap.services
+package br.andrew.sap.services.security
 
 import br.andrew.sap.infrastructure.configurations.security.otp.User
 import org.springframework.beans.factory.annotation.Value

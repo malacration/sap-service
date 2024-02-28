@@ -1,6 +1,6 @@
 package br.andrew.sap.infrastructure.configurations
 
-import br.andrew.sap.services.OneTimePasswordService
+import br.andrew.sap.services.security.OneTimePasswordService
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.github.benmanes.caffeine.cache.Ticker
 import org.slf4j.LoggerFactory

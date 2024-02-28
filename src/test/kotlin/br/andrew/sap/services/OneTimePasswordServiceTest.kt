@@ -1,5 +1,6 @@
 package br.andrew.sap.services
 
+import br.andrew.sap.services.security.OneTimePasswordService
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
