@@ -1,7 +1,7 @@
 package br.andrew.sap.infrastructure.configurations.security.otp
 
 import br.andrew.sap.infrastructure.configurations.security.jwt.JwtHandler
-import br.andrew.sap.services.OneTimePasswordService
+import br.andrew.sap.services.security.OneTimePasswordService
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import jakarta.servlet.http.HttpServletRequest
@@ -17,7 +17,8 @@ import java.util.stream.Collectors
 
 class OneTimePasswordAuthenticationFilter(authManager: AuthenticationManager,
                                           jwtHandler: JwtHandler,
-                                          val otpService : OneTimePasswordService) : AbstractAuthenticationProcessingFilter(
+                                          val otpService : OneTimePasswordService
+) : AbstractAuthenticationProcessingFilter(
         AntPathRequestMatcher(
         "/otp/login",
         "POST"

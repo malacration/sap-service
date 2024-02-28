@@ -1,6 +1,6 @@
-package br.andrew.sap.services
+package br.andrew.sap.services.invent
 
-import br.andrew.sap.infrastructure.configurations.bankplus.BankPlusEnvrioment
+import br.andrew.sap.infrastructure.configurations.invent.BankPlusEnvrioment
 import br.andrew.sap.model.bankplus.Boleto
 import br.andrew.sap.model.bankplus.Empresa
 import br.andrew.sap.model.documents.Invoice
@@ -61,7 +61,7 @@ class BankPlusService(val envrioment: BankPlusEnvrioment, val restTemplate: Rest
     }
 
 
-    fun getPdf(id : String): Any? {
+    fun getPdf(id : String): ByteArray? {
         return restTemplate.exchange(
             RequestEntity
                 .get("$url/api/v2/${envrioment.base}/cobranca/boletos/${id}/pdf")

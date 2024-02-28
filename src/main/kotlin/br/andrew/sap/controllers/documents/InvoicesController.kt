@@ -7,19 +7,19 @@ import br.andrew.sap.model.documents.DocumentStatus
 import br.andrew.sap.model.documents.Fatura
 import br.andrew.sap.model.documents.Invoice
 import br.andrew.sap.model.documents.base.Document
-import br.andrew.sap.services.*
 import br.andrew.sap.services.document.InvoiceService
+import br.andrew.sap.services.invent.BankPlusService
 import org.slf4j.LoggerFactory
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.web.bind.annotation.*
-import java.util.*
 
 @RestController
 @RequestMapping("invoice")
 class InvoicesController(
     val invoice: InvoiceService,
-    val bankPlusService : BankPlusService) {
+    val bankPlusService : BankPlusService
+) {
 
     val logger = LoggerFactory.getLogger(InvoicesController::class.java)
 
@@ -62,7 +62,7 @@ class InvoicesController(
     }
 
     @GetMapping("/{id}/parcela/{idParcela}", produces = ["application/pdf"])
-    fun getPdf(@PathVariable id : String, @PathVariable idParcela : String) : Any? {
+    fun getPdf(@PathVariable id : String, @PathVariable idParcela : String) : ByteArray? {
         val boletos = getBoleto(id)
         val boleto = boletos.firstOrNull{ it.numeroDaParcela.toString() == idParcela } ?: throw Exception("Boleto nao encontrado")
         return bankPlusService.getPdf(boleto.id.toString())

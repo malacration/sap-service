@@ -14,7 +14,7 @@ import br.andrew.sap.model.uzzipay.ContaUzziPayPix
 import br.andrew.sap.model.uzzipay.Transaction
 import br.andrew.sap.model.uzzipay.builder.RequestPixDueDateSemContaBuilder
 import br.andrew.sap.services.AuthService
-import br.andrew.sap.services.BankPlusService
+import br.andrew.sap.services.invent.BankPlusService
 import br.andrew.sap.services.BusinessPartnersService
 import br.andrew.sap.services.BussinessPlaceService
 import br.andrew.sap.services.abstracts.EntitiesService
@@ -35,7 +35,8 @@ class InvoiceService(env: SapEnvrioment, restTemplate: RestTemplate, authService
                      val bussinesPartnersService: BusinessPartnersService,
                      val incomingPaymentService: IncomingPaymentService,
                      val transactionPixService : TransactionsPixService,
-                     val bankPlusService: BankPlusService) :
+                     val bankPlusService: BankPlusService
+) :
         EntitiesService<Invoice>(env, restTemplate, authService) {
     override fun path(): String {
         return "/b1s/v1/Invoices"
