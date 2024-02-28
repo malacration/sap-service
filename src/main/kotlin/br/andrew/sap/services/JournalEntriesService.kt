@@ -39,6 +39,9 @@ class JournalEntriesService(env: SapEnvrioment, restTemplate: RestTemplate, auth
                         it.taxDate = SimpleDateFormat("yyy-MM-dd").format(SimpleDateFormat("dd/MM/yyy").parse(list[2]))
                         it.ReferenceDate = it.taxDate
                         it.costingCodes("501",list[8].trim().replace(";",""))
+                        it.Reference = list.getOrNull(9)
+                        it.Reference2 = list.getOrNull(10)
+                        it.Reference3 = list.getOrNull(11)
                 }
             }.toList()
     }
@@ -53,6 +56,10 @@ class JournalEntry(val journalEntryLines : List<JournalEntryLines>, val memo : S
 
     var taxDate : String? = null
     var ReferenceDate : String? = null
+
+    var Reference : String? = null
+    var Reference2 : String? = null
+    var Reference3 : String? = null
 
     fun costingCodes(costingCode: String, costingCode2: String) {
         journalEntryLines.forEach{
