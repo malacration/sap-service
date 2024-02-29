@@ -27,7 +27,6 @@ class TaxNfeService(val envrioment: TaxNfeEnvrioment, val restTemplate: RestTemp
 
     fun onlyePdf(entidadeId : Int, numeroDocumento : Int, tipoDocumento : Int): ByteArray {
         val value = "[{\"entidadeId\": $entidadeId, \"numeroDocumento\": $numeroDocumento, \"tipoDocumento\": $tipoDocumento}]".replace(":","%3A").replace(",","%2C")
-        "[{\"entidadeId\": 4, \"numeroDocumento\": 36074, \"tipoDocumento\": 13}]".replace(":","%3A").replace(",","%2C")
         val client = OkHttpClient()
         val request = Request.Builder()
             .url("${envrioment.host}/api/v2/PRODUCAO/dfe/recepcionar/obterpdfnfe?ArquivoJason=${value}")
@@ -35,8 +34,6 @@ class TaxNfeService(val envrioment: TaxNfeEnvrioment, val restTemplate: RestTemp
             .build()
         return client.newCall(request).execute().body!!.bytes()
     }
-    
-
 }
 
 
