@@ -1,5 +1,6 @@
 package br.andrew.sap.controllers.documents
 
+import br.andrew.sap.infrastructure.BoletoIdsConfig
 import br.andrew.sap.infrastructure.odata.*
 import br.andrew.sap.model.DocEntry
 import br.andrew.sap.model.bankplus.Boleto
@@ -33,6 +34,7 @@ class InvoicesController(
         return invoice.getById("$id")
     }
 
+    //TODO adicionar validacao de cardcode, ao fazer login adicionar o id do parceiro no token
     @GetMapping("/cardcode/{cardcode}/payment")
     fun getByCardCode(@PathVariable cardcode : String, page : Pageable) : Page<Fatura> {
         val filter = Filter(
@@ -40,7 +42,7 @@ class InvoicesController(
             Predicate("DocumentStatus", DocumentStatus.bost_Open,Condicao.EQUAL)
         )
         return invoice.get(filter, page)
-            .tryGetPageValues<Document>(page).map { Fatura(it) }
+            .tryGetPageValues<Document>(page).map { Fatura(it,BoletoIdsConfig.ids) }
     }
 
     @GetMapping("{id}/create-pix")
