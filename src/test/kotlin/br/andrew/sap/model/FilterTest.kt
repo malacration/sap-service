@@ -20,7 +20,7 @@ class FilterTest {
         val coluna = "Code"
         val comparador = Condicao.STARTS_WITH
         val valor = "a"
-        val resultado = Filter(listOf(Predicate(coluna,valor,comparador))).toString()
+        val resultado = Filter(mutableListOf(Predicate(coluna,valor,comparador))).toString()
         Assertions.assertEquals("\$filter=startswith(Code, 'a')",resultado)
     }
 
@@ -29,7 +29,7 @@ class FilterTest {
         val coluna = "Code"
         val comparador = Condicao.IN
         val valor = listOf<String>("francisco","gabriel")
-        val resultado = Filter(listOf(Predicate(coluna,valor,comparador))).toString()
+        val resultado = Filter(mutableListOf(Predicate(coluna,valor,comparador))).toString()
         Assertions.assertEquals("\$filter=(Code eq 'francisco' or Code eq 'gabriel')",resultado)
     }
 
@@ -38,7 +38,7 @@ class FilterTest {
         val coluna = "Code"
         val comparador = Condicao.CONTAINS
         val valor = "geovana"
-        val resultado = Filter(listOf(Predicate(coluna,valor,comparador))).toString()
+        val resultado = Filter(mutableListOf(Predicate(coluna,valor,comparador))).toString()
         Assertions.assertEquals("\$filter=contains(Code, 'geovana')",resultado)
     }
     @Test
@@ -46,7 +46,7 @@ class FilterTest {
         val coluna = "Code"
         val comparador = Condicao.EQUAL
         val valor = "windson"
-        val resultado = Filter(listOf(Predicate(coluna,valor,comparador))).toSql()
+        val resultado = Filter(mutableListOf(Predicate(coluna,valor,comparador))).toSql()
         Assertions.assertEquals("Code='windson'",resultado)
     }
 
