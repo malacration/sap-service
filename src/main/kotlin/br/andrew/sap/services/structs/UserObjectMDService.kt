@@ -18,7 +18,7 @@ class UserObjectMDService(env: SapEnvrioment, restTemplate: RestTemplate,
     }
 
     fun findOrCreate(field: FieldMd) {
-        val predicates = listOf(
+        val predicates = mutableListOf(
                 Predicate("Name",field.name,Condicao.EQUAL),
                 Predicate("TableName",field.tableName,Condicao.EQUAL)
         )

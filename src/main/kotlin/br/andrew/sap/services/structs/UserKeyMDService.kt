@@ -25,7 +25,7 @@ class UserKeyMDService(env: SapEnvrioment, restTemplate: RestTemplate,
 
         logger.info("Verificando se a key ${key.KeyName} existe")
 
-        val predicates = listOf(
+        val predicates = mutableListOf(
                 Predicate("KeyName",key.KeyName,Condicao.EQUAL),
                 Predicate("TableName",key.TableName,Condicao.EQUAL)
         )

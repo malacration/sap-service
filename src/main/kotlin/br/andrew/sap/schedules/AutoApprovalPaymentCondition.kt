@@ -33,7 +33,7 @@ class AutoApprovalPaymentCondition(
             val dueDate = SimpleDateFormat("YYYY-MM-dd").format(Calendar.getInstance()
                 .also { it.add(Calendar.DAY_OF_YEAR, -30) }.time)
 
-            val predicados = listOf(
+            val predicados = mutableListOf(
                 Predicate("OriginatorID", currentUser.internalKey, Condicao.EQUAL),
                 Predicate("ObjectType", "17", Condicao.EQUAL),
                 Predicate("IsDraft", "Y", Condicao.EQUAL),

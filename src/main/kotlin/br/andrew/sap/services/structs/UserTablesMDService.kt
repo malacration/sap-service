@@ -23,7 +23,7 @@ class UserTablesMDService(env: SapEnvrioment, restTemplate: RestTemplate,
 
     fun findOrCreate(table : TableMd){
         logger.info("Verificando se a tabela ${table.tableName} existe")
-        val predicates = listOf(
+        val predicates = mutableListOf(
             Predicate("TableName",table.tableName, Condicao.EQUAL),
         )
         val result = get(Filter(predicates))

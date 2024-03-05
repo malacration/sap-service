@@ -45,7 +45,7 @@ class CreateSignatureTaskSe(
     @Scheduled(fixedDelay = 30000)
     fun execute() {
         try {
-            val predicados = listOf(
+            val predicados = mutableListOf(
                 Predicate("U_assinatura", "1", Condicao.EQUAL)
             )
             var requests: OData? = null
