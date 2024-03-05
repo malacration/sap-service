@@ -3,6 +3,7 @@ package br.andrew.sap.model
 import br.andrew.sap.infrastructure.odata.Condicao
 import br.andrew.sap.infrastructure.odata.Filter
 import br.andrew.sap.infrastructure.odata.Predicate
+import br.andrew.sap.model.enums.Cancelled
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 
@@ -59,5 +60,11 @@ class FilterTest {
             Predicate("jose","rico",comparador)
         ).toSql()
         Assertions.assertEquals("Code=1&jose='rico'",resultado)
+    }
+
+    @Test
+    fun in2String(){
+        val resultado = Predicate("SequenceModel","39",Condicao.IN).toString()
+        Assertions.assertEquals("SequenceModel eq '39'",resultado)
     }
 }

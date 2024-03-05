@@ -24,7 +24,7 @@ class UserFieldsMDService(env: SapEnvrioment, restTemplate: RestTemplate,
 
         logger.info("Verificando se o campo ${field.name} existe")
 
-        val predicates = listOf(
+        val predicates = mutableListOf(
                 Predicate("Name",field.name,Condicao.EQUAL),
                 Predicate("TableName",field.tableName,Condicao.EQUAL)
         )

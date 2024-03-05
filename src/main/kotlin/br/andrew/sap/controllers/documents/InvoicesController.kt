@@ -8,12 +8,14 @@ import br.andrew.sap.model.documents.DocumentStatus
 import br.andrew.sap.model.documents.Fatura
 import br.andrew.sap.model.documents.Invoice
 import br.andrew.sap.model.documents.base.Document
+import br.andrew.sap.model.enums.Cancelled
 import br.andrew.sap.services.document.InvoiceService
 import br.andrew.sap.services.invent.BankPlusService
 import org.slf4j.LoggerFactory
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.web.bind.annotation.*
+import java.util.*
 
 @RestController
 @RequestMapping("invoice")
@@ -36,12 +38,24 @@ class InvoicesController(
 
     //TODO adicionar validacao de cardcode, ao fazer login adicionar o id do parceiro no token
     @GetMapping("/cardcode/{cardcode}/payment")
-    fun getByCardCode(@PathVariable cardcode : String, page : Pageable) : Page<Fatura> {
+    fun getByCardCode(@PathVariable cardcode : String,
+                      @RequestParam(required = false) numeroNf : Int? = null,
+                      @RequestParam(required = false) dataInicial : String? = null,
+                      @RequestParam(required = false) dataFinal : String? = null,
+                      page : Pageable) : Page<Fatura> {
         val filter = Filter(
             Predicate("CardCode","$cardcode",Condicao.EQUAL),
-            Predicate("DocumentStatus", DocumentStatus.bost_Open,Condicao.EQUAL)
-        )
-        return invoice.get(filter, page)
+            Predicate("SequenceModel","39",Condicao.IN),
+            Predicate(Cancelled.tNO,Condicao.EQUAL),
+        ).also {
+            if(numeroNf !=null )
+                it.add(Predicate("SequenceSerial",numeroNf,Condicao.EQUAL))
+            if(dataInicial !=null )
+                it.add(Predicate("DocDate",dataInicial,Condicao.GREAT_EQUAL))
+            if(dataFinal !=null )
+                it.add(Predicate("DocDate",dataFinal,Condicao.LESS_EQUAL))
+        }
+        return invoice.get(filter, OrderBy("DocDate",Order.DESC),page)
             .tryGetPageValues<Document>(page).map { Fatura(it,BoletoIdsConfig.ids) }
     }
 

@@ -31,7 +31,7 @@ class RomaneioPesagemController(
     @GetMapping("{docNum}")
     fun getById(@PathVariable docNum : Int) : List<RomaneioPesagem>{
         return romaneioService
-                .get(Filter(listOf(Predicate("DocNum",docNum, Condicao.EQUAL))))
+                .get(Filter(mutableListOf(Predicate("DocNum",docNum, Condicao.EQUAL))))
                 .tryGetValues<RomaneioPesagem>()
     }
 
@@ -39,7 +39,7 @@ class RomaneioPesagemController(
     fun getByContrato(page : Pageable,
                       @RequestParam("bp") filial : String?,
                       @RequestParam("nfNum") numero : Int?) : Page<RomaneioPesagem>{
-        var parametros = listOf(
+        var parametros = mutableListOf(
             Predicate("bp", filial?:"all",Condicao.EQUAL),
             Predicate("nfNum", numero?:-666,Condicao.EQUAL)
         )
