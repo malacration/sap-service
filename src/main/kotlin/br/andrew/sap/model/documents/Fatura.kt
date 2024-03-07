@@ -12,8 +12,9 @@ class Fatura(private val documento : Document, var boletosIds : List<String> = l
     val valor = documento.DocTotal
     val vencimentoUltimaParcela = documento.DocDueDate
     val vencimentoProximaParcela = documento.DocDueDate
-    val isBoleto = boletosIds.any { it == documento.paymentGroupCode }
-    val parcelas : List<Parcela>? = documento.documentInstallments?.map { Parcela(it,isBoleto) }
+    val isBoleto = boletosIds.any { it == documento.paymentMethod }
+    val parcelas : List<Parcela>? = documento.documentInstallments?.map {
+        Parcela(it,isBoleto) }
 }
 
 class Parcela(installment: Installment, val isBoleto : Boolean) {
