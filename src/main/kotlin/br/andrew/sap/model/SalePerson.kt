@@ -44,6 +44,6 @@ class SalePerson(val SalesEmployeeCode: Int,
     }
 
     companion object{
-        var emailDefault : String = "franciscomarcello@csc.gruporovema.com.br";
+        var emailDefault : String = "";
     }
 }

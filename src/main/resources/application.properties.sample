@@ -1,13 +1,27 @@
-sap.service.layer.url=https://localhost:500000
-sap.service.layer.user=usuario
+sap.service.layer.url=https://localhost:50000
+sap.service.layer.user=username
 sap.service.layer.password=senha
-sap.service.layer.companyDB=base
+sap.service.layer.companyDB=teste
+spring.security.disable=true
 
 
-
-uzzipay.host=https://openhml-api.uzzipay.com
+uzzipay.host=1
 uzzipay.contas[0].cnpj=1
 uzzipay.contas[0].privateKey=private
 uzzipay.contas[0].chavePix=chavePix
 uzzipay.contas[0].chave-pix=chavePix
 uzzipay.contas[0].tokenJwt=jwt
+
+jwt.secret=123
+
+spring.mail.host=teste
+spring.mail.port=
+spring.mail.username=
+spring.mail.password=
+spring.mail.properties.mail.smtp.auth=
+spring.mail.properties.mail.smtp.starttls.enable=
+
+mail.copy=
+
+imposto.icms.desonerado=25
+imposto.icms.desonerado.futuro=10,28
