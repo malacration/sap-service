@@ -4,6 +4,7 @@ import br.andrew.sap.model.Query
 import br.andrew.sap.services.structs.QuerysServices
 import br.andrew.sap.services.structs.UserFieldsMDService
 import org.slf4j.LoggerFactory
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Profile
@@ -13,6 +14,7 @@ import java.io.File
 
 @Configuration
 @Profile("!test")
+@ConditionalOnProperty(value = ["sql"], havingValue = "true", matchIfMissing = true)
 class ProvisioningConfiguration(val queryService: QuerysServices) {
 
     fun getResourcesFiles(): Array<out File> {
@@ -29,7 +31,7 @@ class ProvisioningConfiguration(val queryService: QuerysServices) {
 
 
         querys.forEach {
-            logger.info("Atualizando view {${it.sqlName}")
+            logger.info("Atualizando view {${it.sqlName}}")
             queryService.replace(it)
         }
         return querys

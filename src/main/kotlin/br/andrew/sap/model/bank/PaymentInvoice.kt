@@ -1,7 +1,7 @@
 package br.andrew.sap.model.bank
 
-import br.andrew.sap.model.documents.Document
-import br.andrew.sap.model.documents.Installment
+import br.andrew.sap.model.documents.base.Document
+import br.andrew.sap.model.documents.base.Installment
 import br.andrew.sap.model.documents.Invoice
 import br.andrew.sap.model.uzzipay.Transaction
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties

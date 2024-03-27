@@ -3,10 +3,10 @@ package br.andrew.sap.infrastructure.odata
 import br.andrew.sap.model.enums.Cancelled
 
 
-class Filter(val propertie : List<Predicate>) {
-    constructor() : this(listOf())
-    //constructor(predicate: Predicate) : this(listOf(predicate))
-    constructor(vararg predicate: Predicate) : this(predicate.toList())
+class Filter(val propertie : MutableList<Predicate>) {
+    constructor() : this(mutableListOf<Predicate>())
+    constructor(vararg predicate: Predicate) : this(predicate.toMutableList())
+    constructor(coluna: String, value: Any, condition : Condicao) : this(mutableListOf(Predicate(coluna,value,condition)))
 
     override fun toString(): String {
         if(propertie.isEmpty())
@@ -20,6 +20,10 @@ class Filter(val propertie : List<Predicate>) {
             return ""
         val filtros = propertie.map { it.toSql() }.joinToString("&")
         return filtros
+    }
+
+    fun add(predicate: Predicate): Boolean {
+        return propertie.add(predicate)
     }
 }
 

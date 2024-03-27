@@ -5,6 +5,8 @@ enum class Condicao(val value: String) {
     GREAT("gt"),
     EQUAL("eq"),
     NOT_EQUAL("ne"),
+    LESS("lt"),
+    LESS_EQUAL("le"),
     STARTS_WITH("startswith"),
     CONTAINS("contains"),
     IN("in");
@@ -18,6 +20,9 @@ enum class Condicao(val value: String) {
             CONTAINS -> "contains(${coluna}, ${value})"
             GREAT -> "${coluna} gt ${value}"
             GREAT_EQUAL -> "${coluna} ge ${value}"
+            IN -> "${coluna} eq ${value}"
+            LESS -> "${coluna} ${this.value} ${value}"
+            LESS_EQUAL -> "${coluna} ${this.value} ${value}"
             else -> "Tipo de dado é invalido para a condição"
         }
     }

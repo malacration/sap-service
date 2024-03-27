@@ -20,7 +20,7 @@ class FazendaController(
 
     @GetMapping("{id}")
     fun getFazendaById(@PathVariable id : String) : OData{
-        return fazendaService.get(Filter(listOf(Predicate("Code",id, Condicao.EQUAL))))
+        return fazendaService.get(Filter(mutableListOf(Predicate("Code",id, Condicao.EQUAL))))
     }
 
 

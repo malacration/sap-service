@@ -1,0 +1,1144 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<definitions xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:SOAP-ENC="http://schemas.xmlsoap.org/soap/encoding/" xmlns:tns="urn:workflow" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" xmlns="http://schemas.xmlsoap.org/wsdl/" targetNamespace="urn:workflow">
+    <types>
+        <xsd:schema elementFormDefault="qualified" targetNamespace="urn:workflow"
+        >
+            <xsd:import namespace="http://schemas.xmlsoap.org/soap/encoding/" />
+            <xsd:import namespace="http://schemas.xmlsoap.org/wsdl/" />
+            <xsd:complexType name="attributeData">
+                <xsd:all>
+                    <xsd:element name="EntityAttributeID" type="xsd:string"/>
+                    <xsd:element name="EntityAttributeValue" type="xsd:string"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="attributeFileData">
+                <xsd:all>
+                    <xsd:element name="EntityAttributeID" type="xsd:string"/>
+                    <xsd:element name="FileName" type="xsd:string"/>
+                    <xsd:element name="FileContent" type="xsd:base64Binary"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="relationshipAttributeData">
+                <xsd:all>
+                    <xsd:element name="RelationshipAttributeID" type="xsd:string"/>
+                    <xsd:element name="RelationshipAttributeValue" type="xsd:string"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="relationshipArray">
+                <xsd:sequence>
+                    <xsd:element name="RelationshipID" type="xsd:string"/>
+                    <xsd:element name="RelationshipAttribute" type="tns:relationshipAttributeData" minOccurs="1" maxOccurs="unbounded"/>
+                </xsd:sequence>
+            </xsd:complexType>
+            <xsd:complexType name="entityAttributeArray">
+                <xsd:sequence>
+                    <xsd:element name="EntityAttribute" type="tns:attributeData" minOccurs="0" maxOccurs="unbounded"/>
+                </xsd:sequence>
+            </xsd:complexType>
+            <xsd:complexType name="entityAttributeFileArray">
+                <xsd:sequence>
+                    <xsd:element name="EntityAttributeFile" type="tns:attributeFileData" minOccurs="0" maxOccurs="unbounded"/>
+                </xsd:sequence>
+            </xsd:complexType>
+            <xsd:complexType name="relationshipListArray">
+                <xsd:sequence>
+                    <xsd:element name="Relationship" type="tns:relationshipArray" minOccurs="0" maxOccurs="unbounded"/>
+                </xsd:sequence>
+            </xsd:complexType>
+            <xsd:complexType name="attributeValueData">
+                <xsd:all>
+                    <xsd:element name="AttributeValue" type="xsd:string"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="attributeArray">
+                <xsd:sequence>
+                    <xsd:element name="AttributeID" type="xsd:string"/>
+                    <xsd:element name="AttributeValueList" type="tns:attributeValueData" minOccurs="0" maxOccurs="unbounded"/>
+                </xsd:sequence>
+            </xsd:complexType>
+            <xsd:complexType name="AttributeListArray">
+                <xsd:sequence>
+                    <xsd:element name="Attribute" type="tns:attributeArray" minOccurs="1" maxOccurs="unbounded"/>
+                </xsd:sequence>
+            </xsd:complexType>
+            <xsd:complexType name="EntityRecordArray">
+                <xsd:sequence>
+                    <xsd:element name="EntityAttributeList" type="tns:entityAttributeArray" minOccurs="0" maxOccurs="1"/>
+                    <xsd:element name="RelationshipList" type="tns:relationshipListArray" minOccurs="0" maxOccurs="1"/>
+                    <xsd:element name="EntityAttributeFileList" type="tns:entityAttributeFileArray" minOccurs="0" maxOccurs="1"/>
+                </xsd:sequence>
+            </xsd:complexType>
+            <xsd:complexType name="EntityRecordListArray">
+                <xsd:sequence>
+                    <xsd:element name="EntityRecord" type="tns:EntityRecordArray" minOccurs="0" maxOccurs="unbounded"/>
+                </xsd:sequence>
+            </xsd:complexType>
+            <xsd:complexType name="EntityListArray">
+                <xsd:sequence>
+                    <xsd:element name="Entity" type="tns:EntityArray" minOccurs="0" maxOccurs="unbounded"/>
+                </xsd:sequence>
+            </xsd:complexType>
+            <xsd:complexType name="EntityArray">
+                <xsd:sequence>
+                    <xsd:element name="EntityID" type="xsd:string"/>
+                    <xsd:element name="EntityAttributeList" type="tns:entityAttributeArray" minOccurs="0" maxOccurs="1"/>
+                    <xsd:element name="RelationshipList" type="tns:RelationshipAttributeListArray" minOccurs="0" maxOccurs="1"/>
+                    <xsd:element name="EntityAttributeFileList" type="tns:entityAttributeFileArray" minOccurs="0" maxOccurs="1"/>
+                </xsd:sequence>
+            </xsd:complexType>
+            <xsd:complexType name="RelationshipAttributeListArray">
+                <xsd:sequence>
+                    <xsd:element name="Relationship" type="tns:RelationshipArrayList" minOccurs="0" maxOccurs="unbounded"/>
+                </xsd:sequence>
+            </xsd:complexType>
+            <xsd:complexType name="RelationshipArrayList">
+                <xsd:sequence>
+                    <xsd:element name="RelationshipID" type="xsd:string"/>
+                    <xsd:element name="RelationshipAttributeList" type="tns:RelationshipListAttributeData" minOccurs="1" maxOccurs="unbounded"/>
+                </xsd:sequence>
+            </xsd:complexType>
+            <xsd:complexType name="RelationshipListAttributeData">
+                <xsd:sequence>
+                    <xsd:element name="RelationshipAttribute" type="tns:relationshipAttributeData" minOccurs="0" maxOccurs="unbounded"/>
+                </xsd:sequence>
+            </xsd:complexType>
+            <xsd:complexType name="RecordData">
+                <xsd:all>
+                    <xsd:element name="RecordKey" type="xsd:string"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="RecordListArray">
+                <xsd:sequence>
+                    <xsd:element name="Record" type="tns:RecordData" minOccurs="1" maxOccurs="unbounded"/>
+                </xsd:sequence>
+            </xsd:complexType>
+            <xsd:complexType name="ValueItemData">
+                <xsd:all>
+                    <xsd:element name="ItemName" type="xsd:string"/>
+                    <xsd:element name="ItemValue" type="xsd:float"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="ValueItemArray">
+                <xsd:sequence>
+                    <xsd:element name="ValueItem" type="tns:ValueItemData" minOccurs="1" maxOccurs="unbounded"/>
+                </xsd:sequence>
+            </xsd:complexType>
+            <xsd:complexType name="RequesterAsUser">
+                <xsd:all>
+                    <xsd:element name="UserID" type="xsd:string"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="RequesterAsCustomer">
+                <xsd:all>
+                    <xsd:element name="CustomerID" type="xsd:string"/>
+                    <xsd:element name="Contact" type="xsd:string"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="Requester">
+                <xsd:sequence>
+                    <xsd:element name="User" type="tns:RequesterAsUser"/>
+                    <xsd:element name="Customer" type="tns:RequesterAsCustomer"/>
+                </xsd:sequence>
+            </xsd:complexType>
+            <xsd:complexType name="accessExceptionData">
+                <xsd:all>
+                    <xsd:element name="UserID" type="xsd:string"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="accessExceptionArray">
+                <xsd:sequence>
+                    <xsd:element name="AccessException" type="tns:accessExceptionData" minOccurs="1" maxOccurs="unbounded"/>
+                </xsd:sequence>
+            </xsd:complexType>
+            <xsd:complexType name="recordDetailData">
+                <xsd:all>
+                    <xsd:element name="Status" type="xsd:string"/>
+                    <xsd:element name="Code" type="xsd:integer"/>
+                    <xsd:element name="Detail" type="xsd:string"/>
+                    <xsd:element name="RecordKey" type="xsd:string"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="recordDetailArray">
+                <xsd:sequence>
+                    <xsd:element name="RecordDetail" type="tns:recordDetailData" minOccurs="1" maxOccurs="unbounded"/>
+                </xsd:sequence>
+            </xsd:complexType>
+            <xsd:complexType name="newWorkflowRequestType">
+                <xsd:all>
+                    <xsd:element name="ProcessID" type="xsd:string"/>
+                    <xsd:element name="WorkflowTitle" type="xsd:string"/>
+                    <xsd:element name="UserID" type="xsd:string" minOccurs="0"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="newWorkflowResponseType">
+                <xsd:all>
+                    <xsd:element name="Status" type="xsd:string"/>
+                    <xsd:element name="Code" type="xsd:integer"/>
+                    <xsd:element name="Detail" type="xsd:string"/>
+                    <xsd:element name="RecordKey" type="xsd:string"/>
+                    <xsd:element name="RecordID" type="xsd:string"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="newWorkflowEditDataRequestType">
+                <xsd:all>
+                    <xsd:element name="ProcessID" type="xsd:string"/>
+                    <xsd:element name="WorkflowTitle" type="xsd:string"/>
+                    <xsd:element name="UserID" type="xsd:string" minOccurs="0"/>
+                    <xsd:element name="Requester" type="tns:Requester" minOccurs="0"/>
+                    <xsd:element name="EntityList" type="tns:EntityListArray" minOccurs="0"/>
+                    <xsd:element name="AttributeList" type="tns:AttributeListArray" minOccurs="0"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="newWorkflowEditDataResponseType">
+                <xsd:all>
+                    <xsd:element name="Status" type="xsd:string"/>
+                    <xsd:element name="Code" type="xsd:integer"/>
+                    <xsd:element name="Detail" type="xsd:string"/>
+                    <xsd:element name="RecordKey" type="xsd:string"/>
+                    <xsd:element name="RecordID" type="xsd:string"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="newWorkflowTypeEditDataRequestType">
+                <xsd:all>
+                    <xsd:element name="WorkflowTypeID" type="xsd:boolean"/>
+                    <xsd:element name="WorkflowTitle" type="xsd:string"/>
+                    <xsd:element name="UserID" type="xsd:string" minOccurs="0"/>
+                    <xsd:element name="Requester" type="tns:Requester" minOccurs="0"/>
+                    <xsd:element name="EntityList" type="tns:EntityListArray" minOccurs="0"/>
+                    <xsd:element name="AttributeList" type="tns:AttributeListArray" minOccurs="0"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="newWorkflowTypeEditDataResponseType">
+                <xsd:all>
+                    <xsd:element name="Status" type="xsd:string"/>
+                    <xsd:element name="Code" type="xsd:integer"/>
+                    <xsd:element name="Detail" type="xsd:string"/>
+                    <xsd:element name="RecordKey" type="xsd:string"/>
+                    <xsd:element name="RecordID" type="xsd:string"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="editWorkflowDataRequestType">
+                <xsd:all>
+                    <xsd:element name="WorkflowID" type="xsd:string"/>
+                    <xsd:element name="UserID" type="xsd:string" minOccurs="0"/>
+                    <xsd:element name="Requester" type="tns:Requester" minOccurs="0"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="editWorkflowDataResponseType">
+                <xsd:all>
+                    <xsd:element name="Status" type="xsd:string"/>
+                    <xsd:element name="Code" type="xsd:integer"/>
+                    <xsd:element name="Detail" type="xsd:string"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="editEntityRecordRequestType">
+                <xsd:all>
+                    <xsd:element name="WorkflowID" type="xsd:string"/>
+                    <xsd:element name="EntityID" type="xsd:string"/>
+                    <xsd:element name="EntityAttributeList" type="tns:entityAttributeArray" minOccurs="0"/>
+                    <xsd:element name="RelationshipList" type="tns:relationshipListArray" minOccurs="0"/>
+                    <xsd:element name="EntityAttributeFileList" type="tns:entityAttributeFileArray" minOccurs="0"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="editEntityRecordResponseType">
+                <xsd:all>
+                    <xsd:element name="Status" type="xsd:string"/>
+                    <xsd:element name="Code" type="xsd:integer"/>
+                    <xsd:element name="Detail" type="xsd:string"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="newChildEntityRecordRequestType">
+                <xsd:all>
+                    <xsd:element name="WorkflowID" type="xsd:string"/>
+                    <xsd:element name="MainEntityID" type="xsd:string"/>
+                    <xsd:element name="ChildRelationshipID" type="xsd:string"/>
+                    <xsd:element name="EntityAttributeList" type="tns:entityAttributeArray" minOccurs="0"/>
+                    <xsd:element name="RelationshipList" type="tns:relationshipListArray" minOccurs="0"/>
+                    <xsd:element name="EntityAttributeFileList" type="tns:entityAttributeFileArray" minOccurs="0"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="newChildEntityRecordResponseType">
+                <xsd:all>
+                    <xsd:element name="Status" type="xsd:string"/>
+                    <xsd:element name="Code" type="xsd:integer"/>
+                    <xsd:element name="Detail" type="xsd:string"/>
+                    <xsd:element name="RecordKey" type="xsd:string"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="newChildEntityRecordListRequestType">
+                <xsd:all>
+                    <xsd:element name="WorkflowID" type="xsd:string"/>
+                    <xsd:element name="MainEntityID" type="xsd:string"/>
+                    <xsd:element name="ChildRelationshipID" type="xsd:string"/>
+                    <xsd:element name="EntityRecordList" type="tns:EntityRecordListArray"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="newChildEntityRecordListResponseType">
+                <xsd:all>
+                    <xsd:element name="Status" type="xsd:string"/>
+                    <xsd:element name="Code" type="xsd:integer"/>
+                    <xsd:element name="Detail" type="xsd:string"/>
+                    <xsd:element name="RecordList" type="tns:RecordListArray"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="editChildEntityRecordRequestType">
+                <xsd:all>
+                    <xsd:element name="WorkflowID" type="xsd:string"/>
+                    <xsd:element name="MainEntityID" type="xsd:string"/>
+                    <xsd:element name="ChildRelationshipID" type="xsd:string"/>
+                    <xsd:element name="ChildRecordOID" type="xsd:string"/>
+                    <xsd:element name="EntityAttributeList" type="tns:entityAttributeArray" minOccurs="0"/>
+                    <xsd:element name="RelationshipList" type="tns:relationshipListArray" minOccurs="0"/>
+                    <xsd:element name="EntityAttributeFileList" type="tns:entityAttributeFileArray" minOccurs="0"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="editChildEntityRecordResponseType">
+                <xsd:all>
+                    <xsd:element name="Status" type="xsd:string"/>
+                    <xsd:element name="Code" type="xsd:integer"/>
+                    <xsd:element name="Detail" type="xsd:string"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="deleteChildEntityRecordRequestType">
+                <xsd:all>
+                    <xsd:element name="WorkflowID" type="xsd:string"/>
+                    <xsd:element name="MainEntityID" type="xsd:string"/>
+                    <xsd:element name="ChildRelationshipID" type="xsd:string"/>
+                    <xsd:element name="ChildRecordOID" type="xsd:string"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="deleteChildEntityRecordResponseType">
+                <xsd:all>
+                    <xsd:element name="Status" type="xsd:string"/>
+                    <xsd:element name="Code" type="xsd:integer"/>
+                    <xsd:element name="Detail" type="xsd:string"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="clearChildEntityRecordRequestType">
+                <xsd:all>
+                    <xsd:element name="WorkflowID" type="xsd:string"/>
+                    <xsd:element name="MainEntityID" type="xsd:string"/>
+                    <xsd:element name="ChildRelationshipID" type="xsd:string"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="clearChildEntityRecordResponseType">
+                <xsd:all>
+                    <xsd:element name="Status" type="xsd:string"/>
+                    <xsd:element name="Code" type="xsd:integer"/>
+                    <xsd:element name="Detail" type="xsd:string"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="editAttributeValueRequestType">
+                <xsd:all>
+                    <xsd:element name="WorkflowID" type="xsd:string"/>
+                    <xsd:element name="AttributeList" type="tns:AttributeListArray" minOccurs="0"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="editAttributeValueResponseType">
+                <xsd:all>
+                    <xsd:element name="Status" type="xsd:string"/>
+                    <xsd:element name="Code" type="xsd:integer"/>
+                    <xsd:element name="Detail" type="xsd:string"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="newAttachmentRequestType">
+                <xsd:all>
+                    <xsd:element name="WorkflowID" type="xsd:string"/>
+                    <xsd:element name="ActivityID" type="xsd:string"/>
+                    <xsd:element name="FileName" type="xsd:string"/>
+                    <xsd:element name="FileContent" type="xsd:base64Binary"/>
+                    <xsd:element name="UserID" type="xsd:string" minOccurs="0"/>
+                    <xsd:element name="AttachmentID" type="xsd:string"/>
+                    <xsd:element name="AttachmentName" type="xsd:string"/>
+                    <xsd:element name="Summary" type="xsd:string"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="newAttachmentResponseType">
+                <xsd:all>
+                    <xsd:element name="Status" type="xsd:string"/>
+                    <xsd:element name="Code" type="xsd:integer"/>
+                    <xsd:element name="Detail" type="xsd:string"/>
+                    <xsd:element name="RecordKey" type="xsd:string"/>
+                    <xsd:element name="RecordID" type="xsd:string"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="newAssocDocumentRequestType">
+                <xsd:all>
+                    <xsd:element name="WorkflowID" type="xsd:string"/>
+                    <xsd:element name="ActivityID" type="xsd:string"/>
+                    <xsd:element name="DocumentID" type="xsd:string"/>
+                    <xsd:element name="ActivityOrder" type="xsd:integer" minOccurs="0"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="newAssocDocumentResponseType">
+                <xsd:all>
+                    <xsd:element name="Status" type="xsd:string"/>
+                    <xsd:element name="Code" type="xsd:integer"/>
+                    <xsd:element name="Detail" type="xsd:string"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="assocWorkflowData">
+                <xsd:all>
+                    <xsd:element name="AssocWorkflowID" type="xsd:string"/>
+                    <xsd:element name="AssocWorkflowType" type="xsd:integer"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="assocWorkflowArray">
+                <xsd:sequence>
+                    <xsd:element name="AssocWorkflow" type="tns:assocWorkflowData" minOccurs="1" maxOccurs="unbounded"/>
+                </xsd:sequence>
+            </xsd:complexType>
+            <xsd:complexType name="newAssocWorkflowRequestType">
+                <xsd:all>
+                    <xsd:element name="WorkflowID" type="xsd:string"/>
+                    <xsd:element name="AssocWorkflowList" type="tns:assocWorkflowArray"/>
+                    <xsd:element name="ActivityID" type="xsd:string"/>
+                    <xsd:element name="ActivityOrder" type="xsd:integer" minOccurs="0"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="newAssocWorkflowResponseType">
+                <xsd:all>
+                    <xsd:element name="Status" type="xsd:string"/>
+                    <xsd:element name="Code" type="xsd:integer"/>
+                    <xsd:element name="Detail" type="xsd:string"/>
+                    <xsd:element name="RecordList" type="tns:RecordListArray"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="executeSystemActivityRequestType">
+                <xsd:all>
+                    <xsd:element name="WorkflowID" type="xsd:string"/>
+                    <xsd:element name="ActivityID" type="xsd:string"/>
+                    <xsd:element name="ActivityOrder" type="xsd:integer" minOccurs="0"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="executeSystemActivityResponseType">
+                <xsd:all>
+                    <xsd:element name="Status" type="xsd:string"/>
+                    <xsd:element name="Code" type="xsd:integer"/>
+                    <xsd:element name="Detail" type="xsd:string"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="executeActivityRequestType">
+                <xsd:all>
+                    <xsd:element name="WorkflowID" type="xsd:string"/>
+                    <xsd:element name="ActivityID" type="xsd:string"/>
+                    <xsd:element name="ActionSequence" type="xsd:integer"/>
+                    <xsd:element name="UserID" type="xsd:string" minOccurs="0"/>
+                    <xsd:element name="ActivityOrder" type="xsd:integer" minOccurs="0"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="executeActivityResponseType">
+                <xsd:all>
+                    <xsd:element name="Status" type="xsd:string"/>
+                    <xsd:element name="Code" type="xsd:integer"/>
+                    <xsd:element name="Detail" type="xsd:string"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="newAccessExceptionRequestType">
+                <xsd:all>
+                    <xsd:element name="WorkflowID" type="xsd:string"/>
+                    <xsd:element name="AccessExceptionList" type="tns:accessExceptionArray"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="newAccessExceptionResponseType">
+                <xsd:all>
+                    <xsd:element name="Status" type="xsd:string"/>
+                    <xsd:element name="Code" type="xsd:integer"/>
+                    <xsd:element name="Detail" type="xsd:string"/>
+                    <xsd:element name="RecordDetailList" type="tns:recordDetailArray"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="cancelWorkflowRequestType">
+                <xsd:all>
+                    <xsd:element name="WorkflowID" type="xsd:string"/>
+                    <xsd:element name="Explanation" type="xsd:string"/>
+                    <xsd:element name="UserID" type="xsd:string" minOccurs="0"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="cancelWorkflowResponseType">
+                <xsd:all>
+                    <xsd:element name="Status" type="xsd:string"/>
+                    <xsd:element name="Code" type="xsd:integer"/>
+                    <xsd:element name="Detail" type="xsd:string"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="getWorkflowRequestType">
+                <xsd:all>
+                    <xsd:element name="WorkflowID" type="xsd:string"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="getWorkflowResponseType">
+                <xsd:all>
+                    <xsd:element name="Status" type="xsd:string"/>
+                    <xsd:element name="Code" type="xsd:integer"/>
+                    <xsd:element name="Detail" type="xsd:string"/>
+                    <xsd:element name="Title" type="xsd:string"/>
+                    <xsd:element name="ProcessID" type="xsd:string"/>
+                    <xsd:element name="InstanceStatus" type="xsd:string"/>
+                    <xsd:element name="WorkflowStatus" type="xsd:string"/>
+                    <xsd:element name="StarterUser" type="xsd:string"/>
+                    <xsd:element name="StarterExternalUser" type="xsd:string"/>
+                    <xsd:element name="StartDate" type="xsd:string"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="unlinkActivityFromUserRequestType">
+                <xsd:all>
+                    <xsd:element name="WorkflowID" type="xsd:string"/>
+                    <xsd:element name="ActivityID" type="xsd:string"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="unlinkActivityFromUserResponseType">
+                <xsd:all>
+                    <xsd:element name="Status" type="xsd:string"/>
+                    <xsd:element name="Code" type="xsd:integer"/>
+                    <xsd:element name="Detail" type="xsd:string"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="newCommentRequestType">
+                <xsd:all>
+                    <xsd:element name="WorkflowID" type="xsd:string"/>
+                    <xsd:element name="ActivityID" type="xsd:string"/>
+                    <xsd:element name="Text" type="xsd:string"/>
+                    <xsd:element name="Private" type="xsd:integer"/>
+                    <xsd:element name="UserID" type="xsd:string" minOccurs="0"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="newCommentResponseType">
+                <xsd:all>
+                    <xsd:element name="Status" type="xsd:string"/>
+                    <xsd:element name="Code" type="xsd:integer"/>
+                    <xsd:element name="Detail" type="xsd:string"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="workflowArray">
+                <xsd:sequence>
+                    <xsd:element name="WorkflowID" type="xsd:string" minOccurs="1" maxOccurs="unbounded"/>
+                </xsd:sequence>
+            </xsd:complexType>
+            <xsd:complexType name="workflowsResultArray">
+                <xsd:sequence>
+                    <xsd:element name="WorkflowID" type="xsd:string" minOccurs="0" maxOccurs="unbounded"/>
+                </xsd:sequence>
+            </xsd:complexType>
+            <xsd:complexType name="reactivateWorkflowRequestType">
+                <xsd:all>
+                    <xsd:element name="ReactivateWorkflowList" type="tns:workflowArray"/>
+                    <xsd:element name="Explanation" type="xsd:string"/>
+                    <xsd:element name="UserID" type="xsd:string" minOccurs="0"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:complexType name="reactivateWorkflowResponseType">
+                <xsd:all>
+                    <xsd:element name="Status" type="xsd:string"/>
+                    <xsd:element name="Code" type="xsd:integer"/>
+                    <xsd:element name="Detail" type="xsd:string"/>
+                    <xsd:element name="RecordListResponse" type="tns:workflowsResultArray"/>
+                </xsd:all>
+            </xsd:complexType>
+            <xsd:element name="newWorkflow" type="tns:newWorkflowRequestType"/>
+            <xsd:element name="newWorkflowResponse" type="tns:newWorkflowResponseType"/>
+            <xsd:element name="newWorkflowEditData" type="tns:newWorkflowEditDataRequestType"/>
+            <xsd:element name="newWorkflowEditDataResponse" type="tns:newWorkflowEditDataResponseType"/>
+            <xsd:element name="newWorkflowTypeEditData" type="tns:newWorkflowTypeEditDataRequestType"/>
+            <xsd:element name="newWorkflowTypeEditDataResponse" type="tns:newWorkflowTypeEditDataResponseType"/>
+            <xsd:element name="editWorkflowData" type="tns:editWorkflowDataRequestType"/>
+            <xsd:element name="editWorkflowDataResponse" type="tns:editWorkflowDataResponseType"/>
+            <xsd:element name="editEntityRecord" type="tns:editEntityRecordRequestType"/>
+            <xsd:element name="editEntityRecordResponse" type="tns:editEntityRecordResponseType"/>
+            <xsd:element name="newChildEntityRecord" type="tns:newChildEntityRecordRequestType"/>
+            <xsd:element name="newChildEntityRecordResponse" type="tns:newChildEntityRecordResponseType"/>
+            <xsd:element name="newChildEntityRecordList" type="tns:newChildEntityRecordListRequestType"/>
+            <xsd:element name="newChildEntityRecordListResponse" type="tns:newChildEntityRecordListResponseType"/>
+            <xsd:element name="editChildEntityRecord" type="tns:editChildEntityRecordRequestType"/>
+            <xsd:element name="editChildEntityRecordResponse" type="tns:editChildEntityRecordResponseType"/>
+            <xsd:element name="deleteChildEntityRecord" type="tns:deleteChildEntityRecordRequestType"/>
+            <xsd:element name="deleteChildEntityRecordResponse" type="tns:deleteChildEntityRecordResponseType"/>
+            <xsd:element name="clearChildEntityRecord" type="tns:clearChildEntityRecordRequestType"/>
+            <xsd:element name="clearChildEntityRecordResponse" type="tns:clearChildEntityRecordResponseType"/>
+            <xsd:element name="editAttributeValue" type="tns:editAttributeValueRequestType"/>
+            <xsd:element name="editAttributeValueResponse" type="tns:editAttributeValueResponseType"/>
+            <xsd:element name="newAttachment" type="tns:newAttachmentRequestType"/>
+            <xsd:element name="newAttachmentResponse" type="tns:newAttachmentResponseType"/>
+            <xsd:element name="newAssocDocument" type="tns:newAssocDocumentRequestType"/>
+            <xsd:element name="newAssocDocumentResponse" type="tns:newAssocDocumentResponseType"/>
+            <xsd:element name="newAssocWorkflow" type="tns:newAssocWorkflowRequestType"/>
+            <xsd:element name="newAssocWorkflowResponse" type="tns:newAssocWorkflowResponseType"/>
+            <xsd:element name="executeSystemActivity" type="tns:executeSystemActivityRequestType"/>
+            <xsd:element name="executeSystemActivityResponse" type="tns:executeSystemActivityResponseType"/>
+            <xsd:element name="executeActivity" type="tns:executeActivityRequestType"/>
+            <xsd:element name="executeActivityResponse" type="tns:executeActivityResponseType"/>
+            <xsd:element name="newAccessException" type="tns:newAccessExceptionRequestType"/>
+            <xsd:element name="newAccessExceptionResponse" type="tns:newAccessExceptionResponseType"/>
+            <xsd:element name="cancelWorkflow" type="tns:cancelWorkflowRequestType"/>
+            <xsd:element name="cancelWorkflowResponse" type="tns:cancelWorkflowResponseType"/>
+            <xsd:element name="getWorkflow" type="tns:getWorkflowRequestType"/>
+            <xsd:element name="getWorkflowResponse" type="tns:getWorkflowResponseType"/>
+            <xsd:element name="unlinkActivityFromUser" type="tns:unlinkActivityFromUserRequestType"/>
+            <xsd:element name="unlinkActivityFromUserResponse" type="tns:unlinkActivityFromUserResponseType"/>
+            <xsd:element name="newComment" type="tns:newCommentRequestType"/>
+            <xsd:element name="newCommentResponse" type="tns:newCommentResponseType"/>
+            <xsd:element name="reactivateWorkflow" type="tns:reactivateWorkflowRequestType"/>
+            <xsd:element name="reactivateWorkflowResponse" type="tns:reactivateWorkflowResponseType"/>
+        </xsd:schema>
+    </types>
+    <message name="newWorkflowRequest">
+        <part name="parameters" element="tns:newWorkflow" /></message>
+    <message name="newWorkflowResponse">
+        <part name="parameters" element="tns:newWorkflowResponse" /></message>
+    <message name="newWorkflowEditDataRequest">
+        <part name="parameters" element="tns:newWorkflowEditData" /></message>
+    <message name="newWorkflowEditDataResponse">
+        <part name="parameters" element="tns:newWorkflowEditDataResponse" /></message>
+    <message name="newWorkflowTypeEditDataRequest">
+        <part name="parameters" element="tns:newWorkflowTypeEditData" /></message>
+    <message name="newWorkflowTypeEditDataResponse">
+        <part name="parameters" element="tns:newWorkflowTypeEditDataResponse" /></message>
+    <message name="editWorkflowDataRequest">
+        <part name="parameters" element="tns:editWorkflowData" /></message>
+    <message name="editWorkflowDataResponse">
+        <part name="parameters" element="tns:editWorkflowDataResponse" /></message>
+    <message name="editEntityRecordRequest">
+        <part name="parameters" element="tns:editEntityRecord" /></message>
+    <message name="editEntityRecordResponse">
+        <part name="parameters" element="tns:editEntityRecordResponse" /></message>
+    <message name="newChildEntityRecordRequest">
+        <part name="parameters" element="tns:newChildEntityRecord" /></message>
+    <message name="newChildEntityRecordResponse">
+        <part name="parameters" element="tns:newChildEntityRecordResponse" /></message>
+    <message name="newChildEntityRecordListRequest">
+        <part name="parameters" element="tns:newChildEntityRecordList" /></message>
+    <message name="newChildEntityRecordListResponse">
+        <part name="parameters" element="tns:newChildEntityRecordListResponse" /></message>
+    <message name="editChildEntityRecordRequest">
+        <part name="parameters" element="tns:editChildEntityRecord" /></message>
+    <message name="editChildEntityRecordResponse">
+        <part name="parameters" element="tns:editChildEntityRecordResponse" /></message>
+    <message name="deleteChildEntityRecordRequest">
+        <part name="parameters" element="tns:deleteChildEntityRecord" /></message>
+    <message name="deleteChildEntityRecordResponse">
+        <part name="parameters" element="tns:deleteChildEntityRecordResponse" /></message>
+    <message name="clearChildEntityRecordRequest">
+        <part name="parameters" element="tns:clearChildEntityRecord" /></message>
+    <message name="clearChildEntityRecordResponse">
+        <part name="parameters" element="tns:clearChildEntityRecordResponse" /></message>
+    <message name="editAttributeValueRequest">
+        <part name="parameters" element="tns:editAttributeValue" /></message>
+    <message name="editAttributeValueResponse">
+        <part name="parameters" element="tns:editAttributeValueResponse" /></message>
+    <message name="newAttachmentRequest">
+        <part name="parameters" element="tns:newAttachment" /></message>
+    <message name="newAttachmentResponse">
+        <part name="parameters" element="tns:newAttachmentResponse" /></message>
+    <message name="newAssocDocumentRequest">
+        <part name="parameters" element="tns:newAssocDocument" /></message>
+    <message name="newAssocDocumentResponse">
+        <part name="parameters" element="tns:newAssocDocumentResponse" /></message>
+    <message name="newAssocWorkflowRequest">
+        <part name="parameters" element="tns:newAssocWorkflow" /></message>
+    <message name="newAssocWorkflowResponse">
+        <part name="parameters" element="tns:newAssocWorkflowResponse" /></message>
+    <message name="executeSystemActivityRequest">
+        <part name="parameters" element="tns:executeSystemActivity" /></message>
+    <message name="executeSystemActivityResponse">
+        <part name="parameters" element="tns:executeSystemActivityResponse" /></message>
+    <message name="executeActivityRequest">
+        <part name="parameters" element="tns:executeActivity" /></message>
+    <message name="executeActivityResponse">
+        <part name="parameters" element="tns:executeActivityResponse" /></message>
+    <message name="newAccessExceptionRequest">
+        <part name="parameters" element="tns:newAccessException" /></message>
+    <message name="newAccessExceptionResponse">
+        <part name="parameters" element="tns:newAccessExceptionResponse" /></message>
+    <message name="cancelWorkflowRequest">
+        <part name="parameters" element="tns:cancelWorkflow" /></message>
+    <message name="cancelWorkflowResponse">
+        <part name="parameters" element="tns:cancelWorkflowResponse" /></message>
+    <message name="getWorkflowRequest">
+        <part name="parameters" element="tns:getWorkflow" /></message>
+    <message name="getWorkflowResponse">
+        <part name="parameters" element="tns:getWorkflowResponse" /></message>
+    <message name="unlinkActivityFromUserRequest">
+        <part name="parameters" element="tns:unlinkActivityFromUser" /></message>
+    <message name="unlinkActivityFromUserResponse">
+        <part name="parameters" element="tns:unlinkActivityFromUserResponse" /></message>
+    <message name="newCommentRequest">
+        <part name="parameters" element="tns:newComment" /></message>
+    <message name="newCommentResponse">
+        <part name="parameters" element="tns:newCommentResponse" /></message>
+    <message name="reactivateWorkflowRequest">
+        <part name="parameters" element="tns:reactivateWorkflow" /></message>
+    <message name="reactivateWorkflowResponse">
+        <part name="parameters" element="tns:reactivateWorkflowResponse" /></message>
+    <portType name="WorkflowPortType">
+        <operation name="newWorkflow">
+            <documentation>
+                Inicia um workflow;
+
+                Parâmetros:
+                ProcessID*: Identificador do processo;   WorkflowTitle*: Título do workflow;   UserID: Matrícula do usuário;
+
+                * Requerido;
+
+
+                Retorno:
+                Status: Situação da execução do método. Seu valor pode ser:   SUCCESS: Método executado com sucesso;    FAILURE: Ocorreu uma falha na execução do método;   Code: Código do retorno do método;   Detail: Detalhe do retorno do método;   RecordKey: Código do registro incluído pelo método;   RecordID: Identificador do registro incluído pelo método;
+            </documentation>
+            <input message="tns:newWorkflowRequest"/>
+            <output message="tns:newWorkflowResponse"/>
+        </operation>
+        <operation name="newWorkflowEditData">
+            <documentation>
+                Inicia um workflow e altera seus dados;
+
+                Parâmetros:
+                ProcessID*: Identificador do processo;   WorkflowTitle*: Título do workflow;   UserID: Matrícula do usuário;   &lt;Requester&gt;  &lt;User&gt;   UserID: Matrícula do usuário solicitante;   &lt;/User&gt;  &lt;Customer&gt;   CustomerID: Identificador do cliente;    Contact: Contato solicitante;   &lt;/Customer&gt;  &lt;/Requester&gt;  &lt;EntityList&gt;  &lt;Entity&gt;   EntityID: Identificador da tabela de formulário;    &lt;EntityAttributeList&gt;   &lt;EntityAttribute&gt;     EntityAttributeID: Identificador do campo da tabela de formulário;      EntityAttributeValue: Valor do campo da tabela de formulário**;     &lt;/EntityAttribute&gt;   &lt;/EntityAttributeList&gt;   &lt;RelationshipList&gt;   &lt;Relationship&gt;     RelationshipID: Identificador do relacionamento;      &lt;RelationshipAttributeList&gt;      &lt;RelationshipAttribute&gt;       RelationshipAttributeID: Identificador do campo da tabela de formulário relacionada;        RelationshipAttributeValue: Valor do campo da tabela de formulário relacionada**;       &lt;/RelationshipAttribute&gt;     &lt;/RelationshipAttributeList&gt;    &lt;/Relationship&gt;   &lt;/RelationshipList&gt;   &lt;EntityAttributeFileList&gt;   &lt;EntityAttributeFile&gt;     EntityAttributeID: Identificador do campo da tabela de formulário;      FileName: Nome do arquivo (inclui sua extensão);      FileContent: Conteúdo binário do arquivo;     &lt;/EntityAttributeFile&gt;   &lt;/EntityAttributeFileList&gt;  &lt;/Entity&gt;  &lt;/EntityList&gt;  &lt;AttributeList&gt;  &lt;Attribute&gt;   AttributeID: Identificador do atributo;    &lt;AttributeValueList&gt;    AttributeValue: Valor do atributo*** ;    &lt;/AttributeValueList&gt;  &lt;/Attribute&gt;  &lt;/AttributeList&gt;
+
+                * Requerido;
+                ** Observações de acordo com o tipo do campo da tabela de formulário:   Número: dígitos numéricos sem separador de milhar e decimal;    Decimal: dígitos numéricos sem separador de milhar e com ponto (.) como separador decimal;    Data: YYYY-MM-DD   Hora: HH:MM   Boolean: 0 ou 1;   *** Observações de acordo com o tipo do atributo:   Numérico: dígitos numéricos sem separador de milhar e com ponto (.) como separador decimal;    Moeda: dígitos numéricos sem separador de milhar e com ponto (.) como separador decimal;    Data: YYYY-MM-DD   Hora: HHHH:MM
+
+                Retorno:
+                Status: Situação da execução do método. Seu valor pode ser:   SUCCESS: Método executado com sucesso;    FAILURE: Ocorreu uma falha na execução do método;   Code: Código do retorno do método;   Detail: Detalhe do retorno do método;   RecordKey: Código do registro incluído pelo método;   RecordID: Identificador do registro incluído pelo método;
+            </documentation>
+            <input message="tns:newWorkflowEditDataRequest"/>
+            <output message="tns:newWorkflowEditDataResponse"/>
+        </operation>
+        <operation name="newWorkflowTypeEditData">
+            <documentation>
+                Inicia um workflow e altera seus dados;
+
+                Parâmetros:
+                WorkflowTypeID*: Identificador do tipo de workflow;   WorkflowTitle*: Título do workflow;   UserID: Matrícula do usuário;   &lt;Requester&gt;  &lt;User&gt;   UserID: Matrícula do usuário solicitante;   &lt;/User&gt;  &lt;Customer&gt;   CustomerID: Identificador do cliente;    Contact: Contato solicitante;   &lt;/Customer&gt;  &lt;/Requester&gt;  &lt;EntityList&gt;  &lt;Entity&gt;   EntityID: Identificador da tabela de formulário;    &lt;EntityAttributeList&gt;   &lt;EntityAttribute&gt;     EntityAttributeID: Identificador do campo da tabela de formulário;      EntityAttributeValue: Valor do campo da tabela de formulário**;     &lt;/EntityAttribute&gt;   &lt;/EntityAttributeList&gt;   &lt;RelationshipList&gt;   &lt;Relationship&gt;     RelationshipID: Identificador do relacionamento;      &lt;RelationshipAttributeList&gt;      &lt;RelationshipAttribute&gt;       RelationshipAttributeID: Identificador do campo da tabela de formulário relacionada;        RelationshipAttributeValue: Valor do campo da tabela de formulário relacionada**;       &lt;/RelationshipAttribute&gt;     &lt;/RelationshipAttributeList&gt;    &lt;/Relationship&gt;   &lt;/RelationshipList&gt;   &lt;EntityAttributeFileList&gt;   &lt;EntityAttributeFile&gt;     EntityAttributeID: Identificador do campo da tabela de formulário;      FileName: Nome do arquivo (inclui sua extensão);      FileContent: Conteúdo binário do arquivo;     &lt;/EntityAttributeFile&gt;   &lt;/EntityAttributeFileList&gt;  &lt;/Entity&gt;  &lt;/EntityList&gt;  &lt;AttributeList&gt;  &lt;Attribute&gt;   AttributeID*: Identificador do atributo;    &lt;AttributeValueList&gt;    AttributeValue: Valor do atributo ;    &lt;/AttributeValueList&gt;  &lt;/Attribute&gt;  &lt;/AttributeList&gt;
+
+                * Requerido;
+                ** Observações de acordo com o tipo do atributo:   Numérico: dígitos numéricos sem separador de milhar e com ponto (.) como separador decimal;    Moeda: dígitos numéricos sem separador de milhar e com ponto (.) como separador decimal;    Data: YYYY-MM-DD   Hora: HHHH:MM
+
+                Retorno:
+                Status: Situação da execução do método. Seu valor pode ser:   SUCCESS: Método executado com sucesso;    FAILURE: Ocorreu uma falha na execução do método;   Code: Código do retorno do método;   Detail: Detalhe do retorno do método;   RecordKey: Código do registro incluído pelo método;   RecordID: Identificador do registro incluído pelo método;
+            </documentation>
+            <input message="tns:newWorkflowTypeEditDataRequest"/>
+            <output message="tns:newWorkflowTypeEditDataResponse"/>
+        </operation>
+        <operation name="editWorkflowData">
+            <documentation>
+                Altera os dados do workflow;
+
+                Parâmetros:
+                WorkflowID*: Identificador do workflow;   UserID: Matrícula do usuário;   &lt;Requester&gt;  &lt;User&gt;   UserID: Matrícula do usuário solicitante;   &lt;/User&gt;  &lt;Customer&gt;   CustomerID: Identificador do cliente;    Contact: Contato solicitante;   &lt;/Customer&gt;  &lt;/Requester&gt;
+
+                * Requerido;
+
+
+                Retorno:
+                Status: Situação da execução do método. Seu valor pode ser:   SUCCESS: Método executado com sucesso;    FAILURE: Ocorreu uma falha na execução do método;   Code: Código do retorno do método;   Detail: Detalhe do retorno do método;
+            </documentation>
+            <input message="tns:editWorkflowDataRequest"/>
+            <output message="tns:editWorkflowDataResponse"/>
+        </operation>
+        <operation name="editEntityRecord">
+            <documentation>
+                Altera um registro da tabela de formulário do workflow;
+
+                Parâmetros:
+                WorkflowID*: Identificador do workflow;   EntityID*: Identificador da tabela de formulário;   &lt;EntityAttributeList&gt;  &lt;EntityAttribute&gt;   EntityAttributeID: Identificador do campo da tabela de formulário;    EntityAttributeValue: Valor do campo da tabela de formulário**;   &lt;/EntityAttribute&gt;  &lt;/EntityAttributeList&gt;  &lt;RelationshipList&gt;  &lt;Relationship&gt;   RelationshipID: Identificador do relacionamento;    &lt;RelationshipAttribute&gt;    RelationshipAttributeID: Identificador do campo da tabela de formulário relacionada;     RelationshipAttributeValue: Valor do campo da tabela de formulário relacionada**;    &lt;/RelationshipAttribute&gt;  &lt;/Relationship&gt;  &lt;/RelationshipList&gt;  &lt;EntityAttributeFileList&gt;  &lt;EntityAttributeFile&gt;   EntityAttributeID: Identificador do campo da tabela de formulário;    FileName: Nome do arquivo (inclui sua extensão);    FileContent: Conteúdo binário do arquivo;   &lt;/EntityAttributeFile&gt;  &lt;/EntityAttributeFileList&gt;
+
+                * Requerido;
+                ** Observações de acordo com o tipo do atributo:   Número: dígitos numéricos sem separador de milhar e decimal;    Decimal: dígitos numéricos sem separador de milhar e com ponto (.) como separador decimal;    Data: YYYY-MM-DD   Hora: HH:MM   Boolean: 0 ou 1;
+
+                Retorno:
+                Status: Situação da execução do método. Seu valor pode ser:   SUCCESS: Método executado com sucesso;    FAILURE: Ocorreu uma falha na execução do método;   Code: Código do retorno do método;   Detail: Detalhe do retorno do método;
+            </documentation>
+            <input message="tns:editEntityRecordRequest"/>
+            <output message="tns:editEntityRecordResponse"/>
+        </operation>
+        <operation name="newChildEntityRecord">
+            <documentation>
+                Inclui um registro na tabela de formulário descendente do workflow;
+
+                Parâmetros:
+                WorkflowID*: Identificador do workflow;   MainEntityID*: Identificador da tabela de formulário principal;   ChildRelationshipID*: Identificador do relacionamento da tabela de formulário descendente;   &lt;EntityAttributeList&gt;  &lt;EntityAttribute&gt;   EntityAttributeID: Identificador do campo da tabela de formulário;    EntityAttributeValue: Valor do campo da tabela de formulário**;   &lt;/EntityAttribute&gt;  &lt;/EntityAttributeList&gt;  &lt;RelationshipList&gt;  &lt;Relationship&gt;   RelationshipID: Identificador do relacionamento;    &lt;RelationshipAttribute&gt;    RelationshipAttributeID: Identificador do campo da tabela de formulário relacionada;     RelationshipAttributeValue: Valor do campo da tabela de formulário relacionada**;    &lt;/RelationshipAttribute&gt;  &lt;/Relationship&gt;  &lt;/RelationshipList&gt;  &lt;EntityAttributeFileList&gt;  &lt;EntityAttributeFile&gt;   EntityAttributeID: Identificador do campo da tabela de formulário;    FileName: Nome do arquivo (inclui sua extensão);    FileContent: Conteúdo binário do arquivo;   &lt;/EntityAttributeFile&gt;  &lt;/EntityAttributeFileList&gt;
+
+                * Requerido;
+                ** Observações de acordo com o tipo do atributo:   Número: dígitos numéricos sem separador de milhar e decimal;    Decimal: dígitos numéricos sem separador de milhar e com ponto (.) como separador decimal;    Data: YYYY-MM-DD   Hora: HH:MM   Boolean: 0 ou 1;
+
+                Retorno:
+                Status: Situação da execução do método. Seu valor pode ser:   SUCCESS: Método executado com sucesso;    FAILURE: Ocorreu uma falha na execução do método;   Code: Código do retorno do método;   Detail: Detalhe do retorno do método;   RecordKey: Código do registro incluído pelo método;
+            </documentation>
+            <input message="tns:newChildEntityRecordRequest"/>
+            <output message="tns:newChildEntityRecordResponse"/>
+        </operation>
+        <operation name="newChildEntityRecordList">
+            <documentation>
+                Inclui um ou mais registros na tabela de formulário descendente do workflow;
+
+                Parâmetros:
+                WorkflowID*: Identificador do workflow;   MainEntityID*: Identificador da tabela de formulário principal;   ChildRelationshipID*: Identificador do relacionamento da tabela de formulário descendente;   &lt;EntityRecordList&gt;  &lt;EntityRecord&gt;   &lt;EntityAttributeList&gt;   &lt;EntityAttribute&gt;     EntityAttributeID: Identificador do campo da tabela de formulário;      EntityAttributeValue: Valor do campo da tabela de formulário**;     &lt;/EntityAttribute&gt;   &lt;/EntityAttributeList&gt;   &lt;RelationshipList&gt;   &lt;Relationship&gt;     RelationshipID: Identificador do relacionamento;      &lt;RelationshipAttribute&gt;      RelationshipAttributeID: Identificador do campo da tabela de formulário relacionada;       RelationshipAttributeValue: Valor do campo da tabela de formulário relacionada**;      &lt;/RelationshipAttribute&gt;    &lt;/Relationship&gt;   &lt;/RelationshipList&gt;   &lt;EntityAttributeFileListList&gt;   &lt;EntityAttributeFile&gt;     EntityAttributeID: Identificador do campo da tabela de formulário;      FileName: Nome do arquivo (inclui sua extensão);      FileContent: Conteúdo binário do arquivo;     &lt;/EntityAttributeFile&gt;   &lt;/EntityAttributeFileListList&gt;  &lt;/EntityRecord&gt;  &lt;/EntityRecordList&gt;
+
+                * Requerido;
+                ** Observações de acordo com o tipo do atributo:   Número: dígitos numéricos sem separador de milhar e decimal;    Decimal: dígitos numéricos sem separador de milhar e com ponto (.) como separador decimal;    Data: YYYY-MM-DD   Hora: HH:MM   Boolean: 0 ou 1;
+
+                Retorno:
+                Status: Situação da execução do método. Seu valor pode ser:   SUCCESS: Método executado com sucesso;    FAILURE: Ocorreu uma falha na execução do método;   Code: Código do retorno do método;   Detail: Detalhe do retorno do método;   &lt;RecordList&gt;  &lt;Record&gt;   RecordKey: Código do registro incluído pelo método;   &lt;/Record&gt;  &lt;/RecordList&gt;
+            </documentation>
+            <input message="tns:newChildEntityRecordListRequest"/>
+            <output message="tns:newChildEntityRecordListResponse"/>
+        </operation>
+        <operation name="editChildEntityRecord">
+            <documentation>
+                Altera um registro da tabela de formulário descendente do workflow;
+
+                Parâmetros:
+                WorkflowID*: Identificador do workflow;   MainEntityID*: Identificador da tabela de formulário principal;   ChildRelationshipID*: Identificador do relacionamento da tabela de formulário descendente;   ChildRecordOID*: Código do registro relacionado da tabela de formulário descendente;   &lt;EntityAttributeList&gt;  &lt;EntityAttribute&gt;   EntityAttributeID: Identificador do campo da tabela de formulário;    EntityAttributeValue: Valor do campo da tabela de formulário**;   &lt;/EntityAttribute&gt;  &lt;/EntityAttributeList&gt;  &lt;RelationshipList&gt;  &lt;Relationship&gt;   RelationshipID: Identificador do relacionamento;    &lt;RelationshipAttribute&gt;    RelationshipAttributeID: Identificador do campo da tabela de formulário relacionada;     RelationshipAttributeValue: Valor do campo da tabela de formulário relacionada**;    &lt;/RelationshipAttribute&gt;  &lt;/Relationship&gt;  &lt;/RelationshipList&gt;  &lt;EntityAttributeFileList&gt;  &lt;EntityAttributeFile&gt;   EntityAttributeID: Identificador do campo da tabela de formulário;    FileName: Nome do arquivo (inclui sua extensão);    FileContent: Conteúdo binário do arquivo;   &lt;/EntityAttributeFile&gt;  &lt;/EntityAttributeFileList&gt;
+
+                * Requerido;
+                ** Observações de acordo com o tipo do atributo:   Número: dígitos numéricos sem separador de milhar e decimal;    Decimal: dígitos numéricos sem separador de milhar e com ponto (.) como separador decimal;    Data: YYYY-MM-DD   Hora: HH:MM   Boolean: 0 ou 1;
+
+                Retorno:
+                Status: Situação da execução do método. Seu valor pode ser:   SUCCESS: Método executado com sucesso;    FAILURE: Ocorreu uma falha na execução do método;   Code: Código do retorno do método;   Detail: Detalhe do retorno do método;
+            </documentation>
+            <input message="tns:editChildEntityRecordRequest"/>
+            <output message="tns:editChildEntityRecordResponse"/>
+        </operation>
+        <operation name="deleteChildEntityRecord">
+            <documentation>
+                Exclui um registro da tabela de formulário descendente do workflow;
+
+                Parâmetros:
+                WorkflowID*: Identificador do workflow;   MainEntityID*: Identificador da tabela de formulário principal;   ChildRelationshipID*: Identificador do relacionamento da tabela de formulário descendente;   ChildRecordOID*: Código do registro relacionado da tabela de formulário descendente;
+
+                * Requerido;
+
+
+                Retorno:
+                Status: Situação da execução do método. Seu valor pode ser:   SUCCESS: Método executado com sucesso;    FAILURE: Ocorreu uma falha na execução do método;   Code: Código do retorno do método;   Detail: Detalhe do retorno do método;
+            </documentation>
+            <input message="tns:deleteChildEntityRecordRequest"/>
+            <output message="tns:deleteChildEntityRecordResponse"/>
+        </operation>
+        <operation name="clearChildEntityRecord">
+            <documentation>
+                Exclui todos registros relacionados da tabela de formulário descendente do workflow;
+
+                Parâmetros:
+                WorkflowID*: Identificador do workflow;   MainEntityID*: Identificador da tabela de formulário principal;   ChildRelationshipID*: Identificador do relacionamento da tabela de formulário descendente;
+
+                * Requerido;
+
+
+                Retorno:
+                Status: Situação da execução do método. Seu valor pode ser:   SUCCESS: Método executado com sucesso;    FAILURE: Ocorreu uma falha na execução do método;   Code: Código do retorno do método;   Detail: Detalhe do retorno do método;
+            </documentation>
+            <input message="tns:clearChildEntityRecordRequest"/>
+            <output message="tns:clearChildEntityRecordResponse"/>
+        </operation>
+        <operation name="editAttributeValue">
+            <documentation>
+                Altera o valor dos atributos de um workflow;
+
+                Parâmetros:
+                WorkflowID*: Identificador do workflow;   &lt;AttributeList&gt;  &lt;Attribute&gt;   AttributeID*: Identificador do atributo;    &lt;AttributeValueList&gt;    AttributeValue: Valor do atributo ;    &lt;/AttributeValueList&gt;  &lt;/Attribute&gt;  &lt;/AttributeList&gt;
+
+                * Requerido;
+                ** Observações de acordo com o tipo do atributo:   Numérico: dígitos numéricos sem separador de milhar e com ponto (.) como separador decimal;    Moeda: dígitos numéricos sem separador de milhar e com ponto (.) como separador decimal;    Data: YYYY-MM-DD   Hora: HHHH:MM
+
+                Retorno:
+                Status: Situação da execução do método. Seu valor pode ser:   SUCCESS: Método executado com sucesso;    FAILURE: Ocorreu uma falha na execução do método;   Code: Código do retorno do método;   Detail: Detalhe do retorno do método;
+            </documentation>
+            <input message="tns:editAttributeValueRequest"/>
+            <output message="tns:editAttributeValueResponse"/>
+        </operation>
+        <operation name="newAttachment">
+            <documentation>
+                Anexa um arquivo a uma atividade do workflow;
+
+                Parâmetros:
+                WorkflowID*: Identificador do workflow;   ActivityID*: Identificador da atividade;   FileName*: Nome do arquivo (inclui sua extensão);   FileContent*: Conteúdo binário do arquivo;   UserID: Matrícula do usuário;   AttachmentID: Desde a versão 2.0.10 este parâmetro tornou-se obsoleto. Na importação, deixe-o em branco.;   AttachmentName: Nome do anexo;   Summary: Resumo;
+
+                * Requerido;
+
+
+                Retorno:
+                Status: Situação da execução do método. Seu valor pode ser:   SUCCESS: Método executado com sucesso;    FAILURE: Ocorreu uma falha na execução do método;   Code: Código do retorno do método;   Detail: Detalhe do retorno do método;   RecordKey: Código do registro incluído pelo método;   RecordID: Identificador do registro incluído pelo método;
+            </documentation>
+            <input message="tns:newAttachmentRequest"/>
+            <output message="tns:newAttachmentResponse"/>
+        </operation>
+        <operation name="newAssocDocument">
+            <documentation>
+                Associa um documento do SE Documento a uma atividade do workflow;
+
+                Parâmetros:
+                WorkflowID*: Identificador do workflow;   ActivityID*: Identificador da atividade;   DocumentID*: Identificador do documento;   ActivityOrder: Número da ordem da atividade;
+
+                * Requerido;
+
+
+                Retorno:
+                Status: Situação da execução do método. Seu valor pode ser:   SUCCESS: Método executado com sucesso;    FAILURE: Ocorreu uma falha na execução do método;   Code: Código do retorno do método;   Detail: Detalhe do retorno do método;
+            </documentation>
+            <input message="tns:newAssocDocumentRequest"/>
+            <output message="tns:newAssocDocumentResponse"/>
+        </operation>
+        <operation name="newAssocWorkflow">
+            <documentation>
+                Associa um ou mais workflows a um outro workflow;
+
+                Parâmetros:
+                WorkflowID*: Identificador do workflow;   &lt;AssocWorkflowList&gt;  &lt;AssocWorkflow&gt;   AssocWorkflowID*: Identificador do workflow associado;    AssocWorkflowType: Tipo da associação**;   &lt;/AssocWorkflow&gt;  &lt;/AssocWorkflowList&gt;  ActivityID: Identificador da atividade;   ActivityOrder: Número da ordem da atividade;
+
+                * Requerido;
+                ** Tipo da associação:   1: Bloqueante;    Qualquer outro valor: Não bloqueante;
+
+                Retorno:
+                Status: Situação da execução do método. Seu valor pode ser:   SUCCESS: Método executado com sucesso;    FAILURE: Ocorreu uma falha na execução do método;   Code: Código do retorno do método;   Detail: Detalhe do retorno do método;   &lt;RecordList&gt;  &lt;Record&gt;   RecordKey: Código do registro incluído pelo método;   &lt;/Record&gt;  &lt;/RecordList&gt;
+            </documentation>
+            <input message="tns:newAssocWorkflowRequest"/>
+            <output message="tns:newAssocWorkflowResponse"/>
+        </operation>
+        <operation name="executeSystemActivity">
+            <documentation>
+                Executa uma atividade de sistema assíncrona do workflow;
+
+                Parâmetros:
+                WorkflowID*: Identificador do workflow;   ActivityID*: Identificador da atividade;   ActivityOrder: Número da ordem da atividade;
+
+                * Requerido;
+
+
+                Retorno:
+                Status: Situação da execução do método. Seu valor pode ser:   SUCCESS: Método executado com sucesso;    FAILURE: Ocorreu uma falha na execução do método;   Code: Código do retorno do método;   Detail: Detalhe do retorno do método;
+            </documentation>
+            <input message="tns:executeSystemActivityRequest"/>
+            <output message="tns:executeSystemActivityResponse"/>
+        </operation>
+        <operation name="executeActivity">
+            <documentation>
+                Executa uma atividade de usuário ou decisão do workflow;
+
+                Parâmetros:
+                WorkflowID*: Identificador do workflow;   ActivityID*: Identificador da atividade;   ActionSequence*: Número de sequência da ação;   UserID: Matrícula do usuário;   ActivityOrder: Número da ordem da atividade;
+
+                * Requerido;
+
+
+                Retorno:
+                Status: Situação da execução do método. Seu valor pode ser:   SUCCESS: Método executado com sucesso;    FAILURE: Ocorreu uma falha na execução do método;   Code: Código do retorno do método;   Detail: Detalhe do retorno do método;
+            </documentation>
+            <input message="tns:executeActivityRequest"/>
+            <output message="tns:executeActivityResponse"/>
+        </operation>
+        <operation name="newAccessException">
+            <documentation>
+                Inclui uma ou mais exceções de acesso do workflow;
+
+                Parâmetros:
+                WorkflowID*: Identificador do workflow;   &lt;AccessExceptionList&gt;  &lt;AccessException&gt;   UserID: Matrícula do usuário;   &lt;/AccessException&gt;  &lt;/AccessExceptionList&gt;
+
+                * Requerido;
+
+
+                Retorno:
+                Status: Situação da execução do método. Seu valor pode ser:   SUCCESS: Método executado com sucesso;    FAILURE: Ocorreu uma falha na execução do método;   Code: Código do retorno do método;   Detail: Detalhe do retorno do método;   &lt;RecordDetailList&gt;  &lt;RecordDetail&gt;   Status: Situação do processamento do registro. Seu valor pode ser:;     SUCCESS: Registro processado com sucesso;     FAILURE: Ocorreu uma falha no processamento do registro;    Code: Código do processamento do registro;    Detail: Detalhe do processamento do registro;    RecordKey: Código do registro incluído;   &lt;/RecordDetail&gt;  &lt;/RecordDetailList&gt;
+            </documentation>
+            <input message="tns:newAccessExceptionRequest"/>
+            <output message="tns:newAccessExceptionResponse"/>
+        </operation>
+        <operation name="cancelWorkflow">
+            <documentation>
+                Cancela um workflow;
+
+                Parâmetros:
+                WorkflowID*: Identificador do workflow;   Explanation*: Justificativa;   UserID: Matrícula do usuário;
+
+                * Requerido;
+
+
+                Retorno:
+                Status: Situação da execução do método. Seu valor pode ser:   SUCCESS: Método executado com sucesso;    FAILURE: Ocorreu uma falha na execução do método;   Code: Código do retorno do método;   Detail: Detalhe do retorno do método;
+            </documentation>
+            <input message="tns:cancelWorkflowRequest"/>
+            <output message="tns:cancelWorkflowResponse"/>
+        </operation>
+        <operation name="getWorkflow">
+            <documentation>
+                Dados da instância;
+
+                Parâmetros:
+                WorkflowID*: Identificador do workflow;
+
+                * Requerido;
+
+
+                Retorno:
+                Status: Situação da execução do método. Seu valor pode ser:   SUCCESS: Método executado com sucesso;    FAILURE: Ocorreu uma falha na execução do método;   Code: Código do retorno do método;   Detail: Detalhe do retorno do método;   Title: Título da instância;   ProcessID: Identificador do processo;   InstanceStatus: Situação da instância;   WorkflowStatus: Situação dinâmica do workflow (Identificador - Nome);   StarterUser: Matrícula do usuário iniciador da instância;   StarterExternalUser: E-mail do usuário externo iniciador da instância;   StartDate: Data e hora de início da instância (formato: AAAA-MM-DD hh:mm:ss);
+            </documentation>
+            <input message="tns:getWorkflowRequest"/>
+            <output message="tns:getWorkflowResponse"/>
+        </operation>
+        <operation name="unlinkActivityFromUser">
+            <documentation>
+                Desassociar atividade do usuário;
+
+                Parâmetros:
+                WorkflowID*: Identificador do workflow;   ActivityID*: Identificador da atividade;
+
+                * Requerido;
+
+
+                Retorno:
+                Status: Situação da execução do método. Seu valor pode ser:   SUCCESS: Método executado com sucesso;    FAILURE: Ocorreu uma falha na execução do método;   Code: Código do retorno do método;   Detail: Detalhe do retorno do método;
+            </documentation>
+            <input message="tns:unlinkActivityFromUserRequest"/>
+            <output message="tns:unlinkActivityFromUserResponse"/>
+        </operation>
+        <operation name="newComment">
+            <documentation>
+                Adiciona um comentário na instância do processo.;
+
+                Parâmetros:
+                WorkflowID*: Identificador do workflow;   ActivityID*: Identificador da atividade;   Text*: Texto;   Private: Privado;   UserID: Matrícula do usuário;
+
+                * Requerido;
+
+
+                Retorno:
+                Status: Situação da execução do método. Seu valor pode ser:   SUCCESS: Método executado com sucesso;    FAILURE: Ocorreu uma falha na execução do método;   Code: Código do retorno do método;   Detail: Detalhe do retorno do método;
+            </documentation>
+            <input message="tns:newCommentRequest"/>
+            <output message="tns:newCommentResponse"/>
+        </operation>
+        <operation name="reactivateWorkflow">
+            <documentation>
+                Reativa um ou mais workflows;
+
+                Parâmetros:
+                &lt;ReactivateWorkflowList&gt;  &lt;WorkflowID&gt;   Identificador do workflow;   &lt;/WorkflowID&gt;  &lt;/ReactivateWorkflowList&gt;  Explanation*: Justificativa;   UserID: Matrícula do usuário;
+
+                * Requerido;
+
+
+                Retorno:
+                Status: Situação da execução do método. Seu valor pode ser:   SUCCESS: Método executado com sucesso;    FAILURE: Ocorreu uma falha na execução do método;   Code: Código do retorno do método;   Detail: Detalhe do retorno do método;   RecordListResponse: Lista com a situação dos registros executados pelo método;   &lt;}WorkflowID&gt;   Situação do registro;   &lt;}/WorkflowID&gt;
+            </documentation>
+            <input message="tns:reactivateWorkflowRequest"/>
+            <output message="tns:reactivateWorkflowResponse"/>
+        </operation>
+    </portType>
+    <binding name="WorkflowBinding" type="tns:WorkflowPortType">
+        <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+        <operation name="newWorkflow">
+            <soap:operation soapAction="urn:workflow#newWorkflow" style="document"/>
+            <input><soap:body use="literal" namespace="urn:workflow"/></input>
+            <output><soap:body use="literal" namespace="urn:workflow"/></output>
+        </operation>
+        <operation name="newWorkflowEditData">
+            <soap:operation soapAction="urn:workflow#newWorkflowEditData" style="document"/>
+            <input><soap:body use="literal" namespace="urn:workflow"/></input>
+            <output><soap:body use="literal" namespace="urn:workflow"/></output>
+        </operation>
+        <operation name="newWorkflowTypeEditData">
+            <soap:operation soapAction="urn:workflow#newWorkflowTypeEditData" style="document"/>
+            <input><soap:body use="literal" namespace="urn:workflow"/></input>
+            <output><soap:body use="literal" namespace="urn:workflow"/></output>
+        </operation>
+        <operation name="editWorkflowData">
+            <soap:operation soapAction="urn:workflow#editWorkflowData" style="document"/>
+            <input><soap:body use="literal" namespace="urn:workflow"/></input>
+            <output><soap:body use="literal" namespace="urn:workflow"/></output>
+        </operation>
+        <operation name="editEntityRecord">
+            <soap:operation soapAction="urn:workflow#editEntityRecord" style="document"/>
+            <input><soap:body use="literal" namespace="urn:workflow"/></input>
+            <output><soap:body use="literal" namespace="urn:workflow"/></output>
+        </operation>
+        <operation name="newChildEntityRecord">
+            <soap:operation soapAction="urn:workflow#newChildEntityRecord" style="document"/>
+            <input><soap:body use="literal" namespace="urn:workflow"/></input>
+            <output><soap:body use="literal" namespace="urn:workflow"/></output>
+        </operation>
+        <operation name="newChildEntityRecordList">
+            <soap:operation soapAction="urn:workflow#newChildEntityRecordList" style="document"/>
+            <input><soap:body use="literal" namespace="urn:workflow"/></input>
+            <output><soap:body use="literal" namespace="urn:workflow"/></output>
+        </operation>
+        <operation name="editChildEntityRecord">
+            <soap:operation soapAction="urn:workflow#editChildEntityRecord" style="document"/>
+            <input><soap:body use="literal" namespace="urn:workflow"/></input>
+            <output><soap:body use="literal" namespace="urn:workflow"/></output>
+        </operation>
+        <operation name="deleteChildEntityRecord">
+            <soap:operation soapAction="urn:workflow#deleteChildEntityRecord" style="document"/>
+            <input><soap:body use="literal" namespace="urn:workflow"/></input>
+            <output><soap:body use="literal" namespace="urn:workflow"/></output>
+        </operation>
+        <operation name="clearChildEntityRecord">
+            <soap:operation soapAction="urn:workflow#clearChildEntityRecord" style="document"/>
+            <input><soap:body use="literal" namespace="urn:workflow"/></input>
+            <output><soap:body use="literal" namespace="urn:workflow"/></output>
+        </operation>
+        <operation name="editAttributeValue">
+            <soap:operation soapAction="urn:workflow#editAttributeValue" style="document"/>
+            <input><soap:body use="literal" namespace="urn:workflow"/></input>
+            <output><soap:body use="literal" namespace="urn:workflow"/></output>
+        </operation>
+        <operation name="newAttachment">
+            <soap:operation soapAction="urn:workflow#newAttachment" style="document"/>
+            <input><soap:body use="literal" namespace="urn:workflow"/></input>
+            <output><soap:body use="literal" namespace="urn:workflow"/></output>
+        </operation>
+        <operation name="newAssocDocument">
+            <soap:operation soapAction="urn:workflow#newAssocDocument" style="document"/>
+            <input><soap:body use="literal" namespace="urn:workflow"/></input>
+            <output><soap:body use="literal" namespace="urn:workflow"/></output>
+        </operation>
+        <operation name="newAssocWorkflow">
+            <soap:operation soapAction="urn:workflow#newAssocWorkflow" style="document"/>
+            <input><soap:body use="literal" namespace="urn:workflow"/></input>
+            <output><soap:body use="literal" namespace="urn:workflow"/></output>
+        </operation>
+        <operation name="executeSystemActivity">
+            <soap:operation soapAction="urn:workflow#executeSystemActivity" style="document"/>
+            <input><soap:body use="literal" namespace="urn:workflow"/></input>
+            <output><soap:body use="literal" namespace="urn:workflow"/></output>
+        </operation>
+        <operation name="executeActivity">
+            <soap:operation soapAction="urn:workflow#executeActivity" style="document"/>
+            <input><soap:body use="literal" namespace="urn:workflow"/></input>
+            <output><soap:body use="literal" namespace="urn:workflow"/></output>
+        </operation>
+        <operation name="newAccessException">
+            <soap:operation soapAction="urn:workflow#newAccessException" style="document"/>
+            <input><soap:body use="literal" namespace="urn:workflow"/></input>
+            <output><soap:body use="literal" namespace="urn:workflow"/></output>
+        </operation>
+        <operation name="cancelWorkflow">
+            <soap:operation soapAction="urn:workflow#cancelWorkflow" style="document"/>
+            <input><soap:body use="literal" namespace="urn:workflow"/></input>
+            <output><soap:body use="literal" namespace="urn:workflow"/></output>
+        </operation>
+        <operation name="getWorkflow">
+            <soap:operation soapAction="urn:workflow#getWorkflow" style="document"/>
+            <input><soap:body use="literal" namespace="urn:workflow"/></input>
+            <output><soap:body use="literal" namespace="urn:workflow"/></output>
+        </operation>
+        <operation name="unlinkActivityFromUser">
+            <soap:operation soapAction="urn:workflow#unlinkActivityFromUser" style="document"/>
+            <input><soap:body use="literal" namespace="urn:workflow"/></input>
+            <output><soap:body use="literal" namespace="urn:workflow"/></output>
+        </operation>
+        <operation name="newComment">
+            <soap:operation soapAction="urn:workflow#newComment" style="document"/>
+            <input><soap:body use="literal" namespace="urn:workflow"/></input>
+            <output><soap:body use="literal" namespace="urn:workflow"/></output>
+        </operation>
+        <operation name="reactivateWorkflow">
+            <soap:operation soapAction="urn:workflow#reactivateWorkflow" style="document"/>
+            <input><soap:body use="literal" namespace="urn:workflow"/></input>
+            <output><soap:body use="literal" namespace="urn:workflow"/></output>
+        </operation>
+    </binding>
+    <service name="Workflow">
+        <port name="WorkflowPort" binding="tns:WorkflowBinding">
+            <soap:address location="https://se.gruporovema.com.br/apigateway/se/ws/wf_ws.php"/>
+        </port>
+    </service>
+</definitions>

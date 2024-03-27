@@ -2,8 +2,8 @@ package br.andrew.sap.services
 
 import br.andrew.sap.infrastructure.odata.OData
 import br.andrew.sap.model.Attachment
-import br.andrew.sap.model.envrioments.SapEnvrioment
 import br.andrew.sap.model.SapError
+import br.andrew.sap.model.envrioments.SapEnvrioment
 import br.andrew.sap.model.partner.BusinessPartner
 import br.andrew.sap.services.abstracts.EntitiesService
 import org.apache.hc.client5.http.utils.Base64
@@ -48,19 +48,18 @@ class AttachmentService(env: SapEnvrioment, val bpService: BusinessPartnersServi
                     .patch(env.host+this.path()+"(${partner.attachmentEntry})")
 
             val boundary = "WebKitFormBoundaryUmZoXOtOBNCTLyxT"
-            val mimeType: String = Tika().detect(Base64.decodeBase64(attachment.file64))
-            val extension = MimeTypes.getDefaultMimeTypes().forName(mimeType).extension
-            val fileName = attachment.fileName+" - "+cardCode+extension
+                val fileName = attachment.fileName+" - "+cardCode
 
-            val body =
-                "--$boundary\n"+
-                        "Content-Disposition: form-data; name=\"$fileName\"; filename=\"$fileName\"\n" +
-                        "Content-Type: $mimeType\n\n"+
-                        "${Base64.decodeBase64(attachment.file64)}\n"+
-                        "--$boundary--"
+            val headeyBoundary = ("--$boundary\n"+
+                    "Content-Disposition: form-data; name=\"$fileName\"; filename=\"${fileName}.${attachment.getExtension()}\"\n" +
+                    "Content-Type: ${attachment.getMimeType()}\n\n").toByteArray()
+            val footer = "\n--$boundary--".toByteArray()
+            var body = headeyBoundary.plus(attachment.body!!.plus(footer))
+
             request
-                .header("Content-Type","multipart/form-data; boundary=$boundary")
+                .header("Content-Type","multipart/form-data;boundary=$boundary")
                 .header("cookie","B1SESSION=${session().sessionId}")
+                .header("Content-Length",body.size.toString())
             val retorno = restTemplate.exchange(request.body(body), OData::class.java)
 
             if(partner.attachmentEntry == null){

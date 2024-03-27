@@ -1,14 +1,19 @@
 package br.andrew.sap.infrastructure.create.fields
 
 import br.andrew.sap.model.*
+import br.andrew.sap.model.entity.DbType
+import br.andrew.sap.model.entity.FieldMd
+import br.andrew.sap.model.entity.ValuesMd
 import br.andrew.sap.services.structs.UserFieldsMDService
 import br.andrew.sap.services.structs.UserTablesMDService
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Profile
 
 
 @Configuration
 @Profile("!test")
+@ConditionalOnProperty(value = ["fields"], havingValue = "true", matchIfMissing = true)
 class TableConfiguration(val userFieldsMDService: UserFieldsMDService,
                         val  tableService: UserTablesMDService) {
 
@@ -18,16 +23,16 @@ class TableConfiguration(val userFieldsMDService: UserFieldsMDService,
        ))
 
         listOf(
-            FieldMd("porcentagem","comissão em porcentagem","@COMISSAO",DbType.db_Float),
+            FieldMd("porcentagem","comissão em porcentagem","@COMISSAO", DbType.db_Float),
         ).forEach { userFieldsMDService.findOrCreate(it) }
 
         listOf(
-            FieldMd("desconto","Desconto (%) do vendedor","@COMISSAO",DbType.db_Float),
+            FieldMd("desconto","Desconto (%) do vendedor","@COMISSAO", DbType.db_Float),
         ).forEach { userFieldsMDService.findOrCreate(it) }
 
 
         listOf(
-            FieldMd("tipoComissao","Selecionar Comissao","OPLN",DbType.db_Alpha)
+            FieldMd("tipoComissao","Selecionar Comissao","OPLN", DbType.db_Alpha)
                 .also { it.linkedUDO = "comissao" },
         ).forEach { userFieldsMDService.findOrCreate(it) }
 
@@ -38,8 +43,8 @@ class TableConfiguration(val userFieldsMDService: UserFieldsMDService,
             "LiberaPara","Libera para",TbType.bott_MasterDataLines
         ))
         listOf(
-            FieldMd("desconto","Desconto (%)","@condicoesFV",DbType.db_Float),
-            FieldMd("juros","Juros (%)","@condicoesFV",DbType.db_Float),
+            FieldMd("desconto","Desconto (%)","@condicoesFV", DbType.db_Float),
+            FieldMd("juros","Juros (%)","@condicoesFV", DbType.db_Float),
             FieldMd("Filial","Filial","@LiberaPara")
                 .also { it.ValidValuesMD = listOf(
                     ValuesMd("2","SUSTENNUTRI NUTRICAO ANIMAL"),

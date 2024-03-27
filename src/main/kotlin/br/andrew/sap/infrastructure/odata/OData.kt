@@ -12,7 +12,14 @@ import org.springframework.web.client.RestTemplate
 class OData : LinkedHashMap<String,Any>(){
 
     inline fun <reified T: Any> tryGetValue() : T {
-        val mapper = ObjectMapper().registerModule(KotlinModule()).registerModule(KotlinModule())
+        val mapper = ObjectMapper().registerModule(KotlinModule.Builder()
+            .withReflectionCacheSize(512)
+            .configure(KotlinFeature.NullToEmptyCollection, true)
+            .configure(KotlinFeature.NullToEmptyMap, true)
+            .configure(KotlinFeature.NullIsSameAsDefault, true)
+            .configure(KotlinFeature.SingletonSupport, true)
+            .configure(KotlinFeature.StrictNullChecks, true)
+            .build())
         val json = this.get("value") ?: mapper.writeValueAsString(this)
         if(json is LinkedHashMap<*,*>)
             return mapper.readValue(mapper.writeValueAsString(json), T::class.java)
@@ -21,8 +28,14 @@ class OData : LinkedHashMap<String,Any>(){
 
     inline fun <reified T> tryGetValues() : List<T> {
         val json = this.get("value")
-        val mapper = ObjectMapper().registerModule(KotlinModule()).registerModule(KotlinModule())
-
+        val mapper = ObjectMapper().registerModule(KotlinModule.Builder()
+            .withReflectionCacheSize(512)
+            .configure(KotlinFeature.NullToEmptyCollection, true)
+            .configure(KotlinFeature.NullToEmptyMap, true)
+            .configure(KotlinFeature.NullIsSameAsDefault, true)
+            .configure(KotlinFeature.SingletonSupport, true)
+            .configure(KotlinFeature.StrictNullChecks, true)
+            .build())
         if(json is String)
             return mapper.readValue(json, jacksonTypeRef<List<T>>())
         else if(json is List<*>)
@@ -30,8 +43,8 @@ class OData : LinkedHashMap<String,Any>(){
         throw Exception("Não foi possivel fazer o parse")
     }
 
-    inline fun <reified T> tryGetPageValues(): Page<T> {
-        return PageImpl<T>(tryGetValues<T>(), Pageable.unpaged(),count() ?:100)
+    inline fun <reified T> tryGetPageValues(page : Pageable): Page<T> {
+        return PageImpl<T>(tryGetValues<T>(), page,count() ?:100)
     }
 
     fun nextLink() : String{

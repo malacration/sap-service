@@ -1,12 +1,15 @@
 package br.andrew.sap.model.partner
 
-import br.andrew.sap.model.PaymentMethod
+import br.andrew.sap.model.ContactOpaque
+import br.andrew.sap.model.bank.PaymentMethod
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.PropertyNamingStrategy
 import com.fasterxml.jackson.databind.annotation.JsonNaming
+import java.security.MessageDigest
+import java.util.Date
 
 
 @JsonNaming(PropertyNamingStrategy.UpperCamelCaseStrategy::class)
@@ -32,20 +35,29 @@ class BusinessPartner() {
     }
 
 
-
+    var referencias: ReferenciaComercial? = null
     var freeText: String? = null
     var u_id_forca: String? = null
     var emailAddress: String? = null
     var phone1: String? = null
+    var phone2: String? = null
     var cardName : String? = null
     var cardType : BusinessPartnerType? = null
     var cardCode : String? = null
     var salesPersonCode : Int? = null
     var U_fazer_fluxo_prazo : String? = "0"
     var attachmentEntry : Int? = null
+
+    var RemoveContacts : List<Int>? = null
 //    var BPLID : String? = null
 //    var DisabledForBP : String? = null
     var series : Int? = 77
+    var ContactEmployees : MutableList<Person> = mutableListOf()
+    var U_Rov_Data_Nascimento : String? = null
+    var U_Rov_Nome_Mae : String? = null
+
+    var U_keyUpdate : String? = null
+    var U_dataSerasa : Date? = null
 
 
 
@@ -100,5 +112,28 @@ class BusinessPartner() {
 
     override fun toString(): String {
         return "$cardCode - CNPJ($BPFiscalTaxIDCollection)"
+    }
+
+    fun clearDataNotAllowUpdated() {
+        this.BPBranchAssignment = null
+        BPFiscalTaxIDCollection = null
+        BPPaymentMethods = listOf()
+        this.RemoveContacts = null
+        this.referencias = null
+        this.U_keyUpdate = ""
+    }
+
+    fun generateKey(md : MessageDigest): String {
+        val timesTamp = "${cardCode}-${System.currentTimeMillis()}"
+        val bytes = timesTamp.toByteArray()
+        val digest = md.digest(bytes)
+        return digest.fold("") { str, it -> str + "%02x".format(it) }
+    }
+
+    @JsonIgnore
+    fun getContactOpaque(): List<ContactOpaque> {
+        return listOf(
+            ContactOpaque(emailAddress?: "")
+        )
     }
 }

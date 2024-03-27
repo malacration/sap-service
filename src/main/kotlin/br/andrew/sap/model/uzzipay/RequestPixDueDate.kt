@@ -69,7 +69,6 @@ class RequestPixDueDate(
                 return SimpleDateFormat("yyyy-MM-dd")
                     .format(Date.from(LocalDate.now().plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant()))
         return dueDate.toString();
-
     }
 }
 

@@ -1,7 +1,7 @@
 package br.andrew.sap.model.uzzipay
 
-import br.andrew.sap.model.documents.Document
-import br.andrew.sap.model.documents.Installment
+import br.andrew.sap.model.documents.base.Document
+import br.andrew.sap.model.documents.base.Installment
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -45,7 +45,7 @@ class RequestQrCodeTests {
         Assertions.assertEquals(123,request.docEntry())
         Assertions.assertTrue(
             request.externalIdentifier.contains("Num333-Entry123-ins:666-invoice"))
-        Assertions.assertEquals("",Installment.reverseExternalIdentifier(""))
+        Assertions.assertEquals("", Installment.reverseExternalIdentifier(""))
     }
 
     @Test

@@ -1,6 +1,7 @@
 package br.andrew.sap.model.documents
 
-import org.junit.jupiter.api.Assertions
+import br.andrew.sap.model.documents.base.DistribuicaoCustoByBranch
+import br.andrew.sap.model.documents.base.Product
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 

@@ -1,24 +1,36 @@
 package br.andrew.sap.controllers.handler
 
+import br.andrew.sap.model.SapError
 import br.andrew.sap.model.telegram.TipoMensagem
 import br.andrew.sap.services.TelegramRequestService
+import brave.Tracer
 import jakarta.servlet.RequestDispatcher
 import jakarta.servlet.http.HttpServletRequest
+import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.boot.web.servlet.error.ErrorController
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.client.HttpClientErrorException
 import java.util.*
 
-class MyErrorController(val telegram : TelegramRequestService) : ErrorController {
+class MyErrorController(val tracer: Tracer, val telegram: TelegramRequestService) : ErrorController {
 
     val log = LoggerFactory.getLogger(MyErrorController::class.java)
 
+    fun getCurrentTrace(): String {
+        try{
+            return tracer.currentSpan().context().spanIdString()
+        }catch (e : Throwable){
+            log.error("Erro ao gerar trace ID",e)
+            return "SEM TRACE ID"
+        }
+    }
     @RequestMapping("/error",produces = ["application/json"])
     fun handleError(request: HttpServletRequest, t : Throwable): ResponseEntity<ErroDto> {
         val trace = request.getAttribute("trace") ?: t
-        val traceId = if (request.getAttribute("TraceId") == null ) "SEM TRACE ID" else request.getAttribute("TraceId").toString()
+        val traceId = getCurrentTrace()
         log.error("Error controller",t)
         val status = request.getAttribute(RequestDispatcher.ERROR_STATUS_CODE)
         val statusCode  = if (status != null)
@@ -32,6 +44,10 @@ class MyErrorController(val telegram : TelegramRequestService) : ErrorController
             ErroDto("Acesso Negado",traceId)
         else if(statusCode == HttpStatus.NOT_FOUND.value())
             ErroDto(t.message ?: "Pagina Não encontrada",traceId,t)
+        else if(t is HttpClientErrorException){
+            val msg = t.getResponseBodyAs(SapError::class.java)?.error?.message?.value ?: "Erro inesperado"
+            ErroDto(msg,traceId,t)
+        }
         else
             ErroDto(t.message ?: "Erro inesperado",traceId,t)
 

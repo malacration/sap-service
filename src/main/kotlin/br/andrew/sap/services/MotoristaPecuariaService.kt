@@ -21,8 +21,9 @@ class MotoristaPecuariaService(env : SapEnvrioment,
 
     fun getByCnh(cnh : String): OData {
         return get(Filter(
-                listOf(
+                mutableListOf(
                         Predicate("U_RegistroCNH",cnh.trim().trimStart('0'), Condicao.CONTAINS)
-                )))
+                )
+        ))
     }
 }

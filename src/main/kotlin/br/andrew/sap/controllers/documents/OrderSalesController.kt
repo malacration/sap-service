@@ -36,7 +36,7 @@ class OrderSalesController(val ordersService: OrdersService,
             return retorno;
         }catch (t : CreditException){
             logger.warn(t.message,t)
-            return t.getOrderFake(order).also { applicationEventPublisher.publishEvent(t) }
+            return t.getDocumentFake(order).also { applicationEventPublisher.publishEvent(t) }
         }
     }
 

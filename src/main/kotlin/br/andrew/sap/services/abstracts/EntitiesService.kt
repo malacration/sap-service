@@ -42,6 +42,14 @@ abstract class EntitiesService<T>(protected val env: SapEnvrioment,
         return restTemplate.exchange(request, OData::class.java).body
     }
 
+    fun put(entry : Any, id : String): OData?{
+        val request = RequestEntity
+            .put(env.host+this.path()+"($id)")
+            .header("cookie","B1SESSION=${session().sessionId}")
+            .body(entry)
+        return restTemplate.exchange(request, OData::class.java).body
+    }
+
     fun cancel(id : String): OData? {
         val request = RequestEntity
                 .post(env.host+this.path()+"($id)/Cancel")
@@ -51,11 +59,12 @@ abstract class EntitiesService<T>(protected val env: SapEnvrioment,
     }
 
     open fun get(filter : Filter = Filter(), order : OrderBy = OrderBy(), page : Pageable = Pageable.ofSize(20)) : OData {
-        val aditional = listOf(filter,order).filter { it.toString().isNotEmpty() }.joinToString(" ","&")
+        val aditional = listOf(filter,order).filter { it.toString().isNotEmpty() }.joinToString("&","&")
         val skip = (page.pageNumber*page.pageSize).toString()+"&\$inlinecount=allpages"
         val request = RequestEntity
                 .get(env.host+this.path()+"?\$skip=${skip}"+aditional)
                 .header("cookie","B1SESSION=${session().sessionId}")
+                .header("Prefer",  "odata.maxpagesize=${page.pageSize}")
                 .build()
         return restTemplate.exchange(request, OData::class.java).body ?: OData()
     }
@@ -73,6 +82,14 @@ abstract class EntitiesService<T>(protected val env: SapEnvrioment,
                 .get(env.host+this.path()+"(${id})")
                 .header("cookie","B1SESSION=${session().sessionId}")
                 .build()
+        return restTemplate.exchange(request, OData::class.java).body!!
+    }
+
+    fun delete(id : String) : OData {
+        val request = RequestEntity
+            .delete(env.host+this.path()+"(${id})")
+            .header("cookie","B1SESSION=${session().sessionId}")
+            .build()
         return restTemplate.exchange(request, OData::class.java).body!!
     }
 
@@ -110,6 +127,17 @@ abstract class EntitiesService<T>(protected val env: SapEnvrioment,
         return restTemplate.exchange(request, OData::class.java).body!!
     }
 
+    inline fun <reified T> getAll(filter: Filter = Filter()): List<T> {
+        var content : MutableList<T> = mutableListOf()
+        var odata : OData = get(filter)
+        content.addAll(odata.tryGetValues())
+        while (odata.hasNext()){
+            odata = next(odata)
+            content.addAll(odata.tryGetValues())
+        }
+        return content;
+    }
+
     fun cru(body: String): OData {
         val request = RequestEntity
                 .post(env.host+this.path())
@@ -125,7 +153,6 @@ abstract class EntitiesService<T>(protected val env: SapEnvrioment,
                 .body(body)
         return restTemplate.exchange(request, OData::class.java).body!!
     }
-
 }
 
 

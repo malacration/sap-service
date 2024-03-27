@@ -7,7 +7,9 @@ enum class TipoMensagem(val tipo: String){
     testes("testes"),
     erros("erros");
 
-    fun topic() : Int{
+    fun topic() : Int?{
+        if(this == TipoMensagem.geral)
+            return null
         return topics[tipo]?: 44
     }
 

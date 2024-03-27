@@ -1,6 +1,6 @@
 package br.andrew.sap.model
 
-import br.andrew.sap.model.documents.Document
+import br.andrew.sap.model.documents.base.Document
 import br.andrew.sap.model.exceptions.BusinessPartnerNotAssignedException
 import br.andrew.sap.model.exceptions.CreditException
 import br.andrew.sap.model.exceptions.PixPaymentException

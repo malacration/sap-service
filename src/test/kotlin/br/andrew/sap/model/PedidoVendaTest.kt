@@ -1,7 +1,5 @@
 package br.andrew.sap.model
 
-import br.andrew.sap.model.documents.Document
-import br.andrew.sap.model.documents.OrderSales
 import br.andrew.sap.model.forca.PedidoVenda
 import br.andrew.sap.services.ItemsService
 import br.andrew.sap.services.pricing.ComissaoService
@@ -29,6 +27,16 @@ class PedidoVendaTest {
         val order = pedido.getOrder(mock(ItemsService::class.java), mock(ComissaoService::class.java))
         Assertions.assertEquals("5_-1",pedido.idCondicaoPagamento)
         Assertions.assertEquals("-1",order.paymentGroupCode)
+    }
+
+    @Test
+    fun getEnderecoId(){
+        val pedido = PedidoVenda("cli","2020-01-01", "forma", "5_-1",
+            listOf(), "1", ).also { it.endereco = "CLI555-B-COBRANCA" }
+        val idEndereco = pedido.getEnderecoEntrega()
+        Assertions.assertEquals("CLI555",idEndereco.cliente)
+        Assertions.assertEquals("B",idEndereco.tipo)
+        Assertions.assertEquals("COBRANCA",idEndereco.code)
     }
 
 

@@ -2,7 +2,6 @@ package br.andrew.sap.services
 
 import br.andrew.sap.model.Login
 import br.andrew.sap.model.Session
-import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.cache.annotation.Caching
 import org.springframework.context.annotation.Profile

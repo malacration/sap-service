@@ -22,12 +22,15 @@ class ParcelasAberto(
     val DueDate : String,
     val DocTotal : Double,
     val U_StatusCobranca: String?
+
 ){
     fun getdueDateFormated() : String {
         return SimpleDateFormat("dd/MM/yyy").format(SimpleDateFormat("yyyyMMdd").parse(DueDate))
     }
 
+
     fun notStatus() : String = if(U_StatusCobranca === null) "sem Status" else U_StatusCobranca
+
 
 
 

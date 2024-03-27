@@ -17,5 +17,5 @@ COPY --from=build ${EXTRACTED}/dependencies/ ./
 COPY --from=build ${EXTRACTED}/spring-boot-loader/ ./
 COPY --from=build ${EXTRACTED}/snapshot-dependencies/ ./
 COPY --from=build ${EXTRACTED}/application/ ./
-ENTRYPOINT ["java", "-Duser.home=/app", "org.springframework.boot.loader.JarLauncher"]
+ENTRYPOINT ["java", "-Duser.home=/app", "org.springframework.boot.loader.launch.JarLauncher"]
 

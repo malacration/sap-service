@@ -115,4 +115,20 @@ class PrecoUnitarioComDesoneracaoTest {
         val liquido = orderBase.total()-desonerado
         Assertions.assertEquals(1402.2855,liquido)
     }
+
+    @Test
+    fun desoneradoBase60(){
+        val precoAlvo = BigDecimal("100")
+        val imposto = SalesTaxAuthorities(0,
+            12.0,
+            0.0,
+            0.0,
+            60.00)
+
+        val resultado = PrecoUnitarioComDesoneracao().calculaPreco(precoAlvo,imposto)
+        val rate = imposto.valorImposto(resultado)
+        Assertions.assertEquals("0.0720", imposto.rateBaseOutro().toString())
+        Assertions.assertEquals("107.7587", resultado.toString())
+        Assertions.assertEquals("7.76", rate.toString())
+    }
 }

@@ -1,7 +1,7 @@
 package br.andrew.sap.model.uzzipay.builder
 
 import br.andrew.sap.model.BussinessPlace
-import br.andrew.sap.model.documents.Document
+import br.andrew.sap.model.documents.base.Document
 import br.andrew.sap.model.partner.Address
 import br.andrew.sap.model.partner.BusinessPartner
 import br.andrew.sap.model.uzzipay.ContaUzziPayPix
