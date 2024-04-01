@@ -20,7 +20,8 @@ class ParcelasAberto(
     val InstlmntID : String,
     val InsTotal : Double,
     val DueDate : String,
-    val DocTotal : Double
+    val DocTotal : Double,
+    val U_StatusCobranca: String?
 ){
     fun getdueDateFormated() : String {
         return SimpleDateFormat("dd/MM/yyy").format(SimpleDateFormat("yyyyMMdd").parse(DueDate))

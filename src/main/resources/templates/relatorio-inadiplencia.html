@@ -15,6 +15,7 @@
                 <th scope="col">Nº Parcela</th>
                 <th scope="col">Total Parcela</th>
                 <th scope="col">Vencimento</th>
+                <th scope="col">Status Cobrança</th>
             </tr>
             <tr th:each="titulo, iStat : ${titulos}"
                 th:style="${iStat.odd}? 'font-weight: bold;'"
@@ -28,6 +29,7 @@
                 <td th:text="${titulo.InstlmntID}"></td>
                 <td th:text="${#numbers.listFormatCurrency(titulo.InsTotal)}"></td>
                 <td th:text="${titulo.getdueDateFormated()}"></td>
+                <td th:text="${titulo.U_StatusCobranca}"></td>
             </tr>
         </table>
         <span th:text="${mail}"></span>
