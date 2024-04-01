@@ -18,7 +18,6 @@ FROM OINV NS
     LEFT  JOIN ORCT OCR ON CR."DocNum" = OCR."DocEntry"
 WHERE
     NS."DocStatus" = 'O'
-    AND NS."BPLId" in (2,4,11,17)
     AND NS."BPLId" in (2,4,11,17,18,12)
     AND P."InsTotal" <> '0'
     AND P."DueDate" <= :data
