@@ -31,7 +31,7 @@ import org.thymeleaf.context.Context
 
 
 @Component
-
+@ConditionalOnProperty(value = ["org.quartz.assinatura.enable"], havingValue = "true", matchIfMissing = true)
 class CreateSignatureTaskSe(
     val service : QuotationsService,
     val telegramRequestService: TelegramRequestService,

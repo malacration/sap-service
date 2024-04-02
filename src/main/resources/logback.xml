@@ -14,15 +14,12 @@
         <host>udp:172.18.10.76</host>
         <port>12201</port>
         <version>1.1</version>
-        <facility>java-test</facility>
+        <facility>gelf-java</facility>
         <extractStackTrace>true</extractStackTrace>
         <filterStackTrace>true</filterStackTrace>
         <mdcProfiling>true</mdcProfiling>
         <timestampPattern>yyyy-MM-dd HH:mm:ss,SSS</timestampPattern>
         <maximumMessageSize>8192</maximumMessageSize>
-
-        <!-- This are static fields -->
-        <additionalFields>fieldName1=fieldValue1,fieldName2=fieldValue2</additionalFields>
 
         <!-- This are fields using MDC -->
         <mdcFields>mdcField1,mdcField2</mdcFields>

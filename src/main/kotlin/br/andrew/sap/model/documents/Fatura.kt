@@ -23,6 +23,4 @@ class Parcela(installment: Installment, val isBoleto : Boolean) {
     val vencimento : String? = installment.dueDate
     val valor : Double = installment.total
 
-
-
 }
