@@ -3,7 +3,7 @@ package br.andrew.sap.model.telegram
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 
-class TipoMensagemTests {
+class TipoContratoFazendaMensagemTests {
 
     @Test
     fun geralSempreENull(){
