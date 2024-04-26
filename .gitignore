@@ -5,7 +5,7 @@ build/
 !gradle/wrapper/gradle-wrapper.jar
 !**/src/main/**/build/
 !**/src/test/**/build/
-src/**/application.properties
+src/main/**/application.properties
 application-*.properties
 version.properties
 
