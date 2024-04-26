@@ -1,11 +1,7 @@
 SELECT
-    "CardCode",
-    "TaxId0",
-    "TaxId4"
+    "CardCode"
 FROM
     CRD7
 WHERE
-    "TaxId0" = :valor or "TaxId4" = :valor
-
-
-
+    ("TaxId0" = :valor or "TaxId4" = :valor)
+    AND "CardCode" like 'CLI%'

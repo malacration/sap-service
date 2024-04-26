@@ -14,7 +14,12 @@ class RovemaApplicationTests {
 	fun leftTrim(){
 		val entrada = "0006660"
 		Assertions.assertEquals("6660",entrada.trim().trimStart('0'))
+	}
 
+	@Test
+	fun arrayNull(){
+		val lista = listOf("windson","jose")
+		Assertions.assertEquals(null,lista.getOrNull(3))
 	}
 
 }

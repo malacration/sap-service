@@ -1,6 +1,6 @@
-package br.andrew.sap.services
+package br.andrew.sap.services.invent
 
-import br.andrew.sap.infrastructure.configurations.bankplus.BankPlusEnvrioment
+import br.andrew.sap.infrastructure.configurations.invent.BankPlusEnvrioment
 import br.andrew.sap.model.bankplus.Boleto
 import br.andrew.sap.model.bankplus.Empresa
 import br.andrew.sap.model.documents.Invoice
@@ -58,6 +58,15 @@ class BankPlusService(val envrioment: BankPlusEnvrioment, val restTemplate: Rest
         return getBoletosBy(
             invoice.getBPL_IDAssignedToInvoice(),
             invoice.docEntry?.toString() ?: throw Exception("Doc Entry nao pode estar nulo"))
+    }
+
+
+    fun getPdf(id : String): ByteArray? {
+        return restTemplate.exchange(
+            RequestEntity
+                .get("$url/api/v2/${envrioment.base}/cobranca/boletos/${id}/pdf")
+                .header("Authorization", envrioment.token)
+                .build(),ByteArray::class.java).body
     }
 
     companion object{

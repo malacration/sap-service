@@ -18,12 +18,12 @@ class ObjectsController(val userObjectsMDService: UserObjectsMDService) {
     @GetMapping("{name}")
     fun getObject(@PathVariable name : String) : Any{
         return userObjectsMDService
-                .get(Filter(listOf(Predicate("TableName",name,Condicao.STARTS_WITH))))
+                .get(Filter(mutableListOf(Predicate("TableName",name,Condicao.STARTS_WITH))))
     }
 
     @GetMapping("/coluna/{coluna}/start/{valor}")
     fun getObjectComplexo(@PathVariable coluna : String, @PathVariable valor : String ) : Any{
         return userObjectsMDService
-                .get(Filter(listOf(Predicate(coluna,valor,Condicao.STARTS_WITH))))
+                .get(Filter(mutableListOf(Predicate(coluna,valor,Condicao.STARTS_WITH))))
     }
 }

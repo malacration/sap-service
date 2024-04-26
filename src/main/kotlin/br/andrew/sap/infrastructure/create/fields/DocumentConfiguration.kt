@@ -11,6 +11,7 @@ import org.springframework.context.annotation.Profile
 
 @Configuration
 @Profile("!test")
+@ConditionalOnProperty(value = ["fields"], havingValue = "true", matchIfMissing = true)
 class DocumentConfiguration(
     val userFieldsMDService: UserFieldsMDService
 ) {
@@ -23,5 +24,8 @@ class DocumentConfiguration(
                 userFieldsMDService.findOrCreate(it)
             }
 
+        listOf(
+            FieldMd("uuid_forca","UUID Força de Vendas","OINV")
+        ).forEach { userFieldsMDService.findOrCreate(it) }
     }
 }

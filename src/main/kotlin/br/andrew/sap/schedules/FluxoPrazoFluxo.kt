@@ -37,7 +37,7 @@ class FluxoPrazoFluxo(
 
     @Scheduled(fixedDelay = 300000)
     fun execute() {
-        val predicados = listOf(
+        val predicados = mutableListOf(
             Predicate("U_fazer_fluxo_prazo", "1", Condicao.EQUAL)
         )
         businessPartnersService

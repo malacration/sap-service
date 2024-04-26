@@ -33,7 +33,7 @@ class RomaneioPesagemService(restTemplate: RestTemplate,
                 .get(env.host+crosJoin+expand+filter)
                 .header("cookie","B1SESSION=${session().sessionId}")
                 .build()
-        return restTemplate.exchange(request, OData::class.java).body?.tryGetPageValues() ?: OData().tryGetPageValues()
+        return restTemplate.exchange(request, OData::class.java).body?.tryGetPageValues(page) ?: OData().tryGetPageValues(page)
     }
 
     fun romaneisoSemEntrada(page: Pageable = Pageable.ofSize(20), parametros: Filter): Page<RomaneioPesagem> {
@@ -43,7 +43,7 @@ class RomaneioPesagemService(restTemplate: RestTemplate,
         return restTemplate.exchange(RequestEntity
                 .get("$url('romaneio-sem-entrada.sql')/List?\$skip=${skip}&$sql")
                 .header("cookie","B1SESSION=${session().sessionId}")
-                .build(), OData::class.java).body!!.tryGetPageValues()
+                .build(), OData::class.java).body!!.tryGetPageValues(page)
     }
 
 }

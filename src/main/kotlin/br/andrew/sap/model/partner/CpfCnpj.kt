@@ -2,6 +2,8 @@ package br.andrew.sap.model.partner
 
 class CpfCnpj(value : String) {
 
+    val value : String
+
     constructor(tax : BPFiscalTaxID) : this(
         if(tax.TaxId4 == null || tax.TaxId4!!.isBlank())
             tax.TaxId0 ?: throw Exception("CpfCnpj not found")
@@ -9,7 +11,13 @@ class CpfCnpj(value : String) {
             tax.TaxId4 ?: throw Exception("CpfCnpj not found")
     )
 
-    val value = value.replace("\\D".toRegex(), "")
+    init {
+        this.value = value.replace("\\D".toRegex(), "")
+        if(this.value.length > 14)
+            throw Exception("CpfCnpj invalid, tamanho e maior que 14")
+    }
+
+
 
     fun isCpf() : Boolean {
         return value.length == 11
@@ -38,5 +46,9 @@ class CpfCnpj(value : String) {
             }
             else -> value
         }
+    }
+
+    fun equals(cpf : String): Boolean {
+        return CpfCnpj(cpf).value == this.value
     }
 }

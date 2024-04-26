@@ -2,11 +2,11 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
 	id("java")
-	id("org.springframework.boot") version "3.1.2"
-	id("io.spring.dependency-management") version "1.1.2"
+	id("org.springframework.boot") version "3.2.2"
+	id("io.spring.dependency-management") version "1.1.4"
 	id("jacoco")
-	kotlin("jvm") version "1.8.22"
-	kotlin("plugin.spring") version "1.8.22"
+	kotlin("jvm") version "1.9.22"
+	kotlin("plugin.spring") version "1.9.22"
 }
 
 group = "br.andrew.sap"
@@ -18,11 +18,17 @@ repositories {
 }
 
 dependencies {
+
+
+
 	implementation("org.springframework.boot:spring-boot-starter")
-	implementation("org.springframework.boot:spring-boot-starter-web")
+	implementation("org.springframework.boot:spring-boot-starter-web"){
+		exclude("commons-logging")
+	}
 	implementation("org.springframework.boot:spring-boot-starter-data-rest")
 	implementation("org.springframework.boot:spring-boot-starter-quartz")
 	implementation("org.springframework.boot:spring-boot-starter-security")
+	implementation("org.springframework.boot:spring-boot-starter-cache")
 	implementation("org.springframework.boot:spring-boot-starter-mail")
 	implementation("org.springframework.boot:spring-boot-starter-thymeleaf")
 
@@ -31,6 +37,23 @@ dependencies {
 
 	implementation("org.apache.tika:tika-core:2.8.0")
 
+	implementation("io.jsonwebtoken:jjwt-api:0.12.4")
+	implementation("io.jsonwebtoken:jjwt-impl:0.12.4")
+	implementation("io.jsonwebtoken:jjwt-jackson:0.12.4")
+
+
+	implementation("com.squareup.okhttp3:okhttp:4.12.0")
+
+
+
+	//** Observability
+	implementation("org.springframework.boot:spring-boot-starter-actuator")
+	//implementation("org.springframework.boot:spring-boot-starter-log4j2")
+	implementation("biz.paluch.logging:logstash-gelf:1.15.1")
+
+	implementation("io.micrometer:micrometer-tracing-bridge-brave")
+	implementation("com.github.ben-manes.caffeine:caffeine:3.1.8")
+
 	implementation("org.apache.httpcomponents.client5:httpclient5:5.2.1")
 	implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
 	implementation("org.jetbrains.kotlin:kotlin-reflect")
@@ -38,19 +61,25 @@ dependencies {
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
 	implementation("org.mockito:mockito-core:5.3.0")
 
-
-
 	//** - SOAP
 	implementation("org.apache.axis:axis:1.4")
 	implementation("org.apache.axis:axis-jaxrpc:1.4")
 	implementation("org.apache.axis:axis-saaj:1.4")
 	implementation("axis:axis-wsdl4j:1.5.1")
 	implementation("javax.xml:jaxrpc-api:1.1")
-	implementation("commons-discovery:commons-discovery:0.5")
-	implementation("commons-logging:commons-logging:1.2")
+	implementation("commons-discovery:commons-discovery:0.5"){
+		exclude("commons-logging")
+	}
+
 	implementation("org.apache.commons:commons-lang3:3.9")
-	implementation("org.apache.ws.commons.axiom:axiom-api:1.2.13")
-	implementation("org.apache.ws.commons.axiom:axiom-impl:1.2.13")
+
+//	implementation("org.apache.ws.commons.axiom:axiom-api:1.2.13"){
+//		exclude("commons-logging","commons-logging")
+//		exclude("commons-logging")
+//	}
+//	implementation("org.apache.ws.commons.axiom:axiom-impl:1.2.13"){
+//		exclude("commons-logging")
+//	}
 
 //	implementation("javax.mail:mail:1.4")
 //	implementation("javax.activation:activation:1.1")

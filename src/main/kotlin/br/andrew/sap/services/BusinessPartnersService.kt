@@ -7,12 +7,16 @@ import br.andrew.sap.model.partner.BusinessPartner
 import br.andrew.sap.model.bank.PaymentMethod
 import br.andrew.sap.model.envrioments.SapEnvrioment
 import br.andrew.sap.model.partner.BPBranchAssignment
+import br.andrew.sap.model.partner.BusinessPartnerType
 import br.andrew.sap.model.partner.CpfCnpj
 import br.andrew.sap.services.abstracts.EntitiesService
 import org.springframework.http.RequestEntity
 import org.springframework.stereotype.Service
 import org.springframework.web.client.RestTemplate
+import java.text.SimpleDateFormat
 import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import java.util.*
 
 @Service
 class BusinessPartnersService(env: SapEnvrioment, restTemplate: RestTemplate, authService: AuthService) :
@@ -46,9 +50,16 @@ class BusinessPartnersService(env: SapEnvrioment, restTemplate: RestTemplate, au
                 "}","'${bp.cardCode}'")
     }
 
-    fun getByCpfCnpj(cpfCnpj: String): BusinessPartner {
+    fun atualizaDataSerasa(date : Date,bp: BusinessPartner): OData? {
+        val strDate = SimpleDateFormat("yyyy-MM-dd").format(date)
+        return update("{" +
+                " \"U_dataSerasa\" : \"$strDate\" "+
+                "}","'${bp.cardCode}'")
+    }
+
+    fun getByCpfCnpj(cpfCnpj: String, type : BusinessPartnerType): BusinessPartner {
         val url = env.host+"/b1s/v1/"
-        var uri = "${url}SQLQueries('parceiro.sql')/List?valor='${CpfCnpj(cpfCnpj).getWithMask()}'"
+        var uri = "${url}SQLQueries('parceiro.sql')/List?valor='${CpfCnpj(cpfCnpj).getWithMask()}'&type='${type.getForSql()}'"
         val request = RequestEntity
             .get(uri)
             .header("cookie","B1SESSION=${session().sessionId}")
@@ -59,5 +70,16 @@ class BusinessPartnersService(env: SapEnvrioment, restTemplate: RestTemplate, au
             "'${odata.firstOrNull()?.cardCode ?: throw Exception("O ${CpfCnpj(cpfCnpj).getWithMask()} não foi encontrado")}'"
         )
             .tryGetValue<BusinessPartner>()
+    }
+
+    fun normalizeAddressName(bp: BusinessPartner) {
+        bp.getAddresses().forEach {
+            it.addressName = it.normalize()
+        }
+        val novo = BusinessPartner().also {
+            it.setAddresses(bp.getAddresses())
+        }
+        update(novo,"'${bp.cardCode}'")
+
     }
 }

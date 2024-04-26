@@ -22,14 +22,14 @@ class RegistroCompraInsumoService(
 
     fun getByPn(codPn : String): OData {
         return get(Filter(
-                listOf(
+                mutableListOf(
                         Predicate("U_CodParceiroNegocio",codPn,Condicao.EQUAL)
                 )))
     }
 
     fun getByItemAndPn(itemCode : String, cardCode : String): OData {
         return get(Filter(
-            listOf(
+            mutableListOf(
                 Predicate("U_CodParceiroNegocio",cardCode,Condicao.EQUAL),
                 Predicate("U_CodigoItem",itemCode,Condicao.EQUAL)
             )))

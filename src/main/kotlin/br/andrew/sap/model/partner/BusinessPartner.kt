@@ -1,5 +1,6 @@
 package br.andrew.sap.model.partner
 
+import br.andrew.sap.model.ContactOpaque
 import br.andrew.sap.model.bank.PaymentMethod
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
@@ -8,6 +9,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.PropertyNamingStrategy
 import com.fasterxml.jackson.databind.annotation.JsonNaming
 import java.security.MessageDigest
+import java.util.Date
 
 
 @JsonNaming(PropertyNamingStrategy.UpperCamelCaseStrategy::class)
@@ -55,6 +57,7 @@ class BusinessPartner() {
     var U_Rov_Nome_Mae : String? = null
 
     var U_keyUpdate : String? = null
+    var U_dataSerasa : Date? = null
 
 
 
@@ -125,5 +128,12 @@ class BusinessPartner() {
         val bytes = timesTamp.toByteArray()
         val digest = md.digest(bytes)
         return digest.fold("") { str, it -> str + "%02x".format(it) }
+    }
+
+    @JsonIgnore
+    fun getContactOpaque(): List<ContactOpaque> {
+        return listOf(
+            ContactOpaque(emailAddress?: "")
+        )
     }
 }

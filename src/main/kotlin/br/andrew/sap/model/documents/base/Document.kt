@@ -44,9 +44,14 @@ open class Document(val CardCode : String,
     var discountPercent : Double? = null
     var totalDiscount : String? = null
     var SequenceSerial : String? = null
+    var sequenceModel : String? = null //->
 
     @JsonProperty("U_id_pedido_forca")
     var u_id_pedido_forca: String? = null
+
+    @JsonProperty("U_uuid_forca")
+    var u_uuid_forca: String? = null
+
     var cardName: String? = null
     var OpeningRemarks: String? = null
     var controlAccount: String? = null

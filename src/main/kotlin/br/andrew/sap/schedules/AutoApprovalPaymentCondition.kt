@@ -6,13 +6,15 @@ import br.andrew.sap.infrastructure.odata.OData
 import br.andrew.sap.infrastructure.odata.Predicate
 import br.andrew.sap.model.ApprovalRequests
 import br.andrew.sap.model.User
-import br.andrew.sap.services.approval.ApprovalRequestsService
 import br.andrew.sap.services.TelegramRequestService
+import br.andrew.sap.services.approval.ApprovalRequestsService
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
+import java.text.SimpleDateFormat
+import java.util.Calendar
 
 
 @Component
@@ -28,11 +30,14 @@ class AutoApprovalPaymentCondition(
     @Scheduled(fixedDelay = 300000)
     fun execute() {
         try {
-            val predicados = listOf(
+            val dueDate = SimpleDateFormat("YYYY-MM-dd").format(Calendar.getInstance()
+                .also { it.add(Calendar.DAY_OF_YEAR, -30) }.time)
+
+            val predicados = mutableListOf(
                 Predicate("OriginatorID", currentUser.internalKey, Condicao.EQUAL),
                 Predicate("ObjectType", "17", Condicao.EQUAL),
                 Predicate("IsDraft", "Y", Condicao.EQUAL),
-                Predicate("CreationDate", "2023-08-07", Condicao.GREAT),
+                Predicate("CreationDate", dueDate.toString(), Condicao.GREAT),
                 Predicate("Status", listOf("arsApproved", "arsPending"), Condicao.IN),
             )
             var requests: OData? = null
