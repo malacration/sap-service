@@ -18,12 +18,6 @@ jobs:
         uses: gradle/gradle-build-action@v2.4.2
         with:
           gradle-version: 7.6.1
-      - name: Create Properties
-        run: |
-          mkdir -p src/test/resources
-          touch src/test/resources/application.properties
-          echo -e "${{ vars.APPLICATION_TEST_PROPERTIES }}\ntelegram.plantao.token=${{secrets.TELEGRAM_PLANTAO_TOKEN}}" > src/test/resources/application.properties
-          cat src/test/resources/application.properties
       - name: Run Coverage
         run: |
           chmod +x gradlew
