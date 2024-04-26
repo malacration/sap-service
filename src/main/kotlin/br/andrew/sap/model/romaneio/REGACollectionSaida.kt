@@ -1,6 +1,6 @@
 package br.andrew.sap.model.romaneio
 
-class REGACollection(
+class REGACollectionSaida(
             val DocEntry: Int,
             val LineId: Int,
             val VisOrder: Int,

@@ -2,7 +2,7 @@ package br.andrew.sap.model
 
 import org.junit.jupiter.api.Test
 
-class RomaneioEntradaInsumoMinimoTest {
+class RomaneioFazendaInsumoMinimoTest {
 
     @Test
     fun test(){

@@ -1,6 +1,6 @@
 package br.andrew.sap.services
 
-import br.andrew.sap.model.RomaneioPesagem
+import br.andrew.sap.model.romaneio.RomaneioPesagem
 import br.andrew.sap.model.envrioments.SapEnvrioment
 import br.andrew.sap.services.abstracts.EntitiesService
 import org.springframework.stereotype.Service

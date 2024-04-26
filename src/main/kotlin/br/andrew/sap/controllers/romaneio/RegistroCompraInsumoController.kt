@@ -1,4 +1,4 @@
-package br.andrew.sap.controllers
+package br.andrew.sap.controllers.romaneio
 
 import br.andrew.sap.infrastructure.odata.OData
 import br.andrew.sap.services.RegistroCompraInsumoService

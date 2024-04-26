@@ -7,6 +7,7 @@ import java.util.*
 
 @JsonNaming(PropertyNamingStrategy.UpperCamelCaseStrategy::class)
 @JsonIgnoreProperties(ignoreUnknown = true)
+@Deprecated("Utilizar o modelo minimo RomaneioEntradaInsumoMin")
 class RomaneioEntradaInsumo(
         val U_ChaveNotaCO: Any?,
         val U_ModeloNotaCO: Any?,
