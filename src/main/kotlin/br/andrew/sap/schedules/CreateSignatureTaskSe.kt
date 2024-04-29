@@ -5,18 +5,8 @@ import br.andrew.sap.infrastructure.odata.Condicao
 import br.andrew.sap.infrastructure.odata.Filter
 import br.andrew.sap.infrastructure.odata.OData
 import br.andrew.sap.infrastructure.odata.Predicate
-import br.andrew.sap.model.BussinessPlace
-import br.andrew.sap.model.User
-import br.andrew.sap.model.bank.PaymentMethod
-import br.andrew.sap.model.documents.DocumentReport
 import br.andrew.sap.model.documents.base.Document
-import br.andrew.sap.model.partner.BusinessPartner
-import br.andrew.sap.services.BusinessPartnersService
-import br.andrew.sap.services.BussinessPlaceService
-import br.andrew.sap.services.PdfService
 import br.andrew.sap.services.TelegramRequestService
-import br.andrew.sap.services.bank.WizardPaymentMethodService
-import br.andrew.sap.services.document.OrdersService
 import br.andrew.sap.services.document.QuotationsService
 import br.andrew.sap.services.softexpert.DocumentExpertService
 import br.andrew.sap.services.softexpert.WorkFlowService
@@ -26,8 +16,6 @@ import org.slf4j.LoggerFactory
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
-import org.thymeleaf.TemplateEngine
-import org.thymeleaf.context.Context
 
 
 @Component

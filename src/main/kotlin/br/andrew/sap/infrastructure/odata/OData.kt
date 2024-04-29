@@ -48,14 +48,18 @@ class OData : LinkedHashMap<String,Any>(){
     }
 
     fun nextLink() : String{
-        return this.get("odata.nextLink").toString()
+        return this["odata.nextLink"]?.toString() ?: ""
     }
 
     fun hasNext() : Boolean{
-        return this.get("odata.nextLink") != null
+        return this["odata.nextLink"] != null
     }
 
     fun count() : Long?{
         return (this.get("odata.count") as Int?)?.toLong()
+    }
+
+    inline fun <reified T: Any> tryGetNextValues(): NextLink<T> {
+        return NextLink(tryGetValues(),nextLink())
     }
 }
