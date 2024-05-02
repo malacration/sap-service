@@ -65,6 +65,7 @@ open class Document(val CardCode : String,
     var shipToCode : String? = null
     var Address : String? = null
     var U_assinatura : String = "0"
+    var U_rd_station : String? = null
 
     @JsonProperty("BPL_IDAssignedToInvoice")
     fun getBPL_IDAssignedToInvoice(): String {
