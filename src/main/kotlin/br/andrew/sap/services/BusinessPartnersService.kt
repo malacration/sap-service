@@ -1,21 +1,17 @@
 package br.andrew.sap.services
 
+import br.andrew.sap.infrastructure.odata.NextLink
 import br.andrew.sap.infrastructure.odata.OData
-import br.andrew.sap.model.ParcelasAberto
 import br.andrew.sap.model.enums.Cancelled
-import br.andrew.sap.model.partner.BusinessPartner
 import br.andrew.sap.model.bank.PaymentMethod
 import br.andrew.sap.model.envrioments.SapEnvrioment
-import br.andrew.sap.model.partner.BPBranchAssignment
-import br.andrew.sap.model.partner.BusinessPartnerType
-import br.andrew.sap.model.partner.CpfCnpj
+import br.andrew.sap.model.partner.*
 import br.andrew.sap.services.abstracts.EntitiesService
+import org.springframework.data.domain.Pageable
 import org.springframework.http.RequestEntity
 import org.springframework.stereotype.Service
 import org.springframework.web.client.RestTemplate
 import java.text.SimpleDateFormat
-import java.time.LocalDate
-import java.time.format.DateTimeFormatter
 import java.util.*
 
 @Service
@@ -70,6 +66,24 @@ class BusinessPartnersService(env: SapEnvrioment, restTemplate: RestTemplate, au
             "'${odata.firstOrNull()?.cardCode ?: throw Exception("O ${CpfCnpj(cpfCnpj).getWithMask()} não foi encontrado")}'"
         )
             .tryGetValue<BusinessPartner>()
+    }
+
+    fun fullSearchText(fullText: String): NextLink<BusinessPartnerSlin> {
+        val url = env.host+"/b1s/v1/"
+        var uri =
+            if(fullText.startsWith("SQLQueries('parceiro-full-search-text.sql')"))
+                url+fullText
+            else{
+                val busca = if(fullText.toDoubleOrNull() == null )  fullText.uppercase() else CpfCnpj(fullText).getWithMask();
+                "${url}SQLQueries('parceiro-full-search-text.sql')/List?valor='%${busca}%'";
+            }
+
+
+        val request = RequestEntity
+            .get(uri)
+            .header("cookie","B1SESSION=${session().sessionId}")
+            .build()
+        return restTemplate.exchange(request, OData::class.java).body!!.tryGetNextValues<BusinessPartnerSlin>()
     }
 
     fun normalizeAddressName(bp: BusinessPartner) {

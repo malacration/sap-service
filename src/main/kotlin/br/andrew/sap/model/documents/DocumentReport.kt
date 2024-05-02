@@ -41,7 +41,7 @@ class DocumentReport(
                     "cpf" to cpf,
                     "email" to email,
                     "idPedido" to idpedido,
-//            "telefone" to "69996106666",
+                    "telefone" to "69996106666",
                 )
             )
         }

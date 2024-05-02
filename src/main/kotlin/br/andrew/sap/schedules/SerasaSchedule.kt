@@ -1,6 +1,5 @@
 package br.andrew.sap.schedules
 
-import br.andrew.sap.events.listener.TelegramListener
 import br.andrew.sap.model.partner.BusinessPartner
 import br.andrew.sap.services.BusinessPartnersService
 import br.andrew.sap.services.SerasaService
@@ -28,7 +27,7 @@ class SerasaSchedule(
         bps.forEach {
             try {
                 val bp = bpService.getById("'$it'").tryGetValue<BusinessPartner>()
-                telegramService.send("Execucao do serasa: cpf: ${bp.getCpfCnpj().value}")
+                telegramService.send("Execucao do serasa: cpf: ${bp.getCpfCnpj().value} - ${bp.cardCode} - ${bp.cardName}")
                 service.atualizaSerasa(bp.getCpfCnpj())
                 bpService.atualizaDataSerasa(Date(),bp)
             }catch (e : Exception){

@@ -26,4 +26,8 @@ class Product(itemCode : String, quantity : String, unitPrice : String, usage : 
             it.AccountCode = AccountCode
         }
     }
+
+    override fun toString(): String {
+        return "$ItemCode - $ItemDescription - $Quantity"
+    }
 }

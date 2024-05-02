@@ -9,7 +9,7 @@ import com.fasterxml.jackson.module.kotlin.jacksonTypeRef
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 
-class DocumentLinesJsonTests {
+class DocumentLinesTestsJsonTests {
 
     @Test
     fun tryJsonWithProduct(){
