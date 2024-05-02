@@ -1,4 +1,4 @@
-package br.andrew.sap.model
+package br.andrew.sap.model.romaneio
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.databind.PropertyNamingStrategy
@@ -7,7 +7,7 @@ import com.fasterxml.jackson.databind.annotation.JsonNaming
 
 @JsonNaming(PropertyNamingStrategy.UpperCamelCaseStrategy::class)
 @JsonIgnoreProperties(ignoreUnknown = true)
-class RegistroCompraInsumo(
+class RegistroInsumo(
         val code : Int?,
         val U_CodigoFazenda : String?) {
 
@@ -17,6 +17,7 @@ class RegistroCompraInsumo(
     var U_CodDeposito : String? = null
     var U_Status : String? = null
     var U_CodigoItem : String? = null
+    var U_CodItem : String? = null
     var U_NomeItem : String? = null
 
 
