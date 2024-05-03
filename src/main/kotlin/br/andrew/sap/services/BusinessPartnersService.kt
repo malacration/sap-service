@@ -2,12 +2,13 @@ package br.andrew.sap.services
 
 import br.andrew.sap.infrastructure.odata.NextLink
 import br.andrew.sap.infrastructure.odata.OData
-import br.andrew.sap.model.enums.Cancelled
+import br.andrew.sap.infrastructure.odata.Parameter
 import br.andrew.sap.model.bank.PaymentMethod
+import br.andrew.sap.model.enums.Cancelled
 import br.andrew.sap.model.envrioments.SapEnvrioment
 import br.andrew.sap.model.partner.*
 import br.andrew.sap.services.abstracts.EntitiesService
-import org.springframework.data.domain.Pageable
+import br.andrew.sap.services.abstracts.SqlQueriesService
 import org.springframework.http.RequestEntity
 import org.springframework.stereotype.Service
 import org.springframework.web.client.RestTemplate
@@ -15,7 +16,11 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 @Service
-class BusinessPartnersService(env: SapEnvrioment, restTemplate: RestTemplate, authService: AuthService) :
+class BusinessPartnersService(
+    val sqlQueriesService : SqlQueriesService,
+    env: SapEnvrioment,
+    restTemplate: RestTemplate,
+    authService: AuthService) :
         EntitiesService<BusinessPartner>(env, restTemplate, authService) {
     override fun path(): String {
         return "/b1s/v1/BusinessPartners"
@@ -69,21 +74,12 @@ class BusinessPartnersService(env: SapEnvrioment, restTemplate: RestTemplate, au
     }
 
     fun fullSearchText(fullText: String): NextLink<BusinessPartnerSlin> {
-        val url = env.host+"/b1s/v1/"
-        var uri =
-            if(fullText.startsWith("SQLQueries('parceiro-full-search-text.sql')"))
-                url+fullText
-            else{
-                val busca = if(fullText.toDoubleOrNull() == null )  fullText.uppercase() else CpfCnpj(fullText).getWithMask();
-                "${url}SQLQueries('parceiro-full-search-text.sql')/List?valor='%${busca}%'";
-            }
-
-
-        val request = RequestEntity
-            .get(uri)
-            .header("cookie","B1SESSION=${session().sessionId}")
-            .build()
-        return restTemplate.exchange(request, OData::class.java).body!!.tryGetNextValues<BusinessPartnerSlin>()
+        if(fullText.startsWith("SQLQueries('parceiro-full-search-text.sql')"))
+            return sqlQueriesService.nextLink(fullText)!!.tryGetNextValues()
+        val busca = if(fullText.toDoubleOrNull() == null )  fullText.uppercase() else CpfCnpj(fullText).getWithMask();
+        return sqlQueriesService
+            .execute("parceiro-full-search-text.sql", Parameter("valor","'%${busca}%'"))!!
+            .tryGetNextValues()
     }
 
     fun normalizeAddressName(bp: BusinessPartner) {
