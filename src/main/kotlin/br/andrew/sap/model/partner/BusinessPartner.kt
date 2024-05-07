@@ -34,15 +34,6 @@ class BusinessPartner() {
             ?.first() ?: throw Exception("CpfCnpj not found")
     }
 
-    fun getCpfCnpjStr() : String{
-        return try {
-            getCpfCnpj().toString()
-        }catch (t : Throwable){
-            "Não informado"
-        }
-    }
-
-
     var referencias: ReferenciaComercial? = null
     var freeText: String? = null
     var u_id_forca: String? = null
