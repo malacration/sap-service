@@ -1,15 +1,16 @@
 SELECT
-	"OITM"."ItemCode" AS "IDPRODUTOERP",
-	"OITM"."U_grupo_sustennutri" AS "IDGRUPOPRODUTOERP",
-	"OITM"."ItemName" AS "DESCRICAO",
-	"ITM1"."PriceList"  AS "IDTABPRECOERP",
-	"ITM1"."Price" AS "VALOR1",
-	c."U_desconto" AS "DESCMAXIMO1",
-	"OITM"."SalUnitMsr" AS "UNDMEDIDUNDMEDIDA",
+	"OITM"."ItemCode",
+	"OITM"."U_grupo_sustennutri",
+	"OITM"."ItemName" as "ItemDescription",
+	"ITM1"."PriceList",
+	p."ListName",
+	"ITM1"."Price" as "UnitPrice",
+	c."U_desconto",
+	"OITM"."SalUnitMsr",
 	(SELECT "FirmName"  FROM OMRC WHERE "FirmCode" = -1) AS "MARCA",
-	"OITM"."UserText" AS "OBSERVACAOGERAL",
-	"OITM"."U_categoria" AS "IDCATEGORIAERP",
-	"OITM"."U_linha_sustennutri" AS "IDLINHAPRODUTOERP"
+	"OITM"."UserText",
+	"OITM"."U_categoria",
+	"OITM"."U_linha_sustennutri"
 FROM
 	"OITM"
 	INNER JOIN "ITM1" on("ITM1"."ItemCode" = "OITM"."ItemCode")

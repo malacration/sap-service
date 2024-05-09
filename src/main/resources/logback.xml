@@ -29,15 +29,8 @@
             <level>INFO</level>
         </filter>
     </appender>
-
     <logger name="br.andrew" level="INFO" additivity="false">
         <appender-ref ref="gelf"/>
         <appender-ref ref="STDOUT"/>
     </logger>
-
-    <root level="INFO">
-        <appender-ref ref="gelf" />
-        <appender-ref ref="STDOUT" />
-    </root>
-
 </configuration>

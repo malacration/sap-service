@@ -2,22 +2,11 @@ package br.andrew.sap.schedules
 
 import br.andrew.sap.infrastructure.odata.Condicao
 import br.andrew.sap.infrastructure.odata.Filter
-import br.andrew.sap.infrastructure.odata.OData
 import br.andrew.sap.infrastructure.odata.Predicate
-import br.andrew.sap.model.ApprovalRequests
-import br.andrew.sap.model.User
-import br.andrew.sap.model.documents.OrderSales
 import br.andrew.sap.model.partner.BusinessPartner
-import br.andrew.sap.model.telegram.TipoMensagem
 import br.andrew.sap.services.AtualizacaoCadastralService
 import br.andrew.sap.services.BusinessPartnersService
-import br.andrew.sap.services.approval.ApprovalRequestsService
-import br.andrew.sap.services.DraftsService
 import br.andrew.sap.services.TelegramRequestService
-import br.andrew.sap.services.approval.ApprovalStagesService
-import org.quartz.DisallowConcurrentExecution
-import org.quartz.Job
-import org.quartz.JobExecutionContext
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty

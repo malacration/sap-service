@@ -1,9 +1,11 @@
 package br.andrew.sap.controllers.documents
 
+import br.andrew.sap.events.OrderSalesSaveEvent
 import br.andrew.sap.infrastructure.WarehouseDefaultConfig
 import br.andrew.sap.infrastructure.configurations.DistribuicaoCustoByBranchConfig
 import br.andrew.sap.infrastructure.odata.*
 import br.andrew.sap.model.documents.OrderSales
+import br.andrew.sap.model.documents.Quotation
 import br.andrew.sap.model.documents.base.Document
 import br.andrew.sap.model.forca.PedidoVenda
 import br.andrew.sap.services.*
@@ -19,6 +21,7 @@ import java.util.*
 class QuotationsController(val quotationsService: QuotationsService,
                            val itemService : ItemsService,
                            val comissaoService: ComissaoService,
+                           val telegramService : TelegramRequestService,
                            val applicationEventPublisher: ApplicationEventPublisher) {
 
     val logger = LoggerFactory.getLogger(QuotationsController::class.java)
@@ -37,6 +40,27 @@ class QuotationsController(val quotationsService: QuotationsService,
             }
         }
     }
+
+    @PostMapping("angular")
+    fun saveForAngular(@RequestBody pedido : Quotation): Any {
+
+        //TODO pegar salesPersonCode do login do usuario
+        //TODO u_pedido_update = "1"'
+        pedido.usaBrenchDefaultWarehouse(WarehouseDefaultConfig.warehouses)
+        pedido.setDistribuicaoCusto(DistribuicaoCustoByBranchConfig.distibucoesCustos)
+        pedido.atualizaPrecoBase(itemService)
+        pedido.u_pedido_update = "1"
+        pedido.salesPersonCode = 27
+        telegramService.send("Criando pedido pelo portal cliente")
+        return quotationsService.save(pedido).tryGetValue<Document>().also {
+            try{
+                applicationEventPublisher.publishEvent(it)
+            }catch (e : Exception){
+                logger.error(e.message,e)
+            }
+        }
+    }
+
 
     @GetMapping("")
     fun get(): List<OrderSales> {
