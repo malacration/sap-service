@@ -37,7 +37,7 @@ class BusinessPartnersService(
         val bp : BusinessPartner = BusinessPartner().also {
             it.BPBranchAssignment = listOf(BPBranchAssignment().also {
                 it.BPCode = cardCode
-                it.bplid = idBusinesPlace
+                it.BPLID = idBusinesPlace
                 it.DisabledForBP = Cancelled.tNO
             })
         }
