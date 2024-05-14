@@ -64,7 +64,7 @@ class PedidoVenda(
             }catch (e : Exception ){
                 e.printStackTrace()
             }
-            it.salesPersonCode = codVendedor
+                it.salesPersonCode = codVendedor
             it.u_pedido_update = "1"
             it.comments = observacao
             it.OpeningRemarks = observacao

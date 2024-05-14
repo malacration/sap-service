@@ -55,7 +55,7 @@ dependencies {
 	implementation("com.github.ben-manes.caffeine:caffeine:3.1.8")
 
 	implementation("org.apache.httpcomponents.client5:httpclient5:5.2.1")
-	implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
+	implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.16.1")
 	implementation("org.jetbrains.kotlin:kotlin-reflect")
 	developmentOnly("org.springframework.boot:spring-boot-devtools")
 	testImplementation("org.springframework.boot:spring-boot-starter-test")

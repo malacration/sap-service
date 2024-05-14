@@ -25,7 +25,7 @@ class OrderSalesController(val ordersService: OrdersService,
     val logger = LoggerFactory.getLogger(OrderSalesController::class.java)
 
     @PostMapping("")
-    fun save(@RequestBody pedido : PedidoVenda): Any {
+    fun saveForSovis(@RequestBody pedido : PedidoVenda): Any {
         val order = pedido.getOrder(itemService,comissaoService).also {
             it.usaBrenchDefaultWarehouse(WarehouseDefaultConfig.warehouses)
             it.setDistribuicaoCusto(DistribuicaoCustoByBranchConfig.distibucoesCustos)
