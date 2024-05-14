@@ -1,13 +1,13 @@
 SELECT
-	cond."U_prazo" AS "IDPRAZOPAGTOERP",
-	OCTG."PymntGroup",
+	"OCTG"."GroupNum",
+	"OCTG"."PymntGroup",
 	c."Code",
-	t."ListNum"
+	"OPLN"."ListNum"
 FROM
-	OPLN t
-	INNER JOIN OPLN tt ON tt."ListNum" =  t."ListNum"
+	"OPLN"
+	INNER JOIN OPLN tt ON tt."ListNum" =  "OPLN"."ListNum"
 	INNER JOIN "@COMISSAO" c ON tt."U_tipoComissao" = c."Code"
 	INNER JOIN "@CONDICOESFV" cond ON cond."Code" = c."Code"
-	INNER JOIN OCTG ON cond."U_prazo" = OCTG."GroupNum"
+	INNER JOIN "OCTG" ON cond."U_prazo" = "OCTG"."GroupNum"
 WHERE
-	t."ListNum" = :tabelaPreco
+	"OPLN"."ListNum" = :tabelaPreco
