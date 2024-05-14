@@ -42,7 +42,7 @@ class QuotationsController(val quotationsService: QuotationsService,
     }
 
     @PostMapping("angular")
-    fun saveForAngular(@RequestBody pedido : Quotation): Any {
+    fun saveForAngular(@RequestBody pedido : Quotation): Document {
         //TODO pegar salesPersonCode do login do usuario
         //TODO u_pedido_update = "1"'
         pedido.usaBrenchDefaultWarehouse(WarehouseDefaultConfig.warehouses)
