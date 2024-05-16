@@ -13,7 +13,7 @@ class FazendaController(
         val fazendaService: FazendaService) {
 
 
-    @GetMapping()
+    @GetMapping() 
     fun getFazendas() : Any{
         return fazendaService.get()
     }

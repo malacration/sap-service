@@ -7,7 +7,6 @@ import br.andrew.sap.model.bank.PaymentMethod
 import br.andrew.sap.model.envrioments.SapEnvrioment
 import br.andrew.sap.model.partner.*
 import br.andrew.sap.services.abstracts.EntitiesService
-import org.springframework.data.domain.Pageable
 import org.springframework.http.RequestEntity
 import org.springframework.stereotype.Service
 import org.springframework.web.client.RestTemplate
@@ -30,9 +29,9 @@ class BusinessPartnersService(env: SapEnvrioment, restTemplate: RestTemplate, au
 
     fun addBusinesPlace(cardCode : String, idBusinesPlace: String): OData? {
         val bp : BusinessPartner = BusinessPartner().also {
-            it.BPBranchAssignment = listOf(BPBranchAssignment().also {
+            it.bpBranchAssignment = listOf(BPBranchAssignment().also {
                 it.BPCode = cardCode
-                it.BPLID = idBusinesPlace
+                it.bplid = idBusinesPlace
                 it.DisabledForBP = Cancelled.tNO
             })
         }
