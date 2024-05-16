@@ -19,7 +19,7 @@ class Cliente(
     val idVendedor : String? = null
     val obscadastral : String? = null
     var ierg : String? = null
-    var dtnasc : String? = null //
+    var dtnasc : String? = null 
 
     @JsonIgnore
     @JsonIgnoreProperties
