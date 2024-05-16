@@ -17,23 +17,18 @@ import java.io.File
 @ConditionalOnProperty(value = ["sql"], havingValue = "true", matchIfMissing = true)
 class ProvisioningConfiguration(val queryService: QuerysServices) {
 
-    fun getResourcesFiles(): Array<out File> {
-        return ClassPathResource("views").file.listFiles()
-    }
-
     val logger = LoggerFactory.getLogger(ProvisioningConfiguration::class.java)
 
-
     @Bean
-    fun createQuerys(): List<Query> {
-        val files = getResourcesFiles()
-        val querys = files.map { Query(it.name,it.name,it.readText()) }
-
-
-        querys.forEach {
-            logger.info("Atualizando view {${it.sqlName}}")
-            queryService.replace(it)
-        }
-        return querys
+    fun createQuerys(): String {
+        ClassPathResource("views").file.walk()
+            .filter { it.isFile }
+            .map {
+                Query(it.name,it.name,it.readText())
+            }.forEach {
+                logger.info("Atualizando view {${it.sqlName}}")
+                queryService.replace(it)
+            }
+        return "true"
     }
 }

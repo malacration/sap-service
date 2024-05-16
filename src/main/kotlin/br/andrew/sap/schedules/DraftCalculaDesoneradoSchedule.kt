@@ -9,14 +9,17 @@ import br.andrew.sap.services.DraftsService
 import br.andrew.sap.services.document.DesoneradoService
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
+import java.time.LocalDate
 
 
 @Component
 @ConditionalOnProperty(value = ["org.quartz.enable"], havingValue = "true", matchIfMissing = false)
 class DraftCalculaDesoneradoSchedule(
+    @Value("\${draft.dias:10}") val dias : Long,
     val desoneradoService: DesoneradoService,
     val draftService : DraftsService,val currentUser : User
 ) {
@@ -25,9 +28,10 @@ class DraftCalculaDesoneradoSchedule(
 
     @Scheduled(fixedDelay = 15000)
     fun execute() {
+        val data = LocalDate.now().plusDays(-dias).toString()
         val filter = Filter(
             Predicate("U_pedido_update", "1", Condicao.EQUAL),
-            Predicate("DocDate", "2023-10-01", Condicao.GREAT),
+            Predicate("DocDate", data, Condicao.GREAT),
             Predicate("DocumentStatus", "bost_Open", Condicao.EQUAL),
             Predicate("UserSign", currentUser.internalKey, Condicao.NOT_EQUAL),
         )

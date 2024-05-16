@@ -40,8 +40,8 @@ class BusinessPartnersController(
     }
 
     @GetMapping("{id}")
-    fun getById(@PathVariable id : String): OData {
-        return service.getById("'$id'")
+    fun getById(@PathVariable id : String): BusinessPartner {
+        return service.getById("'$id'").tryGetValue()
     }
 
     @PostMapping("search")

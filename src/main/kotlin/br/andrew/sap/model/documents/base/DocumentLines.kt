@@ -1,5 +1,7 @@
 package br.andrew.sap.model.documents.base
 import br.andrew.sap.model.Comissao
+import br.andrew.sap.model.price.PriceList
+import br.andrew.sap.services.ItemsService
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonInclude
@@ -32,6 +34,8 @@ abstract class DocumentLines(var UnitPrice : String, var Quantity : String, var 
     var CostingCode2: String? =null
     var AccountCode : String? = null
     var MeasureUnit : String? = null
+    var PriceList : Int? = null
+    var ListName : String? = null
 
     @JsonIgnore
     var valorDesonerado : BigDecimal = BigDecimal(0)
@@ -85,6 +89,13 @@ abstract class DocumentLines(var UnitPrice : String, var Quantity : String, var 
                     println(e.message)
                 }
             }
+        }
+    }
+
+    fun atualizaPrecoBase(itemService: ItemsService) {
+        if(this.ItemCode != null  && PriceList != null) {
+            u_idTabela = PriceList
+            U_preco_base = itemService.getPriceBase(this.ItemCode!!, PriceList!!)
         }
     }
 }

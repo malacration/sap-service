@@ -7,6 +7,7 @@ import br.andrew.sap.model.forca.EnderecoId
 import br.andrew.sap.model.uzzipay.DataRetonroPixQrCode
 import br.andrew.sap.model.uzzipay.RequestPixDueDate
 import br.andrew.sap.model.uzzipay.Transaction
+import br.andrew.sap.services.ItemsService
 import com.fasterxml.jackson.annotation.JsonFormat
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
@@ -161,6 +162,10 @@ open class Document(val CardCode : String,
 
     fun associaEndereco(endereco: EnderecoId){
         this.shipToCode = endereco.code
+    }
+
+    fun atualizaPrecoBase(itemService: ItemsService) {
+        DocumentLines.forEach{it.atualizaPrecoBase(itemService)}
     }
 
 }

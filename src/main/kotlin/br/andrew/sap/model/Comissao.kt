@@ -12,7 +12,7 @@ class Comissao(val Code : Int, val U_porcentagem : Double) {
     var descontoMaximo : Double? = null
     var descontoRegressivo : List<DescontoRegressivo> = listOf()
     var liberadoPara : List<LiberadoPara> = listOf() // Se vazio libera para geral
-    var prazoPagamento : List<PrazoPagamento> = listOf()
+    var prazoPagamento : List<PrazoPagamentoDto> = listOf()
 
     fun getTipoDesconto() : TipoDesconto{
         return if(descontoRegressivo.size == 0){
