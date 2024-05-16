@@ -2,6 +2,7 @@ package br.andrew.sap.model.forca
 
 import br.andrew.sap.model.partner.BusinessPartner
 import br.andrew.sap.model.partner.BusinessPartnerType
+import br.andrew.sap.model.partner.BPBranchAssignment
 import br.andrew.sap.model.partner.CpfCnpj
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
@@ -18,6 +19,7 @@ class Cliente(
     val idVendedor : String? = null
     val obscadastral : String? = null
     var ierg : String? = null
+    var dtnasc : String? = null
 
     @JsonIgnore
     @JsonIgnoreProperties
@@ -31,6 +33,10 @@ class Cliente(
             it.salesPersonCode = idVendedor?.toInt() ?: -1
             it.freeText = obscadastral
             it.U_fazer_fluxo_prazo = "1"
+            it.U_Rov_Data_Nascimento = dtnasc
+            it.bpBranchAssignment = listOf(BPBranchAssignment().also {
+                it.bplid = "2"
+            })
         }
     }
 }

@@ -61,7 +61,7 @@ class BusinessPartner() {
 
 
     @JsonProperty("BPBranchAssignment")
-    var BPBranchAssignment : List<BPBranchAssignment>? = null
+    var bpBranchAssignment : List<BPBranchAssignment>? = null
 
     @JsonIgnoreProperties
     private var BPFiscalTaxIDCollection : List<BPFiscalTaxID>? = null
@@ -114,7 +114,7 @@ class BusinessPartner() {
     }
 
     fun clearDataNotAllowUpdated() {
-        this.BPBranchAssignment = null
+        this.bpBranchAssignment = null
         BPFiscalTaxIDCollection = null
         BPPaymentMethods = listOf()
         this.RemoveContacts = null

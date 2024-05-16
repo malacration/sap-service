@@ -51,7 +51,7 @@ class AddressJson {
         Assertions.assertTrue(saidaJson.contains("AddressType"))
 
         val bussinesParteJson = mapper.writeValueAsString(bussinesParte)
-        Assertions.assertTrue(!bussinesParteJson.contains("BPLID"))
+        Assertions.assertTrue(!bussinesParteJson.contains("bpLID"))
         println(bussinesParteJson)
     }
 
