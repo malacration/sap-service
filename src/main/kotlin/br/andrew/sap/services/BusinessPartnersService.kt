@@ -35,9 +35,9 @@ class BusinessPartnersService(
 
     fun addBusinesPlace(cardCode : String, idBusinesPlace: String): OData? {
         val bp : BusinessPartner = BusinessPartner().also {
-            it.BPBranchAssignment = listOf(BPBranchAssignment().also {
+            it.bpBranchAssignment = listOf(BPBranchAssignment().also {
                 it.BPCode = cardCode
-                it.BPLID = idBusinesPlace
+                it.bplid = idBusinesPlace
                 it.DisabledForBP = Cancelled.tNO
             })
         }

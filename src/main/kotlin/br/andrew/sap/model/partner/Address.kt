@@ -22,6 +22,7 @@ class Address {
     var Country:  String? = null
     var State: String? = null
     var BuildingFloorRoom: String? = null
+    var U_Localidade : Int? = null
 
 
     @JsonIgnoreProperties
