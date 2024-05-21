@@ -11,10 +11,10 @@ class Endereco(val rua : String,
                val estado : String,
                val cep : String,
                val pais : String,
-               val tipoEndereco : String,
-               val localidade : Int) {
+               val tipoEndereco : String) {
 
     var complemento: String? = null
+    var localidade: Int? = null
 
     fun getAddresse(): Address {
         return Address().also {

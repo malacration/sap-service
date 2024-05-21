@@ -34,9 +34,6 @@ class Cliente(
             it.freeText = obscadastral
             it.U_fazer_fluxo_prazo = "1"
             it.U_Rov_Data_Nascimento = dtnasc
-            it.bpBranchAssignment = listOf(BPBranchAssignment().also {
-                it.bplid = "2"
-            })
         }
     }
 }
