@@ -12,8 +12,7 @@ class Cliente(
         val nome : String,
         val cpfCnpj : String,
         val endereco : Endereco,
-        val idCliente : String,
-        val localidade: Int){
+        val idCliente : String){
 
     var telefone : String? = null
     val email : String? = null
@@ -21,6 +20,8 @@ class Cliente(
     val obscadastral : String? = null
     var ierg : String? = null
     var dtnasc : String? = null
+    var localidade : Int? = null
+
 
     @JsonIgnore
     @JsonIgnoreProperties
