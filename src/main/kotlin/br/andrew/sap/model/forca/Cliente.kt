@@ -20,13 +20,15 @@ class Cliente(
     val obscadastral : String? = null
     var ierg : String? = null
     var dtnasc : String? = null
+    var localidade : Int? = null
+
 
     @JsonIgnore
     @JsonIgnoreProperties
     fun getBusinessPartner() : BusinessPartner {
         return BusinessPartner(nome, BusinessPartnerType.C).also {
             it.setCpfCnpj(CpfCnpj(cpfCnpj),ierg)
-            it.setAddresse(endereco.getAddresse())
+            it.setAddresse(endereco.getAddresse(localidade))
             it.u_id_forca = idCliente
             it.phone1 = telefone
             it.emailAddress = email

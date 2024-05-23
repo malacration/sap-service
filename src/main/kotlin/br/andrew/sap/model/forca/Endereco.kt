@@ -16,7 +16,7 @@ class Endereco(val rua : String,
     var complemento: String? = null
     var localidade: Int? = null
 
-    fun getAddresse(): Address {
+    fun getAddresse(localidade: Int?): Address {
         return Address().also {
             it.Street = rua
             it.StreetNo = numero
