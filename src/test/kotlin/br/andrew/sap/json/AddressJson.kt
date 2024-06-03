@@ -34,7 +34,7 @@ class AddressJson {
     fun testJsonCliente(){
         val mapper = ObjectMapper().registerModule(KotlinModule())
         val obj = mapper.readValue(json, Cliente::class.java)
-        val addrs = obj.endereco.getAddresse()
+        val addrs = obj.endereco.getAddresse(localidade = 123)
     }
 
     @Test
@@ -51,7 +51,7 @@ class AddressJson {
         Assertions.assertTrue(saidaJson.contains("AddressType"))
 
         val bussinesParteJson = mapper.writeValueAsString(bussinesParte)
-        Assertions.assertTrue(!bussinesParteJson.contains("BPLID"))
+        Assertions.assertTrue(!bussinesParteJson.contains("bpLID"))
         println(bussinesParteJson)
     }
 

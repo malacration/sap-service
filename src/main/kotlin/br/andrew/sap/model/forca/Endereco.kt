@@ -14,8 +14,9 @@ class Endereco(val rua : String,
                val tipoEndereco : String) {
 
     var complemento: String? = null
+    var localidade: Int? = null
 
-    fun getAddresse(): Address {
+    fun getAddresse(localidade: Int?): Address {
         return Address().also {
             it.Street = rua
             it.StreetNo = numero
@@ -28,6 +29,7 @@ class Endereco(val rua : String,
             it.BuildingFloorRoom = complemento
 //            it.addrType = tipoEndereco
             it.typeOfAddress = tipoEndereco
+            it.U_Localidade = localidade
         }
     }
 }
