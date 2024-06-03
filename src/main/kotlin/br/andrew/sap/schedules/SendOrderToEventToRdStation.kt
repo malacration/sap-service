@@ -15,6 +15,11 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
 import java.time.LocalDate
+import br.andrew.sap.model.SalePerson
+import br.andrew.sap.model.partner.BusinessPartner
+import br.andrew.sap.services.BusinessPartnersService
+import br.andrew.sap.services.SalesPersonsService
+
 
 
 @Component
@@ -22,6 +27,8 @@ import java.time.LocalDate
 class SendOrderToEventToRdStation(
     val ordersService: OrdersService,
     val eventService : EventsService,
+    val bpService: BusinessPartnersService,
+    val slService: SalesPersonsService,
     @Value("\${rd.consumidor-final:CLI0003676}") val consumidorFinal : String,
     @Value("\${rd.dias:10}") val dias : Long,
     @Value("\${rd.sap-id-filiais:2,4,11,17,18}") val filiais : List<Int>,
@@ -42,7 +49,9 @@ class SendOrderToEventToRdStation(
         )
         ordersService.get(Filter(predicados)).tryGetValues<OrderSales>().forEach{
             try{
-                eventService.conversion(it)
+                val businessPartner = bpService.getById("'$it'").tryGetValue<BusinessPartner>()
+                val salePerson = slService.getById("'$it'").tryGetValue<SalePerson>()
+                eventService.conversion(it, businessPartner, salePerson)
                 ordersService.update("{ \"U_rd_station\": \"yes\"}","${it.docEntry}")
                 logger.info("Pedido - DocNum: ${it.docNum} - Enviado ao RdStation")
                 telegramRequestService.send("Pedido - DocNum: ${it.docNum} - Enviado ao RdStation",TipoMensagem.eventos)

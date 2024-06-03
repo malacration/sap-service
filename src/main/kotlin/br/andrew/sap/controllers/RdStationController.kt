@@ -1,7 +1,14 @@
 package br.andrew.sap.controllers
 
-import br.andrew.sap.infrastructure.odata.OData
-import br.andrew.sap.services.MotoristaContratoService
+import br.andrew.sap.model.SalePerson
+import br.andrew.sap.model.documents.base.Document
+import br.andrew.sap.model.partner.BusinessPartner
+import br.andrew.sap.services.BusinessPartnersService
+import br.andrew.sap.services.SalesPersonsService
+import br.andrew.sap.services.document.OrdersService
+import br.andrew.sap.services.rdstation.EventsService
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestMapping
@@ -9,16 +16,38 @@ import org.springframework.web.bind.annotation.RestController
 
 
 @RestController
-    @RequestMapping("motorista-contrato")
-class MotoristaContratoController(val motoristaContratoService : MotoristaContratoService) {
+@RequestMapping("rdstation")
+class RdStationController(
+    val eventsService: EventsService
+) {
 
-    @GetMapping()
-    fun getRegistros(): OData {
-        return motoristaContratoService.get()
+    @Autowired
+    lateinit var bpService: BusinessPartnersService
+
+    @Autowired
+    lateinit var slService: SalesPersonsService
+
+    @Autowired
+    lateinit var eventService: EventsService
+
+    @Autowired
+    lateinit var ordersService: OrdersService
+
+    @GetMapping("/pedido-venda/{id}")
+    fun getByCodParceiro(@PathVariable id: String): ResponseEntity<String> {
+        val documento: Document = ordersService.getById(id).tryGetValue()
+
+        val businessPartner: BusinessPartner = ordersService.getById(id).tryGetValue<BusinessPartner>()
+
+        val salesPersonCode = documento.salesPersonCode
+        val salesPersonCodeAll = slService.getAll<SalePerson>()
+        val salePerson = salesPersonCodeAll.find { it.SalesEmployeeCode == salesPersonCode }
+
+        if (salePerson == null) {
+            return ResponseEntity.notFound().build()
+        }
+
+        return eventsService.conversion(documento, businessPartner, salePerson)
     }
 
-    @GetMapping("{id}")
-    fun getByCodParceiro(@PathVariable id : String): OData {
-        return motoristaContratoService.getById("'$id'").tryGetValue()
-    }
 }

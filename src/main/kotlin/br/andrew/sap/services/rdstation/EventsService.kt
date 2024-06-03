@@ -1,10 +1,13 @@
 package br.andrew.sap.services.rdstation
 
 import br.andrew.sap.infrastructure.configurations.rdstation.RdStationEnvrioment
+import br.andrew.sap.model.SalePerson
 import br.andrew.sap.model.documents.base.Document
+import br.andrew.sap.model.partner.BusinessPartner
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonInclude
 import org.springframework.http.RequestEntity
+import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Service
 import org.springframework.web.client.RestTemplate
 
@@ -14,15 +17,14 @@ class EventsService(private val envrioment : RdStationEnvrioment,
     private val path = "/platform/events?event_type=conversion"
     private  val url = envrioment.host + path
 
-    fun conversion( document: Document){
-        val payload = EventPayloadPedido(document)
+    fun conversion( document: Document, businessPartner: BusinessPartner, salePerson: SalePerson): ResponseEntity<String>{
+        val payload = EventPayloadPedido(document,businessPartner,salePerson)
         val event = Event(payload)
         val request = RequestEntity
             .post(url)
             .header("Authorization","Bearer ${envrioment.getToken()}")
             .body(event)
-        restTemplate
-            .exchange(request,String::class.java)
+        return restTemplate.exchange(request,String::class.java)
     }
 }
 
@@ -39,10 +41,36 @@ class EventPayloadPedido(val email : String, val conversion_identifier : Convers
     var traffic_source = "ERP"
 
     var cf_produtos_sustennutri : String? = null
+    var cf_identificacao_sap_venda : String? = null
 
-    constructor(document: Document) : this(document.CardCode+"@naotem.com"){
+    //campos solicitados
+    var cf_data_criacao : String? = null
+    var cf_representante_vendedor : String? = null
+    var cf_observacoes : String? = null
+    var cf_numero_pedido : String? = null
+    var cf_nome_cliente : String? = null
+    var cf_data_lancamento : String? = null
+
+    constructor(document: Document, businessPartner: BusinessPartner, salePerson: SalePerson) : this(document.CardCode+"@naotem.com"){
+        if(document.salesPersonCode != salePerson.SalesEmployeeCode)
+            throw Exception("Nao e permitido utilizar um Vendedor distindo do documento")
+        if(document.CardCode != businessPartner.cardCode)
+            throw Exception("Nao e permitido utilizar um Telefone se o parceiro e distinto do documento")
         name = document.cardName
         cf_produtos_sustennutri = document.DocumentLines.joinToString("\n")
+
+        cf_data_criacao = document.docDate
+        cf_representante_vendedor = salePerson.SalesEmployeeName
+        cf_observacoes = document.comments
+
+        personal_phone = businessPartner.phone1
+
+        // Concatenacao
+        cf_numero_pedido = document.docNum
+        cf_nome_cliente = document.cardName
+        cf_data_lancamento = document.docDate
+
+        cf_identificacao_sap_venda = listOf(cf_numero_pedido, cf_nome_cliente, cf_representante_vendedor, cf_data_lancamento).joinToString(" - ", "", "")
     }
 
 }

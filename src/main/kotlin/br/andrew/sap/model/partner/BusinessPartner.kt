@@ -46,6 +46,7 @@ class BusinessPartner() {
     var salesPersonCode : Int? = null
     var U_fazer_fluxo_prazo : String? = "0"
     var attachmentEntry : Int? = null
+    var CreateDate : String? = null
 
     var RemoveContacts : List<Int>? = null
 //    var BPLID : String? = null
