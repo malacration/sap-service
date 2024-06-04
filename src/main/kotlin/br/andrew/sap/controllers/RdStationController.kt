@@ -6,6 +6,7 @@ import br.andrew.sap.model.partner.BusinessPartner
 import br.andrew.sap.services.BusinessPartnersService
 import br.andrew.sap.services.SalesPersonsService
 import br.andrew.sap.services.document.OrdersService
+import br.andrew.sap.services.rdstation.Event
 import br.andrew.sap.services.rdstation.EventsService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.ResponseEntity
@@ -16,35 +17,26 @@ import org.springframework.web.bind.annotation.RestController
 
 
 @RestController
-@RequestMapping("rdstation")
+    @RequestMapping("rdstation")
 class RdStationController(
-    val eventsService: EventsService
-) {
-
-    @Autowired
-    lateinit var bpService: BusinessPartnersService
-
-    @Autowired
-    lateinit var slService: SalesPersonsService
-
-    @Autowired
-    lateinit var eventService: EventsService
-
-    @Autowired
-    lateinit var ordersService: OrdersService
+    val eventsService: EventsService,
+    val bussinesPartenerService: BusinessPartnersService,
+    val slService: SalesPersonsService,
+    val ordersService: OrdersService
+    ) {
 
     @GetMapping("/pedido-venda/{id}")
-    fun getByCodParceiro(@PathVariable id: String): ResponseEntity<String> {
+    fun getByCodParceiro(@PathVariable id: String): Any {
         val documento: Document = ordersService.getById(id).tryGetValue()
 
-        val businessPartner: BusinessPartner = ordersService.getById(id).tryGetValue<BusinessPartner>()
+        val businessPartner: BusinessPartner = bussinesPartenerService.getById("'${documento.CardCode}'").tryGetValue<BusinessPartner>()
 
         val salesPersonCode = documento.salesPersonCode
         val salesPersonCodeAll = slService.getAll<SalePerson>()
         val salePerson = salesPersonCodeAll.find { it.SalesEmployeeCode == salesPersonCode }
 
         if (salePerson == null) {
-            return ResponseEntity.notFound().build()
+            return ResponseEntity.notFound()
         }
 
         return eventsService.conversion(documento, businessPartner, salePerson)
