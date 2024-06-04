@@ -23,7 +23,7 @@ import br.andrew.sap.services.SalesPersonsService
 
 
 @Component
-@ConditionalOnProperty(value =["org.quartz.enable"], havingValue = "true", matchIfMissing = false)
+@ConditionalOnProperty(value =["rd.enable"], havingValue = "true", matchIfMissing = true)
 class SendOrderToEventToRdStation(
     val ordersService: OrdersService,
     val eventService : EventsService,
