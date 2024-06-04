@@ -41,7 +41,7 @@ class EventPayloadPedido(val email : String, val conversion_identifier : Convers
     var traffic_source = "ERP"
 
     var cf_produtos_sustennutri : String? = null
-    var cf_identificacao_sap_venda : String? = null
+    var company_name : String? = null
 
     var cf_data_criacao : String? = null
     var cf_representante_vendedor : String? = null
@@ -68,7 +68,7 @@ class EventPayloadPedido(val email : String, val conversion_identifier : Convers
         cf_nome_cliente = document.cardName
         cf_data_da_venda_sap = document.docDate
 
-        cf_identificacao_sap_venda = listOf(cf_numero_pedido, cf_nome_cliente, cf_representante_vendedor, cf_data_da_venda_sap).joinToString(" - ", "", "")
+        company_name = listOf(cf_numero_pedido, cf_nome_cliente, cf_representante_vendedor, cf_data_da_venda_sap).joinToString(" - ", "", "")
     }
 
 }
