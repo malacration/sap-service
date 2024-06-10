@@ -17,7 +17,7 @@ import java.time.LocalDate
 
 
 @Component
-@ConditionalOnProperty(value = ["org.quartz.enable"], havingValue = "true", matchIfMissing = false)
+@ConditionalOnProperty(value = ["jobs.draft"], havingValue = "true", matchIfMissing = false)
 class DraftCalculaDesoneradoSchedule(
     @Value("\${draft.dias:10}") val dias : Long,
     val desoneradoService: DesoneradoService,
@@ -34,6 +34,7 @@ class DraftCalculaDesoneradoSchedule(
             Predicate("DocDate", data, Condicao.GREAT),
             Predicate("DocumentStatus", "bost_Open", Condicao.EQUAL),
             Predicate("UserSign", currentUser.internalKey, Condicao.NOT_EQUAL),
+            Predicate("DocObjectCode", "oOrders", Condicao.EQUAL),
         )
         val resultado = draftService.get(filter).tryGetValues<Document>()
         resultado.forEach {
