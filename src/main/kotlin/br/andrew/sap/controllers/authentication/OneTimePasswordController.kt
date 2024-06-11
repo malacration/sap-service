@@ -1,4 +1,4 @@
-package br.andrew.sap.controllers
+package br.andrew.sap.controllers.authentication
 
 import br.andrew.sap.model.partner.BusinessPartnerType
 import br.andrew.sap.services.*

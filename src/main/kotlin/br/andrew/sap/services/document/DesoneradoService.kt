@@ -10,8 +10,8 @@ import org.springframework.stereotype.Service
 
 @Service
 class DesoneradoService(val taxCodeService: SalesTaxCodeService,
-                        @Value("\${imposto.icms.desonerado}") val tipoImposto : List<Int>,
-                        @Value("\${imposto.icms.desonerado.futuro}")val tipoImpostoFuturo : List<Int>,
+                        @Value("\${imposto.icms.desonerado:0}") val tipoImposto : List<Int>,
+                        @Value("\${imposto.icms.desonerado.futuro:0}")val tipoImpostoFuturo : List<Int>,
                         val taxAuthoritiesService: SalesTaxAuthoritiesService){
 
     val allImpotos = mutableListOf<Int>().also {

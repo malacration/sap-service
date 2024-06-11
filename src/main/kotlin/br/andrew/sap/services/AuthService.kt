@@ -11,7 +11,7 @@ import java.net.URI
 
 @Service
 @Profile("!test")
-class AuthService(
+open class AuthService(
     @Value("\${sap.service.layer.url:https://localhost:50000}") private val host : String,
     private val restTemplate: RestTemplate) {
 

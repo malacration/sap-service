@@ -1,4 +1,4 @@
-package br.andrew.sap.infrastructure.configurations.security.jwt
+package br.andrew.sap.infrastructure.security.jwt
 
 import jakarta.servlet.FilterChain
 import jakarta.servlet.ServletRequest

@@ -1,6 +1,6 @@
-package br.andrew.sap.infrastructure.configurations.security
+package br.andrew.sap.infrastructure.security
 
-import br.andrew.sap.infrastructure.configurations.security.otp.User
+import br.andrew.sap.model.authentication.User
 import br.andrew.sap.model.partner.BusinessPartner
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.ResponseEntity

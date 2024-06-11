@@ -1,6 +1,6 @@
-package br.andrew.sap.infrastructure.configurations.security.jwt
+package br.andrew.sap.infrastructure.security.jwt
 
-import br.andrew.sap.infrastructure.configurations.security.otp.User
+import br.andrew.sap.model.authentication.User
 import io.jsonwebtoken.Jwts
 import javax.crypto.SecretKey
 

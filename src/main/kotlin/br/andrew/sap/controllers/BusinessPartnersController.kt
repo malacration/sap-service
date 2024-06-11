@@ -1,11 +1,11 @@
 package br.andrew.sap.controllers
 
-import br.andrew.sap.infrastructure.configurations.security.otp.User
 import br.andrew.sap.infrastructure.odata.*
 import br.andrew.sap.infrastructure.odata.OData
 import br.andrew.sap.infrastructure.odata.Predicate
 import br.andrew.sap.model.Attachment
 import br.andrew.sap.model.ContactOpaque
+import br.andrew.sap.model.authentication.User
 import br.andrew.sap.model.forca.Cliente
 import br.andrew.sap.model.partner.*
 import br.andrew.sap.services.*

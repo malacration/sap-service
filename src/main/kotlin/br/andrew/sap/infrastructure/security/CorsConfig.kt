@@ -1,4 +1,4 @@
-package br.andrew.sap.infrastructure.configurations.security
+package br.andrew.sap.infrastructure.security
 
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.security.config.Customizer;

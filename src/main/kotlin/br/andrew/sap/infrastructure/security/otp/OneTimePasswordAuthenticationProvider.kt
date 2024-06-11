@@ -1,4 +1,4 @@
-package br.andrew.sap.infrastructure.configurations.security.otp
+package br.andrew.sap.infrastructure.security.otp
 
 import org.springframework.security.authentication.AuthenticationProvider
 import org.springframework.security.core.Authentication

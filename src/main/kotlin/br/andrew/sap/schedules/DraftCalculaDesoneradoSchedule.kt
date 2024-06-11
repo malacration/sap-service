@@ -3,7 +3,7 @@ package br.andrew.sap.schedules
 import br.andrew.sap.infrastructure.odata.Condicao
 import br.andrew.sap.infrastructure.odata.Filter
 import br.andrew.sap.infrastructure.odata.Predicate
-import br.andrew.sap.model.User
+import br.andrew.sap.model.SapUser
 import br.andrew.sap.model.documents.base.Document
 import br.andrew.sap.services.DraftsService
 import br.andrew.sap.services.document.DesoneradoService
@@ -21,7 +21,7 @@ import java.time.LocalDate
 class DraftCalculaDesoneradoSchedule(
     @Value("\${draft.dias:10}") val dias : Long,
     val desoneradoService: DesoneradoService,
-    val draftService : DraftsService,val currentUser : User
+    val draftService : DraftsService,val currentSapUser : SapUser
 ) {
 
     val logger: Logger = LoggerFactory.getLogger(DraftCalculaDesoneradoSchedule::class.java)
@@ -33,7 +33,7 @@ class DraftCalculaDesoneradoSchedule(
             Predicate("U_pedido_update", "1", Condicao.EQUAL),
             Predicate("DocDate", data, Condicao.GREAT),
             Predicate("DocumentStatus", "bost_Open", Condicao.EQUAL),
-            Predicate("UserSign", currentUser.internalKey, Condicao.NOT_EQUAL),
+            Predicate("UserSign", currentSapUser.internalKey, Condicao.NOT_EQUAL),
             Predicate("DocObjectCode", "oOrders", Condicao.EQUAL),
         )
         val resultado = draftService.get(filter).tryGetValues<Document>()
