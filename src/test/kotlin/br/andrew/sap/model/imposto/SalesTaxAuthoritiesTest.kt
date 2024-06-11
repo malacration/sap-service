@@ -61,7 +61,7 @@ class SalesTaxAuthoritiesTest {
             })
         )
         val order = OrderSales("",null,produtos,"")
-        order.documentAdditionalExpenses = listOf(AdditionalExpenses(1,100.0))
+        order.documentAdditionalExpenses = mutableListOf(AdditionalExpenses(1,100.0))
 
         Assertions.assertEquals(3736.37,order.total())
 
@@ -80,7 +80,7 @@ class SalesTaxAuthoritiesTest {
             })
         )
         val order = OrderSales("",null,produtos,"")
-        order.documentAdditionalExpenses = listOf(AdditionalExpenses(1,500.0))
+        order.documentAdditionalExpenses = mutableListOf(AdditionalExpenses(1,500.0))
 
         Assertions.assertEquals(4136.37,order.total())
 
@@ -124,7 +124,7 @@ class SalesTaxAuthoritiesTest {
         )
 
         val order = OrderSales("",null,produtos,"")
-        order.documentAdditionalExpenses = listOf(AdditionalExpenses(1,500.0))
+        order.documentAdditionalExpenses = mutableListOf(AdditionalExpenses(1,500.0))
 
         Assertions.assertEquals(4378.79,order.total())
 
@@ -149,7 +149,7 @@ class SalesTaxAuthoritiesTest {
         )
 
         val order = OrderSales("",null,produtos,"")
-        order.documentAdditionalExpenses = listOf(AdditionalExpenses(1,500.0))
+        order.documentAdditionalExpenses = mutableListOf(AdditionalExpenses(1,500.0))
 
         Assertions.assertEquals(4378.79,order.total())
 
