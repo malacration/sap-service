@@ -1,27 +1,49 @@
-package br.andrew.sap.controllers
+package br.andrew.sap.controller
 
-import br.andrew.sap.infrastructure.odata.*
-import br.andrew.sap.services.FazendaService
-import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PathVariable
-import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RestController
+import br.andrew.sap.infrastructure.odata.Condicao
+import br.andrew.sap.infrastructure.odata.Filter
+import br.andrew.sap.infrastructure.odata.Predicate
+import br.andrew.sap.model.SalePerson
+import br.andrew.sap.model.partner.BusinessPartner
+import br.andrew.sap.services.BusinessPartnersService
+import br.andrew.sap.services.SalesPersonsService
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.data.domain.*
+import org.springframework.web.bind.annotation.*
 
 @RestController
-@RequestMapping("fazenda")
-class FazendaController(
-        val fazendaService: FazendaService) {
+@RequestMapping("/sales-person")
+class SalesPersonController {
+
+    @Autowired
+    lateinit var salesPersonsService: SalesPersonsService
+
+    @Autowired
+    lateinit var businessPartnersService: BusinessPartnersService
 
 
-    @GetMapping()
-    fun getFazendas() : Any{
-        return fazendaService.get()
+    @PostMapping("search")
+    fun search(@RequestBody salesPerson1: String, page : Pageable): Page<SalePerson>? {
+        return salesPersonsService.search(salesPerson1, page)
     }
 
-    @GetMapping("{id}")
-    fun getFazendaById(@PathVariable id : String) : OData{
-        return fazendaService.get(Filter(mutableListOf(Predicate("Code",id, Condicao.EQUAL))))
+    @GetMapping("replace/{origin}/por/{destino}")
+    fun resultado3(@PathVariable origin: Int, @PathVariable destino: Int): Boolean {
+        val isDestinoAtivo = salesPersonsService.isSalesPersonActive(destino)
+        if (isDestinoAtivo) {
+            throw Exception("Vendedor de Destino inativo")
+        }
+        var pagina: Pageable = PageRequest.of(0,20)
+        do {
+            val resultado = businessPartnersService.findAllBySalePerson(origin,pagina)
+            resultado.forEach {
+                print(it.cardCode)
+                businessPartnersService.modificarVendedor(it,destino)
+            }
+            pagina = resultado.nextPageable()
+        }while (resultado.hasNext())
+        return true
     }
-
-
 }
+
+
