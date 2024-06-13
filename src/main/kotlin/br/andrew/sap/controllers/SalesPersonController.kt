@@ -13,15 +13,11 @@ import org.springframework.web.bind.annotation.*
 
 @RestController
 @RequestMapping("/sales-person")
-class SalesPersonController {
-
-    @Autowired
-    lateinit var salesPersonsService: SalesPersonsService
-
-    @Autowired
-    lateinit var businessPartnersService: BusinessPartnersService
-
-
+class SalesPersonController(
+    val salesPersonsService: SalesPersonsService,
+    val businessPartnersService: BusinessPartnersService
+){
+    
     @PostMapping("search")
     fun search(@RequestBody salesPerson1: String, page : Pageable): Page<SalePerson>? {
         return salesPersonsService.search(salesPerson1, page)
