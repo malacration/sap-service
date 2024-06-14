@@ -71,7 +71,7 @@ class PedidoVenda(
             it.u_id_pedido_forca = idPedido
             it.u_uuid_forca = uuid
             if(frete != null)
-                it.documentAdditionalExpenses = listOf(AdditionalExpenses.frete(frete!!))
+                it.documentAdditionalExpenses.add(AdditionalExpenses.frete(frete!!))
         }
     }
 

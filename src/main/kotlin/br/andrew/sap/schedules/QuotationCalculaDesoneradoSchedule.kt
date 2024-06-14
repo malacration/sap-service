@@ -18,7 +18,7 @@ import org.springframework.stereotype.Component
 
 
 @Component
-@ConditionalOnProperty(value = ["org.quartz.enable"], havingValue = "true", matchIfMissing = false)
+@ConditionalOnProperty(value = ["jobs.quotation"], havingValue = "true", matchIfMissing = true)
 class QuotationCalculaDesoneradoSchedule(
     val desoneradoService: DesoneradoService,
     val quotationService : QuotationsService) {
