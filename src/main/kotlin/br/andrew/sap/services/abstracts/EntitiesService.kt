@@ -70,11 +70,15 @@ abstract class EntitiesService<T>(protected val env: SapEnvrioment,
     }
 
     fun getById(id : String) : OData {
-        val request = RequestEntity
+        try{
+            val request = RequestEntity
                 .get(env.host+this.path()+"(${id})")
                 .header("cookie","B1SESSION=${session().sessionId}")
                 .build()
-        return restTemplate.exchange(request, OData::class.java).body!!
+            return restTemplate.exchange(request, OData::class.java).body!!
+        }catch (t : HttpClientErrorException){
+            throw t.getResponseBodyAs(SapError::class.java)?.getError(t,id) ?: t
+        }
     }
 
     open fun getById(id : Int) : OData {

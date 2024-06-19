@@ -10,7 +10,7 @@ import java.util.Date
 
 @JsonNaming(PropertyNamingStrategy.UpperCamelCaseStrategy::class)
 @JsonIgnoreProperties(ignoreUnknown = true)
-@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 class ParcelasAberto(
     @JsonProperty("BPLName") val BPLName : String,
     val CardCode : String,

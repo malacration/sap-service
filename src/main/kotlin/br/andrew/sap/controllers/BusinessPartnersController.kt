@@ -1,17 +1,15 @@
 package br.andrew.sap.controllers
 
-import br.andrew.sap.infrastructure.configurations.security.otp.User
 import br.andrew.sap.infrastructure.odata.*
 import br.andrew.sap.infrastructure.odata.OData
 import br.andrew.sap.infrastructure.odata.Predicate
 import br.andrew.sap.model.Attachment
 import br.andrew.sap.model.ContactOpaque
+import br.andrew.sap.model.authentication.User
 import br.andrew.sap.model.forca.Cliente
 import br.andrew.sap.model.partner.*
 import br.andrew.sap.services.*
 import br.andrew.sap.services.security.OneTimePasswordService
-import org.springframework.data.domain.Page
-import org.springframework.data.domain.Pageable
 import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PostAuthorize
 import org.springframework.security.core.Authentication
@@ -45,8 +43,8 @@ class BusinessPartnersController(
     }
 
     @PostMapping("search")
-    fun search(@RequestBody keyWord : String): NextLink<BusinessPartnerSlin> {
-        return service.fullSearchText(keyWord)
+    fun search(@RequestBody keyWord : String, auth : Authentication): NextLink<BusinessPartnerSlin> {
+        return service.fullSearchTextFallBack(keyWord,auth)
     }
 
     @GetMapping("/key/{hashcode}")

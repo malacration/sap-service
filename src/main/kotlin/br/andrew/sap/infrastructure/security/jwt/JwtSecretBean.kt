@@ -1,4 +1,4 @@
-package br.andrew.sap.infrastructure.configurations.security.jwt
+package br.andrew.sap.infrastructure.security.jwt
 
 import io.jsonwebtoken.security.Keys
 import org.springframework.beans.factory.annotation.Value

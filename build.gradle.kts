@@ -73,6 +73,10 @@ dependencies {
 
 	implementation("org.apache.commons:commons-lang3:3.9")
 
+	implementation("org.jetbrains.kotlinx:kotlinx-serialization-json-jvm:1.7.0")
+
+
+
 //	implementation("org.apache.ws.commons.axiom:axiom-api:1.2.13"){
 //		exclude("commons-logging","commons-logging")
 //		exclude("commons-logging")

@@ -22,7 +22,7 @@ import java.math.RoundingMode
 
 @JsonNaming(PropertyNamingStrategy.UpperCamelCaseStrategy::class)
 @JsonIgnoreProperties(ignoreUnknown = true)
-@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 open class Document(val CardCode : String,
                     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "YYY-MM-dd", timezone = "UTC")
                     val DocDueDate : String?,
@@ -100,10 +100,12 @@ open class Document(val CardCode : String,
                     .forEach { it.WarehouseCode = default.defaultWarehouseID}
     }
 
+    @JsonIgnore
     fun isAvista(): Boolean {
         return paymentGroupCode == "-1"
     }
 
+    @JsonIgnore
     fun isCalculaDesonaerado(): Boolean {
         return u_pedido_update == "1"
     }

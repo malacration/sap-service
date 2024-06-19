@@ -1,5 +1,6 @@
 package br.andrew.sap.model
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.databind.PropertyNamingStrategy
@@ -28,7 +29,7 @@ create construte base on json
  */
 @JsonNaming(PropertyNamingStrategy.UpperCamelCaseStrategy::class)
 @JsonIgnoreProperties(ignoreUnknown = true)
-@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 class SalePerson(val SalesEmployeeCode: Int,
                  val SalesEmployeeName : String,
                  private val Email: String?,
@@ -37,6 +38,10 @@ class SalePerson(val SalesEmployeeCode: Int,
                  val U_envia_relatorio: String,
                  val Active: String) {
 
+    var u_password: String? = null
+
+
+    @JsonIgnore
     fun getEmailAddress(): String {
         if(this.SalesEmployeeCode == -1 || Email == null)
             return emailDefault
@@ -45,6 +50,8 @@ class SalePerson(val SalesEmployeeCode: Int,
     }
 
     companion object{
+        @JsonIgnore
         var emailDefault : String = "";
     }
 }
+

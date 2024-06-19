@@ -14,7 +14,7 @@ import java.util.Date
 
 @JsonNaming(PropertyNamingStrategy.UpperCamelCaseStrategy::class)
 @JsonIgnoreProperties(ignoreUnknown = true)
-@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 class BusinessPartner() {
     constructor(cardName : String,
                 type: BusinessPartnerType) : this() {

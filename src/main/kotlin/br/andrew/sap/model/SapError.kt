@@ -1,10 +1,7 @@
 package br.andrew.sap.model
 
 import br.andrew.sap.model.documents.base.Document
-import br.andrew.sap.model.exceptions.BusinessPartnerNotAssignedException
-import br.andrew.sap.model.exceptions.CreditException
-import br.andrew.sap.model.exceptions.PixPaymentException
-import br.andrew.sap.model.exceptions.SapGenericException
+import br.andrew.sap.model.exceptions.*
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatusCode
 import org.springframework.web.client.HttpClientErrorException
@@ -37,7 +34,9 @@ class ErrorMsg(val code : String, val message : SapMessage) {
 
 class SapMessage(val lang : String, val value : String) {
     fun getError(error: SapError): Throwable? {
-        return if(value.contains("Linked payment method"))
+        return if(value.contains("No matching records found"))
+            NotFoundException(error)
+        else return if(value.contains("Linked payment method"))
             PixPaymentException(error)
         else if(value.contains("Esse codigo de pix ja recebeu pagamento"))
             PixPaymentException(error)

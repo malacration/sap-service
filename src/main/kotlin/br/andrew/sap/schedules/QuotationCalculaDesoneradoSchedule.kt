@@ -46,7 +46,7 @@ class QuotationCalculaDesoneradoSchedule(
 
 @JsonNaming(PropertyNamingStrategy.UpperCamelCaseStrategy::class)
 @JsonIgnoreProperties(ignoreUnknown = true)
-@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 class FalhaAoCalcularDesonerado(){
     var comments = "O desconto precisa ser removido para o calculo funcionar adequadamente"
     var u_pedido_update = "0"

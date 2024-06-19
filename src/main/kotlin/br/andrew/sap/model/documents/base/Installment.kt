@@ -13,7 +13,7 @@ import java.util.*
 
 @JsonNaming(PropertyNamingStrategy.UpperCamelCaseStrategy::class)
 @JsonIgnoreProperties(ignoreUnknown = true)
-@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 class Installment(@JsonProperty("DueDate") private val _dueDate : Date?, val total : Double) {
 
     var InstallmentId : Int? = null

@@ -1,13 +1,15 @@
-package br.andrew.sap.infrastructure.configurations.security
+package br.andrew.sap.infrastructure.security
 
-import br.andrew.sap.infrastructure.configurations.security.otp.OneTimePasswordAuthenticationProvider
-import br.andrew.sap.infrastructure.configurations.security.jwt.JwtAuthenticationFilter
-import br.andrew.sap.infrastructure.configurations.security.jwt.JwtHandler
-import br.andrew.sap.infrastructure.configurations.security.jwt.JwtSecretBean
-import br.andrew.sap.infrastructure.configurations.security.otp.DisableOneTimePasswordAuthenticationFilter
-import br.andrew.sap.infrastructure.configurations.security.otp.OneTimePasswordAuthenticationFilter
+import br.andrew.sap.infrastructure.security.otp.OneTimePasswordAuthenticationProvider
+import br.andrew.sap.infrastructure.security.jwt.JwtAuthenticationFilter
+import br.andrew.sap.infrastructure.security.jwt.JwtHandler
+import br.andrew.sap.infrastructure.security.jwt.JwtSecretBean
+import br.andrew.sap.infrastructure.security.otp.DisableOneTimePasswordAuthenticationFilter
+import br.andrew.sap.infrastructure.security.otp.OneTimePasswordAuthenticationFilter
+import br.andrew.sap.infrastructure.security.password.UserPasswordAuthenticationFilter
 import br.andrew.sap.services.security.OneTimePasswordService
 import br.andrew.sap.services.my.UserJwtService
+import br.andrew.sap.services.security.UserPasswordService
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -30,6 +32,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 class SecurityWebConf(
     @Value("\${spring.security.disable:false}") val disable: Boolean,
     jwtSecretBean : JwtSecretBean,
+    private val userPasswordService: UserPasswordService,
     private val otpService : OneTimePasswordService
 )  {
 
@@ -38,7 +41,9 @@ class SecurityWebConf(
 
     @Bean
     fun authorizationRequestRepository(http : HttpSecurity): DefaultSecurityFilterChain {
-        val authManager : AuthenticationManager = ProviderManager(OneTimePasswordAuthenticationProvider())
+        val authManager : AuthenticationManager = ProviderManager(
+            OneTimePasswordAuthenticationProvider()
+        )
         return if(disable) {
             http.csrf {
                     it.disable()
@@ -52,8 +57,15 @@ class SecurityWebConf(
         else{
             http.sessionManagement{it.sessionCreationPolicy(SessionCreationPolicy.STATELESS)}
                 .authenticationProvider(OneTimePasswordAuthenticationProvider())
-                .addFilterBefore(OneTimePasswordAuthenticationFilter(authManager,jwtHandler,otpService),UsernamePasswordAuthenticationFilter::class.java)
-                .addFilterBefore(JwtAuthenticationFilter(jwtHandler),OneTimePasswordAuthenticationFilter::class.java)
+                .addFilterBefore(
+                    JwtAuthenticationFilter(jwtHandler),
+                    UsernamePasswordAuthenticationFilter::class.java)
+                .addFilterBefore(
+                    OneTimePasswordAuthenticationFilter(authManager,jwtHandler,otpService),
+                    JwtAuthenticationFilter::class.java)
+                .addFilterBefore(
+                    UserPasswordAuthenticationFilter(authManager,jwtHandler,userPasswordService),
+                    OneTimePasswordAuthenticationFilter::class.java)
                 .authorizeHttpRequests { it
                     .requestMatchers(
                         "/otp/login",
@@ -66,10 +78,12 @@ class SecurityWebConf(
                         "/invoice/cardcode/*/payment/**",
                         "/installment/*/paid",
                         "/invoice/*/parcela/**",
+                        "/logar"
                     ).permitAll()
                     .requestMatchers(HttpMethod.POST,
                         "/business-partners/key/**",
                         "/business-partners/key/*/attachment",
+                        "/logar",
                         "/otp/login")
                     .permitAll()
                     .requestMatchers(HttpMethod.OPTIONS,"/**")

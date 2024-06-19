@@ -14,7 +14,7 @@ import java.util.*
 
 @JsonNaming(PropertyNamingStrategy.UpperCamelCaseStrategy::class)
 @JsonIgnoreProperties(ignoreUnknown = true)
-@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 class Payment() {
     constructor(transaction : Transaction, conta : ContaUzziPayPix, extraRemarks : String = "") : this(){
         //TODO adicionar conta contabil sap para conta uzzypay

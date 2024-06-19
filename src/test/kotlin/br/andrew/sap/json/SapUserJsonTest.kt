@@ -1,21 +1,20 @@
 package br.andrew.sap.json
 
 import br.andrew.sap.infrastructure.odata.OData
-import br.andrew.sap.model.User
+import br.andrew.sap.model.SapUser
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.kotlin.KotlinFeature
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.fasterxml.jackson.module.kotlin.jacksonTypeRef
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 
-class UserJsonTest {
+class SapUserJsonTest {
 
     @Test
     fun test(){
         val mapper = ObjectMapper().registerModule(KotlinModule())
-        val user = mapper.readValue(json,jacksonTypeRef<OData>()).tryGetValue<User>()
-        Assertions.assertEquals(162,user.internalKey)
+        val sapUser = mapper.readValue(json,jacksonTypeRef<OData>()).tryGetValue<SapUser>()
+        Assertions.assertEquals(162,sapUser.internalKey)
     }
 
     val json = "{\n" +

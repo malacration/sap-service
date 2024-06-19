@@ -5,7 +5,7 @@ import br.andrew.sap.infrastructure.odata.Filter
 import br.andrew.sap.infrastructure.odata.OData
 import br.andrew.sap.infrastructure.odata.Predicate
 import br.andrew.sap.model.ApprovalRequests
-import br.andrew.sap.model.User
+import br.andrew.sap.model.SapUser
 import br.andrew.sap.services.TelegramRequestService
 import br.andrew.sap.services.approval.ApprovalRequestsService
 import org.slf4j.Logger
@@ -22,7 +22,7 @@ import java.util.Calendar
 class AutoApprovalPaymentCondition(
     val approvalRequestsService : ApprovalRequestsService,
     val telegramRequestService: TelegramRequestService,
-    val currentUser : User) {
+    val currentSapUser : SapUser) {
 
     val logger: Logger = LoggerFactory.getLogger(AutoApprovalPaymentCondition::class.java)
 
@@ -34,7 +34,7 @@ class AutoApprovalPaymentCondition(
                 .also { it.add(Calendar.DAY_OF_YEAR, -30) }.time)
 
             val predicados = mutableListOf(
-                Predicate("OriginatorID", currentUser.internalKey, Condicao.EQUAL),
+                Predicate("OriginatorID", currentSapUser.internalKey, Condicao.EQUAL),
                 Predicate("ObjectType", "17", Condicao.EQUAL),
                 Predicate("IsDraft", "Y", Condicao.EQUAL),
                 Predicate("CreationDate", dueDate.toString(), Condicao.GREAT),
@@ -47,7 +47,7 @@ class AutoApprovalPaymentCondition(
                     else
                         approvalRequestsService.next(requests)
                     requests.tryGetValues<ApprovalRequests>()
-                        .filter { it.draftEntry != null && !it.isReprovado(currentUser.internalKey) }
+                        .filter { it.draftEntry != null && !it.isReprovado(currentSapUser.internalKey) }
                         .forEach {
                             try {
                                 approvalRequestsService.aprovaEhCria(it)

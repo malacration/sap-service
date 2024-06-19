@@ -12,7 +12,7 @@ import com.fasterxml.jackson.databind.annotation.JsonNaming
 
 @JsonNaming(PropertyNamingStrategy.UpperCamelCaseStrategy::class)
 @JsonIgnoreProperties(ignoreUnknown = true)
-@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 class PaymentInvoice(val docEntry: Int, val sumApplied: Double, val invoiceType: PaymentType) {
 
     constructor(invoice: Invoice, transaction: Transaction, installment: Installment)

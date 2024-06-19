@@ -15,7 +15,7 @@ import kotlin.reflect.jvm.javaField
 
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 @JsonDeserialize(using = DocumentLinesDeserializer::class)
 abstract class DocumentLines(var UnitPrice : String, var Quantity : String, var Usage : Int = 9) {
 

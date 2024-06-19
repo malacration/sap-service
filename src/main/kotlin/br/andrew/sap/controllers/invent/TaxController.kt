@@ -1,6 +1,6 @@
 package br.andrew.sap.controllers.invent
 
-import br.andrew.sap.infrastructure.configurations.security.MethodSecurityConfig
+import br.andrew.sap.infrastructure.security.MethodSecurityConfig
 import br.andrew.sap.model.documents.base.Document
 import br.andrew.sap.model.partner.BusinessPartner
 import br.andrew.sap.services.BusinessPartnersService

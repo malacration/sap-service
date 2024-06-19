@@ -13,7 +13,7 @@ import java.util.*
 
 @JsonNaming(PropertyNamingStrategy.UpperCamelCaseStrategy::class)
 @JsonIgnoreProperties(ignoreUnknown = true)
-@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 class RomaneioFazendaInsumo(
         val U_NumeroTicket : Int?,
         val U_PesoNota : Double?,
