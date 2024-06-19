@@ -11,7 +11,7 @@ import java.util.*
 
 @JsonNaming(PropertyNamingStrategy.UpperCamelCaseStrategy::class)
 @JsonIgnoreProperties(ignoreUnknown = true)
-@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 class Invoice(CardCode: String,
               @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "YYY-MM-dd", timezone = "UTC")
                  DocDueDate: String?,

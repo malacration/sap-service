@@ -51,7 +51,7 @@ class JournalEntriesService(env: SapEnvrioment, restTemplate: RestTemplate, auth
 
 @JsonNaming(PropertyNamingStrategy.UpperCamelCaseStrategy::class)
 @JsonIgnoreProperties(ignoreUnknown = true)
-@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 class JournalEntry(val journalEntryLines : List<JournalEntryLines>, val memo : String){
 
     var taxDate : String? = null
@@ -83,7 +83,7 @@ class JournalEntry(val journalEntryLines : List<JournalEntryLines>, val memo : S
 
 @JsonNaming(PropertyNamingStrategy.UpperCamelCaseStrategy::class)
 @JsonIgnoreProperties(ignoreUnknown = true)
-@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 class JournalEntryLines(
     val AccountCode : String,
     val debit : Double,

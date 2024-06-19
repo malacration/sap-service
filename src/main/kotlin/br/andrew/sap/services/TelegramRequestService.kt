@@ -27,7 +27,7 @@ class TelegramRequestService(val config: TelegramConfig, val template: RestTempl
             if(config.token.isNotEmpty())
                 template.postForEntity(config.messageUrl, Mensagem(config.chatId,mensagem.replace("<EOL>",""),tipo),String::class.java)
         }catch (t : Throwable){
-            logger.error("Erro ao enviar mensagem ao telegram!",t)
+            logger.error("Erro ao enviar mensagem ao telegram! ${t.message}",)
         }
     }
 

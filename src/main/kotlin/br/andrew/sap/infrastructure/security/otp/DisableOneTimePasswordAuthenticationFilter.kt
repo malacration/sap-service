@@ -1,5 +1,6 @@
 package br.andrew.sap.infrastructure.security.otp
 
+import br.andrew.sap.infrastructure.security.AuthenticationHandler
 import br.andrew.sap.infrastructure.security.jwt.JwtHandler
 import br.andrew.sap.model.authentication.OtpCpfCnpj
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -23,7 +24,7 @@ class DisableOneTimePasswordAuthenticationFilter(authManager: AuthenticationMana
 ) {
     init {
         this.authenticationManager = authManager
-        this.setAuthenticationSuccessHandler(OneTimePasswordAuthenticationSuccessHandler(jwtHandler))
+        this.setAuthenticationSuccessHandler(AuthenticationHandler(jwtHandler))
     }
 
     override fun attemptAuthentication(request: HttpServletRequest?, response: HttpServletResponse?): Authentication? {

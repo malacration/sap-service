@@ -6,7 +6,6 @@ import com.fasterxml.jackson.databind.annotation.JsonNaming
 
 
 @JsonNaming(PropertyNamingStrategy.UpperCamelCaseStrategy::class)
-@JsonIgnoreProperties(ignoreUnknown = true)
 class SalesTaxCode(val code : String, val salesTaxCodes_Lines : List<SalesTaxCodeLine>)
 
 @JsonNaming(PropertyNamingStrategy.UpperCamelCaseStrategy::class)

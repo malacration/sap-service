@@ -18,8 +18,11 @@ class JwtAuthenticationFilter(private val jwtHandler: JwtHandler) : OncePerReque
     override fun doFilterInternal(request: HttpServletRequest,
                                   response: HttpServletResponse,
                                   filterChain: FilterChain) {
-        if(!request.requestURL.contains("/otp/login") && request.getHeader("Authorization") != null){
+        if(!request.requestURL.contains("/otp/login")
+            && !request.requestURL.contains("/logar")
+            && request.getHeader("Authorization") != null){
             try {
+
                 val compactJws = request.getHeader("Authorization")
                 SecurityContextHolder.getContext().authentication = jwtHandler.getUser(compactJws)
             }catch (e :Exception) {

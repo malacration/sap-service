@@ -31,7 +31,7 @@ class EventsService(private val envrioment : RdStationEnvrioment,
 class Event(val payload : EventPayloadPedido, val event_type : String = "CONVERSION", val event_family : String = "CDP")
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 class EventPayloadPedido(val email : String, val conversion_identifier : ConversionType = ConversionType.SAP_Pedido){
 
     var name : String? = null

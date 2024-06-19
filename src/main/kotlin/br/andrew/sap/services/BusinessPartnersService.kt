@@ -10,6 +10,7 @@ import br.andrew.sap.model.partner.*
 import br.andrew.sap.services.abstracts.EntitiesService
 import br.andrew.sap.services.abstracts.SqlQueriesService
 import org.springframework.http.RequestEntity
+import org.springframework.security.core.Authentication
 import org.springframework.stereotype.Service
 import org.springframework.web.client.RestTemplate
 import java.text.SimpleDateFormat
@@ -73,12 +74,22 @@ class BusinessPartnersService(
             .tryGetValue<BusinessPartner>()
     }
 
-    fun fullSearchText(fullText: String): NextLink<BusinessPartnerSlin> {
+    //TODO melhorar depois
+    fun fullSearchText(fullText: String, auth: Authentication): NextLink<BusinessPartnerSlin> {
+        val request = RequestEntity
+            .get(env.host+"/b1s/v1/sml.svc/CLIENTE_VENDEDORParameters(searchText='$fullText',vendedor=${auth.principal})/CLIENTE_VENDEDOR")
+            .header("cookie","B1SESSION=${session().sessionId}")
+            .build()
+        return restTemplate.exchange(request, OData::class.java).body!!.tryGetNextValues()
+    }
+
+    fun fullSearchTextFallBack(fullText: String, auth: Authentication): NextLink<BusinessPartnerSlin> {
         if(fullText.startsWith("SQLQueries('parceiro-full-search-text.sql')"))
             return sqlQueriesService.nextLink(fullText)!!.tryGetNextValues()
-        val busca = if(fullText.toDoubleOrNull() == null )  fullText.uppercase() else CpfCnpj(fullText).getWithMask();
+        val busca = if(fullText.toDoubleOrNull() == null )  fullText.uppercase().replace("*","%") else CpfCnpj(fullText).getWithMask();
+        val parametros = listOf(Parameter("valor","'%${busca}%'"),Parameter("vendedor",auth.principal))
         return sqlQueriesService
-            .execute("parceiro-full-search-text.sql", Parameter("valor","'%${busca}%'"))!!
+            .execute("parceiro-full-search-text.sql", parametros)!!
             .tryGetNextValues()
     }
 

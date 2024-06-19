@@ -6,13 +6,17 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.core.userdetails.UserDetails
 
 class User(val id : String,
-           private val name : String,
            private val authorities : List<SimpleGrantedAuthority>) : UserDetails, Authentication {
 
     private var authenticated = true
+    private var name : String? = null
     var otp : Int? = null
-    override fun getName(): String {
-        return "Andrew"
+
+    constructor(id : String, name : String, authorities : List<SimpleGrantedAuthority>) : this(id,authorities){
+        this.name = name
+    }
+    override fun getName(): String? {
+        return name
     }
 
     override fun getAuthorities(): List<out GrantedAuthority> {
@@ -28,7 +32,7 @@ class User(val id : String,
     }
 
     override fun getPrincipal(): Any {
-        return this
+        return id
     }
 
     override fun isAuthenticated(): Boolean {

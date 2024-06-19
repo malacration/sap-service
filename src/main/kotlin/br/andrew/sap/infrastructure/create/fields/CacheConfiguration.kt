@@ -12,15 +12,15 @@ import org.springframework.context.annotation.Profile
 @Configuration
 @Profile("!test")
 @ConditionalOnProperty(value = ["fields"], havingValue = "true", matchIfMissing = true)
-class VendedorConfiguration(val userFieldsMDService: UserFieldsMDService) {
+class CacheConfiguration(val userFieldsMDService: UserFieldsMDService) {
 
-    init {
-        listOf(
-            FieldMd("envia_relatorio","Envia Relatorio?","OSLP").also {
-                it.ValidValuesMD = listOf(ValuesMd("0","NÃO"), ValuesMd("1","SIM"))
-                it.defaultValue = "0";
-            },
-            FieldMd("password","senha","OSLP",DbType.db_Memo)
-        ).forEach{userFieldsMDService.findOrCreate(it)}
-    }
+//    init {
+//        listOf(
+//            FieldMd("envia_relatorio","Envia Relatorio?","OSLP").also {
+//                it.ValidValuesMD = listOf(ValuesMd("0","NÃO"), ValuesMd("1","SIM"))
+//                it.defaultValue = "0";
+//            },
+//            FieldMd("password","senha","OSLP",DbType.db_Memo)
+//        ).forEach{userFieldsMDService.findOrCreate(it)}
+//    }
 }

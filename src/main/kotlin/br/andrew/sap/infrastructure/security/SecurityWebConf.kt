@@ -58,14 +58,14 @@ class SecurityWebConf(
             http.sessionManagement{it.sessionCreationPolicy(SessionCreationPolicy.STATELESS)}
                 .authenticationProvider(OneTimePasswordAuthenticationProvider())
                 .addFilterBefore(
-                    OneTimePasswordAuthenticationFilter(authManager,jwtHandler,otpService),
+                    JwtAuthenticationFilter(jwtHandler),
                     UsernamePasswordAuthenticationFilter::class.java)
                 .addFilterBefore(
-                    JwtAuthenticationFilter(jwtHandler),
-                    OneTimePasswordAuthenticationFilter::class.java)
+                    OneTimePasswordAuthenticationFilter(authManager,jwtHandler,otpService),
+                    JwtAuthenticationFilter::class.java)
                 .addFilterBefore(
                     UserPasswordAuthenticationFilter(authManager,jwtHandler,userPasswordService),
-                    JwtAuthenticationFilter::class.java)
+                    OneTimePasswordAuthenticationFilter::class.java)
                 .authorizeHttpRequests { it
                     .requestMatchers(
                         "/otp/login",
@@ -78,10 +78,12 @@ class SecurityWebConf(
                         "/invoice/cardcode/*/payment/**",
                         "/installment/*/paid",
                         "/invoice/*/parcela/**",
+                        "/logar"
                     ).permitAll()
                     .requestMatchers(HttpMethod.POST,
                         "/business-partners/key/**",
                         "/business-partners/key/*/attachment",
+                        "/logar",
                         "/otp/login")
                     .permitAll()
                     .requestMatchers(HttpMethod.OPTIONS,"/**")

@@ -20,7 +20,7 @@ class DummyService(env: SapEnvrioment, restTemplate: RestTemplate, authService: 
 
 @JsonNaming(PropertyNamingStrategy.UpperCamelCaseStrategy::class)
 @JsonIgnoreProperties(ignoreUnknown = true)
-@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 class DocumentWrapper(val Document : OrderSales
 
 )

@@ -8,7 +8,7 @@ import com.fasterxml.jackson.databind.annotation.JsonNaming
 
 @JsonNaming(PropertyNamingStrategy.UpperCamelCaseStrategy::class)
 @JsonIgnoreProperties(ignoreUnknown = true)
-@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 class Service(unitPrice : String, quantity : String = "0") : DocumentLines(unitPrice, quantity){
 
     override fun Duplicate(): Service {

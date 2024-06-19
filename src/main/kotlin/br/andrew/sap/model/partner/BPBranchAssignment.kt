@@ -9,7 +9,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 class BPBranchAssignment {
 
     var BPCode : String? = null

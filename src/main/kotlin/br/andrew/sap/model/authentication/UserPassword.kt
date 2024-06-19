@@ -1,6 +1,6 @@
 package br.andrew.sap.model.authentication
 
 class UserPassword(val username : String,
-                   val passwordHash : String) {
+                   val password : String) {
 
 }

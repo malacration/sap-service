@@ -2,7 +2,7 @@ package br.andrew.sap.controllers.handler
 
 import com.fasterxml.jackson.annotation.JsonInclude
 
-@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 class ErroDto(val mensagem : String, val traceId : String) {
 
     var stackTrace : String? = null
