@@ -13,6 +13,7 @@ import br.andrew.sap.services.document.QuotationsService
 import br.andrew.sap.services.pricing.ComissaoService
 import org.slf4j.LoggerFactory
 import org.springframework.context.ApplicationEventPublisher
+import org.springframework.security.core.Authentication
 import org.springframework.web.bind.annotation.*
 import java.util.*
 
@@ -42,14 +43,12 @@ class QuotationsController(val quotationsService: QuotationsService,
     }
 
     @PostMapping("angular")
-    fun saveForAngular(@RequestBody pedido : Quotation): Document {
-        //TODO pegar salesPersonCode do login do usuario
-        //TODO u_pedido_update = "1"'
+    fun saveForAngular(@RequestBody pedido : Quotation, auth : Authentication): Document {
         pedido.usaBrenchDefaultWarehouse(WarehouseDefaultConfig.warehouses)
         pedido.setDistribuicaoCusto(DistribuicaoCustoByBranchConfig.distibucoesCustos)
         pedido.atualizaPrecoBase(itemService)
         pedido.u_pedido_update = "1"
-        pedido.salesPersonCode = 27
+        pedido.salesPersonCode = auth.principal.toString().toInt()
         telegramService.send("Criando pedido pelo portal cliente")
         return quotationsService.save(pedido).tryGetValue<Document>().also {
             try{
