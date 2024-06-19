@@ -35,7 +35,8 @@ class SalePerson(val SalesEmployeeCode: Int,
                  private val Email: String?,
                  val U_Integracao_sovis: String,
                  val U_filial: String?,
-                 val U_envia_relatorio: String) {
+                 val U_envia_relatorio: String,
+                 val Active: String) {
 
     var u_password: String? = null
 

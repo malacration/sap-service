@@ -1,15 +1,20 @@
 package br.andrew.sap.services
 
-import br.andrew.sap.infrastructure.odata.Condicao
-import br.andrew.sap.infrastructure.odata.Filter
+import br.andrew.sap.infrastructure.odata.*
 import br.andrew.sap.model.SalePerson
 import br.andrew.sap.model.envrioments.SapEnvrioment
+import br.andrew.sap.model.partner.BusinessPartner
+import br.andrew.sap.model.partner.BusinessPartnerSlin
+import br.andrew.sap.model.partner.CpfCnpj
 import br.andrew.sap.services.abstracts.EntitiesService
+import br.andrew.sap.services.abstracts.SqlQueriesService
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
 import org.springframework.web.client.RestTemplate
 
 @Service
-class SalesPersonsService(env: SapEnvrioment, restTemplate: RestTemplate, authService: AuthService) :
+class SalesPersonsService(val sqlQueriesService : SqlQueriesService , env: SapEnvrioment, restTemplate: RestTemplate, authService: AuthService) :
         EntitiesService<SalePerson>(env, restTemplate, authService) {
     override fun path(): String {
         return "/b1s/v1/SalesPersons"
@@ -19,4 +24,26 @@ class SalesPersonsService(env: SapEnvrioment, restTemplate: RestTemplate, authSe
         val filter = Filter("U_envia_relatorio","1",Condicao.EQUAL)
         return get(filter).tryGetValues()
     }
+
+    fun search(keyword: String, page : Pageable): Page<SalePerson>? {
+        val filter = Filter(
+            Predicate("SalesEmployeeName", keyword,Condicao.CONTAINS ),
+            Predicate("SalesEmployeeCode",-1,Condicao.NOT_EQUAL),
+            Predicate("Active","Y",Condicao.EQUAL)
+        )
+        val result = get(filter)
+        return result.tryGetPageValues<SalePerson>(page)
+    }
+
+    fun isSalesPersonActive(salesPersonCode: Int): Boolean {
+        val filter = Filter(
+            Predicate("SalesEmployeeCode", salesPersonCode, Condicao.EQUAL),
+            Predicate("Active", "Y", Condicao.EQUAL)
+        )
+        val result = get(filter)
+
+        // Verifica se o campo "value" existe e se contém pelo menos um elemento
+        return result.containsKey("value") && result["value"] is List<*> && (result["value"] as List<*>).size < 1
+    }
+
 }

@@ -63,7 +63,7 @@ open class Document(val CardCode : String,
 
     @JsonProperty("DocumentStatus")
     val DocumentStatus : DocumentStatus? = null
-    var documentAdditionalExpenses : List<AdditionalExpenses> = emptyList()
+    var documentAdditionalExpenses : MutableList<AdditionalExpenses> = mutableListOf()
     var shipToCode : String? = null
     var Address : String? = null
     var U_assinatura : String = "0"
@@ -170,6 +170,13 @@ open class Document(val CardCode : String,
     fun atualizaPrecoBase(itemService: ItemsService) {
         DocumentLines.forEach{it.atualizaPrecoBase(itemService)}
     }
+
+    var frete : Double? = null
+        set(value) {
+            if(value != null)
+                this.documentAdditionalExpenses.add(AdditionalExpenses.frete(value))
+            field = null
+        }
 
 }
 
