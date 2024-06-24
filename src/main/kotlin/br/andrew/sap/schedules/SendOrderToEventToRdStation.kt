@@ -24,7 +24,7 @@ import br.andrew.sap.services.SalesPersonsService
 
 
 @Component
-@ConditionalOnProperty(value =["rd.enable"], havingValue = "true", matchIfMissing = true)
+@ConditionalOnProperty(value =["rd.enable"], havingValue = "true", matchIfMissing = false)
 class SendOrderToEventToRdStation(
     val controller : RdStationController,
     val ordersService: OrdersService,

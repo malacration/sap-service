@@ -50,7 +50,7 @@ class SecurityWebConf(
                 }.authorizeHttpRequests {
                     it.anyRequest().permitAll()
                 }.addFilterBefore(DisableOneTimePasswordAuthenticationFilter(authManager,jwtHandler),UsernamePasswordAuthenticationFilter::class.java)
-                .addFilterBefore(JwtAuthenticationFilter(jwtHandler), DisableOneTimePasswordAuthenticationFilter::class.java)
+                .addFilterBefore(JwtAuthenticationFilter(jwtHandler,disable), DisableOneTimePasswordAuthenticationFilter::class.java)
                 .cors(CorsConfig().customizer)
                 .build()
         }
@@ -58,7 +58,7 @@ class SecurityWebConf(
             http.sessionManagement{it.sessionCreationPolicy(SessionCreationPolicy.STATELESS)}
                 .authenticationProvider(OneTimePasswordAuthenticationProvider())
                 .addFilterBefore(
-                    JwtAuthenticationFilter(jwtHandler),
+                    JwtAuthenticationFilter(jwtHandler,disable),
                     UsernamePasswordAuthenticationFilter::class.java)
                 .addFilterBefore(
                     OneTimePasswordAuthenticationFilter(authManager,jwtHandler,otpService),
