@@ -1,5 +1,6 @@
 package br.andrew.sap.infrastructure.security.jwt
 
+import br.andrew.sap.model.authentication.User
 import jakarta.servlet.FilterChain
 import jakarta.servlet.ServletRequest
 import jakarta.servlet.ServletResponse
@@ -11,14 +12,17 @@ import org.springframework.web.filter.GenericFilterBean
 import org.springframework.web.filter.OncePerRequestFilter
 
 
-class JwtAuthenticationFilter(private val jwtHandler: JwtHandler) : OncePerRequestFilter() {
+class JwtAuthenticationFilter(private val jwtHandler: JwtHandler, private val disable : Boolean = false) : OncePerRequestFilter() {
 
     val log = LoggerFactory.getLogger(JwtAuthenticationFilter::class.java)
 
     override fun doFilterInternal(request: HttpServletRequest,
                                   response: HttpServletResponse,
                                   filterChain: FilterChain) {
-        if(!request.requestURL.contains("/otp/login")
+        if(disable){
+            SecurityContextHolder.getContext().authentication = User("-1","Nenhum vendedor", listOf())
+        }
+        else if(!request.requestURL.contains("/otp/login")
             && !request.requestURL.contains("/logar")
             && request.getHeader("Authorization") != null){
             try {

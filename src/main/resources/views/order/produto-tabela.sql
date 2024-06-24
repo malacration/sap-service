@@ -23,6 +23,7 @@ WHERE
 
     )
     AND "ITM1"."Price" > :zero
+    AND "OPLN"."U_publica_forca" = 1
 	AND "ITM1"."PriceList" IN(SELECT
                               	"OPLN"."ListNum"
                               FROM
