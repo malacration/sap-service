@@ -119,4 +119,11 @@ class BusinessPartnersService(
         }
     }
 
+    fun findBusinessPartnersBySalesPersonCode(salesPersonCode: Int, page : Pageable): Page<BusinessPartner>? {
+        val filter = Filter(
+            Predicate("SalesPersonCode", salesPersonCode,Condicao.EQUAL )
+        )
+        val result = get(filter,page)
+        return result.tryGetPageValues<BusinessPartner>(page)
+    }
 }
