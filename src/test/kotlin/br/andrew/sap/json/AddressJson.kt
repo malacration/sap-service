@@ -34,7 +34,7 @@ class AddressJson {
     fun testJsonCliente(){
         val mapper = ObjectMapper().registerModule(KotlinModule())
         val obj = mapper.readValue(json, Cliente::class.java)
-        val addrs = obj.endereco.getAddresse(localidade = 123)
+        val addrs = obj.endereco!!.getAddresse(localidade = 123)
     }
 
     @Test

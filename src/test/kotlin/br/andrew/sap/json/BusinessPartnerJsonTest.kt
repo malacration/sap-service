@@ -1,14 +1,13 @@
 package br.andrew.sap.json
 
+import br.andrew.sap.model.forca.Cliente
 import br.andrew.sap.model.partner.BusinessPartner
 import br.andrew.sap.model.partner.BusinessPartnerType
 import br.andrew.sap.model.partner.CpfCnpj
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.kotlin.KotlinFeature
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
-import java.util.*
 
 class BusinessPartnerJsonTest {
 
@@ -19,6 +18,15 @@ class BusinessPartnerJsonTest {
                 .also { it.setCpfCnpj(CpfCnpj("01847004261")) })
         Assertions.assertTrue(saida.contains("BPFiscalTaxIDCollection"))
         Assertions.assertTrue(!saida.contains("BpfiscalTaxIDCollection"))
+        println(saida)
+    }
+
+
+    @Test
+    fun teste2(){
+        val mapper = ObjectMapper().registerModule(KotlinModule())
+        val bp = Cliente("windson","27746773001").getUpdateBusinessPartner("CLI0666")
+        val saida = mapper.writeValueAsString(bp)
         println(saida)
     }
 }
