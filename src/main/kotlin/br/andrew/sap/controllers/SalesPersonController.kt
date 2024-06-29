@@ -24,7 +24,7 @@ class SalesPersonController(
     }
 
     @GetMapping("replace/{origin}/por/{destino}")
-    fun resultado3(@PathVariable origin: Int, @PathVariable destino: Int, @RequestParam("clientes") clientes: List<String>): Boolean {
+    fun replaceSalesPerson(@PathVariable origin: Int, @PathVariable destino: Int, @RequestParam("clientes") clientes: List<String>): Boolean {
         val isDestinoAtivo = salesPersonsService.isSalesPersonActive(destino)
         if (isDestinoAtivo) {
             throw Exception("Vendedor de Destino inativo")
@@ -49,8 +49,7 @@ class SalesPersonController(
 
     @GetMapping("/{salesEmployeeCode}/business-partners")
     fun getBusinessPartners(@PathVariable salesEmployeeCode: Int, page : Pageable): Page<BusinessPartner>?{
-        val cachorro = businessPartnersService.findBusinessPartnersBySalesPersonCode(salesEmployeeCode, page)
-        return cachorro
+        return businessPartnersService.findBusinessPartnersBySalesPersonCode(salesEmployeeCode, page)
     }
 }
 
