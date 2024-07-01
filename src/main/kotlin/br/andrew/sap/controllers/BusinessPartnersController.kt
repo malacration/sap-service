@@ -14,8 +14,10 @@ import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PostAuthorize
 import org.springframework.security.core.Authentication
 import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
@@ -93,6 +95,12 @@ class BusinessPartnersController(
     @PostMapping("save")
     fun save(@RequestBody bp : Cliente): BusinessPartner {
         return salvar(bp)
+    }
+
+    @PutMapping("{cardCode}")
+    fun update(@RequestBody bp : Cliente, @PathVariable cardCode : String) {
+        //TODO fazer update endereco?
+        service.update(bp.getUpdateBusinessPartner(cardCode),"'$cardCode'")
     }
 
     @GetMapping("/cpf-cnpj")
