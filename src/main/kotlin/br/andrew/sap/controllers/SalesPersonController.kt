@@ -24,21 +24,32 @@ class SalesPersonController(
     }
 
     @GetMapping("replace/{origin}/por/{destino}")
-    fun resultado3(@PathVariable origin: Int, @PathVariable destino: Int): Boolean {
+    fun replaceSalesPerson(@PathVariable origin: Int, @PathVariable destino: Int, @RequestParam("clientes") clientes: List<String>): Boolean {
         val isDestinoAtivo = salesPersonsService.isSalesPersonActive(destino)
         if (isDestinoAtivo) {
             throw Exception("Vendedor de Destino inativo")
         }
-        var pagina: Pageable = PageRequest.of(0,20)
+
+        var pagina: Pageable = PageRequest.of(0, 20)
+
         do {
-            val resultado = businessPartnersService.findAllBySalePerson(origin,pagina)
-            resultado.forEach {
-                print(it.cardCode)
-                businessPartnersService.modificarVendedor(it,destino)
+            val resultado = businessPartnersService.findAllBySalePerson(origin, pagina)
+
+            resultado.forEach { businessPartner ->
+                if (clientes.contains(businessPartner.cardCode)) {
+                    businessPartnersService.modificarVendedor(businessPartner, destino)
+                }
             }
+
             pagina = resultado.nextPageable()
-        }while (resultado.hasNext())
+        } while (resultado.hasNext())
+
         return true
+    }
+
+    @GetMapping("/{salesEmployeeCode}/business-partners")
+    fun getBusinessPartners(@PathVariable salesEmployeeCode: Int, page : Pageable): Page<BusinessPartner>?{
+        return businessPartnersService.findBusinessPartnersBySalesPersonCode(salesEmployeeCode, page)
     }
 }
 
