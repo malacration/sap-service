@@ -1,21 +1,39 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-	id("java")
-	id("org.springframework.boot") version "3.2.2"
-	id("io.spring.dependency-management") version "1.1.4"
+
+	id("org.springframework.boot") version "3.3.1"
+	id("io.spring.dependency-management") version "1.1.5"
+	kotlin("jvm") version "1.9.24"
+	kotlin("plugin.spring") version "1.9.24"
+
 	id("jacoco")
-	kotlin("jvm") version "1.9.22"
-	kotlin("plugin.spring") version "1.9.22"
+	kotlin("plugin.allopen") version "2.0.0"
 }
 
 group = "br.andrew.sap"
 version = "0.0.1-SNAPSHOT"
-java.sourceCompatibility = JavaVersion.VERSION_17
+
+java {
+	toolchain {
+		languageVersion = JavaLanguageVersion.of(17)
+	}
+}
+
+allOpen {
+	annotation("org.springframework.context.annotation.Configuration")
+	annotation("org.springframework.stereotype.Service")
+	annotation("org.springframework.stereotype.Component")
+	annotation("org.springframework.stereotype.Repository")
+}
+
 
 repositories {
 	mavenCentral()
 }
+
+
+
 
 dependencies {
 

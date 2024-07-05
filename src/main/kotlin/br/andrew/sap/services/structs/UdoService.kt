@@ -22,8 +22,7 @@ class UdoService(env: SapEnvrioment, restTemplate: RestTemplate,
 
 //    val logger = LoggerFactory.getLogger(UdoService::class.java)
 //
-//    fun findOrCreate(table : TableMd){
-//        logger.info("Verificando se a tabela ${table.tableName} existe")
+    fun findOrCreate(userDefi : UserDefinedObject){
 //        val predicates = mutableListOf(
 //            Predicate("TableName",table.tableName, Condicao.EQUAL),
 //        )
@@ -31,7 +30,7 @@ class UdoService(env: SapEnvrioment, restTemplate: RestTemplate,
 //        if(result.tryGetValues<TableMd>().isEmpty()){
 //            save(table)
 //        }
-//    }
+    }
 
 
 }

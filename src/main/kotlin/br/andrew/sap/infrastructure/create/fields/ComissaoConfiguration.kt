@@ -5,6 +5,7 @@ import br.andrew.sap.model.TbType
 import br.andrew.sap.model.entity.DbType
 import br.andrew.sap.model.entity.FieldMd
 import br.andrew.sap.model.entity.ValuesMd
+import br.andrew.sap.services.structs.UdoService
 import br.andrew.sap.services.structs.UserFieldsMDService
 import br.andrew.sap.services.structs.UserTablesMDService
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
@@ -15,6 +16,7 @@ import org.springframework.context.annotation.Profile
 @Profile("!test")
 @ConditionalOnProperty(value = ["fields"], havingValue = "true", matchIfMissing = true)
 class ComissaoConfiguration(val userFieldsMDService: UserFieldsMDService,
+                            val udoService: UdoService,
                             val  tableService: UserTablesMDService
 ) {
     init {
@@ -42,6 +44,12 @@ class ComissaoConfiguration(val userFieldsMDService: UserFieldsMDService,
 
 
         //TODO criar objeto do usuario
+
+        listOf(
+            ""
+        ).forEach(
+            udoService.findOrCreate(it)
+        )
 
         listOf(
             FieldMd("tipoComissao","Selecionar Comissao","OPLN", DbType.db_Alpha)
