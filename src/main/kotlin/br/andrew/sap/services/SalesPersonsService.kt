@@ -40,10 +40,7 @@ class SalesPersonsService(val sqlQueriesService : SqlQueriesService , env: SapEn
             Predicate("SalesEmployeeCode", salesPersonCode, Condicao.EQUAL),
             Predicate("Active", "Y", Condicao.EQUAL)
         )
-        val result = get(filter)
-
-        // Verifica se o campo "value" existe e se contém pelo menos um elemento
-        return result.containsKey("value") && result["value"] is List<*> && (result["value"] as List<*>).size < 1
+        return get(filter).tryGetValues<SalePerson>().isNotEmpty()
     }
 
 }
