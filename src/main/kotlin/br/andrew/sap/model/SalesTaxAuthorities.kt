@@ -2,12 +2,12 @@ package br.andrew.sap.model
 
 import br.andrew.sap.model.documents.base.Product
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
-import com.fasterxml.jackson.databind.PropertyNamingStrategy
+import com.fasterxml.jackson.databind.PropertyNamingStrategies
 import com.fasterxml.jackson.databind.annotation.JsonNaming
 import java.math.BigDecimal
 import java.math.RoundingMode
 
-@JsonNaming(PropertyNamingStrategy.UpperCamelCaseStrategy::class)
+@JsonNaming(PropertyNamingStrategies.UpperCamelCaseStrategy::class)
 @JsonIgnoreProperties(ignoreUnknown = true)
 class SalesTaxAuthorities(val type : Int, val Rate : Double,
                           val u_Base : Double, val u_Isento : Double,

@@ -1,11 +1,11 @@
 package br.andrew.sap.model
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
-import com.fasterxml.jackson.databind.PropertyNamingStrategy
+import com.fasterxml.jackson.databind.PropertyNamingStrategies
 import com.fasterxml.jackson.databind.annotation.JsonNaming
 
 
-@JsonNaming(PropertyNamingStrategy.UpperCamelCaseStrategy::class)
+@JsonNaming(PropertyNamingStrategies.UpperCamelCaseStrategy::class)
 @JsonIgnoreProperties(ignoreUnknown = true)
 class Comissao(val Code : Int, val U_porcentagem : Double) {
 
@@ -26,7 +26,7 @@ class Comissao(val Code : Int, val U_porcentagem : Double) {
 
 //TODO nao pode existir comissao sem Prazo Pagamento
 
-@JsonNaming(PropertyNamingStrategy.UpperCamelCaseStrategy::class)
+@JsonNaming(PropertyNamingStrategies.UpperCamelCaseStrategy::class)
 @JsonIgnoreProperties(ignoreUnknown = true)
 class PrazoPagamento(){
     // idPrazoReal-idTabela
@@ -35,14 +35,14 @@ class PrazoPagamento(){
     val juros = ""
 }
 
-@JsonNaming(PropertyNamingStrategy.UpperCamelCaseStrategy::class)
+@JsonNaming(PropertyNamingStrategies.UpperCamelCaseStrategy::class)
 @JsonIgnoreProperties(ignoreUnknown = true)
 class LiberadoPara(){
     var filial : String = "";
     var vendedor : String = "";
 }
 
-@JsonNaming(PropertyNamingStrategy.UpperCamelCaseStrategy::class)
+@JsonNaming(PropertyNamingStrategies.UpperCamelCaseStrategy::class)
 @JsonIgnoreProperties(ignoreUnknown = true)
 class DescontoRegressivo(val U_porcentagemDesconto : Double, val U_porcentagemComissao : Double)
 

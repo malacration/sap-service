@@ -33,13 +33,7 @@ class MyErrorController(val tracer: Tracer, val telegram: TelegramRequestService
         val traceId = getCurrentTrace()
         log.error("Error controller",t)
         val status = request.getAttribute(RequestDispatcher.ERROR_STATUS_CODE)
-        val statusCode  = if (status != null)
-            Integer.valueOf(status.toString())
-        else if(status == 404 || status == "404" )
-            404
-        else
-            500
-
+        val statusCode  = status?.toString()?.toIntOrNull() ?: 500
         val erro = if(statusCode == HttpStatus.FORBIDDEN.value())
             ErroDto("Acesso Negado",traceId)
         else if(statusCode == HttpStatus.NOT_FOUND.value())

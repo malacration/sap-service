@@ -17,7 +17,7 @@ class MailConfig(@Value("\${mail.list:[{ \"email\": \"windson@windson\", \"name\
 
 
     init {
-        val mapper = ObjectMapper().registerModule(KotlinModule())
+        val mapper = ObjectMapper().registerModule(KotlinModule.Builder().build())
         val lista = mapper.readValue(mail, jacksonTypeRef<List<EmailAdrres>>())
         lista.firstOrNull()?.let { SalePerson.emailDefault = it.email }
         lista.find { it.type == From.COMERCIAL }?.let { SalePerson.emailDefault = it.email }

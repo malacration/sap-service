@@ -1,30 +1,31 @@
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-
 plugins {
-
+	id("jacoco")
 	id("org.springframework.boot") version "3.3.1"
 	id("io.spring.dependency-management") version "1.1.5"
-	kotlin("jvm") version "1.9.24"
-	kotlin("plugin.spring") version "1.9.24"
-
-	id("jacoco")
-	kotlin("plugin.allopen") version "2.0.0"
+	kotlin("jvm") version "2.0.0"
+	kotlin("plugin.spring") version "2.0.0"
+//	kotlin("plugin.allopen") version "2.0.0"
 }
 
 group = "br.andrew.sap"
 version = "0.0.1-SNAPSHOT"
 
+
+//java.sourceCompatibility = JavaVersion.VERSION_21
+
+//
+//allOpen {
+//	annotation("org.springframework.context.annotation")
+//	annotation("org.springframework.context.annotation.Configuration")
+//	annotation("org.springframework.stereotype.Service")
+//	annotation("org.springframework.stereotype.Component")
+//	annotation("org.springframework.stereotype.Repository")
+//}
+
 java {
 	toolchain {
-		languageVersion = JavaLanguageVersion.of(17)
+		languageVersion = JavaLanguageVersion.of(21)
 	}
-}
-
-allOpen {
-	annotation("org.springframework.context.annotation.Configuration")
-	annotation("org.springframework.stereotype.Service")
-	annotation("org.springframework.stereotype.Component")
-	annotation("org.springframework.stereotype.Repository")
 }
 
 
@@ -36,8 +37,6 @@ repositories {
 
 
 dependencies {
-
-
 
 	implementation("org.springframework.boot:spring-boot-starter")
 	implementation("org.springframework.boot:spring-boot-starter-web"){
@@ -74,6 +73,9 @@ dependencies {
 	implementation("org.apache.httpcomponents.client5:httpclient5:5.2.1")
 	implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.16.1")
 	implementation("org.jetbrains.kotlin:kotlin-reflect")
+
+	implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
+
 	developmentOnly("org.springframework.boot:spring-boot-devtools")
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
 	implementation("org.mockito:mockito-core:5.3.0")
@@ -91,28 +93,12 @@ dependencies {
 	implementation("org.apache.commons:commons-lang3:3.9")
 
 	implementation("org.jetbrains.kotlinx:kotlinx-serialization-json-jvm:1.7.0")
-
-
-
-//	implementation("org.apache.ws.commons.axiom:axiom-api:1.2.13"){
-//		exclude("commons-logging","commons-logging")
-//		exclude("commons-logging")
-//	}
-//	implementation("org.apache.ws.commons.axiom:axiom-impl:1.2.13"){
-//		exclude("commons-logging")
-//	}
-
-//	implementation("javax.mail:mail:1.4")
-//	implementation("javax.activation:activation:1.1")
-
-//	implementation("commons-logging:commons-logging:1.2")
-//	testImplementation("com.willowtreeapps.assertk:assertk:0.25")
-	//**  SAP
-
 	implementation("com.itextpdf:itext-core:8.0.2")
 	implementation("com.itextpdf:html2pdf:5.0.2")
 
 }
+
+
 
 tasks.withType<Test> {
 	useJUnitPlatform()
@@ -175,13 +161,15 @@ tasks.buildDependents {
 }
 
 
-tasks.withType<KotlinCompile> {
-	kotlinOptions {
-		freeCompilerArgs = listOf("-Xjsr305=strict")
-		jvmTarget = "17"
+kotlin {
+	compilerOptions {
+		freeCompilerArgs.addAll("-Xjsr305=strict")
+//		jvmTarget = "17
 	}
-	dependsOn(tasks.named("import-ws"))
+
+//	dependsOn(tasks.named("import-ws"))
 }
+
 
 configurations.all {
 	resolutionStrategy {

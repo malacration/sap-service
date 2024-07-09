@@ -89,12 +89,12 @@ abstract class EntitiesService<T>(protected val env: SapEnvrioment,
         return restTemplate.exchange(request, OData::class.java).body!!
     }
 
-    fun delete(id : String) : OData {
+    fun delete(id : String) : OData? {
         val request = RequestEntity
             .delete(env.host+this.path()+"(${id})")
             .header("cookie","B1SESSION=${session().sessionId}")
             .build()
-        return restTemplate.exchange(request, OData::class.java).body!!
+        return restTemplate.exchange(request, OData::class.java).body
     }
 
     fun getBy(doc : DocEntry) : OData {
