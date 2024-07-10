@@ -20,7 +20,7 @@ class TipoContratoFazendaMensagemTests {
             "erros" to 5
         ))
         Assertions.assertEquals(1,TipoMensagem.eventos.topic())
-        Assertions.assertEquals(null,TipoMensagem.geral.topic())
+        Assertions.assertEquals(2,TipoMensagem.geral.topic())
         Assertions.assertEquals(3,TipoMensagem.autorizacao.topic())
         Assertions.assertEquals(4,TipoMensagem.testes.topic())
         Assertions.assertEquals(5,TipoMensagem.erros.topic())
