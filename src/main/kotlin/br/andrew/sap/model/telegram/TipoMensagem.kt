@@ -8,9 +8,7 @@ enum class TipoMensagem(val tipo: String){
     erros("erros");
 
     fun topic() : Int?{
-        if(this == TipoMensagem.geral)
-            return null
-        return topics[tipo]?: 44
+        return topics[tipo]
     }
 
     companion object{
