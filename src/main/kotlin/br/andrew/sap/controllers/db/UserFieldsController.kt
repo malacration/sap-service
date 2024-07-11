@@ -21,4 +21,10 @@ class UserFieldsController(val userFieldsMDService: UserFieldsMDService) {
         )
         return userFieldsMDService.get(filter,page)
     }
+
+    @GetMapping("/{name}")
+    fun get(name : String) : Any{
+        val filter = Filter(Predicate("Name",name,Condicao.CONTAINS))
+        return userFieldsMDService.get(filter)
+    }
 }

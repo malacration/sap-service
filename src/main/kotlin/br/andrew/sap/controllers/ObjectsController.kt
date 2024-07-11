@@ -52,7 +52,7 @@ class ObjectsController(
             FormColumns("U_juros","Juros (%)",1),
             FormColumns("U_prazo","Prazo",1),
         ))
-        ud.setMenu(43541,6)
+        ud.setMenu(43541,1)
         userObjectsMDService.findOrCreate(ud)
     }
 
