@@ -45,7 +45,7 @@ class ComissaoConfiguration(val userFieldsMDService: UserFieldsMDService,
             FieldMd("desconto","Desconto (%)","@condicoesFV", DbType.db_Float),
             FieldMd("juros","Juros (%)","@condicoesFV", DbType.db_Float),
 
-//            FieldMd("prazo","Prazo","@condicoesFV", DbType.db_Alpha).also {
+//            FieldMd("prazo","Prazo","@condicoesFV", DbType.db_Numeric).also {
 //                it.
 //            },
 
