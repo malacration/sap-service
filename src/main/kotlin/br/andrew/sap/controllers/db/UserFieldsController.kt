@@ -34,4 +34,10 @@ class UserFieldsController(val userFieldsMDService: UserFieldsMDService) {
         val filter = Filter(Predicate("TableName",name,Condicao.CONTAINS))
         return userFieldsMDService.get(filter,page)
     }
+
+    @GetMapping("/linked/{name}")
+    fun getByLinked(@PathVariable name : String, page : Pageable) : Any{
+        val filter = Filter(Predicate("LinkedTable",name,Condicao.CONTAINS))
+        return userFieldsMDService.get(filter,page)
+    }
 }

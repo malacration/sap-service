@@ -7,9 +7,10 @@ plugins {
 //	kotlin("plugin.allopen") version "2.0.0"
 }
 
-group = "br.andrew.sap"
-version = "0.0.1-SNAPSHOT"
+// Define a default version if not provided
 
+group = "br.andrew.sap"
+version = if (project.hasProperty("version")) project.property("version") as String else "0.0.1-SNAPSHOT"
 
 //java.sourceCompatibility = JavaVersion.VERSION_21
 

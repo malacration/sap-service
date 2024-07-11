@@ -6,49 +6,43 @@ import br.andrew.sap.model.entity.*
 import br.andrew.sap.services.structs.UserFieldsMDService
 import br.andrew.sap.services.structs.UserObjectsMDService
 import br.andrew.sap.services.structs.UserTablesMDService
-import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Profile
-import org.springframework.core.io.ClassPathResource
 
 @Configuration
 @Profile("!test")
 @ConditionalOnProperty(value = ["fields"], havingValue = "true", matchIfMissing = true)
 class ComissaoConfiguration(val userFieldsMDService: UserFieldsMDService,
-                            @Value("\${comissao.delete:false}") isDelete : Boolean,
                             val udoService: UserObjectsMDService,
-                            val  tableService: UserTablesMDService
-) {
+                            val  tableService: UserTablesMDService) {
     init {
-        tableService.findOrCreate(
+        listOf(
             TableMd(
-            "COMISSAO","Tabela com regras de comissao", TbType.bott_MasterData
-        ))
-        tableService.findOrCreate(TableMd(
-            "condicoesFV","Linha condiçoes ",TbType.bott_MasterDataLines
-        ))
-        tableService.findOrCreate(TableMd(
-            "LiberaPara","Libera para",TbType.bott_MasterDataLines
-        ))
+                "COMISSAO","Tabela com regras de comissao", TbType.bott_MasterData
+            ),
+            TableMd(
+                "condicoesFV","Linha condiçoes ",TbType.bott_MasterDataLines
+            ),
+            TableMd(
+                "LiberaPara","Libera para",TbType.bott_MasterDataLines
+            )
+        ).forEach{ tableService.findOrCreate(it)}
 
         listOf(
             FieldMd("porcentagem","comissão em porcentagem","@COMISSAO", DbType.db_Float),
             FieldMd("desconto","Desconto (%) do vendedor","@COMISSAO", DbType.db_Float),
-
-            FieldMd("regressiva","Comissão regressiva?","COMISSAO")
+            FieldMd("regressiva","Comissão regressiva?","@COMISSAO")
                 .also {
                     it.ValidValuesMD = listOf(ValuesMd("0","NÃO"), ValuesMd("1","SIM"))
                     it.defaultValue = "0"
                 },
-
             FieldMd("desconto","Desconto (%)","@condicoesFV", DbType.db_Float),
             FieldMd("juros","Juros (%)","@condicoesFV", DbType.db_Float),
-
-//            FieldMd("prazo","Prazo","@condicoesFV", DbType.db_Numeric).also {
-//                it.
-//            },
-
+            FieldMd("prazo","Prazo","@condicoesFV", DbType.db_Alpha).also {
+                it.size = 6
+                it.LinkedSystemObject = "OCTG"
+            },
             FieldMd("Filial","Filial","@LiberaPara")
                 .also { it.ValidValuesMD = listOf(
                     ValuesMd("0","Nenhuma")
@@ -61,7 +55,6 @@ class ComissaoConfiguration(val userFieldsMDService: UserFieldsMDService,
         ).forEach{
             udoService.findOrCreate(it)
         }
-
         listOf(
             FieldMd("tipoComissao","Selecionar Comissao","OPLN", DbType.db_Alpha)
                 .also { it.linkedUDO = "comissao" },
