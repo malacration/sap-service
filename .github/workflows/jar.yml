@@ -27,7 +27,7 @@ jobs:
         run: ./gradlew assemble -Pversion=${{ github.event.release.tag_name }}
 
       - name: Remove unnecessary JAR file
-        run: rm build/libs/sap-service-plain.jar
+        run: rm build/libs/*-plain.jar
 
       - name: Archive JAR file
         if: success()
