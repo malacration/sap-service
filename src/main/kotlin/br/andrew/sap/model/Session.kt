@@ -1,10 +1,10 @@
 package br.andrew.sap.model
 
-import com.fasterxml.jackson.databind.PropertyNamingStrategy
+import com.fasterxml.jackson.databind.PropertyNamingStrategies
 import com.fasterxml.jackson.databind.annotation.JsonNaming
 import java.util.*
 
-@JsonNaming(PropertyNamingStrategy.UpperCamelCaseStrategy::class)
+@JsonNaming(PropertyNamingStrategies.UpperCamelCaseStrategy::class)
 class Session(val sessionId : String,
               val version : String,
               val sessionTimeout : Int,

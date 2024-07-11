@@ -13,11 +13,11 @@ jobs:
         uses: actions/setup-java@v3
         with:
           distribution: 'temurin'
-          java-version: '19'
+          java-version: '21'
       - name: Setup Gradle
         uses: gradle/gradle-build-action@v2.4.2
         with:
-          gradle-version: 7.6.1
+          gradle-version: 8.8
       - name: Run Coverage
         run: |
           chmod +x gradlew

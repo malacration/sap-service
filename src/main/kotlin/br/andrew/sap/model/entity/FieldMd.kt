@@ -3,25 +3,27 @@ package br.andrew.sap.model.entity
 import br.andrew.sap.model.enums.YesNo
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonInclude
-import com.fasterxml.jackson.databind.PropertyNamingStrategy
+import com.fasterxml.jackson.databind.PropertyNamingStrategies
 import com.fasterxml.jackson.databind.annotation.JsonNaming
 
-@JsonNaming(PropertyNamingStrategy.UpperCamelCaseStrategy::class)
+@JsonNaming(PropertyNamingStrategies.UpperCamelCaseStrategy::class)
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 class FieldMd(val name : String,
               val description: String?,
               tableName : String,
-              val type : DbType = DbType.db_Alpha,
+              val type : DbType? = DbType.db_Alpha,
               val mandatory: YesNo = YesNo.tNO) {
 
-    var size : Int? = type.size
+    var size : Int? = type?.size
     var ValidValuesMD : List<ValuesMd> = listOf()
-    val subType : String? = if(type == DbType.db_Float) "st_Measurement" else null
+    val subType : String? =  null
     var defaultValue: String? = null
     var editSize : Int? = null
 
     var linkedUDO : String? = null
+    var LinkedSystemObject : String? = null
+    var LinkedTable : String? = null
     var tableName = tableName.uppercase()
 
 }
@@ -29,11 +31,11 @@ class FieldMd(val name : String,
 enum class DbType(val size : Int?){
     db_Alpha(254),
     db_Memo(null), //Observacao
-    db_Numeric(null),
+    db_Numeric(10),
     db_Float(null),
     db_Date(null);
 }
 
-@JsonNaming(PropertyNamingStrategy.UpperCamelCaseStrategy::class)
+@JsonNaming(PropertyNamingStrategies.UpperCamelCaseStrategy::class)
 @JsonIgnoreProperties(ignoreUnknown = true)
 class ValuesMd(val value : String, val description : String)

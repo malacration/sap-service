@@ -1,9 +1,9 @@
 package br.andrew.sap.model
 
-import com.fasterxml.jackson.databind.PropertyNamingStrategy
+import com.fasterxml.jackson.databind.PropertyNamingStrategies
 import com.fasterxml.jackson.databind.annotation.JsonNaming
 
-@JsonNaming(PropertyNamingStrategy.UpperCamelCaseStrategy::class)
+@JsonNaming(PropertyNamingStrategies.UpperCamelCaseStrategy::class)
 class Login(
         val userName: String,
         val password : String,

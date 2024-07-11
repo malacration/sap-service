@@ -1,11 +1,11 @@
 package br.andrew.sap.model.romaneio
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
-import com.fasterxml.jackson.databind.PropertyNamingStrategy
+import com.fasterxml.jackson.databind.PropertyNamingStrategies
 import com.fasterxml.jackson.databind.annotation.JsonNaming
 
 
-@JsonNaming(PropertyNamingStrategy.UpperCamelCaseStrategy::class)
+@JsonNaming(PropertyNamingStrategies.UpperCamelCaseStrategy::class)
 @JsonIgnoreProperties(ignoreUnknown = true)
 class RegistroInsumo(
         val code : Int?,

@@ -7,7 +7,7 @@ import br.andrew.sap.services.abstracts.EntitiesService
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonProperty
-import com.fasterxml.jackson.databind.PropertyNamingStrategy
+import com.fasterxml.jackson.databind.PropertyNamingStrategies
 import com.fasterxml.jackson.databind.annotation.JsonNaming
 import org.springframework.stereotype.Service
 import org.springframework.web.client.RestTemplate
@@ -49,7 +49,7 @@ class JournalEntriesService(env: SapEnvrioment, restTemplate: RestTemplate, auth
 }
 
 
-@JsonNaming(PropertyNamingStrategy.UpperCamelCaseStrategy::class)
+@JsonNaming(PropertyNamingStrategies.UpperCamelCaseStrategy::class)
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 class JournalEntry(val journalEntryLines : List<JournalEntryLines>, val memo : String){
@@ -81,7 +81,7 @@ class JournalEntry(val journalEntryLines : List<JournalEntryLines>, val memo : S
     )
 }
 
-@JsonNaming(PropertyNamingStrategy.UpperCamelCaseStrategy::class)
+@JsonNaming(PropertyNamingStrategies.UpperCamelCaseStrategy::class)
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 class JournalEntryLines(

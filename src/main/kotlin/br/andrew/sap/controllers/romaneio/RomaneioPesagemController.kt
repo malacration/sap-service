@@ -1,7 +1,7 @@
 package br.andrew.sap.controllers.romaneio
 
-import TipoContratoFazenda
 import br.andrew.sap.infrastructure.odata.*
+import br.andrew.sap.model.enums.TipoContratoFazenda
 import br.andrew.sap.model.romaneio.RomaneioPesagem
 import br.andrew.sap.services.FazendaService
 import br.andrew.sap.services.RegistroCompraInsumoService

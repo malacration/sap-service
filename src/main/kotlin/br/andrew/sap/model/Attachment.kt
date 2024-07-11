@@ -1,7 +1,7 @@
 package br.andrew.sap.model
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
-import com.fasterxml.jackson.databind.PropertyNamingStrategy
+import com.fasterxml.jackson.databind.PropertyNamingStrategies
 import com.fasterxml.jackson.databind.annotation.JsonNaming
 import org.apache.hc.client5.http.utils.Base64
 import org.apache.tika.Tika
@@ -11,7 +11,7 @@ import java.io.File
 import java.util.*
 
 
-@JsonNaming(PropertyNamingStrategy.UpperCamelCaseStrategy::class)
+@JsonNaming(PropertyNamingStrategies.UpperCamelCaseStrategy::class)
 @JsonIgnoreProperties(ignoreUnknown = true)
 class Attachment() {
     constructor(file : File) : this(){

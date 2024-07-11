@@ -1,25 +1,28 @@
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import org.jetbrains.kotlin.ir.backend.js.compile
 
 plugins {
-	id("java")
-	id("org.springframework.boot") version "3.2.2"
-	id("io.spring.dependency-management") version "1.1.4"
 	id("jacoco")
-	kotlin("jvm") version "1.9.22"
-	kotlin("plugin.spring") version "1.9.22"
+	id("org.springframework.boot") version "3.3.1"
+	id("io.spring.dependency-management") version "1.1.5"
+	kotlin("jvm") version "2.0.0"
+	kotlin("plugin.spring") version "2.0.0"
 }
 
 group = "br.andrew.sap"
-version = "0.0.1-SNAPSHOT"
-java.sourceCompatibility = JavaVersion.VERSION_17
+version = if (project.hasProperty("version")) project.property("version") as String else "0.0.1-SNAPSHOT"
+
+java {
+	toolchain {
+		languageVersion = JavaLanguageVersion.of(21)
+	}
+}
+
 
 repositories {
 	mavenCentral()
 }
 
 dependencies {
-
-
 
 	implementation("org.springframework.boot:spring-boot-starter")
 	implementation("org.springframework.boot:spring-boot-starter-web"){
@@ -56,6 +59,9 @@ dependencies {
 	implementation("org.apache.httpcomponents.client5:httpclient5:5.2.1")
 	implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.16.1")
 	implementation("org.jetbrains.kotlin:kotlin-reflect")
+
+	implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
+
 	developmentOnly("org.springframework.boot:spring-boot-devtools")
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
 	implementation("org.mockito:mockito-core:5.3.0")
@@ -73,36 +79,39 @@ dependencies {
 	implementation("org.apache.commons:commons-lang3:3.9")
 
 	implementation("org.jetbrains.kotlinx:kotlinx-serialization-json-jvm:1.7.0")
-
-
-
-//	implementation("org.apache.ws.commons.axiom:axiom-api:1.2.13"){
-//		exclude("commons-logging","commons-logging")
-//		exclude("commons-logging")
-//	}
-//	implementation("org.apache.ws.commons.axiom:axiom-impl:1.2.13"){
-//		exclude("commons-logging")
-//	}
-
-//	implementation("javax.mail:mail:1.4")
-//	implementation("javax.activation:activation:1.1")
-
-//	implementation("commons-logging:commons-logging:1.2")
-//	testImplementation("com.willowtreeapps.assertk:assertk:0.25")
-	//**  SAP
-
 	implementation("com.itextpdf:itext-core:8.0.2")
 	implementation("com.itextpdf:html2pdf:5.0.2")
 
 }
 
+
+val wsdlDir = "$projectDir/src/generated/java"
+
+tasks.register("import-ws") {
+	val packgePrefix = "br.andrew.sap"
+	fileTree("src/main/resources/wsdl").forEach{ file ->
+		doLast {
+			javaexec {
+				mainClass.set("org.apache.axis.wsdl.WSDL2Java")
+//				configurations.implementation.get().isCanBeResolved = true
+				classpath = files(
+					configurations.runtimeClasspath.get().files,
+//					configurations.implementation.get().files,
+					configurations.annotationProcessor.get().files
+				)
+				args = listOf("-o","$wsdlDir", "-p","$packgePrefix.${file.name}", file.absolutePath,)
+			}
+		}
+	}
+}
+
 tasks.withType<Test> {
+	dependsOn(tasks.named("import-ws"))
 	useJUnitPlatform()
 }
 
 tasks.named("jacocoTestReport", JacocoReport::class) {
-	dependsOn(tasks.withType<Test>())
-
+	dependsOn(tasks.named("import-ws"),tasks.withType<Test>())
 	group = "Reporting"
 	reports {
 		html.required.set(true)
@@ -126,29 +135,11 @@ tasks.named("jacocoTestReport", JacocoReport::class) {
 }
 
 
-val wsdlDir = "$projectDir/src/generated/java"
-
-tasks.register("import-ws") {
-	val packgePrefix = "br.andrew.sap"
-	fileTree("src/main/resources/wsdl").forEach{ file ->
-		doLast {
-			javaexec {
-				mainClass.set("org.apache.axis.wsdl.WSDL2Java")
-//				configurations.implementation.get().isCanBeResolved = true
-				classpath = files(
-					configurations.runtimeClasspath.get().files,
-//					configurations.implementation.get().files,
-					configurations.annotationProcessor.get().files
-				)
-				args = listOf("-o","$wsdlDir", "-p","$packgePrefix.${file.name}", file.absolutePath,)
-			}
-		}
-	}
-
+tasks.named("assemble") {
+	dependsOn(tasks.named("import-ws"))
 }
 
-
-tasks.named("assemble") {
+tasks.named("compileKotlin") {
 	dependsOn(tasks.named("import-ws"))
 }
 
@@ -156,14 +147,12 @@ tasks.buildDependents {
 	dependsOn(tasks.named("import-ws"))
 }
 
-
-tasks.withType<KotlinCompile> {
-	kotlinOptions {
-		freeCompilerArgs = listOf("-Xjsr305=strict")
-		jvmTarget = "17"
+kotlin {
+	compilerOptions {
+		freeCompilerArgs.addAll("-Xjsr305=strict")
 	}
-	dependsOn(tasks.named("import-ws"))
 }
+
 
 configurations.all {
 	resolutionStrategy {

@@ -5,7 +5,7 @@ import br.andrew.sap.model.CurrencyRate
 import br.andrew.sap.model.Session
 import br.andrew.sap.model.envrioments.SapEnvrioment
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
-import com.fasterxml.jackson.databind.PropertyNamingStrategy
+import com.fasterxml.jackson.databind.PropertyNamingStrategies
 import com.fasterxml.jackson.databind.annotation.JsonNaming
 import org.springframework.http.RequestEntity
 import org.springframework.http.ResponseEntity
