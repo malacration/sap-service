@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.ir.backend.js.compile
+
 plugins {
 	id("jacoco")
 	id("org.springframework.boot") version "3.3.1"
@@ -137,10 +139,13 @@ tasks.named("assemble") {
 	dependsOn(tasks.named("import-ws"))
 }
 
-tasks.buildDependents {
+tasks.named("compileKotlin") {
 	dependsOn(tasks.named("import-ws"))
 }
 
+tasks.buildDependents {
+	dependsOn(tasks.named("import-ws"))
+}
 
 kotlin {
 	compilerOptions {
