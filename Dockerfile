@@ -3,7 +3,8 @@ VOLUME ~/.gradle /root/.gradle
 WORKDIR /workspace/app
 COPY ./ ./
 RUN ./gradlew assemble
-RUN rm /workspace/app/build/libs/*SNAPSHOT-* && \
+RUN rm build/libs/*-plain.jar
+RUN rm /workspace/app/build/libs/*.jar && \
     java -Djarmode=layertools -jar /workspace/app/build/libs/*.jar extract --destination /extracted
 
 FROM eclipse-temurin:21-jre

@@ -29,14 +29,10 @@ jobs:
       - name: Remove unnecessary JAR file
         run: rm build/libs/*-plain.jar
 
-      - name: Archive JAR file
-        if: success()
-        run: mkdir -p release && cp build/libs/*.jar release/
-
       - name: Upload Release Asset
         uses: actions/upload-release-asset@v1
         with:
           upload_url: ${{ github.event.release.upload_url }}
-          asset_path: release/*.jar
+          asset_path: build/libs/*.jar
           asset_name: sap-service-${{ github.event.release.tag_name }}.jar
           asset_content_type: application/java-archive
