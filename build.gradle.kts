@@ -88,11 +88,12 @@ dependencies {
 
 
 tasks.withType<Test> {
+	dependsOn(tasks.named("import-ws"))
 	useJUnitPlatform()
 }
 
 tasks.named("jacocoTestReport", JacocoReport::class) {
-	dependsOn(tasks.withType<Test>(),tasks.named("import-ws"))
+	dependsOn(tasks.named("import-ws"),tasks.withType<Test>())
 	group = "Reporting"
 	reports {
 		html.required.set(true)
