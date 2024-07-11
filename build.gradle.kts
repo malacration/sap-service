@@ -4,24 +4,10 @@ plugins {
 	id("io.spring.dependency-management") version "1.1.5"
 	kotlin("jvm") version "2.0.0"
 	kotlin("plugin.spring") version "2.0.0"
-//	kotlin("plugin.allopen") version "2.0.0"
 }
-
-// Define a default version if not provided
 
 group = "br.andrew.sap"
 version = if (project.hasProperty("version")) project.property("version") as String else "0.0.1-SNAPSHOT"
-
-//java.sourceCompatibility = JavaVersion.VERSION_21
-
-//
-//allOpen {
-//	annotation("org.springframework.context.annotation")
-//	annotation("org.springframework.context.annotation.Configuration")
-//	annotation("org.springframework.stereotype.Service")
-//	annotation("org.springframework.stereotype.Component")
-//	annotation("org.springframework.stereotype.Repository")
-//}
 
 java {
 	toolchain {
@@ -106,8 +92,7 @@ tasks.withType<Test> {
 }
 
 tasks.named("jacocoTestReport", JacocoReport::class) {
-	dependsOn(tasks.withType<Test>())
-
+	dependsOn(tasks.withType<Test>(),tasks.named("import-ws"))
 	group = "Reporting"
 	reports {
 		html.required.set(true)
@@ -165,10 +150,7 @@ tasks.buildDependents {
 kotlin {
 	compilerOptions {
 		freeCompilerArgs.addAll("-Xjsr305=strict")
-//		jvmTarget = "17
 	}
-
-//	dependsOn(tasks.named("import-ws"))
 }
 
 
