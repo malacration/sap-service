@@ -86,6 +86,25 @@ dependencies {
 }
 
 
+val wsdlDir = "$projectDir/src/generated/java"
+
+tasks.register("import-ws") {
+	val packgePrefix = "br.andrew.sap"
+	fileTree("src/main/resources/wsdl").forEach{ file ->
+		doLast {
+			javaexec {
+				mainClass.set("org.apache.axis.wsdl.WSDL2Java")
+//				configurations.implementation.get().isCanBeResolved = true
+				classpath = files(
+					configurations.runtimeClasspath.get().files,
+//					configurations.implementation.get().files,
+					configurations.annotationProcessor.get().files
+				)
+				args = listOf("-o","$wsdlDir", "-p","$packgePrefix.${file.name}", file.absolutePath,)
+			}
+		}
+	}
+}
 
 tasks.withType<Test> {
 	dependsOn(tasks.named("import-ws"))
@@ -114,28 +133,6 @@ tasks.named("jacocoTestReport", JacocoReport::class) {
 		})
 	)
 	executionData.from(files("${project.buildDir}/jacoco/test.exec"))
-}
-
-
-val wsdlDir = "$projectDir/src/generated/java"
-
-tasks.register("import-ws") {
-	val packgePrefix = "br.andrew.sap"
-	fileTree("src/main/resources/wsdl").forEach{ file ->
-		doLast {
-			javaexec {
-				mainClass.set("org.apache.axis.wsdl.WSDL2Java")
-//				configurations.implementation.get().isCanBeResolved = true
-				classpath = files(
-					configurations.runtimeClasspath.get().files,
-//					configurations.implementation.get().files,
-					configurations.annotationProcessor.get().files
-				)
-				args = listOf("-o","$wsdlDir", "-p","$packgePrefix.${file.name}", file.absolutePath,)
-			}
-		}
-	}
-
 }
 
 
