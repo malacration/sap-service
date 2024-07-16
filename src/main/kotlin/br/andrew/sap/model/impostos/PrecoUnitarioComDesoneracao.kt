@@ -1,6 +1,6 @@
 package br.andrew.sap.model.impostos
 
-import br.andrew.sap.model.SalesTaxAuthorities
+import br.andrew.sap.model.tax.SalesTaxAuthorities
 import br.andrew.sap.model.documents.base.DocumentLines
 import java.math.BigDecimal
 import java.math.RoundingMode
