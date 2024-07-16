@@ -12,7 +12,7 @@ import java.io.InputStream
 
 
 @RestController
-    @RequestMapping("journal")
+@RequestMapping("journal")
 class JournalController(val journalEntry : JournalEntriesService) {
 
     @GetMapping()

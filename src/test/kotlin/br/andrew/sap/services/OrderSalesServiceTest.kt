@@ -1,7 +1,7 @@
 package br.andrew.sap.services
 
 import br.andrew.sap.model.impostos.PrecoUnitarioComDesoneracao
-import br.andrew.sap.model.SalesTaxAuthorities
+import br.andrew.sap.model.tax.SalesTaxAuthorities
 import br.andrew.sap.model.documents.OrderSales
 import br.andrew.sap.model.documents.base.Product
 import br.andrew.sap.model.forca.PedidoVenda

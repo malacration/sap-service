@@ -1,8 +1,9 @@
 package br.andrew.sap.services.document
 
-import br.andrew.sap.model.*
 import br.andrew.sap.model.documents.base.Document
 import br.andrew.sap.model.impostos.PrecoUnitarioComDesoneracao
+import br.andrew.sap.model.tax.SalesTaxAuthorities
+import br.andrew.sap.model.tax.SalesTaxCode
 import br.andrew.sap.services.tax.SalesTaxAuthoritiesService
 import br.andrew.sap.services.tax.SalesTaxCodeService
 import org.springframework.beans.factory.annotation.Value
@@ -22,8 +23,8 @@ class DesoneradoService(val taxCodeService: SalesTaxCodeService,
     fun aplicaDesonerado(order : Document): Document {
         order.productsByTax().forEach{
             taxCodeService.getById("'${it.key}'").tryGetValue<SalesTaxCode>()
-                .salesTaxCodes_Lines.filter { allImpotos.contains(it.STAType) }
-                .forEach{ tax ->
+                .salesTaxCodes_Lines?.filter { allImpotos.contains(it.STAType) }
+                ?.forEach{ tax ->
                     var taxParam = taxAuthoritiesService.get(tax)
                         .tryGetValue<SalesTaxAuthorities>()
                     it.value.forEach { p ->

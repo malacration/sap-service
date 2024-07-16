@@ -1,6 +1,6 @@
 package br.andrew.sap.model.imposto
 
-import br.andrew.sap.model.SalesTaxAuthorities
+import br.andrew.sap.model.tax.SalesTaxAuthorities
 import br.andrew.sap.model.forca.PedidoVenda
 import br.andrew.sap.model.impostos.PrecoUnitarioComDesoneracao
 import br.andrew.sap.services.ComissaoServiceMock
