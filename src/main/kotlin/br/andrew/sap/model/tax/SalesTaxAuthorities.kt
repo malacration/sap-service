@@ -1,4 +1,4 @@
-package br.andrew.sap.model
+package br.andrew.sap.model.tax
 
 import br.andrew.sap.model.documents.base.Product
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
