@@ -13,7 +13,7 @@ import org.springframework.context.annotation.Profile
 
 @Configuration
 @Profile("!test")
-@ConditionalOnProperty(value = ["fields"], havingValue = "true", matchIfMissing = true)
+@ConditionalOnProperty(value = ["fields.sustennutri"], havingValue = "true", matchIfMissing = false)
 class DeterminacaoUtilizacao(
     val userFieldsMDService: UserFieldsMDService,
     val tableService: UserTablesMDService
