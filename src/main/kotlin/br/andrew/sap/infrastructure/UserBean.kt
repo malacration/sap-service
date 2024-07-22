@@ -7,7 +7,7 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Profile
 
 @Configuration
-@Profile("!test")
+@Profile("!test && !aws")
 class UserBean(val userService: UserService) {
 
 

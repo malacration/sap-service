@@ -26,6 +26,12 @@ class DocumentConfiguration(
 
         listOf(
             FieldMd("uuid_forca","UUID Força de Vendas","OINV"),
+
+            FieldMd("pedido_update","Atualiza pedido?","OINV").also {
+                it.ValidValuesMD = listOf(ValuesMd("0","NÃO"), ValuesMd("1","SIM"))
+                it.defaultValue = "1"
+            },
+
             FieldMd("rd_station","rdStation","OINV").also {
                 it.size = 30
             }

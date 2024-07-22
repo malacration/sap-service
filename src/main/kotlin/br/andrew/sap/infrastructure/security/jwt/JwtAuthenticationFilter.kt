@@ -26,7 +26,6 @@ class JwtAuthenticationFilter(private val jwtHandler: JwtHandler, private val di
             && !request.requestURL.contains("/logar")
             && request.getHeader("Authorization") != null){
             try {
-
                 val compactJws = request.getHeader("Authorization")
                 SecurityContextHolder.getContext().authentication = jwtHandler.getUser(compactJws)
             }catch (e :Exception) {

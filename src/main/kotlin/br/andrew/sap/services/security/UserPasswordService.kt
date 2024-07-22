@@ -21,7 +21,9 @@ class UserPasswordService(
 ) {
 
     val logger = LoggerFactory.getLogger(UserPasswordService::class.java)
+
     fun login(request : UserPassword) : User{
+        logger.info("Tentando fazer login para ${request.username}")
         val storageSalePerson = try {
              service.getById(request.username).tryGetValue<SalePerson>()
         }catch (e : Exception){

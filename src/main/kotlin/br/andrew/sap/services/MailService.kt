@@ -95,6 +95,3 @@ class EmailAdrres(val email : String,
         return InternetAddress(email, name)
     }
 }
-
-//-- ("Grupo Rovema <no-reply@gruporovema.com.br>")
-//-- ("Comercial - Grupo Rovema <no-reply@gruporovema.com.br>")

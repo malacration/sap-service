@@ -17,6 +17,11 @@ class SalesPersonController(
     val salesPersonsService: SalesPersonsService,
     val businessPartnersService: BusinessPartnersService
 ){
+
+    @GetMapping("")
+    fun get(page : Pageable): Page<SalePerson> {
+        return salesPersonsService.get(page).tryGetPageValues(page)
+    }
     
     @PostMapping("search")
     fun search(@RequestBody salesPerson1: String, page : Pageable): Page<SalePerson>? {
