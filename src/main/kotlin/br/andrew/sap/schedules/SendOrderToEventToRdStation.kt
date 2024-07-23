@@ -4,11 +4,10 @@ import br.andrew.sap.controllers.RdStationController
 import br.andrew.sap.infrastructure.odata.Condicao
 import br.andrew.sap.infrastructure.odata.Filter
 import br.andrew.sap.infrastructure.odata.Predicate
-import br.andrew.sap.model.documents.OrderSales
+import br.andrew.sap.model.sap.documents.OrderSales
 import br.andrew.sap.model.telegram.TipoMensagem
 import br.andrew.sap.services.TelegramRequestService
 import br.andrew.sap.services.document.OrdersService
-import br.andrew.sap.services.rdstation.EventsService
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
@@ -16,11 +15,6 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
 import java.time.LocalDate
-import br.andrew.sap.model.SalePerson
-import br.andrew.sap.model.partner.BusinessPartner
-import br.andrew.sap.services.BusinessPartnersService
-import br.andrew.sap.services.SalesPersonsService
-
 
 
 @Component

@@ -1,6 +1,6 @@
 package br.andrew.sap.infrastructure
 
-import br.andrew.sap.model.SalePerson
+import br.andrew.sap.model.sap.SalePerson
 import br.andrew.sap.services.From
 import br.andrew.sap.services.EmailAdrres
 import br.andrew.sap.services.MailService

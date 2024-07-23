@@ -3,7 +3,7 @@ package br.andrew.sap.controllers
 import br.andrew.sap.infrastructure.odata.OData
 import br.andrew.sap.infrastructure.odata.Order
 import br.andrew.sap.infrastructure.odata.OrderBy
-import br.andrew.sap.model.Attachment
+import br.andrew.sap.model.sap.Attachment
 import br.andrew.sap.services.AttachmentService
 import br.andrew.sap.services.StorageService
 import org.springframework.http.MediaType

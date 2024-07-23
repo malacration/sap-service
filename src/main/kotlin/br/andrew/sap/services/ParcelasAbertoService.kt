@@ -2,14 +2,12 @@ package br.andrew.sap.services
 
 import br.andrew.sap.infrastructure.odata.OData
 import br.andrew.sap.model.ParcelasAberto
-import br.andrew.sap.model.Session
+import br.andrew.sap.model.sap.Session
 import br.andrew.sap.model.envrioments.SapEnvrioment
 import org.springframework.http.RequestEntity
 import org.springframework.stereotype.Service
 import org.springframework.web.client.RestTemplate
 import java.time.LocalDate
-import java.time.LocalDateTime
-import java.util.Date
 
 @Service
 class ParcelasAbertoService(val env : SapEnvrioment,

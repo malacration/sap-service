@@ -1,6 +1,6 @@
 package br.andrew.sap.infrastructure.configurations.uzzipay
 
-import br.andrew.sap.model.BussinessPlace
+import br.andrew.sap.model.sap.BussinessPlace
 import br.andrew.sap.model.uzzipay.ContaUzziPayPix
 import br.andrew.sap.model.uzzipay.builder.RequestPixDueDateSemContaBuilder
 import org.springframework.boot.context.properties.ConfigurationProperties

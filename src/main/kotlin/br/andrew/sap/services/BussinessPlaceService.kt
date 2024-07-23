@@ -1,6 +1,6 @@
 package br.andrew.sap.services
 
-import br.andrew.sap.model.BussinessPlace
+import br.andrew.sap.model.sap.BussinessPlace
 import br.andrew.sap.model.envrioments.SapEnvrioment
 import br.andrew.sap.services.abstracts.EntitiesService
 import org.springframework.stereotype.Service

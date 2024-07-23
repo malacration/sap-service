@@ -1,6 +1,10 @@
 package br.andrew.sap.model.forca
 
 import br.andrew.sap.model.partner.*
+import br.andrew.sap.model.sap.partner.Address
+import br.andrew.sap.model.sap.partner.BusinessPartner
+import br.andrew.sap.model.sap.partner.BusinessPartnerType
+import br.andrew.sap.model.sap.partner.CpfCnpj
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 

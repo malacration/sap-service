@@ -1,7 +1,7 @@
 package br.andrew.sap.controllers.pricing
 
 import br.andrew.sap.infrastructure.odata.*
-import br.andrew.sap.model.price.PriceList
+import br.andrew.sap.model.sap.price.PriceList
 import br.andrew.sap.services.pricing.PriceListsService
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
@@ -19,7 +19,7 @@ class PriceListsController(val service: PriceListsService) {
     }
 
     @GetMapping("{id}")
-    fun getById(@PathVariable id : Int) : PriceList{
+    fun getById(@PathVariable id : Int) : PriceList {
         return service.getById("$id").tryGetValue()
     }
 

@@ -1,10 +1,8 @@
 package br.andrew.sap.services
 
 import br.andrew.sap.model.Login
-import br.andrew.sap.model.Session
+import br.andrew.sap.model.sap.Session
 import org.springframework.beans.factory.annotation.Value
-import org.springframework.cache.annotation.Caching
-import org.springframework.context.annotation.Profile
 import org.springframework.stereotype.Service
 import org.springframework.web.client.RestTemplate
 import java.net.URI
@@ -15,9 +13,8 @@ open class AuthService(
     private val restTemplate: RestTemplate) {
 
     companion object{
-        private var session :Session? = null
+        private var session : Session? = null
     }
-    @Caching
     fun getToken(login : Login) : Session {
         val url = URI("$host/b1s/v1/Login")
         if(session == null || session!!.isExpire())

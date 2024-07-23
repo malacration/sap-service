@@ -1,13 +1,9 @@
 package br.andrew.sap.controller
 
-import br.andrew.sap.infrastructure.odata.Condicao
-import br.andrew.sap.infrastructure.odata.Filter
-import br.andrew.sap.infrastructure.odata.Predicate
-import br.andrew.sap.model.SalePerson
-import br.andrew.sap.model.partner.BusinessPartner
+import br.andrew.sap.model.sap.SalePerson
+import br.andrew.sap.model.sap.partner.BusinessPartner
 import br.andrew.sap.services.BusinessPartnersService
 import br.andrew.sap.services.SalesPersonsService
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.domain.*
 import org.springframework.web.bind.annotation.*
 

@@ -4,15 +4,19 @@ import br.andrew.sap.events.OrderSalesSaveEvent
 import br.andrew.sap.infrastructure.WarehouseDefaultConfig
 import br.andrew.sap.infrastructure.configurations.DistribuicaoCustoByBranchConfig
 import br.andrew.sap.infrastructure.odata.*
-import br.andrew.sap.model.documents.OrderSales
-import br.andrew.sap.model.documents.Quotation
-import br.andrew.sap.model.documents.base.Document
+import br.andrew.sap.model.authentication.User
+import br.andrew.sap.model.sap.documents.OrderSales
+import br.andrew.sap.model.sap.documents.Quotation
+import br.andrew.sap.model.sap.documents.base.Document
 import br.andrew.sap.model.forca.PedidoVenda
 import br.andrew.sap.services.*
 import br.andrew.sap.services.document.QuotationsService
 import br.andrew.sap.services.pricing.ComissaoService
 import org.slf4j.LoggerFactory
 import org.springframework.context.ApplicationEventPublisher
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.Pageable
+import org.springframework.http.ResponseEntity
 import org.springframework.security.core.Authentication
 import org.springframework.web.bind.annotation.*
 import java.util.*
@@ -61,7 +65,18 @@ class QuotationsController(val quotationsService: QuotationsService,
 
 
     @GetMapping("")
-    fun get(): List<OrderSales> {
-        return quotationsService.get(OrderBy(mapOf("DocEntry" to Order.DESC))).tryGetValues<OrderSales>()
+    fun get(page : Pageable, auth : Authentication): ResponseEntity<Page<OrderSales>> {
+        if(!(auth is User))
+            return ResponseEntity.noContent().build()
+        val predicados = mutableListOf<Predicate>(
+            Predicate("SalesPersonCode",
+                auth.getIdInt(),
+                Condicao.EQUAL)
+        )
+        return ResponseEntity.ok(quotationsService
+                .get(Filter(predicados), OrderBy(mapOf("DocEntry" to Order.DESC)), page)
+                .tryGetPageValues<OrderSales>(page)
+            )
+
     }
 }

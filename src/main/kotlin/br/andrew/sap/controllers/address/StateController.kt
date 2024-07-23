@@ -4,7 +4,7 @@ import br.andrew.sap.infrastructure.odata.Condicao
 import br.andrew.sap.infrastructure.odata.Filter
 import br.andrew.sap.infrastructure.odata.OData
 import br.andrew.sap.infrastructure.odata.Predicate
-import br.andrew.sap.model.address.State
+import br.andrew.sap.model.sap.address.State
 import br.andrew.sap.services.address.StateService
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable

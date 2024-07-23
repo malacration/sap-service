@@ -1,7 +1,6 @@
 package br.andrew.sap.controllers
 
-import br.andrew.sap.infrastructure.odata.*
-import br.andrew.sap.model.SalePerson
+import br.andrew.sap.model.sap.SalePerson
 import br.andrew.sap.model.telegram.TipoMensagem
 import br.andrew.sap.services.*
 import org.slf4j.Logger
@@ -28,7 +27,7 @@ class MailController(val mailService: MailService,
 
     @GetMapping("")
     fun teste(){
-        mailService.sendEmail(MyMailMessage("","windson","olar"))
+        mailService.sendEmail(MyMailMessage("andrewc3po@gmail.com","windson","olar"))
     }
 
     @GetMapping("/inadimplencia/teste/{slpCode}")
