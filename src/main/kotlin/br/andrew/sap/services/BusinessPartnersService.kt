@@ -4,7 +4,6 @@ import br.andrew.sap.infrastructure.odata.*
 import br.andrew.sap.model.bank.PaymentMethod
 import br.andrew.sap.model.enums.Cancelled
 import br.andrew.sap.model.envrioments.SapEnvrioment
-import br.andrew.sap.model.partner.*
 import br.andrew.sap.model.sap.partner.*
 import br.andrew.sap.services.abstracts.EntitiesService
 import br.andrew.sap.services.abstracts.SqlQueriesService
