@@ -1,14 +1,12 @@
 package br.andrew.sap.controllers
 
-import br.andrew.sap.model.SalePerson
-import br.andrew.sap.model.documents.base.Document
-import br.andrew.sap.model.partner.BusinessPartner
+import br.andrew.sap.model.sap.SalePerson
+import br.andrew.sap.model.sap.documents.base.Document
+import br.andrew.sap.model.sap.partner.BusinessPartner
 import br.andrew.sap.services.BusinessPartnersService
 import br.andrew.sap.services.SalesPersonsService
 import br.andrew.sap.services.document.OrdersService
-import br.andrew.sap.services.rdstation.Event
 import br.andrew.sap.services.rdstation.EventsService
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable

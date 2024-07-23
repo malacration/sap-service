@@ -3,7 +3,7 @@ package br.andrew.sap.schedules
 import br.andrew.sap.infrastructure.odata.Condicao
 import br.andrew.sap.infrastructure.odata.Filter
 import br.andrew.sap.infrastructure.odata.Predicate
-import br.andrew.sap.model.partner.BusinessPartner
+import br.andrew.sap.model.sap.partner.BusinessPartner
 import br.andrew.sap.services.AtualizacaoCadastralService
 import br.andrew.sap.services.BusinessPartnersService
 import br.andrew.sap.services.TelegramRequestService

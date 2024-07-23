@@ -1,14 +1,9 @@
 package br.andrew.sap.services
 
-import br.andrew.sap.infrastructure.odata.OData
-import br.andrew.sap.model.CurrencyRate
-import br.andrew.sap.model.Session
+import br.andrew.sap.model.sap.CurrencyRate
+import br.andrew.sap.model.sap.Session
 import br.andrew.sap.model.envrioments.SapEnvrioment
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties
-import com.fasterxml.jackson.databind.PropertyNamingStrategies
-import com.fasterxml.jackson.databind.annotation.JsonNaming
 import org.springframework.http.RequestEntity
-import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Service
 import org.springframework.web.client.RestTemplate
 import java.text.SimpleDateFormat

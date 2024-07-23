@@ -1,7 +1,7 @@
 package br.andrew.sap.services
 
-import br.andrew.sap.model.SalePerson
-import br.andrew.sap.model.partner.BusinessPartner
+import br.andrew.sap.model.sap.SalePerson
+import br.andrew.sap.model.sap.partner.BusinessPartner
 import br.andrew.sap.model.telegram.TipoMensagem
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service

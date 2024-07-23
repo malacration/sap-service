@@ -3,10 +3,10 @@ package br.andrew.sap.services.abstracts
 import br.andrew.sap.infrastructure.odata.Filter
 import br.andrew.sap.infrastructure.odata.OData
 import br.andrew.sap.infrastructure.odata.OrderBy
-import br.andrew.sap.model.DocEntry
+import br.andrew.sap.model.sap.DocEntry
 import br.andrew.sap.model.envrioments.SapEnvrioment
-import br.andrew.sap.model.SapError
-import br.andrew.sap.model.Session
+import br.andrew.sap.model.sap.SapError
+import br.andrew.sap.model.sap.Session
 import br.andrew.sap.services.AuthService
 import org.springframework.data.domain.Pageable
 import org.springframework.http.RequestEntity
@@ -17,7 +17,7 @@ import java.net.URLDecoder
 abstract class EntitiesService<T>(protected val env: SapEnvrioment,
                                   protected val restTemplate: RestTemplate,
                                   protected val authService: AuthService) {
-    fun session() : Session{
+    fun session() : Session {
         return authService.getToken(env.getLogin())
     }
     abstract fun path() : String

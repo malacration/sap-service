@@ -1,7 +1,6 @@
 package br.andrew.sap.controllers
 
 
-import br.andrew.sap.model.CurrencyRate
 import br.andrew.sap.services.CompanyService
 import br.andrew.sap.services.bacen.BacenOlindaService
 import br.andrew.sap.services.bacen.CotacaoMoedaParse

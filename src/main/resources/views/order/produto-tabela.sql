@@ -37,8 +37,7 @@ WHERE
                                                     OSLP o
                                                     INNER JOIN "@RO_FILIAL_LINHA" rfv ON o."U_filial" = rfv."DocEntry"
                                                 WHERE
-                                                    o."U_Integracao_sovis" = 1
-                                                    AND o."SlpCode" = :vendedor
+                                                    o."SlpCode" = :vendedor
                                                 )
                                   OR "@LIBERAPARA"."U_vendedor" = :vendedor)
 	AND	"OITM"."validFor" = :yes

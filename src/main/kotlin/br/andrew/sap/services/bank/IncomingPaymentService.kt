@@ -1,7 +1,6 @@
 package br.andrew.sap.services.bank
 
 import br.andrew.sap.infrastructure.odata.OData
-import br.andrew.sap.model.DocEntry
 import br.andrew.sap.model.envrioments.SapEnvrioment
 import br.andrew.sap.model.bank.Payment
 import br.andrew.sap.services.AuthService

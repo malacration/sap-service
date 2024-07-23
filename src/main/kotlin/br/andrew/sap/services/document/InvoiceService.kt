@@ -1,15 +1,15 @@
 package br.andrew.sap.services.document
 
 import br.andrew.sap.infrastructure.odata.OData
-import br.andrew.sap.model.BussinessPlace
-import br.andrew.sap.model.DocEntry
+import br.andrew.sap.model.sap.BussinessPlace
+import br.andrew.sap.model.sap.DocEntry
 import br.andrew.sap.model.bank.Payment
 import br.andrew.sap.model.bank.PaymentInvoice
 import br.andrew.sap.model.envrioments.SapEnvrioment
-import br.andrew.sap.model.documents.base.Installment
-import br.andrew.sap.model.documents.Invoice
+import br.andrew.sap.model.sap.documents.base.Installment
+import br.andrew.sap.model.sap.documents.Invoice
 import br.andrew.sap.model.exceptions.PixPaymentException
-import br.andrew.sap.model.partner.BusinessPartner
+import br.andrew.sap.model.sap.partner.BusinessPartner
 import br.andrew.sap.model.uzzipay.ContaUzziPayPix
 import br.andrew.sap.model.uzzipay.Transaction
 import br.andrew.sap.model.uzzipay.builder.RequestPixDueDateSemContaBuilder

@@ -1,6 +1,6 @@
 package br.andrew.sap.model.bacen
 
-import br.andrew.sap.model.CurrencyRate
+import br.andrew.sap.model.sap.CurrencyRate
 import com.fasterxml.jackson.annotation.JsonFormat
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import java.time.LocalDate

@@ -1,13 +1,9 @@
 package br.andrew.sap.services.abstracts
 
-import br.andrew.sap.infrastructure.odata.Filter
 import br.andrew.sap.infrastructure.odata.OData
-import br.andrew.sap.infrastructure.odata.OrderBy
-import br.andrew.sap.infrastructure.odata.Parameter
-import br.andrew.sap.model.Session
+import br.andrew.sap.model.sap.Session
 import br.andrew.sap.model.envrioments.SapEnvrioment
 import br.andrew.sap.services.AuthService
-import org.springframework.data.domain.Pageable
 import org.springframework.http.RequestEntity
 import org.springframework.stereotype.Service
 import org.springframework.web.client.RestTemplate

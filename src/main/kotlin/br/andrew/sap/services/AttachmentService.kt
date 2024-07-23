@@ -1,14 +1,11 @@
 package br.andrew.sap.services
 
 import br.andrew.sap.infrastructure.odata.OData
-import br.andrew.sap.model.Attachment
-import br.andrew.sap.model.SapError
+import br.andrew.sap.model.sap.Attachment
+import br.andrew.sap.model.sap.SapError
 import br.andrew.sap.model.envrioments.SapEnvrioment
-import br.andrew.sap.model.partner.BusinessPartner
+import br.andrew.sap.model.sap.partner.BusinessPartner
 import br.andrew.sap.services.abstracts.EntitiesService
-import org.apache.hc.client5.http.utils.Base64
-import org.apache.tika.Tika
-import org.apache.tika.mime.MimeTypes
 import org.springframework.http.RequestEntity
 import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Service

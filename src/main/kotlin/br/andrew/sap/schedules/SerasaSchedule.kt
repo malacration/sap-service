@@ -1,6 +1,6 @@
 package br.andrew.sap.schedules
 
-import br.andrew.sap.model.partner.BusinessPartner
+import br.andrew.sap.model.sap.partner.BusinessPartner
 import br.andrew.sap.services.BusinessPartnersService
 import br.andrew.sap.services.SerasaService
 import br.andrew.sap.services.TelegramRequestService

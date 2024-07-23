@@ -1,9 +1,9 @@
 package br.andrew.sap.json
 
 import br.andrew.sap.model.forca.Cliente
-import br.andrew.sap.model.partner.BusinessPartner
-import br.andrew.sap.model.partner.BusinessPartnerType
-import br.andrew.sap.model.partner.CpfCnpj
+import br.andrew.sap.model.sap.partner.BusinessPartner
+import br.andrew.sap.model.sap.partner.BusinessPartnerType
+import br.andrew.sap.model.sap.partner.CpfCnpj
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinFeature
 import com.fasterxml.jackson.module.kotlin.KotlinModule

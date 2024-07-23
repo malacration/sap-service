@@ -6,7 +6,7 @@ import br.andrew.sap.infrastructure.odata.Predicate
 import br.andrew.sap.model.enums.Cancelled
 import br.andrew.sap.model.envrioments.SapEnvrioment
 import br.andrew.sap.model.bank.Payment
-import br.andrew.sap.model.documents.PurchaseInvoice
+import br.andrew.sap.model.sap.documents.PurchaseInvoice
 import br.andrew.sap.services.AuthService
 import br.andrew.sap.services.abstracts.EntitiesService
 import br.andrew.sap.services.bank.VendorPaymentService
