@@ -47,6 +47,8 @@ class ComissaoConfiguration(val userFieldsMDService: UserFieldsMDService,
                 .also { it.ValidValuesMD = listOf(
                     ValuesMd("0","Nenhuma")
                 ) },
+
+            FieldMd("vendedor","vendedor","@LiberaPara"),
         ).forEach { userFieldsMDService.findOrCreate(it) }
 
 

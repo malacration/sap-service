@@ -1,10 +1,10 @@
 package br.andrew.sap.infrastructure.create.fields
 
-import br.andrew.sap.model.TableMd
-import br.andrew.sap.model.TbType
 import br.andrew.sap.model.entity.DbType
 import br.andrew.sap.model.entity.FieldMd
 import br.andrew.sap.model.entity.ValuesMd
+import br.andrew.sap.model.sap.TableMd
+import br.andrew.sap.model.sap.TbType
 import br.andrew.sap.services.structs.UserFieldsMDService
 import br.andrew.sap.services.structs.UserObjectsMDService
 import br.andrew.sap.services.structs.UserTablesMDService
