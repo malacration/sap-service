@@ -1,7 +1,7 @@
 package br.andrew.sap.services.tax
 
 import br.andrew.sap.infrastructure.odata.OData
-import br.andrew.sap.model.tax.SalesTaxCodeLine
+import br.andrew.sap.model.sap.tax.SalesTaxCodeLine
 import br.andrew.sap.model.envrioments.SapEnvrioment
 import br.andrew.sap.services.AuthService
 import org.springframework.http.RequestEntity

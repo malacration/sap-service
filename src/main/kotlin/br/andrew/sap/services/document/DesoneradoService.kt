@@ -1,9 +1,9 @@
 package br.andrew.sap.services.document
 
-import br.andrew.sap.model.documents.base.Document
+import br.andrew.sap.model.sap.documents.base.Document
 import br.andrew.sap.model.impostos.PrecoUnitarioComDesoneracao
-import br.andrew.sap.model.tax.SalesTaxAuthorities
-import br.andrew.sap.model.tax.SalesTaxCode
+import br.andrew.sap.model.sap.tax.SalesTaxAuthorities
+import br.andrew.sap.model.sap.tax.SalesTaxCode
 import br.andrew.sap.services.tax.SalesTaxAuthoritiesService
 import br.andrew.sap.services.tax.SalesTaxCodeService
 import org.springframework.beans.factory.annotation.Value

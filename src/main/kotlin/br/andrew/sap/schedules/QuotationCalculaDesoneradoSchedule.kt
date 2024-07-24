@@ -3,7 +3,7 @@ package br.andrew.sap.schedules
 import br.andrew.sap.infrastructure.odata.Condicao
 import br.andrew.sap.infrastructure.odata.Filter
 import br.andrew.sap.infrastructure.odata.Predicate
-import br.andrew.sap.model.documents.base.Document
+import br.andrew.sap.model.sap.documents.base.Document
 import br.andrew.sap.services.document.DesoneradoService
 import br.andrew.sap.services.document.QuotationsService
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties

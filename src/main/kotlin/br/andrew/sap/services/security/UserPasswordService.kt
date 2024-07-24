@@ -1,7 +1,7 @@
 package br.andrew.sap.services.security
 
 import br.andrew.sap.infrastructure.odata.OData
-import br.andrew.sap.model.SalePerson
+import br.andrew.sap.model.sap.SalePerson
 import br.andrew.sap.model.authentication.User
 import br.andrew.sap.model.authentication.UserPassword
 import br.andrew.sap.services.MailService

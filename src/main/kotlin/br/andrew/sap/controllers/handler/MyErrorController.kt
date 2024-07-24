@@ -1,12 +1,11 @@
 package br.andrew.sap.controllers.handler
 
-import br.andrew.sap.model.SapError
+import br.andrew.sap.model.sap.SapError
 import br.andrew.sap.model.telegram.TipoMensagem
 import br.andrew.sap.services.TelegramRequestService
 import brave.Tracer
 import jakarta.servlet.RequestDispatcher
 import jakarta.servlet.http.HttpServletRequest
-import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.boot.web.servlet.error.ErrorController
 import org.springframework.http.HttpStatus

@@ -1,6 +1,6 @@
 package br.andrew.sap.json
 
-import br.andrew.sap.model.tax.SalesTaxCode
+import br.andrew.sap.model.sap.tax.SalesTaxCode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.fasterxml.jackson.module.kotlin.readValue

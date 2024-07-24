@@ -1,7 +1,7 @@
 package br.andrew.sap.infrastructure.security
 
 import br.andrew.sap.model.authentication.User
-import br.andrew.sap.model.partner.BusinessPartner
+import br.andrew.sap.model.sap.partner.BusinessPartner
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.ResponseEntity
 import org.springframework.security.access.expression.method.MethodSecurityExpressionOperations

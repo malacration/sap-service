@@ -1,6 +1,6 @@
 package br.andrew.sap.model
 
-import br.andrew.sap.model.documents.base.Product
+import br.andrew.sap.model.sap.documents.base.Product
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import java.math.BigDecimal

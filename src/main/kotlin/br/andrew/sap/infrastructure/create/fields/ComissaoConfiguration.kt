@@ -1,7 +1,7 @@
 package br.andrew.sap.infrastructure.create.fields
 
-import br.andrew.sap.model.TableMd
-import br.andrew.sap.model.TbType
+import br.andrew.sap.model.sap.TableMd
+import br.andrew.sap.model.sap.TbType
 import br.andrew.sap.model.entity.*
 import br.andrew.sap.services.structs.UserFieldsMDService
 import br.andrew.sap.services.structs.UserObjectsMDService
@@ -22,10 +22,10 @@ class ComissaoConfiguration(val userFieldsMDService: UserFieldsMDService,
                 "COMISSAO","Tabela com regras de comissao", TbType.bott_MasterData
             ),
             TableMd(
-                "condicoesFV","Linha condiçoes ",TbType.bott_MasterDataLines
+                "condicoesFV","Linha condiçoes ", TbType.bott_MasterDataLines
             ),
             TableMd(
-                "LiberaPara","Libera para",TbType.bott_MasterDataLines
+                "LiberaPara","Libera para", TbType.bott_MasterDataLines
             )
         ).forEach{ tableService.findOrCreate(it)}
 

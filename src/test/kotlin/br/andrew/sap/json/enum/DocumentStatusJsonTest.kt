@@ -1,8 +1,8 @@
 package br.andrew.sap.json.enum
 
-import br.andrew.sap.model.documents.DocumentStatus
+import br.andrew.sap.model.sap.documents.DocumentStatus
 import br.andrew.sap.model.forca.Cliente
-import br.andrew.sap.model.partner.BusinessPartner
+import br.andrew.sap.model.sap.partner.BusinessPartner
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.fasterxml.jackson.module.kotlin.jacksonTypeRef
@@ -25,6 +25,6 @@ class DocumentStatusJsonTest {
         val json = "\"bost_Close\""
         val mapper = ObjectMapper().registerModule(KotlinModule())
         val obj = mapper.readValue(json, jacksonTypeRef<DocumentStatus>())
-        Assertions.assertEquals(obj,DocumentStatus.bost_Close)
+        Assertions.assertEquals(obj, DocumentStatus.bost_Close)
     }
 }

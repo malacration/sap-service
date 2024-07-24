@@ -1,6 +1,6 @@
 package br.andrew.sap.json
 
-import br.andrew.sap.model.partner.BPBranchAssignment
+import br.andrew.sap.model.sap.partner.BPBranchAssignment
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import org.junit.jupiter.api.Assertions

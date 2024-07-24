@@ -2,8 +2,8 @@ package br.andrew.sap.services
 
 import br.andrew.sap.infrastructure.odata.OData
 import br.andrew.sap.model.envrioments.SapEnvrioment
-import br.andrew.sap.model.SapUser
-import br.andrew.sap.model.documents.PurchaseInvoice
+import br.andrew.sap.model.sap.SapUser
+import br.andrew.sap.model.sap.documents.PurchaseInvoice
 import br.andrew.sap.services.abstracts.EntitiesService
 import org.springframework.http.RequestEntity
 import org.springframework.stereotype.Service
@@ -20,7 +20,7 @@ class UserService(env: SapEnvrioment,
     }
 
 
-    fun getCurretuser() : SapUser{
+    fun getCurretuser() : SapUser {
         val request = RequestEntity
                 .post(env.host+this.path()+"_GetCurrentUser")
                 .header("cookie","B1SESSION=${session().sessionId}")

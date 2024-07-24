@@ -67,7 +67,7 @@ dependencies {
 	implementation("org.mockito:mockito-core:5.3.0")
 
 	//** - SOAP
-	implementation("org.apache.axis:axis:1.4")
+	implementation("org.apache.axis:axis:1.7.9")
 	implementation("org.apache.axis:axis-jaxrpc:1.4")
 	implementation("org.apache.axis:axis-saaj:1.4")
 	implementation("axis:axis-wsdl4j:1.5.1")

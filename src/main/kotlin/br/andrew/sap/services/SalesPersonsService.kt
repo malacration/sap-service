@@ -1,11 +1,8 @@
 package br.andrew.sap.services
 
 import br.andrew.sap.infrastructure.odata.*
-import br.andrew.sap.model.SalePerson
+import br.andrew.sap.model.sap.SalePerson
 import br.andrew.sap.model.envrioments.SapEnvrioment
-import br.andrew.sap.model.partner.BusinessPartner
-import br.andrew.sap.model.partner.BusinessPartnerSlin
-import br.andrew.sap.model.partner.CpfCnpj
 import br.andrew.sap.services.abstracts.EntitiesService
 import br.andrew.sap.services.abstracts.SqlQueriesService
 import org.springframework.data.domain.Page

@@ -1,6 +1,6 @@
 package br.andrew.sap.schedules
 
-import br.andrew.sap.model.SapUser
+import br.andrew.sap.model.sap.SapUser
 import br.andrew.sap.services.approval.ApprovalRequestsService
 import br.andrew.sap.services.DraftsService
 import br.andrew.sap.services.document.InvoiceService
@@ -17,7 +17,8 @@ class GeneratePix(
     val invoiceService: InvoiceService,
     val approvalRequestsService : ApprovalRequestsService,
     val draftsService: DraftsService,
-    val currentSapUser : SapUser) {
+    val currentSapUser : SapUser
+) {
 
     val logger: Logger = LoggerFactory.getLogger(GeneratePix::class.java)
 
