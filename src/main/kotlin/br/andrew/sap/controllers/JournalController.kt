@@ -10,16 +10,37 @@ import org.springframework.web.bind.annotation.*
 
 @RestController
 @RequestMapping("journal")
-class JournalController(val journalEntry : JournalEntriesService) {
+class JournalController(val journalEntryService : JournalEntriesService) {
 
     @GetMapping()
     fun getRegistros(): OData {
-        return journalEntry.get(OrderBy("Number", Order.DESC))
+        return journalEntryService.get(OrderBy("Number", Order.DESC))
     }
 
     @PostMapping("save")
     fun create(@RequestBody csv: String): List<JournalEntry> {
-        return journalEntry.readCsv(csv.byteInputStream()).map{ journalEntry.save(it).tryGetValue<JournalEntry>()}
+        return journalEntryService.readCsv(csv.byteInputStream()).map{ journalEntryService.save(it).tryGetValue<JournalEntry>()}
     }
+
+    @GetMapping("replace/{docEntry}")
+    fun replaceJournalEntryMemo(@PathVariable docEntry: Int): Boolean {
+        val journalEntry = journalEntryService.getByDocEntry(docEntry)
+        if (journalEntry == null) {
+            throw Exception("Lançamento Contábil não encontrado")
+        }
+
+        val updatedMemo = when {
+            journalEntry.OriginalJournal == "ttJournalEntry" && !journalEntry.Reference.isNullOrEmpty() -> "Entrada com referência"
+            journalEntry.OriginalJournal == "ttJournalEntry" -> "Entrada"
+            journalEntry.OriginalJournal == "ttAPInvoice" -> "Saída"
+            else -> journalEntry.memo
+        }
+
+        journalEntry.memo = updatedMemo
+        journalEntryService.updateMemoJournalEntry(journalEntry)
+
+        return true
+    }
+
 
 }

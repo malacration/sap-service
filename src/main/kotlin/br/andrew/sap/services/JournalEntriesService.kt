@@ -1,14 +1,20 @@
 package br.andrew.sap.services
 
+import br.andrew.sap.infrastructure.odata.Condicao
+import br.andrew.sap.infrastructure.odata.Filter
 import br.andrew.sap.infrastructure.odata.OData
+import br.andrew.sap.infrastructure.odata.Predicate
 
 import br.andrew.sap.model.envrioments.SapEnvrioment
+import br.andrew.sap.model.sap.SalePerson
 import br.andrew.sap.services.abstracts.EntitiesService
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.PropertyNamingStrategies
 import com.fasterxml.jackson.databind.annotation.JsonNaming
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
 import org.springframework.web.client.RestTemplate
 import java.io.InputStream
@@ -46,17 +52,27 @@ class JournalEntriesService(env: SapEnvrioment, restTemplate: RestTemplate, auth
             }.toList()
     }
 
-}
+    fun getByDocEntry(docEntry: Int): JournalEntry? {
+        val filter = Filter((mutableListOf(Predicate("JdtNum", docEntry, Condicao.EQUAL))))
+        return get(filter).tryGetValues<JournalEntry>().firstOrNull()
+    }
 
+    fun updateMemoJournalEntry(journalEntry: JournalEntry): OData? {
+        val json = "{ \"Memo\": \"${journalEntry.memo}\" }"
+        return update(json, journalEntry.JdtNum.toString())
+    }
+}
 
 @JsonNaming(PropertyNamingStrategies.UpperCamelCaseStrategy::class)
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-class JournalEntry(val journalEntryLines : List<JournalEntryLines>, val memo : String){
+class JournalEntry(val journalEntryLines : List<JournalEntryLines>, var memo : String){
 
     var taxDate : String? = null
     var ReferenceDate : String? = null
-
+    var JdtNum : Int? = null
+    var Number : Int? = null
+    var OriginalJournal : String? = null
     var Reference : String? = null
     var Reference2 : String? = null
     var Reference3 : String? = null
