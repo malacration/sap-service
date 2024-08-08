@@ -1,54 +1,45 @@
 package br.andrew.sap.schedules
 
-import br.andrew.sap.controllers.RdStationController
-import br.andrew.sap.infrastructure.odata.Condicao
-import br.andrew.sap.infrastructure.odata.Filter
-import br.andrew.sap.infrastructure.odata.Predicate
-import br.andrew.sap.model.sap.documents.OrderSales
-import br.andrew.sap.model.telegram.TipoMensagem
-import br.andrew.sap.services.TelegramRequestService
-import br.andrew.sap.services.document.OrdersService
+import JournalEntry
+import br.andrew.sap.infrastructure.odata.*
+import br.andrew.sap.model.sap.SapUser
+import br.andrew.sap.services.journal.JournalEntriesService
+import br.andrew.sap.services.journal.JournalMemoHandle
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
+import org.springframework.data.domain.Pageable
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
 import java.time.LocalDate
 
-
 @Component
-@ConditionalOnProperty(value =["rd.enable"], havingValue = "true", matchIfMissing = false)
-class SendOrderToEventToRdStation(
-    val controller : RdStationController,
-    val ordersService: OrdersService,
-    @Value("\${rd.consumidor-final:CLI0003676}") val consumidorFinal : String,
-    @Value("\${rd.dias:10}") val dias : Long,
-    @Value("\${rd.sap-id-filiais:2,4,11,17,18}") val filiais : List<Int>,
-    val telegramRequestService: TelegramRequestService) {
+@ConditionalOnProperty(value = ["lc.memo.enable"], havingValue = "true", matchIfMissing = false)
+class AtualizarObservacaoLancamento(
+    val journalEntriesService: JournalEntriesService,
+    val journalMemoHandle : JournalMemoHandle,
+    @Value("\${lc.memo.dias:5}") val dias : Long,
+    val currentSapUser : SapUser
+) {
 
-    val logger: Logger = LoggerFactory.getLogger(SendOrderToEventToRdStation::class.java)
+    val logger: Logger = LoggerFactory.getLogger(AtualizarObservacaoLancamento::class.java)
 
-
-
-    @Scheduled(fixedDelay = 30000)
+    @Scheduled(fixedDelay = 20000)
     fun execute() {
-        val data = LocalDate.now().plusDays(-dias).toString()
-        val predicados = mutableListOf(
-            Predicate("DocDate", data, Condicao.GREAT),
-            Predicate("U_rd_station", "null", Condicao.EQUAL),
-            Predicate("CardCode", "CLI0003676", Condicao.NOT_EQUAL),
-            Predicate("BPL_IDAssignedToInvoice", filiais, Condicao.IN),
+        val dataLimite = LocalDate.now().minusDays(dias).toString()
+        val filter = Filter(
+            Predicate("U_Atualizar_Observacao", 0, Condicao.EQUAL),
+            Predicate("ReferenceDate", dataLimite, Condicao.GREAT_EQUAL)
         )
-        ordersService.get(Filter(predicados)).tryGetValues<OrderSales>().forEach{
+        val resultado = journalEntriesService.get(filter,OrderBy("ReferenceDate", Order.DESC))
+            .tryGetPageValues<JournalEntry>(Pageable.unpaged())
+        resultado.forEach { journalEntry ->
             try{
-                controller.getByCodParceiro(it)
-                ordersService.update("{ \"U_rd_station\": \"yes\"}","${it.docEntry}")
-                logger.info("Pedido - DocNum: ${it.docNum} - Enviado ao RdStation")
-                telegramRequestService.send("Pedido - DocNum: ${it.docNum} - Enviado ao RdStation",TipoMensagem.eventos)
+                logger.info("Atualizando memo para o jornal ${journalEntry.JdtNum}")
+                journalMemoHandle.updateMemoJournal(journalEntry.JdtNum!!)
             }catch (e : Exception){
-                telegramRequestService.send("Erro ao enviar pedido para RD-Station - DocNum: ${it.docNum}",TipoMensagem.erros)
-                logger.error("Erro ao enviar pedido para RD-Station - DocNum: ${it.docNum}",e)
+                logger.error("Erro ao atualizar a descricao do LC ${journalEntry.JdtNum}")
             }
         }
     }

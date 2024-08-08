@@ -1,43 +1,42 @@
-package br.andrew.sap.model.sap
-
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import com.fasterxml.jackson.annotation.JsonInclude
+import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.PropertyNamingStrategies
 import com.fasterxml.jackson.databind.annotation.JsonNaming
-import org.apache.hc.client5.http.utils.Base64
-import org.apache.tika.Tika
-import org.apache.tika.mime.MimeTypes
-import org.springframework.web.multipart.MultipartFile
-import java.io.File
-
 
 @JsonNaming(PropertyNamingStrategies.UpperCamelCaseStrategy::class)
 @JsonIgnoreProperties(ignoreUnknown = true)
-class Attachment() {
-    constructor(file : File) : this(){
-        body = file.readBytes()
-        file64 = Base64.encodeBase64String(file.readBytes())
-        fileName = file.nameWithoutExtension
-    }
-    constructor(file : MultipartFile) : this(){
-        body = file.bytes
-        file64 = Base64.encodeBase64String(file.bytes)
-        fileName = file.originalFilename?.substringBeforeLast(".") ?: "windson"
-        extension = file.originalFilename?.substringAfterLast('.', "")
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
+class JournalEntry(val journalEntryLines : List<JournalEntryLines>, val memo : String){
+
+    var taxDate : String? = null
+    var ReferenceDate : String? = null
+    var JdtNum : Int? = null
+    var OriginalJournal : String? = null
+    var Original : Int? = null
+    var U_Atualizar_Observacao : Int? = null
+
+
+    var Reference : String? = null
+    var Reference2 : String? = null
+    var Reference3 : String? = null
+
+    fun costingCodes(costingCode: String, costingCode2: String) {
+        journalEntryLines.forEach{
+            it.costingCode = costingCode
+            it.costingCode2 = costingCode2
+        }
     }
 
-    var body: ByteArray? = null
-    var fileName : String? = null
-    var absoluteEntry : Int? = null
-    var file64 : String? = null
-    private var extension : String? = null
-
-    @JsonIgnoreProperties
-    fun getExtension(): String? {
-        return extension ?: MimeTypes.getDefaultMimeTypes().forName(getMimeType()).extension
-    }
-
-    @JsonIgnoreProperties
-    fun getMimeType(): String {
-        return Tika().detect(body!!)
-    }
+    constructor(filial : Int,
+                accDebit : String,
+                accCredit : String,
+                value : Double,
+                memo : String) : this(
+        listOf(
+            JournalEntryLines(accDebit,value,0.0,filial),
+            JournalEntryLines(accCredit,0.0,value,filial)
+        ),
+        memo
+    )
 }

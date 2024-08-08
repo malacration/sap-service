@@ -12,14 +12,15 @@ import org.springframework.context.annotation.Profile
 @Configuration
 @Profile("!test")
 @ConditionalOnProperty(value = ["fields"], havingValue = "true", matchIfMissing = true)
-class BusinessPartnersFieldsConfiguration(
+class HistoricoPadraoConfiguration(
     val userFieldsMDService: UserFieldsMDService
 ) {
 
     init {
         listOf(
-            FieldMd("keyUpdate","Atualização pedido","OCRD",DbType.db_Alpha),
-            FieldMd("dataSerasa","Data Serasa","OCRD",DbType.db_Date)
+            FieldMd("Atualizar_Observacao","Atualização Observação","OJDT",DbType.db_Numeric).also {
+                it.defaultValue = "0"
+            }
         )
             .forEach { userFieldsMDService.findOrCreate(it) }
     }

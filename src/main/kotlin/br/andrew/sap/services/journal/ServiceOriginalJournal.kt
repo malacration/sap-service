@@ -1,6 +1,10 @@
 package br.andrew.sap.services.journal
 
-interface EntryOriginalJournal{
+import br.andrew.sap.model.sap.journal.OriginalJournal
 
-    fun getMemoForJournal() : String
+interface ServiceOriginalJournal{
+
+    fun getEntryOriginalJournal(idJournal : Int) : EntryOriginalJournal
+
+    fun getOriginalJournal() : OriginalJournal
 }

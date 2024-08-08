@@ -1,76 +1,23 @@
-package br.andrew.sap.services.invent
+package br.andrew.sap.services.journal
 
-import br.andrew.sap.infrastructure.configurations.invent.BankPlusEnvrioment
-import br.andrew.sap.model.bankplus.Boleto
-import br.andrew.sap.model.bankplus.Empresa
-import br.andrew.sap.model.sap.documents.Invoice
-import org.springframework.core.ParameterizedTypeReference
-import org.springframework.http.RequestEntity
-import org.springframework.stereotype.Service
-import org.springframework.web.client.HttpClientErrorException
-import org.springframework.web.client.RestTemplate
+import br.andrew.sap.model.sap.documents.base.Document
+import br.andrew.sap.model.enums.Cancelled.tNO as tNO
+import br.andrew.sap.model.enums.Cancelled.tYES as tYES
 
-@Service
-class BankPlusService(val envrioment: BankPlusEnvrioment, val restTemplate: RestTemplate) {
+interface EntryOriginalJournal{
 
-    val url = envrioment.host
-    fun getBoletosBy(idFilial : String, docEntry : String): List<Boleto> {
-        val objType = object: ParameterizedTypeReference<List<Boleto>> () {}
-        return getEmpresas()
-            .filter { it.codigoDaFilial == idFilial }.flatMap {
-                try {
-                    restTemplate.exchange(RequestEntity
-                        .get("$url/api/v2/${envrioment.base}/cobranca/${it.id}/notafiscal/${docEntry}/boletos")
-                        .header("Authorization",envrioment.token)
-                        .build(), objType).body ?: listOf()
-                } catch (t : HttpClientErrorException){
-                    t.printStackTrace()
-                    if(!t.responseBodyAsString.contains("Nenhum boleto encontrado"))
-                        throw t
-                    listOf()
-                }
-            }
-    }
-    fun getEmpresas(): List<Empresa> {
-        val objType = object: ParameterizedTypeReference<List<Empresa>> () {}
-        if(empresas.isEmpty()) {
-            empresas = restTemplate.exchange(
-                RequestEntity
-                    .get("$url/api/v2/${envrioment.base}/cobranca/empresas")
-                    .header("Authorization", envrioment.token)
-                    .build(),objType)
-                .body ?: throw Exception("Nao retornou nenhuma empresa")
-        }
-        return empresas;
+
+    fun getMemoForJournal() : String {
+        return "Teste"
     }
 
-    fun cancelarBoleto(boleto : Boleto): Any? {
-        if(boleto.id == null)
-            throw Exception("Boleto nao possui id")
-        return restTemplate.exchange(
-            RequestEntity
-                .patch("$url/api/v2/${envrioment.base}/cobranca/boletos/${boleto.id}/cancelar")
-                .header("Authorization", envrioment.token)
-                .build(),Any::class.java).body
-    }
-
-    fun getBoletosBy(invoice: Invoice): List<Boleto> {
-        return getBoletosBy(
-            invoice.getBPL_IDAssignedToInvoice(),
-            invoice.docEntry?.toString() ?: throw Exception("Doc Entry nao pode estar nulo"))
-    }
-
-
-    fun getPdf(id : String): ByteArray? {
-        return restTemplate.exchange(
-            RequestEntity
-                .get("$url/api/v2/${envrioment.base}/cobranca/boletos/${id}/pdf")
-                .header("Authorization", envrioment.token)
-                .build(),ByteArray::class.java).body
-    }
-
-    companion object{
-        var empresas : List<Empresa> = listOf()
+    fun getDefaultForJournal(doc: Document, type : String): String {
+        return if(doc.Cancelled == tNO)
+            "$type - ${doc.SequenceSerial} - ${doc.CardCode} - ${doc.cardName}"
+        else if(doc.Cancelled == tYES)
+            "$type - ${doc.SequenceSerial} - ${doc.CardCode} - ${doc.cardName} (Cancelado)"
+        else
+            "$type - ${doc.SequenceSerial} - ${doc.CardCode} - ${doc.cardName} (Cancelamento)"
     }
 
 }
