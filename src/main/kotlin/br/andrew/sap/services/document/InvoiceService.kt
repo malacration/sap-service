@@ -1,6 +1,9 @@
 package br.andrew.sap.services.document
 
+import br.andrew.sap.infrastructure.odata.Condicao
+import br.andrew.sap.infrastructure.odata.Filter
 import br.andrew.sap.infrastructure.odata.OData
+import br.andrew.sap.infrastructure.odata.Predicate
 import br.andrew.sap.model.sap.BussinessPlace
 import br.andrew.sap.model.sap.DocEntry
 import br.andrew.sap.model.bank.Payment
@@ -9,6 +12,8 @@ import br.andrew.sap.model.envrioments.SapEnvrioment
 import br.andrew.sap.model.sap.documents.base.Installment
 import br.andrew.sap.model.sap.documents.Invoice
 import br.andrew.sap.model.exceptions.PixPaymentException
+import br.andrew.sap.model.sap.SalePerson
+import br.andrew.sap.model.sap.journal.OriginalJournal
 import br.andrew.sap.model.sap.partner.BusinessPartner
 import br.andrew.sap.model.uzzipay.ContaUzziPayPix
 import br.andrew.sap.model.uzzipay.Transaction
@@ -19,6 +24,8 @@ import br.andrew.sap.services.BusinessPartnersService
 import br.andrew.sap.services.BussinessPlaceService
 import br.andrew.sap.services.abstracts.EntitiesService
 import br.andrew.sap.services.bank.IncomingPaymentService
+import br.andrew.sap.services.journal.EntryOriginalJournal
+import br.andrew.sap.services.journal.ServiceOriginalJournal
 import br.andrew.sap.services.uzzipay.DynamicPixQrCodeService
 import br.andrew.sap.services.uzzipay.TransactionsPixService
 import org.springframework.data.domain.Pageable
@@ -37,7 +44,7 @@ class InvoiceService(env: SapEnvrioment, restTemplate: RestTemplate, authService
                      val transactionPixService : TransactionsPixService,
                      val bankPlusService: BankPlusService
 ) :
-        EntitiesService<Invoice>(env, restTemplate, authService) {
+        EntitiesService<Invoice>(env, restTemplate, authService), ServiceOriginalJournal {
     override fun path(): String {
         return "/b1s/v1/Invoices"
     }
@@ -123,5 +130,17 @@ class InvoiceService(env: SapEnvrioment, restTemplate: RestTemplate, authService
         boletos.filter { parcelaBaixar.getBy(it) }
             .forEach { bankPlusService.cancelarBoleto(it) }
         return "ok"
+    }
+
+    override fun getEntryOriginalJournal(jdtNum: Int): EntryOriginalJournal {
+        val filter = Filter(
+            Predicate("DocEntry", jdtNum, Condicao.EQUAL)
+        )
+        val outro = get(filter).tryGetValues<Invoice>().first()
+        return outro
+    }
+
+    override fun getOriginalJournal(): OriginalJournal {
+        return OriginalJournal.ttARInvoice
     }
 }

@@ -1,19 +1,25 @@
-package br.andrew.sap.services
+package br.andrew.sap.services.journal
 
+import JournalEntry
+import br.andrew.sap.infrastructure.odata.Condicao
+import br.andrew.sap.infrastructure.odata.Filter
 import br.andrew.sap.infrastructure.odata.OData
-
+import br.andrew.sap.infrastructure.odata.Predicate
 import br.andrew.sap.model.envrioments.SapEnvrioment
+import br.andrew.sap.model.sap.SalePerson
+import br.andrew.sap.services.AuthService
 import br.andrew.sap.services.abstracts.EntitiesService
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.PropertyNamingStrategies
 import com.fasterxml.jackson.databind.annotation.JsonNaming
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
 import org.springframework.web.client.RestTemplate
 import java.io.InputStream
 import java.text.SimpleDateFormat
-import java.util.Date
 
 @Service
 class JournalEntriesService(env: SapEnvrioment, restTemplate: RestTemplate, authService: AuthService) :
@@ -46,55 +52,33 @@ class JournalEntriesService(env: SapEnvrioment, restTemplate: RestTemplate, auth
             }.toList()
     }
 
-}
-
-
-@JsonNaming(PropertyNamingStrategies.UpperCamelCaseStrategy::class)
-@JsonIgnoreProperties(ignoreUnknown = true)
-@JsonInclude(JsonInclude.Include.NON_EMPTY)
-class JournalEntry(val journalEntryLines : List<JournalEntryLines>, val memo : String){
-
-    var taxDate : String? = null
-    var ReferenceDate : String? = null
-
-    var Reference : String? = null
-    var Reference2 : String? = null
-    var Reference3 : String? = null
-
-    fun costingCodes(costingCode: String, costingCode2: String) {
-        journalEntryLines.forEach{
-            it.costingCode = costingCode
-            it.costingCode2 = costingCode2
-        }
+    fun search(docEntry: Int): List<JournalEntry> {
+        val filter = Filter(
+            Predicate("JdtNum", docEntry,Condicao.EQUAL )
+        )
+        val result = get(filter)
+        return result.tryGetValues<JournalEntry>()
     }
 
-    constructor(filial : Int,
-                accDebit : String,
-                accCredit : String,
-                value : Double,
-                memo : String) : this(
-        listOf(
-            JournalEntryLines(accDebit,value,0.0,filial),
-            JournalEntryLines(accCredit,0.0,value,filial)
-        ),
-        memo
-    )
-}
+    //TODO Modificar isso
+    fun getByDocEntry(docEntry: Int): JournalEntry?{
+        val filter = Filter((mutableListOf(Predicate("JdtNum", docEntry, Condicao.EQUAL))))
+        return get(filter).tryGetValues<JournalEntry>().firstOrNull()
+    }
 
-@JsonNaming(PropertyNamingStrategies.UpperCamelCaseStrategy::class)
-@JsonIgnoreProperties(ignoreUnknown = true)
-@JsonInclude(JsonInclude.Include.NON_EMPTY)
-class JournalEntryLines(
-    val AccountCode : String,
-    val debit : Double,
-    val Credit : Double,
-    @JsonProperty("BPLID")
-    private val BPLID : Int,
-    var costingCode : String? = null,
-    var costingCode2 : String? = null
-){
-    @JsonProperty("BPLID")
-    fun getBPLID() : Int {
-        return BPLID
+    fun updateMemoJournalEntry(JdtNum: Int, memo: String): OData?{
+        val json = "{" +
+                "\"Memo\": \"$memo\"," +
+                "\"U_Atualizar_Observacao\": \"1\"" +
+                "}"
+        return update(json, JdtNum.toString() )
+    }
+
+    fun markMemoChecked(idJournal: Int): OData? {
+        val json = "{" +
+                "\"U_Atualizar_Observacao\": \"1\"" +
+                "}"
+        return update(json, idJournal.toString() )
+
     }
 }
