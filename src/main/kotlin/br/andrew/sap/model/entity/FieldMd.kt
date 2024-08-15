@@ -17,7 +17,7 @@ class FieldMd(val name : String,
 
     var size : Int? = type?.size
     var ValidValuesMD : List<ValuesMd> = listOf()
-    val subType : String? =  null
+    val subType : String? = if(type == DbType.db_Float) "st_Measurement" else null
     var defaultValue: String? = null
     var editSize : Int? = null
 
@@ -31,7 +31,7 @@ class FieldMd(val name : String,
 enum class DbType(val size : Int?){
     db_Alpha(254),
     db_Memo(null), //Observacao
-    db_Numeric(10),
+    db_Numeric(null),
     db_Float(null),
     db_Date(null);
 }

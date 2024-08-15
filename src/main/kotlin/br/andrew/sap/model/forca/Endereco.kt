@@ -1,6 +1,6 @@
 package br.andrew.sap.model.forca
 
-import br.andrew.sap.model.partner.Address
+import br.andrew.sap.model.sap.partner.Address
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 
 @JsonIgnoreProperties(ignoreUnknown = true)

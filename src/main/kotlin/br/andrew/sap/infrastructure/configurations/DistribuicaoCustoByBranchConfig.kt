@@ -1,6 +1,6 @@
 package br.andrew.sap.infrastructure.configurations
 
-import br.andrew.sap.model.documents.base.DistribuicaoCustoByBranch
+import br.andrew.sap.model.sap.documents.base.DistribuicaoCustoByBranch
 
 class DistribuicaoCustoByBranchConfig {
 

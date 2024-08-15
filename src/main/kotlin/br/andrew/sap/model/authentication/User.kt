@@ -15,6 +15,10 @@ class User(val id : String,
     constructor(id : String, name : String, authorities : List<SimpleGrantedAuthority>) : this(id,authorities){
         this.name = name
     }
+
+    fun getIdInt() : Int{
+        return id.toIntOrNull() ?: throw Exception("O ID do seu login contem algum erro ${id}")
+    }
     override fun getName(): String? {
         return name
     }

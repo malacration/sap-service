@@ -1,11 +1,11 @@
 package br.andrew.sap.controllers
 
 
-import br.andrew.sap.model.BussinessPlace
+import br.andrew.sap.model.sap.BussinessPlace
 import br.andrew.sap.model.bank.PaymentMethod
-import br.andrew.sap.model.documents.DocumentReport
-import br.andrew.sap.model.documents.base.Document
-import br.andrew.sap.model.partner.BusinessPartner
+import br.andrew.sap.model.sap.documents.DocumentReport
+import br.andrew.sap.model.sap.documents.base.Document
+import br.andrew.sap.model.sap.partner.BusinessPartner
 import br.andrew.sap.services.*
 import br.andrew.sap.services.bank.*
 import br.andrew.sap.services.document.QuotationsService

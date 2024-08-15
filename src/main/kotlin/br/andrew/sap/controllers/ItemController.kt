@@ -2,7 +2,7 @@ package br.andrew.sap.controllers
 
 import br.andrew.sap.infrastructure.odata.NextLink
 import br.andrew.sap.model.authentication.User
-import br.andrew.sap.model.documents.base.Product
+import br.andrew.sap.model.sap.documents.base.Product
 import br.andrew.sap.services.ItemsService
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.Authentication
@@ -26,7 +26,7 @@ class ItemController(val service: ItemsService) {
     @PostMapping("search/branch/{branchId}")
     fun fullSearchText(@RequestBody keyword : String, auth : Authentication): ResponseEntity<NextLink<Product>>? {
         return if(auth is User)
-            ResponseEntity.ok(service.fullSearchText(keyword,auth.id.toIntOrNull() ?: throw Exception("Id do vendedor nao é um int")))
+            ResponseEntity.ok(service.fullSearchText(keyword,auth.getIdInt()))
         else
             ResponseEntity.noContent().build()
     }

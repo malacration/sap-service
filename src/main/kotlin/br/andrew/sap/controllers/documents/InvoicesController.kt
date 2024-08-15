@@ -2,12 +2,11 @@ package br.andrew.sap.controllers.documents
 
 import br.andrew.sap.infrastructure.BoletoIdsConfig
 import br.andrew.sap.infrastructure.odata.*
-import br.andrew.sap.model.DocEntry
+import br.andrew.sap.model.sap.DocEntry
 import br.andrew.sap.model.bankplus.Boleto
-import br.andrew.sap.model.documents.DocumentStatus
-import br.andrew.sap.model.documents.Fatura
-import br.andrew.sap.model.documents.Invoice
-import br.andrew.sap.model.documents.base.Document
+import br.andrew.sap.model.sap.documents.Fatura
+import br.andrew.sap.model.sap.documents.Invoice
+import br.andrew.sap.model.sap.documents.base.Document
 import br.andrew.sap.model.enums.Cancelled
 import br.andrew.sap.services.document.InvoiceService
 import br.andrew.sap.services.invent.BankPlusService
@@ -15,7 +14,6 @@ import org.slf4j.LoggerFactory
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.web.bind.annotation.*
-import java.util.*
 
 @RestController
 @RequestMapping("invoice")

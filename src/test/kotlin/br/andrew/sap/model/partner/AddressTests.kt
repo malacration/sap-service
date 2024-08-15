@@ -1,5 +1,6 @@
 package br.andrew.sap.model.partner
 
+import br.andrew.sap.model.sap.partner.Address
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 

@@ -1,7 +1,7 @@
 package br.andrew.sap.model
 
-import br.andrew.sap.model.documents.base.Document
-import br.andrew.sap.model.documents.OrderSales
+import br.andrew.sap.model.sap.documents.base.Document
+import br.andrew.sap.model.sap.documents.OrderSales
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 

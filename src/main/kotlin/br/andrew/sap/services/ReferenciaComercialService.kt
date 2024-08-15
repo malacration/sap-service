@@ -3,8 +3,8 @@ package br.andrew.sap.services
 import br.andrew.sap.infrastructure.odata.Condicao
 import br.andrew.sap.infrastructure.odata.Filter
 import br.andrew.sap.model.envrioments.SapEnvrioment
-import br.andrew.sap.model.partner.Person
-import br.andrew.sap.model.partner.ReferenciaComercial
+import br.andrew.sap.model.sap.partner.Person
+import br.andrew.sap.model.sap.partner.ReferenciaComercial
 import br.andrew.sap.services.abstracts.EntitiesService
 import org.springframework.stereotype.Service
 import org.springframework.web.client.RestTemplate

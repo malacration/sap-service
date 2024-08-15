@@ -1,9 +1,9 @@
 package br.andrew.sap.services.rdstation
 
 import br.andrew.sap.infrastructure.configurations.rdstation.RdStationEnvrioment
-import br.andrew.sap.model.SalePerson
-import br.andrew.sap.model.documents.base.Document
-import br.andrew.sap.model.partner.BusinessPartner
+import br.andrew.sap.model.sap.SalePerson
+import br.andrew.sap.model.sap.documents.base.Document
+import br.andrew.sap.model.sap.partner.BusinessPartner
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonInclude
 import org.springframework.http.RequestEntity
@@ -17,7 +17,7 @@ class EventsService(private val envrioment : RdStationEnvrioment,
     private val path = "/platform/events?event_type=conversion"
     private  val url = envrioment.host + path
 
-    fun conversion( document: Document,businessPartner: BusinessPartner, salePerson: SalePerson): ResponseEntity<String> {
+    fun conversion(document: Document, businessPartner: BusinessPartner, salePerson: SalePerson): ResponseEntity<String> {
         val payload = EventPayloadPedido(document,businessPartner,salePerson)
         val event = Event(payload)
         val request = RequestEntity

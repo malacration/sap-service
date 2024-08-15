@@ -4,7 +4,7 @@ import br.andrew.sap.infrastructure.odata.NextLink
 import br.andrew.sap.infrastructure.odata.Parameter
 import br.andrew.sap.model.Item
 import br.andrew.sap.model.envrioments.SapEnvrioment
-import br.andrew.sap.model.documents.base.Product
+import br.andrew.sap.model.sap.documents.base.Product
 import br.andrew.sap.services.abstracts.EntitiesService
 import br.andrew.sap.services.abstracts.SqlQueriesService
 import org.springframework.stereotype.Service
