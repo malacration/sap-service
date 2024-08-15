@@ -12,7 +12,7 @@ class ContratoJsonTests {
     @Test
     fun test(){
         val mapper = ObjectMapper().registerModule(KotlinModule())
-        val contrato = Contrato(1,"code", listOf(),100.0,SimpleDateFormat("dd/MM/yyyy").parse("05/08/1992"))
+        val contrato = Contrato(1,"code", listOf(),666,"windson",100.0,SimpleDateFormat("dd/MM/yyyy").parse("05/08/1992"))
         val json = mapper.writeValueAsString(contrato)
         println(json)
         Assertions.assertTrue(json.contains("\"U_dataCriacao\":\"1992-08-05\""))

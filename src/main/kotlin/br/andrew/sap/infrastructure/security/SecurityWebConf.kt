@@ -9,6 +9,7 @@ import br.andrew.sap.infrastructure.security.otp.OneTimePasswordAuthenticationFi
 import br.andrew.sap.infrastructure.security.password.UserPasswordAuthenticationFilter
 import br.andrew.sap.services.security.OneTimePasswordService
 import br.andrew.sap.services.my.UserJwtService
+import br.andrew.sap.services.security.RuleService
 import br.andrew.sap.services.security.UserPasswordService
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
@@ -32,6 +33,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 class SecurityWebConf(
     @Value("\${spring.security.disable:false}") val disable: Boolean,
     jwtSecretBean : JwtSecretBean,
+    private val ruleService: RuleService,
     private val userPasswordService: UserPasswordService,
     private val otpService : OneTimePasswordService
 )  {
@@ -65,6 +67,9 @@ class SecurityWebConf(
                     JwtAuthenticationFilter::class.java)
                 .addFilterBefore(
                     UserPasswordAuthenticationFilter(authManager,jwtHandler,userPasswordService),
+                    OneTimePasswordAuthenticationFilter::class.java)
+                .addFilterAfter(
+                    RoleBasedAuthorizationFilter(ruleService),
                     OneTimePasswordAuthenticationFilter::class.java)
                 .authorizeHttpRequests { it
                     .requestMatchers(
