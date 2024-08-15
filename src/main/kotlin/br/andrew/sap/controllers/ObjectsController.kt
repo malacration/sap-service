@@ -32,30 +32,6 @@ class ObjectsController(
                 .get(Filter(mutableListOf(Predicate(coluna,valor,Condicao.STARTS_WITH))))
     }
 
-    //TODO remover depois
-    @GetMapping("/create")
-    fun create(){
-        val ud = UserDefinedObject("comissao", "Comissões New", "COMISSAO",)
-        delete(ud)
-        ud.UserObjectMD_ChildTables.addAll(listOf(
-            ChildTables("CONDICOESFV"),
-            ChildTables("LIBERAPARA")
-        ))
-
-        ud.UserObjectMD_FormColumns.addAll(listOf(
-            FormColumns("Code","Código",0),
-            FormColumns("Name","Descrição",0),
-            FormColumns("U_porcentagem","comissão em porcentagem",0),
-            FormColumns("U_desconto","Desconto (%) do vendedor",0),
-            FormColumns("U_regressiva","Comissão regressiva?",0),
-            FormColumns("U_desconto","Desconto (%)",1),
-            FormColumns("U_juros","Juros (%)",1),
-            FormColumns("U_prazo","Prazo",1),
-        ))
-        ud.setMenu(43541,1)
-        userObjectsMDService.findOrCreate(ud)
-    }
-
 
     fun delete(ud : UserDefinedObject) : OData? {
         val predicates = mutableListOf(
@@ -67,6 +43,5 @@ class ObjectsController(
             return userObjectsMDService.delete("'${ud.Code}'")
         }
         return null
-
     }
 }

@@ -7,24 +7,23 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.databind.PropertyNamingStrategies
 import com.fasterxml.jackson.databind.annotation.JsonNaming
-import java.math.BigDecimal
-import java.util.*
 
 @JsonNaming(PropertyNamingStrategies.UpperCamelCaseStrategy::class)
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-class Invoice(CardCode: String,
-              @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "YYY-MM-dd", timezone = "UTC")
-              DocDueDate: String?,
-              DocumentLines: List<DocumentLines> = listOf(),
-              BPL_IDAssignedToInvoice: String)
+class DownPayment(CardCode: String,
+                  @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "YYY-MM-dd", timezone = "UTC")
+                  DocDueDate: String?,
+                  DocumentLines: List<DocumentLines> = listOf(),
+                  BPL_IDAssignedToInvoice: String)
     : Document(CardCode, DocDueDate, DocumentLines, BPL_IDAssignedToInvoice) {
 
     //TODO não achei onde fica esse propriedade
     var header : String? = null
+    val DownPaymentType = "dptInvoice"
 
     override fun toString(): String {
-        return "OrderSales(CardCode='$CardCode', Branch='${getBPL_IDAssignedToInvoice()}', docEntry=$docEntry, docNum=$docNum, pedido_forca=$u_id_pedido_forca)"
+        return "DownPayment(CardCode='$CardCode', Branch='${getBPL_IDAssignedToInvoice()}', docEntry=$docEntry, docNum=$docNum, pedido_forca=$u_id_pedido_forca)"
     }
 }
 //data de entrega - ORDRdocduedate

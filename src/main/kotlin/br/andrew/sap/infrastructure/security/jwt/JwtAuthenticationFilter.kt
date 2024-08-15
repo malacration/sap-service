@@ -19,7 +19,7 @@ class JwtAuthenticationFilter(private val jwtHandler: JwtHandler, private val di
     override fun doFilterInternal(request: HttpServletRequest,
                                   response: HttpServletResponse,
                                   filterChain: FilterChain) {
-        if(disable){
+        if(disable && request.getHeader("Authorization") == null){
             SecurityContextHolder.getContext().authentication = User("-1","Nenhum vendedor", listOf())
         }
         else if(!request.requestURL.contains("/otp/login")

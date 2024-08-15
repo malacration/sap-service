@@ -20,7 +20,7 @@ class IncomingPaymentService(env: SapEnvrioment, restTemplate: RestTemplate, aut
 
     fun installPayment(docEntry : Int) : Any{
         val url = env.host+"/b1s/v1/SQLQueries"
-        return restTemplate.exchange(
+        return restT.exchange(
             RequestEntity
                 .get("$url('parcelas-pagas.sql')/List?docEntryInvoice=$docEntry")
                 .header("cookie","B1SESSION=${session().sessionId}")

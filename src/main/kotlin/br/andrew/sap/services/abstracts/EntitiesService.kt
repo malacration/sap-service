@@ -15,12 +15,19 @@ import org.springframework.web.client.RestTemplate
 import java.net.URLDecoder
 
 abstract class EntitiesService<T>(protected val env: SapEnvrioment,
-                                  protected val restTemplate: RestTemplate,
-                                  protected val authService: AuthService) {
-    fun session() : Session {
+                                  protected val restT: RestTemplate,
+                                  protected val authService: AuthService) : EntitiesBase{
+    override fun session() : Session {
         return authService.getToken(env.getLogin())
     }
-    abstract fun path() : String
+
+    override fun getHost(): String {
+        return env.host
+    }
+
+    override fun getRestTemplate(): RestTemplate {
+        return restT
+    }
 
     open fun save(entry: T & Any) : OData {
         try{
@@ -28,7 +35,7 @@ abstract class EntitiesService<T>(protected val env: SapEnvrioment,
                     .post(env.host+this.path())
                     .header("cookie","B1SESSION=${session().sessionId}")
                     .body(entry)
-            return restTemplate.exchange(request, OData::class.java).body!!
+            return restT.exchange(request, OData::class.java).body!!
         }catch (t : HttpClientErrorException){
             throw t.getResponseBodyAs(SapError::class.java)?.getError(t,entry) ?: t
         }
@@ -39,7 +46,7 @@ abstract class EntitiesService<T>(protected val env: SapEnvrioment,
                 .patch(env.host+this.path()+"($id)")
                 .header("cookie","B1SESSION=${session().sessionId}")
                 .body(entry)
-        return restTemplate.exchange(request, OData::class.java).body
+        return restT.exchange(request, OData::class.java).body
     }
 
     fun put(entry : Any, id : String): OData?{
@@ -47,7 +54,7 @@ abstract class EntitiesService<T>(protected val env: SapEnvrioment,
             .put(env.host+this.path()+"($id)")
             .header("cookie","B1SESSION=${session().sessionId}")
             .body(entry)
-        return restTemplate.exchange(request, OData::class.java).body
+        return restT.exchange(request, OData::class.java).body
     }
 
     fun cancel(id : String): OData? {
@@ -55,7 +62,7 @@ abstract class EntitiesService<T>(protected val env: SapEnvrioment,
                 .post(env.host+this.path()+"($id)/Cancel")
                 .header("cookie","B1SESSION=${session().sessionId}")
                 .build()
-        return restTemplate.exchange(request, OData::class.java).body
+        return restT.exchange(request, OData::class.java).body
     }
 
     open fun get(filter : Filter = Filter(), order : OrderBy = OrderBy(), page : Pageable = Pageable.ofSize(20)) : OData {
@@ -66,7 +73,7 @@ abstract class EntitiesService<T>(protected val env: SapEnvrioment,
                 .header("cookie","B1SESSION=${session().sessionId}")
                 .header("Prefer",  "odata.maxpagesize=${page.pageSize}")
                 .build()
-        return restTemplate.exchange(request, OData::class.java).body ?: OData()
+        return restT.exchange(request, OData::class.java).body ?: OData()
     }
 
     fun getById(id : String) : OData {
@@ -75,7 +82,7 @@ abstract class EntitiesService<T>(protected val env: SapEnvrioment,
                 .get(env.host+this.path()+"(${id})")
                 .header("cookie","B1SESSION=${session().sessionId}")
                 .build()
-            return restTemplate.exchange(request, OData::class.java).body!!
+            return restT.exchange(request, OData::class.java).body!!
         }catch (t : HttpClientErrorException){
             throw t.getResponseBodyAs(SapError::class.java)?.getError(t,id) ?: t
         }
@@ -86,7 +93,7 @@ abstract class EntitiesService<T>(protected val env: SapEnvrioment,
                 .get(env.host+this.path()+"(${id})")
                 .header("cookie","B1SESSION=${session().sessionId}")
                 .build()
-        return restTemplate.exchange(request, OData::class.java).body!!
+        return restT.exchange(request, OData::class.java).body!!
     }
 
     fun delete(id : String) : OData? {
@@ -94,7 +101,7 @@ abstract class EntitiesService<T>(protected val env: SapEnvrioment,
             .delete(env.host+this.path()+"(${id})")
             .header("cookie","B1SESSION=${session().sessionId}")
             .build()
-        return restTemplate.exchange(request, OData::class.java).body
+        return restT.exchange(request, OData::class.java).body
     }
 
     fun getBy(doc : DocEntry) : OData {
@@ -128,7 +135,7 @@ abstract class EntitiesService<T>(protected val env: SapEnvrioment,
             .get(URLDecoder.decode(url,"UTF-8"))
             .header("cookie","B1SESSION=${session().sessionId}")
             .build()
-        return restTemplate.exchange(request, OData::class.java).body!!
+        return restT.exchange(request, OData::class.java).body!!
     }
 
     inline fun <reified T> getAll(filter: Filter = Filter()): List<T> {
@@ -147,7 +154,7 @@ abstract class EntitiesService<T>(protected val env: SapEnvrioment,
                 .post(env.host+this.path())
                 .header("cookie","B1SESSION=${session().sessionId}")
                 .body(body)
-        return restTemplate.exchange(request, OData::class.java).body!!
+        return restT.exchange(request, OData::class.java).body!!
     }
 
     fun cruUp(body: String, id : String): OData{
@@ -155,7 +162,7 @@ abstract class EntitiesService<T>(protected val env: SapEnvrioment,
                 .patch(env.host+this.path()+"($id)")
                 .header("cookie","B1SESSION=${session().sessionId}")
                 .body(body)
-        return restTemplate.exchange(request, OData::class.java).body!!
+        return restT.exchange(request, OData::class.java).body!!
     }
 }
 

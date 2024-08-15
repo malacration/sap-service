@@ -32,7 +32,7 @@ class ApprovalRequestsService(env : SapEnvrioment,
     fun getPendencias(): Page<ApprovalRequests>? {
 //        val now = SimpleDateFormat("yyyy-MM-dd").format(Date())
         val url = env.host+"/b1s/v1/SQLQueries"
-        return restTemplate.exchange(
+        return restT.exchange(
             RequestEntity
                 .get("$url('autorizacao.sql')/List'")
                 .header("cookie","B1SESSION=${session().sessionId}")

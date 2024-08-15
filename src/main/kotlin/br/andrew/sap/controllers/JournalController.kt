@@ -14,7 +14,7 @@ class JournalController(val journalEntry : JournalEntriesService) {
 
     @GetMapping()
     fun getRegistros(): OData {
-        return journalEntry.get(OrderBy("Number", Order.DESC))
+        return journalEntry.get(OrderBy("JdtNum", Order.DESC))
     }
 
     @PostMapping("save")

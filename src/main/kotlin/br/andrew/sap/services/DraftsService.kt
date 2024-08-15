@@ -39,7 +39,7 @@ class DraftsService(env : SapEnvrioment,
                     .post(url)
                     .header("cookie","B1SESSION=${session().sessionId}")
                     .body(DraftWrapper(documento))
-            restTemplate.exchange(request, String::class.java)
+            restT.exchange(request, String::class.java)
         }catch (t : HttpClientErrorException){
             throw t.getResponseBodyAs(SapError::class.java)?.getError(t,documento) ?: t
         }

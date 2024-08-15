@@ -26,7 +26,7 @@ class AttachmentService(env: SapEnvrioment, val bpService: BusinessPartnersServi
             .get(env.host+this.path()+"(${id})/\$value")
             .header("cookie","B1SESSION=${session().sessionId}")
             .build()
-        val response = restTemplate.exchange(request, ByteArray::class.java)
+        val response = restT.exchange(request, ByteArray::class.java)
         val body = response.body ?: ByteArray(0)
         val contentType = response.headers["Content-Type"]?.toString() ?: ""
         return (contentType to body)
@@ -57,7 +57,7 @@ class AttachmentService(env: SapEnvrioment, val bpService: BusinessPartnersServi
                 .header("Content-Type","multipart/form-data;boundary=$boundary")
                 .header("cookie","B1SESSION=${session().sessionId}")
                 .header("Content-Length",body.size.toString())
-            val retorno = restTemplate.exchange(request.body(body), OData::class.java)
+            val retorno = restT.exchange(request.body(body), OData::class.java)
 
             if(partner.attachmentEntry == null){
                 bpService.update(BusinessPartner().also {
