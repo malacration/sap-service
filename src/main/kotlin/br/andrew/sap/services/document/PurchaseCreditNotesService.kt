@@ -19,7 +19,7 @@ import org.springframework.web.client.RestTemplate
 class PurchaseCreditNotesService(env: SapEnvrioment,
                                  restTemplate: RestTemplate,
                                  authService: AuthService) :
-        EntitiesService<Document>(env, restTemplate, authService), ServiceOriginalJournal {
+        EntitiesService<PurchaseCreditNotes>(env, restTemplate, authService), ServiceOriginalJournal {
 
     override fun path(): String {
         return "/b1s/v1/PurchaseCreditNotes"

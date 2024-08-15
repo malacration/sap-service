@@ -7,9 +7,7 @@ import br.andrew.sap.model.enums.Cancelled.tYES as tYES
 interface EntryOriginalJournal{
 
 
-    fun getMemoForJournal() : String {
-        return "Teste"
-    }
+    fun getMemoForJournal() : String
 
     fun getDefaultForJournal(doc: Document, type : String): String {
         return if(doc.Cancelled == tNO)

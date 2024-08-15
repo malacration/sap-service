@@ -27,7 +27,7 @@ class JournalController(val journalEntry : JournalEntriesService,
         return journalEntry.readCsv(csv.byteInputStream()).map{ journalEntry.save(it).tryGetValue<JournalEntry>()}
     }
 
-    @GetMapping("replace/{docEntry}")
+    @GetMapping("default-memo/{docEntry}")
     fun replaceJournalEntryMemo(@PathVariable docEntry: Int): Boolean{
         teste.updateMemoJournal(docEntry)
         return true

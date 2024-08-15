@@ -25,7 +25,7 @@ class AtualizarObservacaoLancamento(
 
     val logger: Logger = LoggerFactory.getLogger(AtualizarObservacaoLancamento::class.java)
 
-    @Scheduled(fixedDelay = 20000)
+    @Scheduled(fixedDelay = 60000)
     fun execute() {
         val dataLimite = LocalDate.now().minusDays(dias).toString()
         val filter = Filter(

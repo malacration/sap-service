@@ -136,8 +136,7 @@ class InvoiceService(env: SapEnvrioment, restTemplate: RestTemplate, authService
         val filter = Filter(
             Predicate("DocEntry", jdtNum, Condicao.EQUAL)
         )
-        val outro = get(filter).tryGetValues<Invoice>().first()
-        return outro
+        return get(filter).tryGetValues<Invoice>().first()
     }
 
     override fun getOriginalJournal(): OriginalJournal {
