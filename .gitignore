@@ -8,7 +8,6 @@ build/
 !**/src/test/**/build/
 src/main/**/application.properties
 application-*.properties
-rules.yml
 version.properties
 
 ### STS ###

@@ -25,6 +25,7 @@ class ContratoParseTest {
             })
         val document = Invoice("","",produtos,"2").also {
             it.docEntry = 666
+            it.cardName = "windson"
         }
         val contrato = ContratoParse.parse(document)
         Assertions.assertEquals(666,contrato.U_orderDocEntry)

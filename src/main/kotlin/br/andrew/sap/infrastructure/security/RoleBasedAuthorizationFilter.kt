@@ -23,7 +23,7 @@ class RoleBasedAuthorizationFilter(val service : RuleService) : OncePerRequestFi
         val path = request.requestURI
         val method = request.method
         val authentication: Authentication? = SecurityContextHolder.getContext().authentication
-        if(authentication == null || !authentication.isAuthenticated || isAuthorized(path, method, authentication))
+        if(authentication == null || !authentication.isAuthenticated || !isAuthorized(path, method, authentication))
             response.sendError(HttpServletResponse.SC_FORBIDDEN, "Você não tem permissão para acessar este recurso.")
         filterChain.doFilter(request, response)
     }
@@ -32,11 +32,11 @@ class RoleBasedAuthorizationFilter(val service : RuleService) : OncePerRequestFi
         if(authentication !is User)
             throw Exception("Nao foi possivel fazer parse da interface para User")
         var urlPermitidas : List<Rule> = authentication.roles.flatMap { service.get(it) }
-
         return urlPermitidas.any { rule ->
-            matchPath(rule.url, path) && (rule.actions.contains(method) || rule.actions.contains("*"))
+            matchPath(rule.url, path)
+                    &&
+                    (rule.actions.any { it.equals(method, ignoreCase = true) } || rule.actions.contains("*"))
         }
-        return true
     }
 
     private fun matchPath(pattern: String, path: String): Boolean {
