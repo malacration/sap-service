@@ -16,22 +16,22 @@ import br.andrew.sap.model.enums.Cancelled.tYES as tYES
 @JsonNaming(PropertyNamingStrategies.UpperCamelCaseStrategy::class)
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-class Invoice(CardCode: String,
-              @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "YYY-MM-dd", timezone = "UTC")
+class PurchaseDeliveryNotes(CardCode: String,
+                            @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "YYY-MM-dd", timezone = "UTC")
                  DocDueDate: String?,
-              DocumentLines: List<DocumentLines> = listOf(),
-              BPL_IDAssignedToInvoice: String)
+                            DocumentLines: List<DocumentLines> = listOf(),
+                            BPL_IDAssignedToInvoice: String)
     : Document(CardCode, DocDueDate, DocumentLines, BPL_IDAssignedToInvoice), EntryOriginalJournal {
 
     //TODO não achei onde fica esse propriedade
     var header : String? = null
 
     override fun toString(): String {
-        return "OrderSales(CardCode='$CardCode', Branch='${getBPL_IDAssignedToInvoice()}', docEntry=$docEntry, docNum=$docNum, pedido_forca=$u_id_pedido_forca)"
+        return "PurchaseDeliveryNotes(CardCode='$CardCode', Branch='${getBPL_IDAssignedToInvoice()}', docEntry=$docEntry, docNum=$docNum, pedido_forca=$u_id_pedido_forca)"
     }
 
     override fun getMemoForJournal() : String{
-        return getDefaultForJournal(this,"Nota fiscal de Saída")
+        return getDefaultForJournal(this,"Recebimento de Mercadoria")
     }
 }
 //data de entrega - ORDRdocduedate
