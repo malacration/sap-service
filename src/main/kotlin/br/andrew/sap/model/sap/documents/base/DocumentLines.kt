@@ -42,6 +42,8 @@ abstract class DocumentLines(var UnitPrice : String, var Quantity : String, var 
 
     abstract fun Duplicate() : DocumentLines
 
+
+    @JsonIgnore
     fun total(): BigDecimal {
         val desconto = BigDecimal(1 -(DiscountPercent ?: 0.0)/100)
         return BigDecimal(UnitPrice.toDouble()).setScale(4,RoundingMode.UP).multiply(BigDecimal(Quantity).multiply(desconto))
@@ -54,14 +56,13 @@ abstract class DocumentLines(var UnitPrice : String, var Quantity : String, var 
         this.CommisionPercent = comissao.U_porcentagem
     }
 
-    fun totalAntesDesconto() {
-        TODO("Not yet implemented")
+
+    @JsonIgnore
+    fun totalNegociado(): BigDecimal {
+        return BigDecimal(Quantity).multiply(BigDecimal((U_preco_negociado ?: 0.0).toString()))
     }
 
-    fun totalNegociado(): Double {
-        return Quantity.toDouble() * (U_preco_negociado ?: 0.0)
-    }
-
+    @JsonIgnore
     fun presumeDesonerado(rate: Double): Double {
         return total().toDouble()*rate/100
     }

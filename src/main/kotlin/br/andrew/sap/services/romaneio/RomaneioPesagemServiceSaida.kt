@@ -33,14 +33,14 @@ class RomaneioPesagemServiceSaida(restTemplate: RestTemplate,
                 .get(env.host+crosJoin+expand+filter)
                 .header("cookie","B1SESSION=${session().sessionId}")
                 .build()
-        return restTemplate.exchange(request, OData::class.java).body?.tryGetPageValues(page) ?: OData().tryGetPageValues(page)
+        return restT.exchange(request, OData::class.java).body?.tryGetPageValues(page) ?: OData().tryGetPageValues(page)
     }
 
     fun romaneisoSemSaida(page: Pageable = Pageable.ofSize(20), parametros: Filter): Page<RomaneioPesagem> {
         val url = env.host+"/b1s/v1/SQLQueries"
         val skip = (page.pageNumber*page.pageSize).toString()
         val sql = parametros.toSql()
-        return restTemplate.exchange(RequestEntity
+        return restT.exchange(RequestEntity
                 .get("$url('romaneio-sem-saida.sql')/List?\$skip=${skip}&$sql")
                 .header("cookie","B1SESSION=${session().sessionId}")
                 .build(), OData::class.java).body!!.tryGetPageValues(page)

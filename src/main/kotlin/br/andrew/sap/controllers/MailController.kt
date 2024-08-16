@@ -25,9 +25,9 @@ class MailController(val mailService: MailService,
 
     val logger: Logger = LoggerFactory.getLogger(MailController::class.java)
 
-    @GetMapping("")
-    fun teste(){
-        mailService.sendEmail(MyMailMessage("andrewc3po@gmail.com","windson","olar"))
+    @GetMapping("{mail}")
+    fun teste(@PathVariable mail : String){
+        mailService.sendEmail(MyMailMessage(mail,"Email teste - SAP Service","Ola essa é uma mensagem de teste"))
     }
 
     @GetMapping("/inadimplencia/teste/{slpCode}")

@@ -26,7 +26,7 @@ class VendorPaymentService(env: SapEnvrioment, restTemplate: RestTemplate, authS
 
     fun getPaymentBy(docEntry : String) : OData {
         val url = env.host+"/b1s/v1/SQLQueries"
-        val pagamentos = restTemplate.exchange(
+        val pagamentos = restT.exchange(
             RequestEntity
             .get("$url('pagamento-by-docEntry.sql')/List?DocEntry=$docEntry")
             .header("cookie","B1SESSION=${session().sessionId}")

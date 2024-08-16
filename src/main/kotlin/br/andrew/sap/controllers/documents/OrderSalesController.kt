@@ -44,4 +44,15 @@ class OrderSalesController(val ordersService: OrdersService,
     fun get(): List<OrderSales> {
         return ordersService.get(OrderBy(mapOf("DocEntry" to Order.DESC))).tryGetValues<OrderSales>()
     }
+
+
+    @GetMapping("raw")
+    fun raw(): OData {
+        return ordersService.get(OrderBy(mapOf("DocEntry" to Order.DESC)))
+    }
+
+    @GetMapping("raw/{id}")
+    fun rawById(@PathVariable id : String): OData {
+        return ordersService.getById(id)
+    }
 }

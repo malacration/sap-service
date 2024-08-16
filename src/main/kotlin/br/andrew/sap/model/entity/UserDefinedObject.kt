@@ -6,7 +6,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.databind.PropertyNamingStrategies
 import com.fasterxml.jackson.databind.annotation.JsonNaming
-
+import com.itextpdf.layout.element.Table
 
 @JsonNaming(PropertyNamingStrategies.UpperCamelCaseStrategy::class)
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -16,19 +16,39 @@ class UserDefinedObject(
     val Name: String,
     val TableName: String,
     val ObjectType: UDOObjType = UDOObjType.boud_MasterData,
+    val CanDelete: YesNo = YesNo.tYES,
     val CanCreateDefaultForm: YesNo = YesNo.tYES,
     val CanCancel: YesNo = YesNo.tNO,
     val CanClose: YesNo = YesNo.tNO,
     val CanArchive: YesNo = YesNo.tNO,
-    val CanDelete: YesNo = YesNo.tYES,
     val CanLog: YesNo = YesNo.tYES,
     val CanYearTransfer: YesNo = YesNo.tNO,
     val CanFind: YesNo = YesNo.tYES,
     val EnableEnhancedForm: YesNo = YesNo.tYES,
-    val ManageSeries: YesNo = YesNo.tNO
+    val ManageSeries: YesNo = YesNo.tNO,
+    UserObjectMD_ChildTables : List<ChildTables>? = null
 ){
     var FormSRF: String? = null
-    var UserObjectMD_ChildTables : MutableList<ChildTables> = mutableListOf()
+
+    private var _UserObjectMD_ChildTables : MutableList<ChildTables> = mutableListOf()
+    var UserObjectMD_ChildTables : List<ChildTables> = listOf()
+        get() = _UserObjectMD_ChildTables
+    init {
+        if(UserObjectMD_ChildTables != null)
+        this._UserObjectMD_ChildTables = UserObjectMD_ChildTables.toMutableList()
+    }
+
+    fun popChildTable(table : ChildTables){
+        val size = UserObjectMD_ChildTables.size
+        (UserObjectMD_ChildTables as MutableList).add(table.also { it.SonNumber = size })
+    }
+
+    fun popChildTable(vararg table : ChildTables){
+        table.forEach {
+            popChildTable(it)
+        }
+    }
+
 
     var UserObjectMD_FindColumns : MutableList<FindColumns> = mutableListOf(FindColumns(this.ObjectType.getId(),"código"))
     var UserObjectMD_FormColumns : MutableList<FormColumns> = mutableListOf()
@@ -47,7 +67,7 @@ class UserDefinedObject(
             }
     }
 
-    var RebuildEnhancedForm: YesNo = YesNo.tYES
+    var RebuildEnhancedForm: YesNo = YesNo.tNO
 
     var FatherMenuID : Int? = null
     var Position : Int? = null
@@ -66,7 +86,12 @@ class UserDefinedObject(
 @JsonNaming(PropertyNamingStrategies.UpperCamelCaseStrategy::class)
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-class ChildTables(val TableName : String){
+class ChildTables(val TableName : String, val code : String){
+
+    var SonNumber: Int? = null
+    val ObjectName : String = TableName
+
+    constructor(tableName : String, ud : UserDefinedObject) : this(tableName,ud.Code)
     fun getEnhancedForm(type: UDOObjType, childNumber: Int) : List<EnhancedForm> {
         return listOf(
             EnhancedForm(type.getId(),"Codigo").also { it.ChildNumber = childNumber },
@@ -84,11 +109,22 @@ class ChildTables(val TableName : String){
 class FormColumns(val FormColumnAlias : String, val FormColumnDescription : String, val SonNumber : Int = 0){
     var FormColumnNumber : Int? = null
     var Editable : YesNo = YesNo.tYES
+    var code : String? = null
 
+
+    constructor(FormColumnAlias : String, FormColumnDescription : String, SonNumber : Int, ud : UserDefinedObject)
+            : this(FormColumnAlias, FormColumnDescription, SonNumber){
+        this.code = ud.Code
+    }
 
     @JsonIgnore
     fun getEnhancedForm() : EnhancedForm{
-        return EnhancedForm(FormColumnAlias,FormColumnDescription).also { it.ChildNumber = SonNumber }
+        return EnhancedForm(FormColumnAlias,FormColumnDescription)
+            .also {
+                it.ChildNumber = SonNumber
+                it.ColumnIsUsed = YesNo.tYES
+                it.Editable = Editable
+            }
     }
 }
 
@@ -109,7 +145,9 @@ class FindColumns(val ColumnAlias : String, val ColumnDescription : String){
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 class EnhancedForm(val ColumnAlias : String, val ColumnDescription : String){
+    var Editable: YesNo = YesNo.tNO
     var ChildNumber : Int? = null
+    var ColumnIsUsed : YesNo = YesNo.tNO
 }
 
 enum class UDOObjType {

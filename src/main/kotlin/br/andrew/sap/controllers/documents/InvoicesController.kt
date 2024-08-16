@@ -29,6 +29,11 @@ class InvoicesController(
         return invoice.get(Filter(),OrderBy(mapOf("DocEntry" to Order.DESC)),pages).tryGetPageValues<Invoice>(pages)
     }
 
+    @GetMapping("raw")
+    fun rw(pages : Pageable): Any {
+        return invoice.get(Filter(),OrderBy(mapOf("DocEntry" to Order.DESC)),pages)
+    }
+
     @GetMapping("{id}")
     fun getById(@PathVariable id : String) : Any{
         return invoice.getById("$id")

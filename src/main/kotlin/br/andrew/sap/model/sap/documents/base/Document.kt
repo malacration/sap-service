@@ -33,7 +33,7 @@ open class Document(val CardCode : String,
     var comments: String? = null
     var docDate :String? = null
     var salesPersonCode: Int = -1
-    var paymentGroupCode: String? = null
+    var paymentGroupCode: Int? = null
     var docEntry : Int? = null
     var docNum : String? = null
     var paymentMethod : String? = null
@@ -68,6 +68,7 @@ open class Document(val CardCode : String,
     var Address : String? = null
     var U_assinatura : String = "0"
     var U_rd_station : String? = null
+    var U_venda_futura: Int? = null
 
     @JsonProperty("BPL_IDAssignedToInvoice")
     fun getBPL_IDAssignedToInvoice(): String {
@@ -102,7 +103,7 @@ open class Document(val CardCode : String,
 
     @JsonIgnore
     fun isAvista(): Boolean {
-        return paymentGroupCode == "-1"
+        return paymentGroupCode == -1
     }
 
     @JsonIgnore
@@ -117,8 +118,8 @@ open class Document(val CardCode : String,
             .setScale(2,RoundingMode.HALF_UP).toDouble()
     }
 
-    fun totalNegociado() : Double {
-        return DocumentLines.sumOf { it.totalNegociado() }
+    fun totalNegociado() : BigDecimal {
+        return DocumentLines.sumOf { it.totalNegociado() }.setScale(2)
     }
 
     fun totalDespesaAdicional(): BigDecimal {

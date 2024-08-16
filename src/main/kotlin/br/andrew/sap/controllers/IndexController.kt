@@ -1,10 +1,7 @@
 package br.andrew.sap.controllers
 
 
-import br.andrew.sap.infrastructure.odata.OData
 import br.andrew.sap.model.Version
-import br.andrew.sap.services.TelegramRequestService
-import br.andrew.sap.services.abstracts.TesteService
 import org.slf4j.LoggerFactory
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
@@ -25,5 +22,4 @@ class IndexController(val version : Version){
     fun forCorsOrigin() {
         println("EndPoint for optionals login")
     }
-
 }

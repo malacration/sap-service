@@ -8,6 +8,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.databind.PropertyNamingStrategies
 import com.fasterxml.jackson.databind.annotation.JsonNaming
+import java.math.BigDecimal
 import java.util.*
 import br.andrew.sap.model.enums.Cancelled.tNO as tNO
 import br.andrew.sap.model.enums.Cancelled.tYES as tYES
@@ -18,7 +19,7 @@ import br.andrew.sap.model.enums.Cancelled.tYES as tYES
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 class Invoice(CardCode: String,
               @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "YYY-MM-dd", timezone = "UTC")
-                 DocDueDate: String?,
+              DocDueDate: String?,
               DocumentLines: List<DocumentLines> = listOf(),
               BPL_IDAssignedToInvoice: String)
     : Document(CardCode, DocDueDate, DocumentLines, BPL_IDAssignedToInvoice), EntryOriginalJournal {
