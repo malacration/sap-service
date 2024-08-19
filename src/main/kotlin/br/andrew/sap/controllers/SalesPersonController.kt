@@ -27,7 +27,7 @@ class SalesPersonController(
     @GetMapping("replace/{origin}/por/{destino}")
     fun replaceSalesPerson(@PathVariable origin: Int, @PathVariable destino: Int, @RequestParam("clientes") clientes: List<String>): Boolean {
         val isDestinoAtivo = salesPersonsService.isSalesPersonActive(destino)
-        if (isDestinoAtivo) {
+        if (!isDestinoAtivo) {
             throw Exception("Vendedor de Destino inativo")
         }
 
