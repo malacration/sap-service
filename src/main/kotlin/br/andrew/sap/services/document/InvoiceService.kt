@@ -64,7 +64,7 @@ class InvoiceService(env: SapEnvrioment, restTemplate: RestTemplate, authService
 
     fun getInvoiceByIdPix(reference: String): Invoice {
         val url = env.host+"/b1s/v1/SQLQueries"
-        val list = restTemplate.exchange(RequestEntity
+        val list = restT.exchange(RequestEntity
             .get("$url('invoice-by-pix-reference.sql')/List?reference='${reference}'")
             .header("cookie","B1SESSION=${session().sessionId}")
             .build(), OData::class.java).body
@@ -76,7 +76,7 @@ class InvoiceService(env: SapEnvrioment, restTemplate: RestTemplate, authService
 
     fun getAllPixs(): Any {
         val url = env.host+"/b1s/v1/SQLQueries"
-        return restTemplate.exchange(RequestEntity
+        return restT.exchange(RequestEntity
             .get("$url('installment-pix.sql')/List")
             .header("cookie","B1SESSION=${session().sessionId}")
             .build(), Any::class.java).body!!
@@ -85,7 +85,7 @@ class InvoiceService(env: SapEnvrioment, restTemplate: RestTemplate, authService
     fun pendenteGerarPix(): List<Int> {
         val now = SimpleDateFormat("yyyy-MM-dd").format(Date())
         val url = env.host+"/b1s/v1/SQLQueries"
-        return restTemplate.exchange(RequestEntity
+        return restT.exchange(RequestEntity
             .get("$url('installment-gerar-pix.sql')/List?now='${now}'")
             .header("cookie","B1SESSION=${session().sessionId}")
             .build(), OData::class.java).body

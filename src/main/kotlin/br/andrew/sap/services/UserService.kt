@@ -25,6 +25,6 @@ class UserService(env: SapEnvrioment,
                 .post(env.host+this.path()+"_GetCurrentUser")
                 .header("cookie","B1SESSION=${session().sessionId}")
                 .build()
-        return restTemplate.exchange(request, OData::class.java).body?.tryGetValue() ?: SapUser(-1)
+        return restT.exchange(request, OData::class.java).body?.tryGetValue() ?: SapUser(-1)
     }
 }

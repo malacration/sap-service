@@ -3,6 +3,7 @@ package br.andrew.sap.model.entity
 import br.andrew.sap.model.enums.YesNo
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonInclude
+import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.PropertyNamingStrategies
 import com.fasterxml.jackson.databind.annotation.JsonNaming
 
@@ -17,12 +18,13 @@ class FieldMd(val name : String,
 
     var size : Int? = type?.size
     var ValidValuesMD : List<ValuesMd> = listOf()
-    val subType : String? = if(type == DbType.db_Float) "st_Measurement" else null
+    var subType : String? = if(type == DbType.db_Float) "st_Measurement" else null
     var defaultValue: String? = null
     var editSize : Int? = null
-
+    @JsonProperty("FieldID")
+    val FieldID : String? = null
     var linkedUDO : String? = null
-    var LinkedSystemObject : String? = null
+    var LinkedSystemObject : LinkedSystemObject? = null
     var LinkedTable : String? = null
     var tableName = tableName.uppercase()
 

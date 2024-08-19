@@ -1,6 +1,7 @@
 package br.andrew.sap.services.security
 
 import br.andrew.sap.infrastructure.odata.OData
+import br.andrew.sap.infrastructure.security.roles.RolesEnum
 import br.andrew.sap.model.sap.SalePerson
 import br.andrew.sap.model.authentication.User
 import br.andrew.sap.model.authentication.UserPassword
@@ -8,8 +9,8 @@ import br.andrew.sap.services.MailService
 import br.andrew.sap.services.MyMailMessage
 import br.andrew.sap.services.SalesPersonsService
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.security.authentication.BadCredentialsException
-import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.core.userdetails.UsernameNotFoundException
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.stereotype.Service
@@ -17,6 +18,7 @@ import org.springframework.stereotype.Service
 @Service
 class UserPasswordService(
     val service : SalesPersonsService,
+    val roleBindService: RoleBindService,
     val mailService : MailService
 ) {
 
@@ -36,7 +38,8 @@ class UserPasswordService(
         }
         if(!passwordEncoder.matches(request.password, storageSalePerson.u_password))
             throw BadCredentialsException("Senha incorreta")
-        val permission = listOf(SimpleGrantedAuthority("vendedor"))
+
+        val permission = roleBindService.get(request.username)
         return User(storageSalePerson.SalesEmployeeCode.toString(),storageSalePerson.SalesEmployeeName,permission)
     }
 

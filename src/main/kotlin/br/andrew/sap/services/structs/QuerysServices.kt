@@ -1,10 +1,13 @@
 package br.andrew.sap.services.structs
 
+import br.andrew.sap.controllers.IndexController
 import br.andrew.sap.infrastructure.odata.OData
 import br.andrew.sap.model.Query
 import br.andrew.sap.model.envrioments.SapEnvrioment
+import br.andrew.sap.model.exceptions.NotFoundException
 import br.andrew.sap.services.AuthService
 import br.andrew.sap.services.abstracts.EntitiesService
+import org.slf4j.LoggerFactory
 import org.springframework.http.RequestEntity
 import org.springframework.stereotype.Service
 import org.springframework.web.client.HttpClientErrorException
@@ -19,6 +22,8 @@ class QuerysServices(env: SapEnvrioment, restTemplate: RestTemplate,
         return "/b1s/v1/SQLQueries"
     }
 
+    val logger = LoggerFactory.getLogger(QuerysServices::class.java)
+
     fun replace(query: Query) {
         try {
             val code = "'${query.sqlCode}'"
@@ -26,9 +31,18 @@ class QuerysServices(env: SapEnvrioment, restTemplate: RestTemplate,
             this.update(query,"$code")
         }catch (t : HttpClientErrorException){
             if(t.statusCode == org.springframework.http.HttpStatus.NOT_FOUND){
-                this.save(query)
+                handdleError(query)
             }
-            t.printStackTrace()
+        }catch (t: NotFoundException){
+            handdleError(query)
+        }
+    }
+
+    private fun handdleError(query : Query) {
+        try {
+            this.save(query)
+        }catch (e : Exception){
+            logger.error("Erro ao criar campo ${query.sqlCode}",e)
         }
     }
 

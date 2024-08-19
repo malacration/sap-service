@@ -59,9 +59,9 @@ class PedidoVenda(
             it.paymentMethod = idFormaPagamento
             it.discountPercent = desconto
             it.paymentGroupCode = if(condicao.size > 1)
-                condicao[1]
+                condicao[1].toIntOrNull() ?: throw Exception("Erro ao converter para inteiro")
             else
-                idCondicaoPagamento
+                idCondicaoPagamento.toIntOrNull() ?: throw Exception("Erro ao converter para inteiro")
             try {
                 if(endereco != null)
                     it.shipToCode = getEnderecoEntrega().code

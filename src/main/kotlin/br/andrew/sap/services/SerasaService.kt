@@ -36,7 +36,7 @@ class SerasaService(@Value("\${serasa.url:http://localhost:8081}") val serasaUrl
             .get(uri)
             .header("cookie","B1SESSION=${session().sessionId}")
             .build()
-        val odata = restTemplate.exchange(request, OData::class.java).body
+        val odata = restT.exchange(request, OData::class.java).body
         return odata?.tryGetValues<Map<String,String>>()?.flatMap { it.values.toList() } ?: listOf()
     }
 
@@ -45,7 +45,7 @@ class SerasaService(@Value("\${serasa.url:http://localhost:8081}") val serasaUrl
         val request = RequestEntity
             .get(uri)
             .build()
-        return restTemplate.exchange(request, String::class.java)
+        return restT.exchange(request, String::class.java)
     }
 }
 

@@ -1,6 +1,5 @@
 SELECT
 	"OITM"."ItemCode",
-	"OITM"."U_grupo_sustennutri",
 	"OITM"."ItemName" as "ItemDescription",
 	"ITM1"."PriceList",
 	p."ListName",
@@ -8,9 +7,7 @@ SELECT
 	c."U_desconto",
 	"OITM"."SalUnitMsr",
 	(SELECT "FirmName"  FROM OMRC WHERE "FirmCode" = -1) AS "MARCA",
-	"OITM"."UserText",
-	"OITM"."U_categoria",
-	"OITM"."U_linha_sustennutri"
+	"OITM"."UserText"
 FROM
 	"OITM"
 	INNER JOIN "ITM1" on("ITM1"."ItemCode" = "OITM"."ItemCode")

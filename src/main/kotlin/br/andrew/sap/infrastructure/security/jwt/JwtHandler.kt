@@ -1,5 +1,6 @@
 package br.andrew.sap.infrastructure.security.jwt
 
+import br.andrew.sap.infrastructure.security.roles.RolesEnum
 import br.andrew.sap.model.authentication.User
 import io.jsonwebtoken.Jwts
 import org.springframework.security.core.authority.SimpleGrantedAuthority
@@ -13,7 +14,10 @@ class JwtHandler(jwtSecret : JwtSecretBean) {
         val jwtParser = Jwts.parser().verifyWith(secretKey)
             .build()
         val claims = jwtParser.parseSignedClaims(compactJws).payload;
-        val authorities = (claims.get("authorities") as List<Map<String,String>>).filter { it.containsKey("authority") }.map { SimpleGrantedAuthority(it.get("authority")) }
+        val authorities = (claims.get("authorities") as List<Map<String,String>>)
+            .filter { it.containsKey("authority") }
+            .mapNotNull { it.get("authority") }
+            .mapNotNull { runCatching { RolesEnum.valueOf(it) }.getOrNull() }
         return User(claims.id, claims.subject, authorities)
     }
 
