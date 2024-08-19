@@ -23,7 +23,7 @@ class RoleBasedAuthorizationFilter(val service : RuleService) : OncePerRequestFi
         val path = request.requestURI
         val method = request.method
         val authentication: Authentication? = SecurityContextHolder.getContext().authentication
-        if(authentication == null || !authentication.isAuthenticated || !isAuthorized(path, method, authentication))
+        if(authentication != null && authentication.isAuthenticated && !isAuthorized(path, method, authentication))
             response.sendError(HttpServletResponse.SC_FORBIDDEN, "Você não tem permissão para acessar este recurso.")
         filterChain.doFilter(request, response)
     }
