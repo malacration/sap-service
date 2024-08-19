@@ -25,8 +25,7 @@ class SalesPersonsService(val sqlQueriesService : SqlQueriesService , env: SapEn
     fun search(keyword: String, page : Pageable): Page<SalePerson>? {
         val filter = Filter(
             Predicate("SalesEmployeeName", keyword,Condicao.CONTAINS ),
-            Predicate("SalesEmployeeCode",-1,Condicao.NOT_EQUAL),
-            Predicate("Active","Y",Condicao.EQUAL)
+            Predicate("SalesEmployeeCode",-1,Condicao.NOT_EQUAL)
         )
         val result = get(filter)
         return result.tryGetPageValues<SalePerson>(page)
