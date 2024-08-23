@@ -1,6 +1,5 @@
 package br.andrew.sap.model
 
-import br.andrew.sap.model.payment.HandlePaymentTermsLines
 import br.andrew.sap.model.sap.documents.Invoice
 import br.andrew.sap.model.sap.documents.base.Product
 import br.andrew.sap.model.self.vendafutura.ContratoParse
@@ -8,7 +7,6 @@ import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import java.lang.Exception
-import java.time.LocalDate
 
 class ContratoParseTest {
 
