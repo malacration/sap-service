@@ -1,9 +1,9 @@
 package br.andrew.sap.model.forca
 
-import br.andrew.sap.model.documents.base.AdditionalExpenses
-import br.andrew.sap.model.documents.OrderSales
-import br.andrew.sap.model.documents.Quotation
-import br.andrew.sap.model.documents.base.Document
+import br.andrew.sap.model.sap.documents.base.AdditionalExpenses
+import br.andrew.sap.model.sap.documents.OrderSales
+import br.andrew.sap.model.sap.documents.Quotation
+import br.andrew.sap.model.sap.documents.base.Document
 import br.andrew.sap.services.ItemsService
 import br.andrew.sap.services.pricing.ComissaoService
 import com.fasterxml.jackson.annotation.*
@@ -38,15 +38,19 @@ class PedidoVenda(
 
     @JsonIgnore
     fun getOrder(itemService: ItemsService, comissaoService: ComissaoService): OrderSales {
-        return build(OrderSales(idCliente,dataEntraga,
-            produtos.map { it.getProduct(tipoPedido,itemService,comissaoService) }, idEmpresa))
+        return build(
+            OrderSales(idCliente,dataEntraga,
+            produtos.map { it.getProduct(tipoPedido,itemService,comissaoService) }, idEmpresa)
+        )
 
     }
 
     @JsonIgnore
     fun getQuotation(itemService: ItemsService, comissaoService: ComissaoService): Quotation {
-        return build(Quotation(idCliente, dataEntraga,
-            produtos.map { it.getProduct(tipoPedido,itemService,comissaoService) },idEmpresa))
+        return build(
+            Quotation(idCliente, dataEntraga,
+            produtos.map { it.getProduct(tipoPedido,itemService,comissaoService) },idEmpresa)
+        )
     }
 
     fun <T : Document> build(document : T) : T{
@@ -55,9 +59,9 @@ class PedidoVenda(
             it.paymentMethod = idFormaPagamento
             it.discountPercent = desconto
             it.paymentGroupCode = if(condicao.size > 1)
-                condicao[1]
+                condicao[1].toIntOrNull() ?: throw Exception("Erro ao converter para inteiro")
             else
-                idCondicaoPagamento
+                idCondicaoPagamento.toIntOrNull() ?: throw Exception("Erro ao converter para inteiro")
             try {
                 if(endereco != null)
                     it.shipToCode = getEnderecoEntrega().code

@@ -1,8 +1,8 @@
 package br.andrew.sap.services
 
 import br.andrew.sap.model.envrioments.SapEnvrioment
-import br.andrew.sap.model.SapError
-import br.andrew.sap.model.documents.base.Document
+import br.andrew.sap.model.sap.SapError
+import br.andrew.sap.model.sap.documents.base.Document
 import br.andrew.sap.services.abstracts.EntitiesService
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonInclude
@@ -39,7 +39,7 @@ class DraftsService(env : SapEnvrioment,
                     .post(url)
                     .header("cookie","B1SESSION=${session().sessionId}")
                     .body(DraftWrapper(documento))
-            restTemplate.exchange(request, String::class.java)
+            restT.exchange(request, String::class.java)
         }catch (t : HttpClientErrorException){
             throw t.getResponseBodyAs(SapError::class.java)?.getError(t,documento) ?: t
         }

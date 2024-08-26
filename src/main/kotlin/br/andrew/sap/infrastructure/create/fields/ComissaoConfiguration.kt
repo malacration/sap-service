@@ -1,7 +1,7 @@
 package br.andrew.sap.infrastructure.create.fields
 
-import br.andrew.sap.model.TableMd
-import br.andrew.sap.model.TbType
+import br.andrew.sap.model.sap.TableMd
+import br.andrew.sap.model.sap.TbType
 import br.andrew.sap.model.entity.*
 import br.andrew.sap.services.structs.UserFieldsMDService
 import br.andrew.sap.services.structs.UserObjectsMDService
@@ -22,10 +22,10 @@ class ComissaoConfiguration(val userFieldsMDService: UserFieldsMDService,
                 "COMISSAO","Tabela com regras de comissao", TbType.bott_MasterData
             ),
             TableMd(
-                "condicoesFV","Linha condiçoes ",TbType.bott_MasterDataLines
+                "condicoesFV","Linha condiçoes ", TbType.bott_MasterDataLines
             ),
             TableMd(
-                "LiberaPara","Libera para",TbType.bott_MasterDataLines
+                "LiberaPara","Libera para", TbType.bott_MasterDataLines
             )
         ).forEach{ tableService.findOrCreate(it)}
 
@@ -39,10 +39,11 @@ class ComissaoConfiguration(val userFieldsMDService: UserFieldsMDService,
                 },
             FieldMd("desconto","Desconto (%)","@condicoesFV", DbType.db_Float),
             FieldMd("juros","Juros (%)","@condicoesFV", DbType.db_Float),
-            FieldMd("prazo","Prazo","@condicoesFV", DbType.db_Alpha).also {
-                it.size = 6
-                it.LinkedSystemObject = "OCTG"
-            },
+            //TODO arrumar o prazo
+//            FieldMd("prazo","Prazo","@condicoesFV", DbType.db_Alpha).also {
+//                it.size = 6
+//                it.LinkedSystemObject = "OCTG"
+//            },
             FieldMd("Filial","Filial","@LiberaPara")
                 .also { it.ValidValuesMD = listOf(
                     ValuesMd("0","Nenhuma")
@@ -64,19 +65,16 @@ class ComissaoConfiguration(val userFieldsMDService: UserFieldsMDService,
 
     fun comissaoObject(): UserDefinedObject {
         val ud = UserDefinedObject("comissao", "Comissões", "COMISSAO",)
-        ud.UserObjectMD_ChildTables.addAll(listOf(
-            ChildTables("CONDICOESFV"),
-            ChildTables("LIBERAPARA")
-        ))
+        ud.popChildTable(ChildTables("CONDICOESFV",ud),ChildTables("LIBERAPARA",ud))
         ud.UserObjectMD_FormColumns.addAll(listOf(
-            FormColumns("Code","Código",0),
-            FormColumns("Name","Descrição",0),
-            FormColumns("U_porcentagem","comissão em porcentagem",0),
-            FormColumns("U_desconto","Desconto (%) do vendedor",0),
-            FormColumns("U_regressiva","Comissão regressiva?",0),
-            FormColumns("U_desconto","Desconto (%)",1),
-            FormColumns("U_juros","Juros (%)",1),
-            FormColumns("U_prazo","Prazo",1),
+            FormColumns("Code","Código",0,ud),
+            FormColumns("Name","Descrição",0,ud),
+            FormColumns("U_porcentagem","comissão em porcentagem",0,ud),
+            FormColumns("U_desconto","Desconto (%) do vendedor",0,ud),
+            FormColumns("U_regressiva","Comissão regressiva?",0,ud),
+            FormColumns("U_desconto","Desconto (%)",1,ud),
+            FormColumns("U_juros","Juros (%)",1,ud),
+            FormColumns("U_prazo","Prazo",1,ud),
         ))
         ud.setMenu(43541,1)
 //        ud.FormSRF = ClassPathResource("udo-view/comissao.xml").file.readText()

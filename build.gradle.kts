@@ -58,6 +58,7 @@ dependencies {
 
 	implementation("org.apache.httpcomponents.client5:httpclient5:5.2.1")
 	implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.16.1")
+	implementation("com.fasterxml.jackson.core:jackson-databind:2.16.1")
 	implementation("org.jetbrains.kotlin:kotlin-reflect")
 
 	implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
@@ -67,7 +68,7 @@ dependencies {
 	implementation("org.mockito:mockito-core:5.3.0")
 
 	//** - SOAP
-	implementation("org.apache.axis:axis:1.4")
+	implementation("org.apache.axis:axis:1.7.9")
 	implementation("org.apache.axis:axis-jaxrpc:1.4")
 	implementation("org.apache.axis:axis-saaj:1.4")
 	implementation("axis:axis-wsdl4j:1.5.1")

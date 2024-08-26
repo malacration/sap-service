@@ -1,6 +1,6 @@
 package br.andrew.sap.controllers.authentication
 
-import br.andrew.sap.model.partner.BusinessPartnerType
+import br.andrew.sap.model.sap.partner.BusinessPartnerType
 import br.andrew.sap.services.*
 import br.andrew.sap.services.security.OneTimePasswordService
 import org.springframework.beans.factory.annotation.Value

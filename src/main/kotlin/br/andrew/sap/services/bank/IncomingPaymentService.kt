@@ -1,7 +1,6 @@
 package br.andrew.sap.services.bank
 
 import br.andrew.sap.infrastructure.odata.OData
-import br.andrew.sap.model.DocEntry
 import br.andrew.sap.model.envrioments.SapEnvrioment
 import br.andrew.sap.model.bank.Payment
 import br.andrew.sap.services.AuthService
@@ -21,7 +20,7 @@ class IncomingPaymentService(env: SapEnvrioment, restTemplate: RestTemplate, aut
 
     fun installPayment(docEntry : Int) : Any{
         val url = env.host+"/b1s/v1/SQLQueries"
-        return restTemplate.exchange(
+        return restT.exchange(
             RequestEntity
                 .get("$url('parcelas-pagas.sql')/List?docEntryInvoice=$docEntry")
                 .header("cookie","B1SESSION=${session().sessionId}")

@@ -1,0 +1,30 @@
+roles:
+  admin:
+    - url: "/**"
+      actions: ["*"]
+  vendedor:
+    - url: "/contrato-venda-futura"
+      actions: ["*"]
+    - url: "branch"
+      actions: ["get"]
+    - url : "/business-partners/*"
+      actions: ["*"]
+    - url : "/business-partners/search"
+      actions: ["*"]
+    - url: "item/search/branch/**"
+      actions: ["*"]
+    - url: "prazo/tabela/**"
+      actions: ["get"]
+    - url: "/quotation/angular/**"
+      actions: [ "post" ]
+  vendedor_admin:
+    - url: "/sales-person/search"
+      actions: [ "*" ]
+    - url: "/sales-person/search"
+      actions: [ "*" ]
+    - url: "/sales-person/*/business-partners"
+      actions: [ "*" ]
+    - url: "/sales-person/replace/*/por/*"
+      actions: [ "*" ]
+
+

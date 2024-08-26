@@ -3,18 +3,20 @@ package br.andrew.sap.controllers
 import br.andrew.sap.infrastructure.odata.*
 import br.andrew.sap.infrastructure.odata.OData
 import br.andrew.sap.infrastructure.odata.Predicate
-import br.andrew.sap.model.Attachment
+import br.andrew.sap.model.sap.Attachment
 import br.andrew.sap.model.ContactOpaque
 import br.andrew.sap.model.authentication.User
 import br.andrew.sap.model.forca.Cliente
-import br.andrew.sap.model.partner.*
+import br.andrew.sap.model.sap.partner.BusinessPartner
+import br.andrew.sap.model.sap.partner.BusinessPartnerSlin
+import br.andrew.sap.model.sap.partner.BusinessPartnerType
+import br.andrew.sap.model.sap.partner.ReferenciaComercial
 import br.andrew.sap.services.*
 import br.andrew.sap.services.security.OneTimePasswordService
 import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PostAuthorize
 import org.springframework.security.core.Authentication
 import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
@@ -106,7 +108,8 @@ class BusinessPartnersController(
     @GetMapping("/cpf-cnpj")
     @PostAuthorize("@authz.acessoCliente(#root)")
     fun getBy(auth : Authentication,
-              @RequestParam(name = "type", defaultValue = "cCustomer") tipo : BusinessPartnerType): ResponseEntity<BusinessPartner> {
+              @RequestParam(name = "type", defaultValue = "cCustomer") tipo : BusinessPartnerType
+    ): ResponseEntity<BusinessPartner> {
         return if(auth is User)
             ResponseEntity.ok(service.getByCpfCnpj(auth.id,tipo))
         else

@@ -1,7 +1,7 @@
 package br.andrew.sap.services.address
 
 import br.andrew.sap.infrastructure.odata.Filter
-import br.andrew.sap.model.address.State
+import br.andrew.sap.model.sap.address.State
 import br.andrew.sap.model.envrioments.SapEnvrioment
 import br.andrew.sap.model.romaneio.TipoAnalise
 import br.andrew.sap.services.AuthService

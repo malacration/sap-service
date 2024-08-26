@@ -4,7 +4,8 @@ import br.andrew.sap.events.OrderSalesSaveEvent
 import br.andrew.sap.infrastructure.WarehouseDefaultConfig
 import br.andrew.sap.infrastructure.configurations.DistribuicaoCustoByBranchConfig
 import br.andrew.sap.infrastructure.odata.*
-import br.andrew.sap.model.documents.OrderSales
+import br.andrew.sap.model.authentication.User
+import br.andrew.sap.model.sap.documents.OrderSales
 import br.andrew.sap.model.exceptions.CreditException
 import br.andrew.sap.model.forca.PedidoVenda
 import br.andrew.sap.services.*
@@ -12,6 +13,10 @@ import br.andrew.sap.services.document.OrdersService
 import br.andrew.sap.services.pricing.ComissaoService
 import org.slf4j.LoggerFactory
 import org.springframework.context.ApplicationEventPublisher
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.Pageable
+import org.springframework.http.ResponseEntity
+import org.springframework.security.core.Authentication
 import org.springframework.web.bind.annotation.*
 import java.util.*
 
@@ -43,5 +48,32 @@ class OrderSalesController(val ordersService: OrdersService,
     @GetMapping("")
     fun get(): List<OrderSales> {
         return ordersService.get(OrderBy(mapOf("DocEntry" to Order.DESC))).tryGetValues<OrderSales>()
+    }
+
+
+    @GetMapping("raw")
+    fun raw(): OData {
+        return ordersService.get(OrderBy(mapOf("DocEntry" to Order.DESC)))
+    }
+
+    @GetMapping("raw/{id}")
+    fun rawById(@PathVariable id : String): OData {
+        return ordersService.getById(id)
+    }
+
+    @GetMapping("listar")
+    fun get(page : Pageable, auth : Authentication): ResponseEntity<Page<OrderSales>> {
+        if(!(auth is User))
+            return ResponseEntity.noContent().build()
+        val predicados = mutableListOf<Predicate>(
+            Predicate("SalesPersonCode",
+                auth.getIdInt(),
+                Condicao.EQUAL)
+        )
+        return ResponseEntity.ok(ordersService
+            .get(Filter(predicados), OrderBy(mapOf("DocEntry" to Order.DESC)), page)
+            .tryGetPageValues<OrderSales>(page)
+        )
+
     }
 }

@@ -1,8 +1,8 @@
 package br.andrew.sap.services
 
 import br.andrew.sap.infrastructure.odata.OData
-import br.andrew.sap.model.Session
-import br.andrew.sap.model.documents.base.Document
+import br.andrew.sap.model.sap.Session
+import br.andrew.sap.model.sap.documents.base.Document
 import br.andrew.sap.model.envrioments.SapEnvrioment
 import org.springframework.http.RequestEntity
 import org.springframework.stereotype.Service

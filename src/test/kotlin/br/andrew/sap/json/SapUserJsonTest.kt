@@ -1,7 +1,7 @@
 package br.andrew.sap.json
 
 import br.andrew.sap.infrastructure.odata.OData
-import br.andrew.sap.model.SapUser
+import br.andrew.sap.model.sap.SapUser
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.fasterxml.jackson.module.kotlin.jacksonTypeRef

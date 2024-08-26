@@ -1,10 +1,10 @@
 package br.andrew.sap.services.approval
 
 import br.andrew.sap.infrastructure.odata.OData
-import br.andrew.sap.model.ApprovalRequests
+import br.andrew.sap.model.sap.ApprovalRequests
 import br.andrew.sap.model.envrioments.SapEnvrioment
-import br.andrew.sap.model.documents.base.Document
-import br.andrew.sap.model.documents.OrderSales
+import br.andrew.sap.model.sap.documents.base.Document
+import br.andrew.sap.model.sap.documents.OrderSales
 import br.andrew.sap.services.AuthService
 import br.andrew.sap.services.DraftsService
 import br.andrew.sap.services.TelegramRequestService
@@ -32,7 +32,7 @@ class ApprovalRequestsService(env : SapEnvrioment,
     fun getPendencias(): Page<ApprovalRequests>? {
 //        val now = SimpleDateFormat("yyyy-MM-dd").format(Date())
         val url = env.host+"/b1s/v1/SQLQueries"
-        return restTemplate.exchange(
+        return restT.exchange(
             RequestEntity
                 .get("$url('autorizacao.sql')/List'")
                 .header("cookie","B1SESSION=${session().sessionId}")

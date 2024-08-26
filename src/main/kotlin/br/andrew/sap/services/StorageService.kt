@@ -1,6 +1,6 @@
 package br.andrew.sap.services
 
-import br.andrew.sap.model.Attachment
+import br.andrew.sap.model.sap.Attachment
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import java.nio.file.Path

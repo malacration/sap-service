@@ -9,7 +9,10 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Profile
 import org.springframework.core.io.ClassPathResource
+import org.springframework.core.io.support.PathMatchingResourcePatternResolver
+import java.io.BufferedReader
 import java.io.File
+import java.io.InputStreamReader
 
 
 @Configuration
@@ -21,14 +24,16 @@ class ProvisioningConfiguration(val queryService: QuerysServices) {
 
     @Bean
     fun createQuerys(): String {
-        ClassPathResource("views").file.walk()
-            .filter { it.isFile }
-            .map {
-                Query(it.name,it.name,it.readText())
-            }.forEach {
-                logger.info("Atualizando view {${it.sqlName}}")
-                queryService.replace(it)
-            }
+        val resolver = PathMatchingResourcePatternResolver()
+        val resources = resolver.getResources("classpath:/views/**/*.sql") // Ajuste o caminho conforme necessário
+
+        resources.forEach { resource ->
+            val inputStream = resource.inputStream
+            val content = BufferedReader(InputStreamReader(inputStream)).use { it.readText() }
+            if(resource.filename != null)
+                queryService.replace(Query(resource.filename!!, resource.filename!!, content))
+            logger.info("Atualizando view {${resource.filename}}")
+        }
         return "true"
     }
 }

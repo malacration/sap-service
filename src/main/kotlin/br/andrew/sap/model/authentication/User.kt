@@ -1,26 +1,30 @@
 package br.andrew.sap.model.authentication
 
+import br.andrew.sap.infrastructure.security.roles.RolesEnum
 import org.springframework.security.core.Authentication
 import org.springframework.security.core.GrantedAuthority
-import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.core.userdetails.UserDetails
 
 class User(val id : String,
-           private val authorities : List<SimpleGrantedAuthority>) : UserDetails, Authentication {
+           val roles : List<RolesEnum>) : UserDetails, Authentication {
 
     private var authenticated = true
     private var name : String? = null
     var otp : Int? = null
 
-    constructor(id : String, name : String, authorities : List<SimpleGrantedAuthority>) : this(id,authorities){
+    constructor(id : String, name : String, authorities : List<RolesEnum>) : this(id,authorities){
         this.name = name
+    }
+
+    fun getIdInt() : Int{
+        return id.toIntOrNull() ?: throw Exception("O ID do seu login contem algum erro ${id}")
     }
     override fun getName(): String? {
         return name
     }
 
     override fun getAuthorities(): List<out GrantedAuthority> {
-        return authorities
+        return roles.map { it.getGrantedAuthority() }
     }
 
     override fun getCredentials(): Any {

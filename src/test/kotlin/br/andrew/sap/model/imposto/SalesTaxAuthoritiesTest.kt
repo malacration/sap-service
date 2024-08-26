@@ -1,9 +1,9 @@
 package br.andrew.sap.model.imposto
 
-import br.andrew.sap.model.tax.SalesTaxAuthorities
-import br.andrew.sap.model.documents.base.AdditionalExpenses
-import br.andrew.sap.model.documents.OrderSales
-import br.andrew.sap.model.documents.base.Product
+import br.andrew.sap.model.sap.tax.SalesTaxAuthorities
+import br.andrew.sap.model.sap.documents.base.AdditionalExpenses
+import br.andrew.sap.model.sap.documents.OrderSales
+import br.andrew.sap.model.sap.documents.base.Product
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import java.math.BigDecimal

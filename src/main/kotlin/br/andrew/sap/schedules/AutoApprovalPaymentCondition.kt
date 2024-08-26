@@ -4,8 +4,8 @@ import br.andrew.sap.infrastructure.odata.Condicao
 import br.andrew.sap.infrastructure.odata.Filter
 import br.andrew.sap.infrastructure.odata.OData
 import br.andrew.sap.infrastructure.odata.Predicate
-import br.andrew.sap.model.ApprovalRequests
-import br.andrew.sap.model.SapUser
+import br.andrew.sap.model.sap.ApprovalRequests
+import br.andrew.sap.model.sap.SapUser
 import br.andrew.sap.services.TelegramRequestService
 import br.andrew.sap.services.approval.ApprovalRequestsService
 import org.slf4j.Logger
@@ -22,7 +22,8 @@ import java.util.Calendar
 class AutoApprovalPaymentCondition(
     val approvalRequestsService : ApprovalRequestsService,
     val telegramRequestService: TelegramRequestService,
-    val currentSapUser : SapUser) {
+    val currentSapUser : SapUser
+) {
 
     val logger: Logger = LoggerFactory.getLogger(AutoApprovalPaymentCondition::class.java)
 

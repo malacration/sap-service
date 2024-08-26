@@ -1,9 +1,9 @@
 package br.andrew.sap.services.uzzipay
 
 import br.andrew.sap.infrastructure.configurations.uzzipay.UzziPayEnvrioment
-import br.andrew.sap.model.BussinessPlace
-import br.andrew.sap.model.documents.base.Installment
-import br.andrew.sap.model.documents.Invoice
+import br.andrew.sap.model.sap.BussinessPlace
+import br.andrew.sap.model.sap.documents.base.Installment
+import br.andrew.sap.model.sap.documents.Invoice
 import br.andrew.sap.model.uzzipay.ContaUzziPayPix
 import br.andrew.sap.model.uzzipay.Transaction
 import br.andrew.sap.services.BussinessPlaceService

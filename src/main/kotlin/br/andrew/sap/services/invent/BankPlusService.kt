@@ -3,7 +3,7 @@ package br.andrew.sap.services.invent
 import br.andrew.sap.infrastructure.configurations.invent.BankPlusEnvrioment
 import br.andrew.sap.model.bankplus.Boleto
 import br.andrew.sap.model.bankplus.Empresa
-import br.andrew.sap.model.documents.Invoice
+import br.andrew.sap.model.sap.documents.Invoice
 import org.springframework.core.ParameterizedTypeReference
 import org.springframework.http.RequestEntity
 import org.springframework.stereotype.Service

@@ -1,7 +1,7 @@
 package br.andrew.sap.json
 
 import br.andrew.sap.infrastructure.odata.OData
-import br.andrew.sap.model.documents.Invoice
+import br.andrew.sap.model.sap.documents.Invoice
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinFeature
 import com.fasterxml.jackson.module.kotlin.KotlinModule

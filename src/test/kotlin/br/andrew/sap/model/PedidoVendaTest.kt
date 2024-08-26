@@ -12,7 +12,7 @@ class PedidoVendaTest {
 
     @Test
     fun fazSemSplitFormaPgamento(){
-        val pedido = PedidoVenda("cli","2020-01-01", "-1", "obs",
+        val pedido = PedidoVenda("cli","2020-01-01", "-1", "1",
             listOf(), "1", )
         val order = pedido.getOrder(mock(ItemsService::class.java), mock(ComissaoService::class.java))
         Assertions.assertEquals("-1",pedido.idFormaPagamento)
@@ -26,7 +26,7 @@ class PedidoVendaTest {
             listOf(), "1", )
         val order = pedido.getOrder(mock(ItemsService::class.java), mock(ComissaoService::class.java))
         Assertions.assertEquals("5_-1",pedido.idCondicaoPagamento)
-        Assertions.assertEquals("-1",order.paymentGroupCode)
+        Assertions.assertEquals(-1,order.paymentGroupCode)
     }
 
     @Test

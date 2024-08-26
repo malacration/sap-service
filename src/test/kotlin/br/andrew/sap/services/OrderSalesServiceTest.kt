@@ -1,9 +1,9 @@
 package br.andrew.sap.services
 
 import br.andrew.sap.model.impostos.PrecoUnitarioComDesoneracao
-import br.andrew.sap.model.tax.SalesTaxAuthorities
-import br.andrew.sap.model.documents.OrderSales
-import br.andrew.sap.model.documents.base.Product
+import br.andrew.sap.model.sap.tax.SalesTaxAuthorities
+import br.andrew.sap.model.sap.documents.OrderSales
+import br.andrew.sap.model.sap.documents.base.Product
 import br.andrew.sap.model.forca.PedidoVenda
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
@@ -26,11 +26,11 @@ class OrderSalesServiceTest {
             ComissaoServiceMock.get()
         )
 
-        val negociadoEsperado = 544.50
+        val negociadoEsperado = "544.50"
 
         Assertions.assertEquals("106",orderBase.u_id_pedido_forca)
         Assertions.assertEquals(554.5,orderBase.total())
-        Assertions.assertEquals(negociadoEsperado,orderBase.totalNegociado())
+        Assertions.assertEquals(BigDecimal(negociadoEsperado),orderBase.totalNegociado())
         Assertions.assertEquals(BigDecimal("10"),orderBase.totalDespesaAdicional())
         Assertions.assertEquals(0.0,orderBase.discountPercent)
         orderBase.DocumentLines.forEach {  Assertions.assertEquals(10.0,it.DiscountPercent) }
@@ -44,7 +44,7 @@ class OrderSalesServiceTest {
         orderBase.total()-orderBase.presumeDesonerado(17.5)
 
         Assertions.assertEquals(670.0,orderBase.total())
-        Assertions.assertEquals(544.50,orderBase.totalNegociado())
+        Assertions.assertEquals(BigDecimal("544.50"),orderBase.totalNegociado())
     }
 
     @Test

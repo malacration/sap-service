@@ -9,7 +9,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinFeature
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.fasterxml.jackson.module.kotlin.jacksonTypeRef
-import br.andrew.sap.model.partner.BPBranchAssignment
+import br.andrew.sap.model.sap.partner.BPBranchAssignment
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito
@@ -89,7 +89,7 @@ class PedidoVendaJsonTest {
         val order = obj.getOrder(Mockito.mock(ItemsService::class.java), ComissaoServiceMock.get())
         Assertions.assertEquals("138.6",order.DocumentLines.get(0).UnitPrice)
         Assertions.assertEquals(5.0,order.DocumentLines.get(0).DiscountPercent)
-        Assertions.assertEquals("19",order.paymentGroupCode)
+        Assertions.assertEquals(19,order.paymentGroupCode)
     }
 
     val jsonDataNull = "{\"dataEntraga\":null,\"observacao\":\"RETIRAR NA FABRICA\\nFRETE A R\$12,00/SC\",\"idCliente\":\"CLI0001475\",\"desconto\":0,\"produtos\":{\"precoUnitario\":113.19,\"idProduto\":\"PAC0000121\",\"desconto\":0,\"valorTabela\":113.19,\"quantidade\":30},\"idCondicaoPagamento\":20,\"frete\":360,\"idEmpresa\":2,\"tipoPedido\":9,\"codVendedor\":65,\"idPedido\":52,\"idFormaPagamento\":\"BB-RC-BOL-1199\"}"

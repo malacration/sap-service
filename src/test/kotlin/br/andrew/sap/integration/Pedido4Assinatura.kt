@@ -1,13 +1,13 @@
 package br.andrew.sap.integration
 
-import br.andrew.sap.model.BussinessPlace
+import br.andrew.sap.model.sap.BussinessPlace
 import br.andrew.sap.model.bank.PaymentMethod
-import br.andrew.sap.model.documents.DocumentReport
-import br.andrew.sap.model.documents.base.Document
-import br.andrew.sap.model.documents.base.Product
-import br.andrew.sap.model.partner.BPFiscalTaxID
-import br.andrew.sap.model.partner.BusinessPartner
-import br.andrew.sap.model.partner.CpfCnpj
+import br.andrew.sap.model.sap.documents.DocumentReport
+import br.andrew.sap.model.sap.documents.base.Document
+import br.andrew.sap.model.sap.documents.base.Product
+import br.andrew.sap.model.sap.partner.BPFiscalTaxID
+import br.andrew.sap.model.sap.partner.BusinessPartner
+import br.andrew.sap.model.sap.partner.CpfCnpj
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest

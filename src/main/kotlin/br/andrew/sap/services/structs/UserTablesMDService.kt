@@ -1,10 +1,9 @@
 package br.andrew.sap.services.structs
 
-import br.andrew.sap.controllers.documents.InvoicesController
 import br.andrew.sap.infrastructure.odata.Condicao
 import br.andrew.sap.infrastructure.odata.Filter
 import br.andrew.sap.infrastructure.odata.Predicate
-import br.andrew.sap.model.TableMd
+import br.andrew.sap.model.sap.TableMd
 import br.andrew.sap.model.envrioments.SapEnvrioment
 import br.andrew.sap.services.AuthService
 import br.andrew.sap.services.abstracts.EntitiesService

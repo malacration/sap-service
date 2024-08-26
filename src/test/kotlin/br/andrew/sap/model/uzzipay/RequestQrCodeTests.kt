@@ -1,7 +1,7 @@
 package br.andrew.sap.model.uzzipay
 
-import br.andrew.sap.model.documents.base.Document
-import br.andrew.sap.model.documents.base.Installment
+import br.andrew.sap.model.sap.documents.base.Document
+import br.andrew.sap.model.sap.documents.base.Installment
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows

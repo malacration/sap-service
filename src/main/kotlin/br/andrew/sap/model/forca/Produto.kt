@@ -1,6 +1,6 @@
 package br.andrew.sap.model.forca
 
-import br.andrew.sap.model.documents.base.Product
+import br.andrew.sap.model.sap.documents.base.Product
 import br.andrew.sap.services.ItemsService
 import br.andrew.sap.services.pricing.ComissaoService
 import com.fasterxml.jackson.annotation.JsonIgnore

@@ -1,5 +1,6 @@
 package br.andrew.sap.infrastructure.security
 
+import br.andrew.sap.controllers.BacenController
 import br.andrew.sap.infrastructure.security.jwt.JwtHandler
 import br.andrew.sap.model.authentication.User
 import br.andrew.sap.services.security.PasswordEmptyException
@@ -7,6 +8,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
+import org.slf4j.LoggerFactory
 import org.springframework.security.authentication.BadCredentialsException
 import org.springframework.security.core.Authentication
 import org.springframework.security.core.AuthenticationException
@@ -18,6 +20,8 @@ import org.springframework.security.web.authentication.AuthenticationSuccessHand
 class AuthenticationHandler(
     private val jwtHandler: JwtHandler
 ) : AuthenticationSuccessHandler, AuthenticationFailureHandler {
+
+    val logger = LoggerFactory.getLogger(AuthenticationHandler::class.java)
 
     override fun onAuthenticationSuccess(
         request: HttpServletRequest,
@@ -41,6 +45,7 @@ class AuthenticationHandler(
         response: HttpServletResponse,
         exception: AuthenticationException
     ) {
+        logger.error("onAuthenticationFailure",exception)
         response.setHeader("Access-Control-Allow-Origin","*")
         val msg = when(exception::class) {
             PasswordEmptyException()::class -> exception.message
