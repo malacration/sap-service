@@ -4,6 +4,8 @@ import br.andrew.sap.model.*
 import br.andrew.sap.model.entity.DbType
 import br.andrew.sap.model.entity.FieldMd
 import br.andrew.sap.model.entity.ValuesMd
+import br.andrew.sap.model.sap.TableMd
+import br.andrew.sap.model.sap.TbType
 import br.andrew.sap.services.structs.UserFieldsMDService
 import br.andrew.sap.services.structs.UserTablesMDService
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
