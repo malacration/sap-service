@@ -35,6 +35,7 @@ class DownPaymentService(env: SapEnvrioment,
 
     fun adiantamentosVendaFutura(document: Document, contrato: Contrato, paymentInfo: PaymentDueDates): Document {
         //TODO colocar item de adiantamento como parametro
+        //TODO configurar forma de pagamento da venda futura (boleto)
         val linhas = listOf(Product("FIN0000002",paymentInfo.value.toString(),"1"))
         val adiantamento = DownPayment(
             document.CardCode,

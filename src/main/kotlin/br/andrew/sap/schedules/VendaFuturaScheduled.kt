@@ -14,6 +14,8 @@ import br.andrew.sap.services.abstracts.SqlQueriesService
 import br.andrew.sap.services.bank.PaymentTermsTypesService
 import br.andrew.sap.services.document.DownPaymentService
 import br.andrew.sap.services.document.OrdersService
+import br.andrew.sap.services.invent.BankPlusService
+import br.andrew.sap.services.invent.OrigemBoletoEnum
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
@@ -32,6 +34,7 @@ class VendaFuturaScheduled(
     val contratoService : ContratoVendaFuturaService,
     val paymentService : PaymentTermsTypesService,
     val adiantamentoService : DownPaymentService,
+    val bankplus : BankPlusService,
     val orderService : OrdersService,
     @Value("\${venda-futura.utilizacao}") val idUtilizacao : Long,
     protected val env: SapEnvrioment) {
@@ -51,7 +54,18 @@ class VendaFuturaScheduled(
                         )
                         val contrato = contratoService.saveOnly(ContratoParse.parse(order))
                         hanndlePaymentTerms.calculaVencimentos(contrato).map {
-                            adiantamentoService.adiantamentosVendaFutura(order,contrato,it)
+                            val adiantamento = adiantamentoService.adiantamentosVendaFutura(order,contrato,it)
+                            try{
+                                bankplus.geraBoletos(
+                                    adiantamento.getBPL_IDAssignedToInvoice().toInt(),
+                                    adiantamento.docEntry ?: throw Exception("Falha ao obter docentry do adiantamento"),
+                                    0,
+                                    OrigemBoletoEnum.adiantamento)
+
+                            }catch (e : Exception){
+                                logger.error("Erro ao gerar boleto",e)
+                            }
+
                         }
                         orderService.close(order.docEntry.toString())
                     }

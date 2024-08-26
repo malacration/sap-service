@@ -63,7 +63,6 @@ class QuotationsController(val quotationsService: QuotationsService,
         }
     }
 
-
     @GetMapping("")
     fun get(page : Pageable, auth : Authentication): ResponseEntity<Page<OrderSales>> {
         if(!(auth is User))
