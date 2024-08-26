@@ -28,6 +28,7 @@ import br.andrew.sap.services.journal.EntryOriginalJournal
 import br.andrew.sap.services.journal.ServiceOriginalJournal
 import br.andrew.sap.services.uzzipay.DynamicPixQrCodeService
 import br.andrew.sap.services.uzzipay.TransactionsPixService
+import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.http.RequestEntity
 import org.springframework.stereotype.Service
@@ -141,5 +142,13 @@ class InvoiceService(env: SapEnvrioment, restTemplate: RestTemplate, authService
 
     override fun getOriginalJournal(): OriginalJournal {
         return OriginalJournal.ttARInvoice
+    }
+
+    fun findInvoiceById(id: Int, page : Pageable): Page<Invoice>? {
+        val filter = Filter(
+            Predicate("DocEntry", id,Condicao.EQUAL )
+        )
+        val result = get(filter,page)
+        return result.tryGetPageValues<Invoice>(page)
     }
 }
