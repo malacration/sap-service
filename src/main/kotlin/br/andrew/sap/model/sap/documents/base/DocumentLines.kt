@@ -30,12 +30,14 @@ abstract class DocumentLines(var UnitPrice : String, var Quantity : String, var 
     var U_preco_negociado: Double? = null
     var WarehouseCode: String? = null
     var U_id_item_forca: String? = null
+    var u_venda_futura: Int? = null
     var CostingCode: String? = null
     var CostingCode2: String? =null
     var AccountCode : String? = null
     var MeasureUnit : String? = null
     var PriceList : Int? = null
     var ListName : String? = null
+    var LineTotal : Double? = null
 
     @JsonIgnore
     var valorDesonerado : BigDecimal = BigDecimal(0)
