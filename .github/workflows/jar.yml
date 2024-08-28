@@ -1,4 +1,4 @@
-name: Build and Release Spring Boot Application
+name: Public jar on relese
 
 on:
   release:
@@ -27,12 +27,14 @@ jobs:
         run: ./gradlew assemble -Pversion=${{ github.event.release.tag_name }}
 
       - name: Remove unnecessary JAR file
-        run: rm build/libs/*-plain.jar
+        run: |
+          rm -f build/libs/*-plain.jar
+          ls build/libs
 
-      - name: Upload Release Asset
-        uses: actions/upload-release-asset@v1
+      - name: Release
+        uses: softprops/action-gh-release@v2
         with:
-          upload_url: ${{ github.event.release.upload_url }}
-          asset_path: build/libs/*.jar
-          asset_name: sap-service-${{ github.event.release.tag_name }}.jar
-          asset_content_type: application/java-archive
+          files: |
+            build/libs/*.jar
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
