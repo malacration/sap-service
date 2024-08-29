@@ -54,11 +54,6 @@ class UserDefinedObject(
     var UserObjectMD_FormColumns : MutableList<FormColumns> = mutableListOf()
 
     fun getUserObjectMD_EnhancedFormColumns() : List<EnhancedForm> {
-        if(false)
-            return UserObjectMD_FormColumns.map { it.getEnhancedForm() }.filter { it.ChildNumber != 0 }.toMutableList().also {
-                it.addAll(this.UserObjectMD_FindColumns.map { it.getEnhancedForm() })
-                it.add(EnhancedForm(this.ObjectType.getId(),"código").also { it.ChildNumber = 0 })
-            }
         return UserObjectMD_ChildTables
             .flatMapIndexed { index: Int, value: ChildTables -> value.getEnhancedForm(ObjectType,index+1) }
             .toMutableList()

@@ -56,6 +56,7 @@ class ComissaoConfiguration(val userFieldsMDService: UserFieldsMDService,
         ).forEach{
             udoService.findOrCreate(it)
         }
+
         listOf(
             FieldMd("tipoComissao","Selecionar Comissao","OPLN", DbType.db_Alpha)
                 .also { it.linkedUDO = "comissao" },

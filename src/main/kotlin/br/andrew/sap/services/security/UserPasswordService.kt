@@ -27,8 +27,9 @@ class UserPasswordService(
     fun login(request : UserPassword) : User{
         logger.info("Tentando fazer login para ${request.username}")
         val storageSalePerson = try {
-             service.getById(request.username).tryGetValue<SalePerson>()
+             service.getByUserName(request.username)
         }catch (e : Exception){
+            logger.error("Usuario nao encontrado",e)
             throw UsernameNotFoundException("Usuario nao encontrado")
         }
         val passwordEncoder = BCryptPasswordEncoder()
@@ -39,7 +40,7 @@ class UserPasswordService(
         if(!passwordEncoder.matches(request.password, storageSalePerson.u_password))
             throw BadCredentialsException("Senha incorreta")
 
-        val permission = roleBindService.get(request.username)
+        val permission = roleBindService.get(storageSalePerson.SalesEmployeeCode.toString())
         return User(storageSalePerson.SalesEmployeeCode.toString(),storageSalePerson.SalesEmployeeName,permission)
     }
 
@@ -47,7 +48,7 @@ class UserPasswordService(
         val password = createRandomPassword()
         changePassword(salePerson,password)
         val body  = "$password"
-        mailService.sendEmail(MyMailMessage("andrewc3po@gmail.com","Senha temporaria - Portal de vendas", body))
+        mailService.sendEmail(MyMailMessage(salePerson.getEmailAddress(),"Senha temporaria - Portal de vendas", body))
     }
 
     fun changePassword(salePerson: SalePerson, password : String): OData? {

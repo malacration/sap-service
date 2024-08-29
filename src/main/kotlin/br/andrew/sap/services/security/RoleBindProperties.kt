@@ -6,7 +6,7 @@ import org.springframework.context.annotation.Configuration
 @Configuration
 @ConfigurationProperties(prefix = "role")
 class RoleBindProperties{
-    lateinit var bind : List<RoleBind>
+    var bind : List<RoleBind> = listOf()
 }
 
 class RoleBind{
