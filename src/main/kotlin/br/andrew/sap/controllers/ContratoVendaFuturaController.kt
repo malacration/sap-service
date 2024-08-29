@@ -44,8 +44,10 @@ class ContratoVendaFuturaController(
     fun get(auth : Authentication, page : Pageable): ResponseEntity<Page<Contrato>> {
         if(auth !is User)
             return ResponseEntity.noContent().build()
-        val contratos = service.get(Filter("U_vendedor",auth.getIdInt(),Condicao.EQUAL),page)
-            .tryGetPageValues<Contrato>(page)
+        val contratos = service.get(Filter("U_vendedor",auth.getIdInt(),Condicao.EQUAL),
+            OrderBy(mapOf("U_dataCriacao" to Order.DESC)),
+            page
+        ).tryGetPageValues<Contrato>(page)
         return ResponseEntity.ok(contratos)
     }
 
