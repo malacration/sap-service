@@ -51,7 +51,9 @@ class ContratoVendaFuturaController(
 
     @PostMapping("pedido-retirada")
     fun teste(@RequestBody pedidoRetirada : PedidoRetirada, auth : Authentication) : ResponseEntity<Document?> {
-        val dataEntrega = "01-01-2025"
+        //TODO fazer parametro desse valor
+        val controlAccount = "2.1.2.001.00005"
+        val utilizacao = 9
         if(auth !is User)
             return ResponseEntity.noContent().build()
 
@@ -63,7 +65,7 @@ class ContratoVendaFuturaController(
             throw Exception("O contrato nao foi encontrado")
         val contrato = contratos.firstOrNull() ?: throw Exception("Erro ao consultar contrato")
         val baseDocument = pedidoService.getById(contrato.U_orderDocEntry).tryGetValue<OrderSales>()
-        val documento = baseDocument.getQuotationVendaFutura(pedidoRetirada)
+        val documento = baseDocument.getQuotationVendaFutura(pedidoRetirada,controlAccount,utilizacao)
         return ResponseEntity.ok(cotacaoController.saveForAngular(documento,auth))
     }
 }
