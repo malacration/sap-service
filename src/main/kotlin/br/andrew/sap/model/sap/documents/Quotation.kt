@@ -1,6 +1,7 @@
 package br.andrew.sap.model.sap.documents
 
 import br.andrew.sap.model.sap.documents.base.Document
+import br.andrew.sap.model.sap.documents.base.DocumentLines
 import br.andrew.sap.model.sap.documents.base.Product
 import com.fasterxml.jackson.annotation.JsonFormat
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
@@ -14,8 +15,8 @@ import java.util.*
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 class Quotation(CardCode: String,
                 @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "YYY-MM-dd", timezone = "UTC")
-                 DocDueDate: String?,
-                DocumentLines: List<Product>,
+                DocDueDate: String?,
+                DocumentLines: List<DocumentLines>,
                 BPL_IDAssignedToInvoice: String)
     : Document(CardCode, DocDueDate, DocumentLines, BPL_IDAssignedToInvoice) {
 

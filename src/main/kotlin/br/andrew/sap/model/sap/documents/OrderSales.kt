@@ -1,7 +1,10 @@
 package br.andrew.sap.model.sap.documents
 
 import br.andrew.sap.model.sap.documents.base.Document
+import br.andrew.sap.model.sap.documents.base.DocumentLines
 import br.andrew.sap.model.sap.documents.base.Product
+import br.andrew.sap.model.sap.documents.futura.ItemRetirada
+import br.andrew.sap.model.sap.documents.futura.PedidoRetirada
 import com.fasterxml.jackson.annotation.JsonFormat
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonInclude
@@ -15,7 +18,7 @@ import java.util.*
 class OrderSales(CardCode: String,
                  @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "YYY-MM-dd", timezone = "UTC")
                  DocDueDate: String?,
-                 DocumentLines: List<Product>,
+                 DocumentLines: List<DocumentLines>,
                  BPL_IDAssignedToInvoice: String)
     : Document(CardCode, DocDueDate, DocumentLines, BPL_IDAssignedToInvoice) {
 
@@ -24,6 +27,34 @@ class OrderSales(CardCode: String,
 
     override fun toString(): String {
         return "OrderSales(CardCode='$CardCode', Branch='${getBPL_IDAssignedToInvoice()}', docEntry=$docEntry, docNum=$docNum, pedido_forca=$u_id_pedido_forca)"
+    }
+
+
+    fun duplicate() : OrderSales {
+        val produtos = DocumentLines.map { it.Duplicate() }
+        return OrderSales(CardCode,DocDueDate,produtos, getBPL_IDAssignedToInvoice()).also {
+            it.model = model
+            it.documentInstallments = this.documentInstallments
+            it.journalMemo = this.journalMemo
+            it.docDate = this.docDate
+            it.controlAccount = this.controlAccount
+        }
+    }
+
+    fun getQuotationVendaFutura(pedidoRetirada: PedidoRetirada, contaControle : String, utilizacao : Int) : Quotation{
+        val itens = pedidoRetirada.itensRetirada
+        val docLines : List<DocumentLines> = itens.map {  retirada ->
+            val item = this.DocumentLines
+                .firstOrNull{ it.ItemCode == retirada.itemCode } ?: throw Exception("Erro ao selecionar item para retirada")
+            item.Quantity = retirada.quantity.toString()
+            item.LineTotal = null
+            item.Usage = utilizacao
+            item
+        }
+        return Quotation(CardCode,DocDueDate,docLines, getBPL_IDAssignedToInvoice()).also {
+            it.U_venda_futura = pedidoRetirada.docEntryVendaFutura
+            it.controlAccount = contaControle
+        }
     }
 }
 //data de entrega - ORDRdocduedate
