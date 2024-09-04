@@ -41,18 +41,19 @@ class OrderSales(CardCode: String,
         }
     }
 
-    fun getQuotationVendaFutura(pedidoRetirada: PedidoRetirada) : Quotation{
+    fun getQuotationVendaFutura(pedidoRetirada: PedidoRetirada, contaControle : String, utilizacao : Int) : Quotation{
         val itens = pedidoRetirada.itensRetirada
         val docLines : List<DocumentLines> = itens.map {  retirada ->
             val item = this.DocumentLines
                 .firstOrNull{ it.ItemCode == retirada.itemCode } ?: throw Exception("Erro ao selecionar item para retirada")
             item.Quantity = retirada.quantity.toString()
             item.LineTotal = null
+            item.Usage = utilizacao
             item
         }
-        //TODO adicionar DATA de entrega
         return Quotation(CardCode,DocDueDate,docLines, getBPL_IDAssignedToInvoice()).also {
             it.U_venda_futura = pedidoRetirada.docEntryVendaFutura
+            it.controlAccount = contaControle
         }
     }
 }
