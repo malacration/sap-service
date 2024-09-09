@@ -66,6 +66,11 @@ class PedidoFieldConfiguration(val userFieldsMDService: UserFieldsMDService) {
                 it.ValidValuesMD = listOf(ValuesMd("0","NÃO"), ValuesMd("1","SIM"))
                 it.defaultValue = "0"
             },
+            FieldMd("envia_forca","Envia Força?","OPYM")
+                .also {
+                    it.ValidValuesMD = listOf(ValuesMd("0","NÃO"), ValuesMd("1","SIM"))
+                    it.defaultValue = "0"
+                }
         ).forEach { userFieldsMDService.findOrCreate(it)}
 
         listOf(

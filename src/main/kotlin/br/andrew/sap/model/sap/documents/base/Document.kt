@@ -4,6 +4,7 @@ import br.andrew.sap.model.enums.Cancelled
 import br.andrew.sap.model.WarehouseDefault
 import br.andrew.sap.model.sap.documents.DocumentStatus
 import br.andrew.sap.model.forca.EnderecoId
+import br.andrew.sap.model.sap.documents.base.adiantamento.DownPaymentsToDraw
 import br.andrew.sap.model.uzzipay.DataRetonroPixQrCode
 import br.andrew.sap.model.uzzipay.RequestPixDueDate
 import br.andrew.sap.model.uzzipay.Transaction
@@ -69,6 +70,8 @@ open class Document(val CardCode : String,
     var U_assinatura : String = "0"
     var U_rd_station : String? = null
     var U_venda_futura: Int? = null
+    var downPaymentsToDraw : List<DownPaymentsToDraw>? = null
+    var TransNum : Int? = null
 
     @JsonProperty("BPL_IDAssignedToInvoice")
     fun getBPL_IDAssignedToInvoice(): String {

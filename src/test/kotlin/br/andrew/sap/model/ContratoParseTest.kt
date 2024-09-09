@@ -6,8 +6,6 @@ import br.andrew.sap.model.self.vendafutura.ContratoParse
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
-import java.lang.Exception
-import kotlin.Exception
 
 class ContratoParseTest {
 
