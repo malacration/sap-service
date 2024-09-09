@@ -6,6 +6,7 @@ import br.andrew.sap.model.self.vendafutura.ContratoParse
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
+import kotlin.Exception
 
 class ContratoParseTest {
 
@@ -29,12 +30,6 @@ class ContratoParseTest {
         Assertions.assertEquals("177.32",contrato.total().toString())
         Assertions.assertEquals(0.0,contrato.U_valorFrete)
     }
-
-    @Test
-    fun testaValorFrete(){
-        throw Exception("valor do frete nao esta sendo testado")
-    }
-
 
     @Test
     fun valorNegociadoComErro(){

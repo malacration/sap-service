@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.RestController
 @RequestMapping("future-sales")
 class FutureDeliverySalesController(val invoiceService: InvoiceService) {
 
-    @GetMapping("/{id}/entrada")
+    @GetMapping("/{id}/saida")
     fun entrada(@PathVariable id: Int, page : Pageable): Page<Invoice>?{
         return invoiceService.findInvoiceById(id, page)
     }
