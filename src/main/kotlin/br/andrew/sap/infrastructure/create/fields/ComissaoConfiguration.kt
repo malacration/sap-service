@@ -66,7 +66,7 @@ class ComissaoConfiguration(val userFieldsMDService: UserFieldsMDService,
 
     fun comissaoObject(): UserDefinedObject {
         val ud = UserDefinedObject("comissao", "Comissões", "COMISSAO",)
-        ud.popChildTable(ChildTables("CONDICOESFV",ud),ChildTables("LIBERAPARA",ud))
+        ud.popChildTable(ChildTables("CONDICOESFV"),ChildTables("LIBERAPARA"))
         ud.UserObjectMD_FormColumns.addAll(listOf(
             FormColumns("Code","Código",0,ud),
             FormColumns("Name","Descrição",0,ud),

@@ -27,6 +27,7 @@ import br.andrew.sap.services.invent.BankPlusService
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.context.annotation.Profile
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
@@ -35,7 +36,7 @@ import java.math.BigDecimal
 
 @Component
 @Profile("!test")
-
+@ConditionalOnProperty(value = ["venda-futura.utilizacao"], matchIfMissing = false)
 class TesteScheduled(
     protected val authService: AuthService,
     val sqlQueriesService: SqlQueriesService,
@@ -47,7 +48,6 @@ class TesteScheduled(
     val orderService : OrdersService,
     val internalReconciliationsService: InternalReconciliationsService,
     val inoviceService : InvoiceService,
-    @Value("\${venda-futura.utilizacao}") val idUtilizacao : Long,
     protected val env: SapEnvrioment) {
 
     val logger: Logger = LoggerFactory.getLogger(TesteScheduled::class.java)
