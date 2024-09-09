@@ -163,8 +163,13 @@ open class Document(val CardCode : String,
         this.Address = null
         val desonerado = DocumentLines.sumOf { it.valorDesonerado }.setScale(4,RoundingMode.HALF_UP)
         val totalAntesDesconto = BigDecimal(total()).setScale(2,RoundingMode.HALF_UP)
-        this.discountPercent = desonerado.divide(totalAntesDesconto, 6,RoundingMode.HALF_UP)
-            .multiply(BigDecimal(100)).toDouble()
+        this.discountPercent =
+            if(totalAntesDesconto.compareTo(BigDecimal.ZERO) == 0 )
+                0.0
+            else
+                desonerado
+                    .divide(totalAntesDesconto, 6,RoundingMode.HALF_UP)
+                    .multiply(BigDecimal(100)).toDouble()
     }
 
     fun associaEndereco(endereco: EnderecoId){

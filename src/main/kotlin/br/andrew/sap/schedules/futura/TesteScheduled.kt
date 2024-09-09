@@ -57,16 +57,12 @@ class TesteScheduled(
     fun execute() {
         //23316
         // cardCode CardCode -> CLI0003170
-        var docNum = 23314 //TODO remover
         //TODO adicionar forma de pagamento especifica parae essa gambi
         val itemAdiantamento = "FIN0000002" //TODO adicionar parametro
         val entregasFilter = Filter(
             Predicate("U_venda_futura",0,Condicao.GREAT),
             Predicate("DocumentStatus",DocumentStatus.bost_Open,Condicao.EQUAL),
-
-            Predicate("DocNum",docNum,Condicao.EQUAL) //TODO remover linha
         )
-
         inoviceService.get(entregasFilter).tryGetValues<Invoice>().forEach { invoice ->
             val exp = Exception("Nao foi possivel buscar o adianemtno, entrega de venda sem id contrato")
             val adiantamentoFilter = Filter(
@@ -87,24 +83,21 @@ class TesteScheduled(
             }
 
             val downDraw = ApropriacaoAdiantamento(invoice,adiantamentos).get()
-
-            val invoiceApropiacao = Invoice(
+            if(downDraw.isNotEmpty()){
+                val invoiceApropiacao = Invoice(
                     invoice.CardCode,null,
                     listOf(Product(itemAdiantamento,"1","0",9)),
                     invoice.getBPL_IDAssignedToInvoice())
-                .also {
-                    it.downPaymentsToDraw = downDraw
-                    it.U_venda_futura = invoice.U_venda_futura
-                }
-            val apropriado = inoviceService.save(invoiceApropiacao).tryGetValue<Document>()
+                    .also {
+                        it.downPaymentsToDraw = downDraw
+                        it.U_venda_futura = invoice.U_venda_futura
+                    }
+                val apropriado = inoviceService.save(invoiceApropiacao).tryGetValue<Document>()
 
-            internalReconciliationsService.save(
-                InternalReconciliationsBuilder(invoice,apropriado).build()
-            )
-
-            //TODO falta reconciliacao interna!
-            //incomingPaymentService.save(payment)
-
+                internalReconciliationsService.save(
+                    InternalReconciliationsBuilder(invoice,apropriado).build()
+                )
+            }
         }
         // PaidToDate valor pago ate a data atual
         val adiantamento = adiantamentoService.getById(3808)

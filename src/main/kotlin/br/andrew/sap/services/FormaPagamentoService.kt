@@ -12,7 +12,7 @@ class FormaPagamentoService(val sqlQueriesService : SqlQueriesService,) {
 
     fun getByFilial(idBranch : Int): List<PaymentMethodDto>? {
         return sqlQueriesService
-            .execute("prazo-por-tabela-preco.sql", Parameter("idBranch",idBranch))
+            .execute("forma-pagamento.sql", Parameter("idBranch",idBranch))
             ?.tryGetValues<PaymentMethodDto>()
     }
 }

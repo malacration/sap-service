@@ -32,6 +32,11 @@ class ContratoParseTest {
     }
 
     @Test
+    fun testaValorFrete(){
+        throw Exception("valor do frete nao esta sendo testado")
+    }
+
+    @Test
     fun valorNegociadoComErro(){
         val produtos = listOf(Product("windson","100","1.7732",10)
             .also {

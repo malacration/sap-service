@@ -1,17 +1,22 @@
 package br.andrew.sap.model.sap
 
+import br.andrew.sap.model.enums.YesNo
 import br.andrew.sap.model.sap.documents.base.Document
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonInclude
+import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.PropertyNamingStrategies
 import com.fasterxml.jackson.databind.annotation.JsonNaming
+import java.text.SimpleDateFormat
+import java.util.*
+import kotlin.time.times
 
 @JsonNaming(PropertyNamingStrategies.UpperCamelCaseStrategy::class)
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 class InternalReconciliations {
     var reconNum: Int? = null
-    var reconDate: String? = null
+    var reconDate: String? = SimpleDateFormat("yyyy-MM-dd").format(Date())
     var cardOrAccount: String? = null
     var reconType: String? = null
     var total: Double? = null
@@ -27,14 +32,28 @@ class InternalReconciliations {
 class InternalReconciliationOpenTransRow(
     var cashDiscount: Double? = null,
     var creditOrDebit: String? = null,
-    var reconcileAmount: Double? = null,
-    var selected: String? = null,
+    @JsonProperty("ReconcileAmount")
+    private var _reconcileAmount: Double? = null,
+    var selected: YesNo? = YesNo.tYES,
     var shortName: String? = null,
     var srcObjAbs: Int? = null,
     var srcObjTyp: String? = null,
     var transId: Int? = null,
     var transRowId: Int? = null
-)
+){
+
+    var reconcileAmount : Double?
+        get() {
+            return if((_reconcileAmount ?: 0.0) < 0)
+                -1*(_reconcileAmount ?: 0.0)
+            else
+                _reconcileAmount
+        }
+        set(value) {
+            _reconcileAmount = value
+        }
+
+}
 
 
 class InternalReconciliationsBuilder(val deb : Document, val cred : Document){
@@ -50,7 +69,7 @@ class InternalReconciliationsBuilder(val deb : Document, val cred : Document){
         return InternalReconciliationOpenTransRow().also {
             it.creditOrDebit = "codDebit"
             it.transId = deb.TransNum
-            it.srcObjTyp = deb.docObjectCode
+            //it.srcObjTyp = deb.docObjectCode
             it.reconcileAmount = deb.DocTotal?.toDoubleOrNull()
         }
     }
@@ -59,7 +78,7 @@ class InternalReconciliationsBuilder(val deb : Document, val cred : Document){
         return InternalReconciliationOpenTransRow().also {
             it.creditOrDebit = "codCredit"
             it.transId = cred.TransNum
-            it.srcObjTyp = cred.docObjectCode
+            //it.srcObjTyp = cred.docObjectCode
             it.reconcileAmount = cred.DocTotal?.toDoubleOrNull()
         }
     }

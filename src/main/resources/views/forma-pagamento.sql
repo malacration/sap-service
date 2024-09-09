@@ -1,10 +1,10 @@
 SELECT
 	forma."PayMethCod",
-	forma."Descript",
+	forma."Descript" as "Description",
 	forma."Branch",
 	forma."DflAccount",
 	banco."GLAccount",
-	contaContabil."BPLId"
+	contaContabil."BPLId" as 'BPLID'
 FROM
 	OPYM as forma
 	LEFT JOIN DSC1 as banco on(forma."DflAccount" = banco."Account")

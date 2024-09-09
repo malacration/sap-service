@@ -26,4 +26,8 @@ class InternalReconciliationsService(
     override fun path(): String {
         return "/b1s/v1/InternalReconciliations"
     }
+
+    override fun get(filter: Filter, order: OrderBy, page: Pageable): OData {
+        throw Exception("Metodo nao suportado")
+    }
 }
