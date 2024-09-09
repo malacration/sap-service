@@ -28,7 +28,7 @@ class UserObjectsMDService(restTemplate: RestTemplate,
     }
 
     fun findOrCreate(ud : UserDefinedObject) {
-        logger.info("Verificando se UDO ${ud.Name} existe")
+        logger.info("Verificando se UDO ${ud.Code} existe")
         val predicates = mutableListOf(
             Predicate("Code",ud.Code, Condicao.EQUAL),
         )
