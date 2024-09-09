@@ -1,6 +1,7 @@
 package br.andrew.sap.services
 
 import br.andrew.sap.infrastructure.odata.*
+import br.andrew.sap.model.enums.YesNo
 import br.andrew.sap.model.sap.SalePerson
 import br.andrew.sap.model.envrioments.SapEnvrioment
 import br.andrew.sap.services.abstracts.EntitiesService
@@ -37,6 +38,18 @@ class SalesPersonsService(val sqlQueriesService : SqlQueriesService , env: SapEn
             Predicate("Active", "Y", Condicao.EQUAL)
         )
         return get(filter).tryGetValues<SalePerson>().isNotEmpty()
+    }
+
+    fun getByUserName(username: String): SalePerson {
+        val filter = if(username.toIntOrNull() != null)
+            Filter(Predicate("SalesEmployeeCode", username.toInt(), Condicao.EQUAL),Predicate("Active", YesNo.tYES, Condicao.EQUAL))
+        else{
+            Filter(Predicate("Email", username, Condicao.EQUAL),Predicate("Active", YesNo.tYES, Condicao.EQUAL))
+        }
+        val resultado = get(filter).tryGetValues<SalePerson>().filter { it.Active == "tYES" }
+        if(resultado.size > 1)
+            throw Exception("Existe mais de um usuario com o mesmo email")
+        return resultado.firstOrNull() ?: throw Exception("Usuario nao encontrado")
     }
 
 }

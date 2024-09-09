@@ -17,6 +17,8 @@ roles:
       actions: ["get"]
     - url: "/quotation/angular/**"
       actions: [ "post" ]
+    - url: "/condicao/**"
+      actions: [ "get" ]
   vendedor_admin:
     - url: "/sales-person/search"
       actions: [ "*" ]

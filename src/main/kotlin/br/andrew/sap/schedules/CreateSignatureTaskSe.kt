@@ -19,7 +19,7 @@ import org.springframework.stereotype.Component
 
 
 @Component
-@ConditionalOnProperty(value = ["org.quartz.assinatura.enable"], havingValue = "true", matchIfMissing = true)
+@ConditionalOnProperty(value = ["org.quartz.assinatura.enable"], havingValue = "true", matchIfMissing = false)
 class CreateSignatureTaskSe(
     val service : QuotationsService,
     val telegramRequestService: TelegramRequestService,
