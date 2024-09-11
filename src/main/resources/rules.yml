@@ -28,5 +28,7 @@ roles:
       actions: [ "*" ]
     - url: "/sales-person/replace/*/por/*"
       actions: [ "*" ]
+    - url: "/forma-pagamento/filial/*/cardcode/*"
+      actions: [ "get" ]
 
 
