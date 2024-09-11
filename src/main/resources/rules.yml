@@ -17,6 +17,8 @@ roles:
       actions: [ "post" ]
     - url: "/condicao/**"
       actions: [ "get" ]
+    - url: "/forma-pagamento/filial/*/cardcode/*"
+      actions: [ "get" ]
   vendedor_admin:
     - url: "/sales-person/search"
       actions: [ "*" ]
