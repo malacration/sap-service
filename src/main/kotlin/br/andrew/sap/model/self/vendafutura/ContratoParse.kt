@@ -18,7 +18,7 @@ class ContratoParse {
                 parseDocumentLines(doc.DocumentLines),
                 doc.salesPersonCode,
                 doc.cardName ?: throw Exception("Nome do cliente nao pode ser nulo"),
-                doc.frete ?: 0.0,
+                doc.totalDespesaAdicional().toDouble() ?: 0.0,
             )
         }
 

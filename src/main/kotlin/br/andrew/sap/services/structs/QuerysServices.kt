@@ -32,7 +32,8 @@ class QuerysServices(env: SapEnvrioment, restTemplate: RestTemplate,
         }catch (t : HttpClientErrorException){
             if(t.statusCode == org.springframework.http.HttpStatus.NOT_FOUND){
                 handdleError(query)
-            }
+            }else
+                logger.error("Erro ao criar view ${query.sqlName}",t)
         }catch (t: NotFoundException){
             handdleError(query)
         }

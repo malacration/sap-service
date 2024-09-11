@@ -7,8 +7,6 @@ roles:
       actions: ["*"]
     - url: "branch"
       actions: ["get"]
-    - url : "/business-partners/*"
-      actions: ["*"]
     - url : "/business-partners/search"
       actions: ["*"]
     - url: "item/search/branch/**"
@@ -18,6 +16,8 @@ roles:
     - url: "/quotation/angular/**"
       actions: [ "post" ]
     - url: "/condicao/**"
+      actions: [ "get" ]
+    - url: "/forma-pagamento/filial/*/cardcode/*"
       actions: [ "get" ]
   vendedor_admin:
     - url: "/sales-person/search"
