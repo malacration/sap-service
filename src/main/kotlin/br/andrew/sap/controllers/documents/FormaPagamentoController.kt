@@ -11,9 +11,9 @@ import org.springframework.web.bind.annotation.RestController
 @RequestMapping("forma-pagamento")
 class FormaPagamentoController(val service: FormaPagamentoService) {
 
-    @GetMapping("{filial}")
-    fun getByFilial(@PathVariable filial : Int): List<PaymentMethodDto>? {
-        return service.getByFilial(filial)
+    @GetMapping("/filial/{filial}/cardcode/{cardCode}")
+    fun getByFilial(@PathVariable filial : Int, @PathVariable cardCode : String): List<PaymentMethodDto>? {
+        return service.getByFilial(filial,cardCode)
     }
 }
 

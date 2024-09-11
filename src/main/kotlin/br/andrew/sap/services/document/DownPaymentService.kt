@@ -2,30 +2,36 @@ package br.andrew.sap.services.document
 
 import br.andrew.sap.infrastructure.odata.Condicao
 import br.andrew.sap.infrastructure.odata.Filter
+import br.andrew.sap.infrastructure.odata.Parameter
 import br.andrew.sap.infrastructure.odata.Predicate
 import br.andrew.sap.model.enums.Cancelled
 import br.andrew.sap.model.envrioments.SapEnvrioment
 import br.andrew.sap.model.payment.PaymentDueDates
+import br.andrew.sap.model.sap.documents.DocumentStatus
 import br.andrew.sap.model.sap.documents.DownPayment
+import br.andrew.sap.model.sap.documents.Invoice
 import br.andrew.sap.model.sap.documents.base.Document
 import br.andrew.sap.model.sap.documents.base.Product
 import br.andrew.sap.model.self.vendafutura.Contrato
+import br.andrew.sap.schedules.futura.Soma
 import br.andrew.sap.services.AuthService
 import br.andrew.sap.services.abstracts.EntitiesService
+import br.andrew.sap.services.abstracts.SqlQueriesService
 import br.andrew.sap.services.bank.VendorPaymentService
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
 import org.springframework.web.client.RestTemplate
+import java.math.BigDecimal
 
 @Service
 class DownPaymentService(env: SapEnvrioment,
+                         val sqlQueriesService: SqlQueriesService,
                          @Value("\${adiantamento.itemcode:none}")
                          val itemAdiantamento : String,
-                             restTemplate: RestTemplate,
-                             authService: AuthService,
-                             val vendorPaymentService: VendorPaymentService
+                         restTemplate: RestTemplate,
+                         authService: AuthService,
 ) :
         EntitiesService<Document>(env, restTemplate, authService) {
 
@@ -54,5 +60,25 @@ class DownPaymentService(env: SapEnvrioment,
         )
         return get(filter).tryGetValues()
 
+    }
+
+    fun adiantamentosAbertos(invoice : Invoice): List<DownPayment> {
+        val exp = Exception("Nao foi possivel buscar o adianemtno, entrega de venda sem id contrato")
+        val adiantamentoFilter = Filter(
+            Predicate("U_venda_futura",invoice.U_venda_futura?: throw exp,Condicao.EQUAL),
+            Predicate("CardCode",invoice.CardCode,Condicao.EQUAL),
+            Predicate("DownPaymentStatus","so_Open",Condicao.EQUAL),
+            Predicate("DocumentStatus", DocumentStatus.bost_Close,Condicao.EQUAL),
+            //Talvez DownPaymentStatus indique se tem saldo a apropriar ou nao
+        )
+        return get(adiantamentoFilter).tryGetValues<DownPayment>().map{
+            val apropriacoes : List<Soma> = sqlQueriesService
+                .execute("adiantamento-apropriado.sql", Parameter("docEntry",it.docEntry!!))
+                ?.tryGetValues<Soma>() ?: listOf(Soma(BigDecimal.ZERO))
+            if(apropriacoes.size > 1)
+                throw Exception("Nao pode ter mais de uma apropriacao para um adiantamento")
+            it.apropriado = apropriacoes.firstOrNull()?.soma ?: BigDecimal.ZERO
+            it
+        }
     }
 }

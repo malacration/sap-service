@@ -17,10 +17,10 @@ class SqlQueriesServiceTest {
         val envrioment = SapEnvrioment("","","","")
         val sq = SqlQueriesService(envrioment,rt ,authService)
 
-        Assertions.assertEquals("windson=windson",sq.getParameter(listOf(Parameter("windson","windson"))))
+        Assertions.assertEquals("windson='windson'",sq.getParameter(listOf(Parameter("windson","windson"))))
 
         Assertions.assertEquals(
-            "windson=windson&bruno=jose",
+            "windson='windson'&bruno='jose'",
             sq.getParameter(listOf(
                 Parameter("windson","windson"),
                 Parameter("bruno","jose"),

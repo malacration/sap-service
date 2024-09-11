@@ -10,9 +10,12 @@ import org.springframework.stereotype.Service
 class FormaPagamentoService(val sqlQueriesService : SqlQueriesService,) {
 
 
-    fun getByFilial(idBranch : Int): List<PaymentMethodDto>? {
+    fun getByFilial(idBranch : Int, cardCode : String): List<PaymentMethodDto>? {
         return sqlQueriesService
-            .execute("forma-pagamento.sql", Parameter("idBranch",idBranch))
+            .execute("forma-pagamento.sql",
+                listOf(Parameter("idBranch",idBranch),
+                    Parameter("cardCode",cardCode))
+            )
             ?.tryGetValues<PaymentMethodDto>()
     }
 }

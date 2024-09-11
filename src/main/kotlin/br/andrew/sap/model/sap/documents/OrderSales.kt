@@ -1,5 +1,6 @@
 package br.andrew.sap.model.sap.documents
 
+import br.andrew.sap.model.sap.documents.base.AdditionalExpenses
 import br.andrew.sap.model.sap.documents.base.Document
 import br.andrew.sap.model.sap.documents.base.DocumentLines
 import br.andrew.sap.model.sap.documents.base.Product
@@ -10,6 +11,8 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.databind.PropertyNamingStrategies
 import com.fasterxml.jackson.databind.annotation.JsonNaming
+import java.math.BigDecimal
+import java.math.RoundingMode
 import java.util.*
 
 @JsonNaming(PropertyNamingStrategies.UpperCamelCaseStrategy::class)
@@ -46,14 +49,33 @@ class OrderSales(CardCode: String,
         val docLines : List<DocumentLines> = itens.map {  retirada ->
             val item = this.DocumentLines
                 .firstOrNull{ it.ItemCode == retirada.itemCode } ?: throw Exception("Erro ao selecionar item para retirada")
-            item.Quantity = retirada.quantity.toString()
-            item.LineTotal = null
-            item.Usage = utilizacao
-            item
+            Product(item.ItemCode ?: throw Exception("nao e um produto"),
+                    retirada.quantity.toString(),
+                    item.UnitPrice,
+                    utilizacao
+            ).also {
+                it.DiscountPercent = item.DiscountPercent
+                it.U_preco_negociado = item.U_preco_negociado
+                it.U_preco_base = item.U_preco_base
+                it.U_id_item_forca = item.U_id_item_forca
+                it.u_idTabela = item.u_idTabela
+                it.u_venda_futura = item.u_venda_futura
+                it.LineTotal = null
+            }
         }
         return Quotation(CardCode,DocDueDate,docLines, getBPL_IDAssignedToInvoice()).also {
             it.U_venda_futura = pedidoRetirada.docEntryVendaFutura
             it.controlAccount = contaControle
+        }.also {
+            if(this.totalDespesaAdicional().compareTo(BigDecimal.ZERO) > 0){
+                val proporcao = it.totalProdutos().divide(this.totalProdutos(),2,RoundingMode.HALF_UP)
+                it.documentAdditionalExpenses = this.documentAdditionalExpenses.map {
+                    val lineTotal = BigDecimal(it.LineTotal.toString()).multiply(proporcao).toDouble()
+                    AdditionalExpenses(it.expenseCode,lineTotal)
+                }.toMutableList()
+            }
+
+
         }
     }
 }

@@ -69,7 +69,6 @@ class InternalReconciliationsBuilder(val deb : Document, val cred : Document){
         return InternalReconciliationOpenTransRow().also {
             it.creditOrDebit = "codDebit"
             it.transId = deb.TransNum
-            //it.srcObjTyp = deb.docObjectCode
             it.reconcileAmount = deb.DocTotal?.toDoubleOrNull()
         }
     }
@@ -78,7 +77,6 @@ class InternalReconciliationsBuilder(val deb : Document, val cred : Document){
         return InternalReconciliationOpenTransRow().also {
             it.creditOrDebit = "codCredit"
             it.transId = cred.TransNum
-            //it.srcObjTyp = cred.docObjectCode
             it.reconcileAmount = cred.DocTotal?.toDoubleOrNull()
         }
     }

@@ -125,6 +125,10 @@ open class Document(val CardCode : String,
         return DocumentLines.sumOf { it.totalNegociado() }.setScale(2)
     }
 
+    fun totalProdutos() : BigDecimal {
+        return DocumentLines.sumOf { it.total() }.setScale(2,RoundingMode.HALF_UP)
+    }
+
     fun totalDespesaAdicional(): BigDecimal {
         return documentAdditionalExpenses.sumOf { BigDecimal(it.LineTotal) }
     }

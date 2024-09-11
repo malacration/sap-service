@@ -7,8 +7,6 @@ roles:
       actions: ["*"]
     - url: "branch"
       actions: ["get"]
-    - url : "/business-partners/*"
-      actions: ["*"]
     - url : "/business-partners/search"
       actions: ["*"]
     - url: "item/search/branch/**"
