@@ -37,7 +37,7 @@ class ConciliacaoVendaFuturaSchedule(
     val internalReconciliationsService: InternalReconciliationsService,
     val inoviceService : InvoiceService,
     @Value("\${venda-futura.item}") val itemConciliacaoVendaFutura : String,
-    @Value("\${venda-futura.forma-pagamento:null}") val formaPagamento : String?,) {
+    @Value("\${venda-futura.forma-pagamento:null}") val formaPagamento : String? = null,) {
 
     val logger: Logger = LoggerFactory.getLogger(ConciliacaoVendaFuturaSchedule::class.java)
 
@@ -61,7 +61,7 @@ class ConciliacaoVendaFuturaSchedule(
                     .also {
                         it.downPaymentsToDraw = adiantamentosDisponiveis
                         it.U_venda_futura = invoice.U_venda_futura
-                        it.paymentMethod = formaPagamento
+                        //it.paymentMethod = formaPagamento
                     }
 
                 val apropriado = inoviceService.save(invoiceApropiacao).tryGetValue<Document>()

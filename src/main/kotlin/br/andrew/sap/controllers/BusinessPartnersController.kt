@@ -128,11 +128,16 @@ class BusinessPartnersController(
         return service.getByCpfCnpj(cpfCnpj,tipo).getContactOpaque()
     }
 
-    @GetMapping("/pedido")
+    @GetMapping("/cientes")
     fun get(auth: Authentication, page: Pageable): ResponseEntity<Page<BusinessPartner>> {
         if (auth !is User)
             return ResponseEntity.noContent().build()
-        val parceiroNegocio = service.get(Filter("CardType", "C", Condicao.EQUAL), OrderBy(mapOf("CardName" to Order.ASC)),
+        val parceiroNegocio = service.get(
+            Filter(mutableListOf(
+                Predicate("CardType", "C", Condicao.EQUAL),
+                Predicate("SalesPersonCode", auth.getIdInt(), Condicao.EQUAL)
+            )),
+            OrderBy(mapOf("CardName" to Order.ASC)),
             page
         ).tryGetPageValues<BusinessPartner>(page)
         return ResponseEntity.ok(parceiroNegocio)

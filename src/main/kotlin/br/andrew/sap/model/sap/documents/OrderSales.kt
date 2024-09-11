@@ -68,9 +68,9 @@ class OrderSales(CardCode: String,
             it.controlAccount = contaControle
         }.also {
             if(this.totalDespesaAdicional().compareTo(BigDecimal.ZERO) > 0){
-                val proporcao = it.totalProdutos().divide(this.totalProdutos(),2,RoundingMode.HALF_UP)
+                val proporcao = it.totalProdutos().divide(this.totalProdutos())
                 it.documentAdditionalExpenses = this.documentAdditionalExpenses.map {
-                    val lineTotal = BigDecimal(it.LineTotal.toString()).multiply(proporcao).toDouble()
+                    val lineTotal = BigDecimal(it.LineTotal.toString()).multiply(proporcao).setScale(2,RoundingMode.HALF_DOWN).toDouble()
                     AdditionalExpenses(it.expenseCode,lineTotal)
                 }.toMutableList()
             }

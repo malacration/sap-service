@@ -50,6 +50,7 @@ class DownPaymentService(env: SapEnvrioment,
             linhas,
             document.getBPL_IDAssignedToInvoice())
         adiantamento.U_venda_futura = contrato.DocEntry;
+        adiantamento.controlAccount = "1.1.2.001.00004"
         return save(adiantamento).tryGetValue<Document>()
     }
 
