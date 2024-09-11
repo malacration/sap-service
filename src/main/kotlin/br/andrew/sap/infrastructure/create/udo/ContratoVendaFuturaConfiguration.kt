@@ -12,6 +12,8 @@ import br.andrew.sap.services.structs.UserFieldsMDService
 import br.andrew.sap.services.structs.UserKeyMDService
 import br.andrew.sap.services.structs.UserObjectsMDService
 import br.andrew.sap.services.structs.UserTablesMDService
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.kotlin.KotlinModule
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Profile
@@ -103,12 +105,22 @@ class ContratoVendaFuturaConfiguration(val userFieldsMDService: UserFieldsMDServ
             "AR_CONTRATO_FUTURO",
             UDOObjType.boud_Document,
             YesNo.tNO)
-        ud.popChildTable(ChildTables("AR_CF_LINHA",ud))
+        ud.popChildTable(ChildTables("AR_CF_LINHA"))
         ud.UserObjectMD_FormColumns.addAll(listOf(
-            FormColumns("Code","Codigo",0),
-            FormColumns("U_orderDocEntry","Pedido Origem",0),
-            FormColumns("U_itemCode","Item code",1),
+            FormColumns("DocEntry","DocEntry",0),
+            FormColumns("DocNum","DocNum",0)
         ))
+
+//        ud.UserObjectMD_FindColumns.addAll(listOf(
+//            FindColumns("CreateDate","CreateDate"),
+//            FindColumns("UpdateDate","UpdateDate"),
+//            FindColumns("U_orderDocEntry","Pedido"),
+//            FindColumns("U_cardCode","Cliente"),
+//            FindColumns("U_dataCriacao","Data de Criação"),
+//            FindColumns("U_valorFrete","Valor Frete"),
+//        ))
+
+        ObjectMapper().registerModule(KotlinModule()).writeValueAsString(ud)
         return ud;
     }
 }

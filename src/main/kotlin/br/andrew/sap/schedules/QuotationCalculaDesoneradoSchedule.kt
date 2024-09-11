@@ -34,11 +34,15 @@ class QuotationCalculaDesoneradoSchedule(
         )
         val resultado = quotationService.get(filter).tryGetValues<Document>()
         resultado.forEach {
-            val update = if(it.discountPercent == null || it.discountPercent!! == 0.0)
-                desoneradoService.aplicaDesonerado(it)
-            else
-                FalhaAoCalcularDesonerado()
-            quotationService.update(update,it.docEntry.toString())
+            try {
+                val update = if(it.discountPercent == null || it.discountPercent!! == 0.0)
+                    desoneradoService.aplicaDesonerado(it)
+                else
+                    FalhaAoCalcularDesonerado()
+                quotationService.update(update,it.docEntry.toString())
+            }catch (e : Throwable){
+                logger.error("erro ao tentar cacular desonerado. DocNum "+it.docNum,e)
+            }
         }
     }
 }

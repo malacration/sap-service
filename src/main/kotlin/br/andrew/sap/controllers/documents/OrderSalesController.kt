@@ -8,6 +8,7 @@ import br.andrew.sap.model.authentication.User
 import br.andrew.sap.model.sap.documents.OrderSales
 import br.andrew.sap.model.exceptions.CreditException
 import br.andrew.sap.model.forca.PedidoVenda
+import br.andrew.sap.model.sap.documents.Invoice
 import br.andrew.sap.services.*
 import br.andrew.sap.services.document.OrdersService
 import br.andrew.sap.services.pricing.ComissaoService

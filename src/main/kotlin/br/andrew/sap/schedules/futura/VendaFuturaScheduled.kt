@@ -36,7 +36,7 @@ class VendaFuturaScheduled(
     val adiantamentoService : DownPaymentService,
     val bankplus : BankPlusService,
     val orderService : OrdersService,
-    @Value("\${venda-futura.utilizacao}") val idUtilizacao : Long,
+    @Value("\${venda-futura.utilizacao:-1}") val idUtilizacao : Long,
     protected val env: SapEnvrioment) {
 
     val logger: Logger = LoggerFactory.getLogger(VendaFuturaScheduled::class.java)
