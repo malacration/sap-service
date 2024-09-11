@@ -7,6 +7,7 @@ import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.databind.PropertyNamingStrategies
 import com.fasterxml.jackson.databind.annotation.JsonNaming
 import com.itextpdf.layout.element.Table
+import org.apache.commons.lang3.mutable.Mutable
 
 @JsonNaming(PropertyNamingStrategies.UpperCamelCaseStrategy::class)
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -33,6 +34,7 @@ class UserDefinedObject(
     private var _UserObjectMD_ChildTables : MutableList<ChildTables> = mutableListOf()
     var UserObjectMD_ChildTables : List<ChildTables> = listOf()
         get() = _UserObjectMD_ChildTables
+
     init {
         if(UserObjectMD_ChildTables != null)
         this._UserObjectMD_ChildTables = UserObjectMD_ChildTables.toMutableList()
@@ -40,7 +42,7 @@ class UserDefinedObject(
 
     fun popChildTable(table : ChildTables){
         val size = UserObjectMD_ChildTables.size
-        (UserObjectMD_ChildTables as MutableList).add(table.also { it.SonNumber = size })
+        (UserObjectMD_ChildTables as MutableList).add(table.also { it.SonNumber = size+1 })
     }
 
     fun popChildTable(vararg table : ChildTables){
@@ -50,16 +52,53 @@ class UserDefinedObject(
     }
 
 
-    var UserObjectMD_FindColumns : MutableList<FindColumns> = mutableListOf(FindColumns(this.ObjectType.getId(),"código"))
+    private var _UserObjectMD_FindColumns : MutableList<FindColumns> = mutableListOf<FindColumns>().also {
+            if(ObjectType.getId() == "DocEntry")
+                it.add(FindColumns("DocNum","DocNum"))
+            else
+                it.add(FindColumns(ObjectType.getId(),ObjectType.getId()))
+        }
+    var UserObjectMD_FindColumns : MutableList<FindColumns> = mutableListOf()
+        get() = _UserObjectMD_FindColumns.also {
+            it.forEachIndexed { index, findColumns ->
+                findColumns.Code = this.Code
+                findColumns.ColumnNumber = index+1
+            }
+        }
+
+    private var _UserObjectMD_FormColumns : MutableList<FormColumns> = mutableListOf()
+
     var UserObjectMD_FormColumns : MutableList<FormColumns> = mutableListOf()
+        get() = _UserObjectMD_FormColumns.also {
+            it.forEachIndexed { index, findColumns ->
+                findColumns.Code = this.Code
+                findColumns.FormColumnNumber = index+1
+            }
+        }
 
     fun getUserObjectMD_EnhancedFormColumns() : List<EnhancedForm> {
-        return UserObjectMD_ChildTables
-            .flatMapIndexed { index: Int, value: ChildTables -> value.getEnhancedForm(ObjectType,index+1) }
-            .toMutableList()
-            .also {
-                it.addAll(UserObjectMD_FormColumns.map { it.getEnhancedForm() }.filter { it.ChildNumber != 0 })
-            }
+        return if(this.EnableEnhancedForm == YesNo.tYES)
+            UserObjectMD_ChildTables
+                .flatMapIndexed { index: Int, value: ChildTables -> value.getEnhancedForm(ObjectType,index+1) }
+                .toMutableList()
+                .also {
+                    it.addAll(
+                        UserObjectMD_FormColumns
+                            .filter { fil -> !it.any {
+                                    fil.FormColumnAlias == it.ColumnAlias && (it.ChildNumber ?: (0 - 1)) == fil.SonNumber
+                                }
+                            }
+                            .map { it.getEnhancedForm() }
+                            .filter { it.ChildNumber != 0 }
+                    )
+
+                    it.forEachIndexed { index, it ->
+                        it.Code = this.Code
+                        it.ColumnNumber = index+1
+                    }
+                }
+        else
+            listOf()
     }
 
     var RebuildEnhancedForm: YesNo = YesNo.tNO
@@ -81,19 +120,25 @@ class UserDefinedObject(
 @JsonNaming(PropertyNamingStrategies.UpperCamelCaseStrategy::class)
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-class ChildTables(val TableName : String, val code : String){
+class ChildTables(val TableName : String, val code : String? = null){
 
     var SonNumber: Int? = null
     val ObjectName : String = TableName
 
-    constructor(tableName : String, ud : UserDefinedObject) : this(tableName,ud.Code)
     fun getEnhancedForm(type: UDOObjType, childNumber: Int) : List<EnhancedForm> {
-        return listOf(
-            EnhancedForm(type.getId(),"Codigo").also { it.ChildNumber = childNumber },
-            EnhancedForm("LineId","LineId").also { it.ChildNumber = childNumber },
-            EnhancedForm("Object","Object").also { it.ChildNumber = childNumber },
-            EnhancedForm("LogInst","LogInst").also { it.ChildNumber = childNumber },
-        )
+
+        return mutableListOf(
+            EnhancedForm(type.getId(),type.getId()),
+            EnhancedForm("LineId","LineId"),
+            EnhancedForm("VisOrder","VisOrder"),
+            EnhancedForm("Object","Object"),
+            EnhancedForm("LogInst","LogInst"),
+        ).also {
+            it.forEach{
+                it.ChildNumber = childNumber
+                it.ColumnIsUsed = YesNo.tNO
+            }
+        }
     }
 }
 
@@ -103,13 +148,13 @@ class ChildTables(val TableName : String, val code : String){
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 class FormColumns(val FormColumnAlias : String, val FormColumnDescription : String, val SonNumber : Int = 0){
     var FormColumnNumber : Int? = null
-    var Editable : YesNo = YesNo.tYES
-    var code : String? = null
+    var Editable : YesNo = if(FormColumnAlias == "DocEntry" || FormColumnAlias == "DocNum") YesNo.tNO else YesNo.tYES
+    var Code : String? = null
 
 
     constructor(FormColumnAlias : String, FormColumnDescription : String, SonNumber : Int, ud : UserDefinedObject)
             : this(FormColumnAlias, FormColumnDescription, SonNumber){
-        this.code = ud.Code
+        this.Code = ud.Code
     }
 
     @JsonIgnore
@@ -129,9 +174,11 @@ class FormColumns(val FormColumnAlias : String, val FormColumnDescription : Stri
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 class FindColumns(val ColumnAlias : String, val ColumnDescription : String){
 
+    var Code : String? = null
+    var ColumnNumber : Int? = null
     @JsonIgnore
     fun getEnhancedForm() : EnhancedForm{
-        return EnhancedForm(ColumnAlias,ColumnDescription)
+        return EnhancedForm(ColumnAlias,ColumnDescription).also { Code = Code }
     }
 }
 
@@ -142,7 +189,11 @@ class FindColumns(val ColumnAlias : String, val ColumnDescription : String){
 class EnhancedForm(val ColumnAlias : String, val ColumnDescription : String){
     var Editable: YesNo = YesNo.tNO
     var ChildNumber : Int? = null
-    var ColumnIsUsed : YesNo = YesNo.tNO
+    var ColumnIsUsed : YesNo = YesNo.tYES
+
+    var Code : String? = null
+    var ColumnNumber : Int? = null
+
 }
 
 enum class UDOObjType {

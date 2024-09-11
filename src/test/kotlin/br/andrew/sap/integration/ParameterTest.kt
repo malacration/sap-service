@@ -10,6 +10,12 @@ class ParameterTest {
     @Test
     fun test(){
         val p = Parameter("windson","jose")
-        Assertions.assertEquals("windson=jose",p.toString())
+        Assertions.assertEquals("windson='jose'",p.toString())
+    }
+
+    @Test
+    fun passandoComString(){
+        val p = Parameter("windson","'jose'")
+        Assertions.assertEquals("windson='jose'",p.toString())
     }
 }
