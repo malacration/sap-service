@@ -18,7 +18,7 @@ class OrderSalesTests {
         }
         Assertions.assertEquals(100.00,order.totalDespesaAdicional().toDouble())
         val retirada = PedidoRetirada(50, listOf(ItemRetirada("item",50.00)))
-        val resultado = order.getQuotationVendaFutura(retirada,"",5)
+        val resultado = order.getQuotationVendaFutura(retirada,5)
         Assertions.assertEquals(50.00,resultado.totalDespesaAdicional().toDouble())
     }
 
@@ -33,7 +33,7 @@ class OrderSalesTests {
 
         // Pedido de retirada proporcional (metade da quantidade)
         val retirada = PedidoRetirada(50, listOf(ItemRetirada("item1", 50.00)))
-        val resultado = order.getQuotationVendaFutura(retirada, "", 2)
+        val resultado = order.getQuotationVendaFutura(retirada, 2)
 
         // O frete proporcional deve ser a metade do frete original (75 / 2 = 37.50)
         Assertions.assertEquals(37.50, resultado.totalDespesaAdicional().toDouble(), "Falha ao verificar o frete proporcional")
@@ -50,12 +50,12 @@ class OrderSalesTests {
 
         // Pedido de retirada que retira 60 de 200 itens (30%)
         val retirada = PedidoRetirada(60, listOf(ItemRetirada("item2", 60.00)))
-        val resultado = order.getQuotationVendaFutura(retirada, "", 3)
+        val resultado = order.getQuotationVendaFutura(retirada,3)
         // Frete proporcional (123.45 * (60/200) = 37.035)
         Assertions.assertEquals(37.03, resultado.totalDespesaAdicional().toDouble(), "Falha ao verificar o frete com arredondamento")
 
         val retirada2 = PedidoRetirada(60, listOf(ItemRetirada("item2", 140.0)))
-        val resultado2 = order.getQuotationVendaFutura(retirada2, "", 3)
+        val resultado2 = order.getQuotationVendaFutura(retirada2, 3)
         Assertions.assertEquals(86.41, resultado2.totalDespesaAdicional().toDouble(), "Falha ao verificar o frete com arredondamento")
 
 
