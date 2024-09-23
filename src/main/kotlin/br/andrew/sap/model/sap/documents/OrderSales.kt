@@ -25,7 +25,6 @@ class OrderSales(CardCode: String,
                  BPL_IDAssignedToInvoice: String)
     : Document(CardCode, DocDueDate, DocumentLines, BPL_IDAssignedToInvoice) {
 
-    //TODO não achei onde fica esse propriedade
     var header : String? = null
 
     override fun toString(): String {
@@ -45,8 +44,7 @@ class OrderSales(CardCode: String,
     }
 
     fun getQuotationVendaFutura(pedidoRetirada: PedidoRetirada, contaControle : String, utilizacao : Int) : Quotation{
-        val itens = pedidoRetirada.itensRetirada
-        val docLines : List<DocumentLines> = itens.map {  retirada ->
+        val docLines : List<DocumentLines> = pedidoRetirada.itensRetirada.map {  retirada ->
             val item = this.DocumentLines
                 .firstOrNull{ it.ItemCode == retirada.itemCode } ?: throw Exception("Erro ao selecionar item para retirada")
             Product(item.ItemCode ?: throw Exception("nao e um produto"),
@@ -68,7 +66,7 @@ class OrderSales(CardCode: String,
             it.controlAccount = contaControle
         }.also {
             if(this.totalDespesaAdicional().compareTo(BigDecimal.ZERO) > 0){
-                val proporcao = it.totalProdutos().divide(this.totalProdutos())
+                val proporcao = it.totalProdutos().divide(this.totalProdutos(),RoundingMode.HALF_DOWN)
                 it.documentAdditionalExpenses = this.documentAdditionalExpenses.map {
                     val lineTotal = BigDecimal(it.LineTotal.toString()).multiply(proporcao).setScale(2,RoundingMode.HALF_DOWN).toDouble()
                     AdditionalExpenses(it.expenseCode,lineTotal)

@@ -23,8 +23,8 @@ class PrecoUnitarioComDesoneracao {
         val minusDiscont = one.minus(discountPercent.divide(sem))
         return if(tax.u_Outros > 0)
             valorAlvo
-                    .divide(minusDiscont,4,RoundingMode.UP)
-                    .divide(rate,4, RoundingMode.UP)
+                    .divide(minusDiscont,4,RoundingMode.HALF_DOWN)
+                    .divide(rate,4, RoundingMode.HALF_DOWN)
         else
             valorAlvo
     }

@@ -17,7 +17,9 @@ import kotlin.reflect.jvm.javaField
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 @JsonDeserialize(using = DocumentLinesDeserializer::class)
-abstract class DocumentLines(var UnitPrice : String, var Quantity : String, var Usage : Int = 9) {
+abstract class DocumentLines(
+    var UnitPrice : String,
+    var Quantity : String, var Usage : Int = 9) {
 
     var DocEntry: Int? = null
     var ItemDescription: String? = null
@@ -43,13 +45,16 @@ abstract class DocumentLines(var UnitPrice : String, var Quantity : String, var 
     @JsonIgnore
     var valorDesonerado : BigDecimal = BigDecimal(0)
 
+    @JsonIgnore
+    var resto: BigDecimal = BigDecimal(0)
+
     abstract fun Duplicate() : DocumentLines
 
 
     @JsonIgnore
     fun total(): BigDecimal {
         val desconto = BigDecimal(1 -(DiscountPercent ?: 0.0)/100)
-        return BigDecimal(UnitPrice.toDouble()).setScale(4,RoundingMode.UP).multiply(BigDecimal(Quantity).multiply(desconto))
+        return BigDecimal(UnitPrice.toDouble()).setScale(4,RoundingMode.HALF_DOWN).multiply(BigDecimal(Quantity).multiply(desconto))
     }
 
     fun aplicaBase(precoBase: Double, idTabela: Int, comissao: Comissao) {

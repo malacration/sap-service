@@ -1,5 +1,6 @@
 package br.andrew.sap.model.sap
 
+import JournalEntry
 import br.andrew.sap.model.enums.YesNo
 import br.andrew.sap.model.sap.documents.base.Document
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
@@ -32,8 +33,7 @@ class InternalReconciliations {
 class InternalReconciliationOpenTransRow(
     var cashDiscount: Double? = null,
     var creditOrDebit: String? = null,
-    @JsonProperty("ReconcileAmount")
-    private var _reconcileAmount: Double? = null,
+    var reconcileAmount: Double? = null,
     var selected: YesNo? = YesNo.tYES,
     var shortName: String? = null,
     var srcObjAbs: Int? = null,
@@ -42,21 +42,15 @@ class InternalReconciliationOpenTransRow(
     var transRowId: Int? = null
 ){
 
-    var reconcileAmount : Double?
-        get() {
-            return if((_reconcileAmount ?: 0.0) < 0)
-                -1*(_reconcileAmount ?: 0.0)
-            else
-                _reconcileAmount
-        }
-        set(value) {
-            _reconcileAmount = value
-        }
-
 }
 
+interface ReconciliationRow{
+    fun transNumReconciliation() : Int
+}
+class InternalReconciliationsBuilder(val deb : ReconciliationRow, val cred : ReconciliationRow, val total : Double){
 
-class InternalReconciliationsBuilder(val deb : Document, val cred : Document){
+    private var _debitTransRowId = 0
+    private var _creditTransRowId = 0
 
     fun build() : InternalReconciliations{
         return InternalReconciliations().also {
@@ -65,19 +59,31 @@ class InternalReconciliationsBuilder(val deb : Document, val cred : Document){
         }
     }
 
+    fun setDebitTransRowId(transRowId : Int): InternalReconciliationsBuilder {
+        this._debitTransRowId = transRowId
+        return this
+    }
+
+    fun setCreditTransRowId(transRowId : Int): InternalReconciliationsBuilder {
+        this._creditTransRowId = transRowId
+        return this
+    }
+
     private fun getDebit() : InternalReconciliationOpenTransRow {
         return InternalReconciliationOpenTransRow().also {
             it.creditOrDebit = "codDebit"
-            it.transId = deb.TransNum
-            it.reconcileAmount = deb.DocTotal?.toDoubleOrNull()
+            it.transId = deb.transNumReconciliation()
+            it.reconcileAmount = total
+            it.transRowId = _debitTransRowId
         }
     }
 
     private fun getCredit() : InternalReconciliationOpenTransRow {
         return InternalReconciliationOpenTransRow().also {
             it.creditOrDebit = "codCredit"
-            it.transId = cred.TransNum
-            it.reconcileAmount = cred.DocTotal?.toDoubleOrNull()
+            it.transId = cred.transNumReconciliation()
+            it.reconcileAmount = total
+            it.transRowId = _creditTransRowId
         }
     }
 }
