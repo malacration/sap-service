@@ -128,7 +128,7 @@ class PrecoUnitarioComDesoneracaoTest {
         val resultado = PrecoUnitarioComDesoneracao().calculaPreco(precoAlvo,imposto)
         val rate = imposto.valorImposto(resultado)
         Assertions.assertEquals("0.0720", imposto.rateBaseOutro().toString())
-        Assertions.assertEquals("107.7587", resultado.toString())
+        Assertions.assertEquals("107.758t", resultado.toString())
         Assertions.assertEquals("7.76", rate.toString())
     }
 
