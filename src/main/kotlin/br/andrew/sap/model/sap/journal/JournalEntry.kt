@@ -1,3 +1,4 @@
+import br.andrew.sap.model.sap.ReconciliationRow
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonProperty
@@ -7,7 +8,7 @@ import com.fasterxml.jackson.databind.annotation.JsonNaming
 @JsonNaming(PropertyNamingStrategies.UpperCamelCaseStrategy::class)
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-class JournalEntry(val journalEntryLines : List<JournalEntryLines>, val memo : String){
+class JournalEntry(val journalEntryLines : List<JournalEntryLines>, val memo : String) : ReconciliationRow {
 
     var taxDate : String? = null
     var ReferenceDate : String? = null
@@ -15,6 +16,7 @@ class JournalEntry(val journalEntryLines : List<JournalEntryLines>, val memo : S
     var OriginalJournal : String? = null
     var Original : Int? = null
     var U_Atualizar_Observacao : Int? = null
+    var TransactionCode : String? = null
 
 
     var Reference : String? = null
@@ -39,4 +41,8 @@ class JournalEntry(val journalEntryLines : List<JournalEntryLines>, val memo : S
         ),
         memo
     )
+
+    override fun transNumReconciliation(): Int {
+        return this.JdtNum ?:throw Exception("Numero do LC esta null")
+    }
 }

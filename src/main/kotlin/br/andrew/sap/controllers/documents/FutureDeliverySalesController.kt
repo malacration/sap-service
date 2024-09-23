@@ -19,17 +19,18 @@ import org.springframework.web.bind.annotation.RestController
 @RequestMapping("future-sales")
 class FutureDeliverySalesController(val invoiceService: InvoiceService) {
 
-    @GetMapping("/{id}/entrada")
+    @GetMapping("/{id}/saida")
     fun entrada(@PathVariable id: Int, page : Pageable): Page<Invoice>?{
         return invoiceService.findInvoiceById(id, page)
     }
 
-    @GetMapping("contrato-venda-futura/")
-    fun get(auth : Authentication, @RequestParam docEntry: Int): ResponseEntity<List<Invoice>> {
+    @GetMapping("/contrato-venda-futura/{idContrato}")
+    fun get(auth : Authentication, @PathVariable idContrato: Int): ResponseEntity<List<Invoice>> {
         if(!(auth is User))
             return ResponseEntity.noContent().build()
         val predicados = mutableListOf(
-            Predicate("U_venda_futura", docEntry, Condicao.EQUAL),
+            Predicate("U_venda_futura", idContrato, Condicao.EQUAL),
+            Predicate("DownPaymentAmountSC", 0, Condicao.EQUAL),
         )
         return ResponseEntity.ok(invoiceService
             .get(Filter(predicados), OrderBy(mapOf("DocEntry" to Order.DESC)))

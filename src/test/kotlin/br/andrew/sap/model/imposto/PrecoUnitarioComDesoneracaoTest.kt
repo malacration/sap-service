@@ -46,7 +46,7 @@ class PrecoUnitarioComDesoneracaoTest {
         Assertions.assertEquals(precoAlvo.setScale(2),
             resultado.minus(desonerado)
                 .multiply(BigDecimal("0.95"))
-                .setScale(2,RoundingMode.UP))
+                .setScale(2,RoundingMode.HALF_DOWN))
     }
 
     @Test
@@ -89,7 +89,7 @@ class PrecoUnitarioComDesoneracaoTest {
         val desconto = BigDecimal("10")
 
         val resultado = PrecoUnitarioComDesoneracao().calculaPreco(precoAlvo,imposto,desconto)
-        Assertions.assertEquals("134.6803", resultado.toString())
+        Assertions.assertEquals("134.6801", resultado.toString())
     }
 
 
@@ -128,7 +128,42 @@ class PrecoUnitarioComDesoneracaoTest {
         val resultado = PrecoUnitarioComDesoneracao().calculaPreco(precoAlvo,imposto)
         val rate = imposto.valorImposto(resultado)
         Assertions.assertEquals("0.0720", imposto.rateBaseOutro().toString())
-        Assertions.assertEquals("107.7587", resultado.toString())
+        Assertions.assertEquals("107.7586", resultado.toString())
         Assertions.assertEquals("7.76", rate.toString())
+    }
+
+
+    @Test
+    fun desoneradoArredondamento(){
+        val precoAlvo = BigDecimal("93.50")
+        val imposto = SalesTaxAuthorities(0,
+            19.5,
+            0.0,
+            0.0,
+            100.00)
+        val resultado = PrecoUnitarioComDesoneracao().calculaPreco(precoAlvo,imposto)
+        Assertions.assertEquals("0.1950", imposto.rateBaseOutro().toString())
+        val valorDosProdutos = resultado.multiply(BigDecimal("50"))
+        val valorDaDesoneracaoDoIcms = valorDosProdutos.multiply(imposto.rateBaseOutro())
+        Assertions.assertEquals("4675.00", valorDosProdutos.minus(valorDaDesoneracaoDoIcms).setScale(2,RoundingMode.HALF_UP).toString())
+        Assertions.assertEquals("116.1491", resultado.toString())
+    }
+
+
+    @Test
+    fun testeDesoneradoValoresGrande(){
+        val precoAlvo = BigDecimal("935000.00")
+        val imposto = SalesTaxAuthorities(0,
+            19.5,
+            0.0,
+            0.0,
+            100.00)
+        val resultado = PrecoUnitarioComDesoneracao().calculaPreco(precoAlvo,imposto)
+        Assertions.assertEquals("0.1950", imposto.rateBaseOutro().toString())
+        Assertions.assertEquals("1161490.6832", resultado.toString())
+        val valorDaDesoneracaoDoIcms = resultado.multiply(imposto.rateBaseOutro()).setScale(2,RoundingMode.HALF_UP)
+        Assertions.assertEquals("226490.68", valorDaDesoneracaoDoIcms.toString())
+        Assertions.assertEquals("935000.00", resultado.minus(valorDaDesoneracaoDoIcms).setScale(2,RoundingMode.HALF_UP).toString())
+        Assertions.assertEquals("1161490.6832", resultado.toString())
     }
 }

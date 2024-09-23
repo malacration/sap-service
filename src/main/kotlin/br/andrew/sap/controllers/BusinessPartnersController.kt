@@ -7,12 +7,17 @@ import br.andrew.sap.model.sap.Attachment
 import br.andrew.sap.model.ContactOpaque
 import br.andrew.sap.model.authentication.User
 import br.andrew.sap.model.forca.Cliente
+import br.andrew.sap.model.sap.documents.OrderSales
 import br.andrew.sap.model.sap.partner.BusinessPartner
 import br.andrew.sap.model.sap.partner.BusinessPartnerSlin
 import br.andrew.sap.model.sap.partner.BusinessPartnerType
 import br.andrew.sap.model.sap.partner.ReferenciaComercial
+import br.andrew.sap.model.self.vendafutura.Contrato
 import br.andrew.sap.services.*
+import br.andrew.sap.services.document.OrdersService
 import br.andrew.sap.services.security.OneTimePasswordService
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.Pageable
 import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PostAuthorize
 import org.springframework.security.core.Authentication
@@ -30,6 +35,7 @@ import org.springframework.web.multipart.MultipartFile
 @RequestMapping("business-partners")
 class BusinessPartnersController(
     val service : BusinessPartnersService,
+    val OrderService : OrdersService,
     val refService : ReferenciaComercialService,
     val atualizacao: AtualizacaoCadastralService,
     val anexoController : AttachmentController,
@@ -121,4 +127,33 @@ class BusinessPartnersController(
     fun contact(@PathVariable cpfCnpj : String, @RequestParam(name = "type", defaultValue = "C") tipo : BusinessPartnerType): List<ContactOpaque> {
         return service.getByCpfCnpj(cpfCnpj,tipo).getContactOpaque()
     }
+
+    @GetMapping("/cientes")
+    fun get(auth: Authentication, page: Pageable): ResponseEntity<Page<BusinessPartner>> {
+        if (auth !is User)
+            return ResponseEntity.noContent().build()
+        val parceiroNegocio = service.get(
+            Filter(mutableListOf(
+                Predicate("CardType", "C", Condicao.EQUAL),
+                Predicate("SalesPersonCode", auth.getIdInt(), Condicao.EQUAL)
+            )),
+            OrderBy(mapOf("CardName" to Order.ASC)),
+            page
+        ).tryGetPageValues<BusinessPartner>(page)
+        return ResponseEntity.ok(parceiroNegocio)
+    }
+
+    @GetMapping("pedido-venda-parceiro/")
+    fun get(auth : Authentication, @RequestParam CardCode: String): ResponseEntity<List<OrderSales>> {
+        if(!(auth is User))
+            return ResponseEntity.noContent().build()
+        val predicados = mutableListOf(
+            Predicate("CardCode", "${CardCode}", Condicao.EQUAL),
+        )
+        return ResponseEntity.ok(OrderService
+            .get(Filter(predicados), OrderBy(mapOf("DocEntry" to Order.DESC)))
+            .tryGetValues<OrderSales>()
+        )
+    }
+
 }

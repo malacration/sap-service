@@ -35,6 +35,9 @@ class FilialVendedorConfiguration(val userFieldsMDService: UserFieldsMDService,
                     ValuesMd("2","Matriz")
                 ) },
         ).forEach { userFieldsMDService.findOrCreate(it) }
+        //TODO fazer registro do objeto
+        //TODO procurar onde esta adicionado filial na tabela de vendedores e remover (ou vincular com esse objeto)
+        //TODO fazer select que pega as filiais do sistema e preenche os valores do MD da filial
     }
 
 

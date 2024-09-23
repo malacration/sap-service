@@ -1,9 +1,11 @@
 package br.andrew.sap.services.invent
 
+import br.andrew.sap.infrastructure.configurations.CacheConfig
 import br.andrew.sap.infrastructure.configurations.invent.BankPlusEnvrioment
 import br.andrew.sap.model.bankplus.Boleto
 import br.andrew.sap.model.bankplus.Empresa
 import br.andrew.sap.model.sap.documents.Invoice
+import org.slf4j.LoggerFactory
 import org.springframework.core.ParameterizedTypeReference
 import org.springframework.http.RequestEntity
 import org.springframework.stereotype.Service
@@ -14,6 +16,8 @@ import org.springframework.web.client.RestTemplate
 class BankPlusService(val envrioment: BankPlusEnvrioment, val restTemplate: RestTemplate) {
 
     val url = envrioment.host
+
+    private val logger = LoggerFactory.getLogger(BankPlusService::class.java)
     fun getBoletosBy(idFilial : String, docEntry : String): List<Boleto> {
         val objType = object: ParameterizedTypeReference<List<Boleto>> () {}
         return getEmpresas()
@@ -24,7 +28,7 @@ class BankPlusService(val envrioment: BankPlusEnvrioment, val restTemplate: Rest
                         .header("Authorization",envrioment.token)
                         .build(), objType).body ?: listOf()
                 } catch (t : HttpClientErrorException){
-                    t.printStackTrace()
+                    logger.error("Erro ao pegar boleto",t)
                     if(!t.responseBodyAsString.contains("Nenhum boleto encontrado"))
                         throw t
                     listOf()
@@ -42,6 +46,16 @@ class BankPlusService(val envrioment: BankPlusEnvrioment, val restTemplate: Rest
                 .body ?: throw Exception("Nao retornou nenhuma empresa")
         }
         return empresas;
+    }
+
+    fun geraBoletos(idFilial : Int, entryId : Int, parcela : Int, tipoDocumento : OrigemBoletoEnum): ByteArray {
+        val empresa = getEmpresas().firstOrNull { it.codigoDaFilial == idFilial.toString() } ?:throw Exception("Filial nao encontrada")
+        val url = "$url/api/v2/${envrioment.base}/cobranca/${empresa.codigoDaFilial}/${tipoDocumento}/$entryId/boletos?parcela=$parcela&impresso=S"
+        return restTemplate.exchange(
+            RequestEntity.post(url)
+                .header("Authorization", envrioment.token)
+                .build(),ByteArray::class.java)
+            .body ?: throw Exception("Nao retornou nenhuma empresa")
     }
 
     fun cancelarBoleto(boleto : Boleto): Any? {
@@ -73,4 +87,10 @@ class BankPlusService(val envrioment: BankPlusEnvrioment, val restTemplate: Rest
         var empresas : List<Empresa> = listOf()
     }
 
+}
+
+enum class OrigemBoletoEnum{
+    notafiscal,
+    adiantamento,
+    lcm
 }

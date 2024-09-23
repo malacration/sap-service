@@ -36,7 +36,7 @@ class Contrato(
         return itens.map{ it.total() }
             .sumOf { it }
             .plus(BigDecimal(U_valorFrete.toString()))
-            .setScale(2, RoundingMode.HALF_UP)
+            .setScale(2, RoundingMode.HALF_DOWN)
     }
 
     var DocEntry : Int? = null

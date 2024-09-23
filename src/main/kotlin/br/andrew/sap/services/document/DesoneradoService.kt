@@ -8,6 +8,8 @@ import br.andrew.sap.services.tax.SalesTaxAuthoritiesService
 import br.andrew.sap.services.tax.SalesTaxCodeService
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
+import java.math.BigDecimal
+import java.math.RoundingMode
 
 @Service
 class DesoneradoService(val taxCodeService: SalesTaxCodeService,
@@ -31,6 +33,16 @@ class DesoneradoService(val taxCodeService: SalesTaxCodeService,
                         p.UnitPrice = PrecoUnitarioComDesoneracao().calculaPreco(p, taxParam).toString()
                         if(tipoImpostoFuturo.contains(tax.STAType))
                             p.valorDesonerado = taxParam.valorImposto(p)
+
+                        val totalEsperado = BigDecimal(p.U_preco_negociado ?: throw Exception("Informe o preco negociado"))
+                            .multiply(BigDecimal(p.Quantity))
+                            .setScale(2,RoundingMode.HALF_UP)
+
+                        val totalObtido = BigDecimal(p.UnitPrice)
+                            .multiply(BigDecimal(p.Quantity))
+                            .minus(taxParam.valorImposto(p))
+                            .setScale(2,RoundingMode.HALF_UP)
+                        p.resto = p.resto.plus(totalObtido.minus(totalEsperado))
                     }
                 }
         }

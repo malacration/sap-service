@@ -28,11 +28,11 @@ class ProvisioningConfiguration(val queryService: QuerysServices) {
         val resources = resolver.getResources("classpath:/views/**/*.sql") // Ajuste o caminho conforme necessário
 
         resources.forEach { resource ->
+            logger.info("Atualizando view {${resource.filename}}")
             val inputStream = resource.inputStream
             val content = BufferedReader(InputStreamReader(inputStream)).use { it.readText() }
             if(resource.filename != null)
                 queryService.replace(Query(resource.filename!!, resource.filename!!, content))
-            logger.info("Atualizando view {${resource.filename}}")
         }
         return "true"
     }

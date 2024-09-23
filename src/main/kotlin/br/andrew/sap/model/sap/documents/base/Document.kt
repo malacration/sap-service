@@ -4,6 +4,8 @@ import br.andrew.sap.model.enums.Cancelled
 import br.andrew.sap.model.WarehouseDefault
 import br.andrew.sap.model.sap.documents.DocumentStatus
 import br.andrew.sap.model.forca.EnderecoId
+import br.andrew.sap.model.sap.ReconciliationRow
+import br.andrew.sap.model.sap.documents.base.adiantamento.DownPaymentsToDraw
 import br.andrew.sap.model.uzzipay.DataRetonroPixQrCode
 import br.andrew.sap.model.uzzipay.RequestPixDueDate
 import br.andrew.sap.model.uzzipay.Transaction
@@ -27,7 +29,7 @@ open class Document(val CardCode : String,
                     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "YYY-MM-dd", timezone = "UTC")
                     val DocDueDate : String?,
                     val DocumentLines : List<DocumentLines>,
-                    private val BPL_IDAssignedToInvoice : String) {
+                    private val BPL_IDAssignedToInvoice : String) : ReconciliationRow{
 
 
     var comments: String? = null
@@ -69,6 +71,9 @@ open class Document(val CardCode : String,
     var U_assinatura : String = "0"
     var U_rd_station : String? = null
     var U_venda_futura: Int? = null
+    var downPaymentsToDraw : List<DownPaymentsToDraw>? = null
+    var TransNum : Int? = null
+    var SequenceCode : Int? = null
 
     @JsonProperty("BPL_IDAssignedToInvoice")
     fun getBPL_IDAssignedToInvoice(): String {
@@ -122,6 +127,10 @@ open class Document(val CardCode : String,
         return DocumentLines.sumOf { it.totalNegociado() }.setScale(2)
     }
 
+    fun totalProdutos() : BigDecimal {
+        return DocumentLines.sumOf { it.total() }.setScale(2,RoundingMode.HALF_UP)
+    }
+
     fun totalDespesaAdicional(): BigDecimal {
         return documentAdditionalExpenses.sumOf { BigDecimal(it.LineTotal) }
     }
@@ -129,6 +138,11 @@ open class Document(val CardCode : String,
 
     fun presumeDesonerado(rate : Double) : Double {
         return DocumentLines.sumOf { it.presumeDesonerado(rate) }
+    }
+
+    @JsonIgnore
+    override fun transNumReconciliation(): Int {
+        return this.TransNum ?: throw Exception("Nao existe numero de transaction")
     }
 
     override fun toString(): String {
@@ -158,10 +172,15 @@ open class Document(val CardCode : String,
         this.discountPercent = null
         this.DocTotal = null
         this.Address = null
-        val desonerado = DocumentLines.sumOf { it.valorDesonerado }.setScale(4,RoundingMode.HALF_UP)
+        val desonerado = DocumentLines.sumOf { it.valorDesonerado + it.resto }.setScale(4,RoundingMode.HALF_UP)
         val totalAntesDesconto = BigDecimal(total()).setScale(2,RoundingMode.HALF_UP)
-        this.discountPercent = desonerado.divide(totalAntesDesconto, 6,RoundingMode.HALF_UP)
-            .multiply(BigDecimal(100)).toDouble()
+        this.discountPercent =
+            if(totalAntesDesconto.compareTo(BigDecimal.ZERO) == 0 )
+                0.0
+            else
+                desonerado
+                    .divide(totalAntesDesconto, 6,RoundingMode.HALF_UP)
+                    .multiply(BigDecimal(100)).toDouble()
     }
 
     fun associaEndereco(endereco: EnderecoId){

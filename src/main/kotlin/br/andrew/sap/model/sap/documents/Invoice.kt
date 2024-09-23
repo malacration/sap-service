@@ -4,6 +4,7 @@ import br.andrew.sap.model.sap.documents.base.Document
 import br.andrew.sap.model.sap.documents.base.DocumentLines
 import br.andrew.sap.services.journal.EntryOriginalJournal
 import com.fasterxml.jackson.annotation.JsonFormat
+import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.databind.PropertyNamingStrategies
@@ -31,6 +32,7 @@ class Invoice(CardCode: String,
         return "OrderSales(CardCode='$CardCode', Branch='${getBPL_IDAssignedToInvoice()}', docEntry=$docEntry, docNum=$docNum, pedido_forca=$u_id_pedido_forca)"
     }
 
+    @JsonIgnore
     override fun getMemoForJournal() : String{
         return getDefaultForJournal(this,"Nota fiscal de Saída")
     }

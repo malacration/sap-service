@@ -3,10 +3,12 @@ package br.andrew.sap.model.sap.documents
 import br.andrew.sap.model.sap.documents.base.Document
 import br.andrew.sap.model.sap.documents.base.DocumentLines
 import com.fasterxml.jackson.annotation.JsonFormat
+import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.databind.PropertyNamingStrategies
 import com.fasterxml.jackson.databind.annotation.JsonNaming
+import java.math.BigDecimal
 
 @JsonNaming(PropertyNamingStrategies.UpperCamelCaseStrategy::class)
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -22,6 +24,12 @@ class DownPayment(CardCode: String,
     var header : String? = null
     val DownPaymentType = "dptInvoice"
 
+    @JsonIgnore
+    var apropriado: BigDecimal = BigDecimal.ZERO
+
+    fun adiantamentoDisponivel() : BigDecimal{
+        return BigDecimal(this.DocTotal)-apropriado
+    }
     override fun toString(): String {
         return "DownPayment(CardCode='$CardCode', Branch='${getBPL_IDAssignedToInvoice()}', docEntry=$docEntry, docNum=$docNum, pedido_forca=$u_id_pedido_forca)"
     }
