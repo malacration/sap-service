@@ -28,7 +28,6 @@ class ContratoVendaFuturaController(
     val service : ContratoVendaFuturaService,
     val pedidoService : OrdersService,
     val cotacaoController : QuotationsController){
-
     val logger = LoggerFactory.getLogger(ContratoVendaFuturaController::class.java)
 
     @GetMapping("")
@@ -43,9 +42,7 @@ class ContratoVendaFuturaController(
     }
 
     @PostMapping("pedido-retirada")
-    fun teste(@RequestBody pedidoRetirada : PedidoRetirada, auth : Authentication) : ResponseEntity<Document?> {
-        //TODO fazer parametro desse valor
-        val controlAccount = "2.1.2.001.00005"
+    fun pedidoRetirada(@RequestBody pedidoRetirada : PedidoRetirada, auth : Authentication) : ResponseEntity<Document?> {
         val utilizacao = 9
         if(auth !is User)
             return ResponseEntity.noContent().build()
@@ -58,7 +55,7 @@ class ContratoVendaFuturaController(
             throw Exception("O contrato nao foi encontrado")
         val contrato = contratos.firstOrNull() ?: throw Exception("Erro ao consultar contrato")
         val baseDocument = pedidoService.getById(contrato.U_orderDocEntry).tryGetValue<OrderSales>()
-        val documento = baseDocument.getQuotationVendaFutura(pedidoRetirada,controlAccount,utilizacao)
+        val documento = baseDocument.getQuotationVendaFutura(pedidoRetirada,utilizacao)
         return ResponseEntity.ok(cotacaoController.saveForAngular(documento,auth))
     }
 }

@@ -28,29 +28,29 @@ import java.math.BigDecimal
 @Service
 class DownPaymentService(env: SapEnvrioment,
                          val sqlQueriesService: SqlQueriesService,
-                         @Value("\${adiantamento.itemcode:none}")
-                         val itemAdiantamento : String,
+                         @Value("\${adiantamento-vf.itemcode:none}") val vfItemAdiantamento : String,
+                         @Value("\${adiantamento-vf.formaPagamento:none}") vfFormaPagamento : String,
                          restTemplate: RestTemplate,
                          authService: AuthService,
 ) :
         EntitiesService<Document>(env, restTemplate, authService) {
+
+    val vfFormaPagamento: String? = if(vfFormaPagamento == "none")  null else vfFormaPagamento
 
     override fun path(): String {
         return "/b1s/v1/DownPayments"
     }
 
     fun adiantamentosVendaFutura(document: Document, contrato: Contrato, paymentInfo: PaymentDueDates): Document {
-        //TODO colocar item de adiantamento como parametro
-        //TODO configurar forma de pagamento da venda futura (boleto)
-        //TODO frete nao esta sendo considerado
-        val linhas = listOf(Product("FIN0000002",paymentInfo.value.toString(),"1"))
+        val linhas = listOf(Product(vfItemAdiantamento,paymentInfo.value.toString(),"1"))
         val adiantamento = DownPayment(
             document.CardCode,
             paymentInfo.dueDate.toString(),
             linhas,
             document.getBPL_IDAssignedToInvoice())
+        if(vfFormaPagamento != null)
+            adiantamento.paymentMethod = vfFormaPagamento
         adiantamento.U_venda_futura = contrato.DocEntry;
-        adiantamento.controlAccount = "1.1.2.001.00004"
         return save(adiantamento).tryGetValue<Document>()
     }
 
