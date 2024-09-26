@@ -3,11 +3,8 @@ package br.andrew.sap.schedules.futura
 import JournalEntry
 import br.andrew.sap.infrastructure.odata.Condicao
 import br.andrew.sap.infrastructure.odata.Filter
-import br.andrew.sap.infrastructure.odata.Parameter
 import br.andrew.sap.infrastructure.odata.Predicate
 import br.andrew.sap.model.sap.InternalReconciliationsBuilder
-import br.andrew.sap.model.sap.documents.DocumentStatus
-import br.andrew.sap.model.sap.documents.DownPayment
 import br.andrew.sap.model.sap.documents.Invoice
 import br.andrew.sap.model.sap.documents.base.Document
 import br.andrew.sap.model.sap.documents.base.Product

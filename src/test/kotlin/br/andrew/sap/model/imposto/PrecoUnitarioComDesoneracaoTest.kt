@@ -31,6 +31,20 @@ class PrecoUnitarioComDesoneracaoTest {
     }
 
     @Test
+    fun semImpostoComDesconto(){
+        val precoAlvo = BigDecimal("100")
+        val imposto = SalesTaxAuthorities(0,
+            17.5,
+            0.0,
+            0.0,
+            0.0)
+        val valorEsperado = BigDecimal("111.1111")
+        val resultado = PrecoUnitarioComDesoneracao().calculaPreco(precoAlvo,imposto, BigDecimal(10))
+
+        Assertions.assertEquals(valorEsperado, resultado)
+    }
+
+    @Test
     fun disconto(){
         val precoAlvo = BigDecimal("131.6700")
         val imposto = SalesTaxAuthorities(0,
@@ -58,7 +72,7 @@ class PrecoUnitarioComDesoneracaoTest {
                 0.0,
                 0.00)
 
-        val valorEsperado = BigDecimal("93.65")
+        val valorEsperado = BigDecimal("93.6500")
         val resultado = PrecoUnitarioComDesoneracao().calculaPreco(precoAlvo,imposto)
         Assertions.assertEquals(valorEsperado, resultado)
     }
@@ -73,7 +87,7 @@ class PrecoUnitarioComDesoneracaoTest {
                 0.0,
                 0.00)
 
-        val valorEsperado = BigDecimal("93.65")
+        val valorEsperado = BigDecimal("93.6500")
         val resultado = PrecoUnitarioComDesoneracao().calculaPreco(precoAlvo,imposto)
         Assertions.assertEquals(valorEsperado, resultado)
     }

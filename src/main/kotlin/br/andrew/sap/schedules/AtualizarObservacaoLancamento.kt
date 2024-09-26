@@ -39,7 +39,7 @@ class AtualizarObservacaoLancamento(
                 logger.info("Atualizando memo para o jornal ${journalEntry.JdtNum}")
                 journalMemoHandle.updateMemoJournal(journalEntry.JdtNum!!)
             }catch (e : Exception){
-                logger.error("Erro ao atualizar a descricao do LC ${journalEntry.JdtNum}")
+                logger.error("Erro ao atualizar a descricao do LC ${journalEntry.JdtNum}",e)
             }
         }
     }

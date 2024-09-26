@@ -27,5 +27,6 @@ class PrecoUnitarioComDesoneracao {
                     .divide(rate,4, RoundingMode.HALF_DOWN)
         else
             valorAlvo
+                .divide(minusDiscont,4,RoundingMode.HALF_DOWN)
     }
 }
