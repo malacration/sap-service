@@ -38,7 +38,12 @@ class DesoneradoService(val taxCodeService: SalesTaxCodeService,
                             .multiply(BigDecimal(p.Quantity))
                             .setScale(2,RoundingMode.HALF_UP)
 
+                        val desconto = BigDecimal("1")
+                            .minus(BigDecimal(p.DiscountPercent?: 0.0).divide(BigDecimal("100")))
+
+
                         val totalObtido = BigDecimal(p.UnitPrice)
+                            .multiply(desconto)
                             .multiply(BigDecimal(p.Quantity))
                             .minus(taxParam.valorImposto(p))
                             .setScale(2,RoundingMode.HALF_UP)

@@ -23,7 +23,7 @@ class QuotationCalculaDesoneradoSchedule(
     val desoneradoService: DesoneradoService,
     val quotationService : QuotationsService) {
 
-    val logger: Logger = LoggerFactory.getLogger(DraftCalculaDesoneradoSchedule::class.java)
+    val logger: Logger = LoggerFactory.getLogger(QuotationCalculaDesoneradoSchedule::class.java)
 
     @Scheduled(fixedDelay = 15000)
     fun execute() {
