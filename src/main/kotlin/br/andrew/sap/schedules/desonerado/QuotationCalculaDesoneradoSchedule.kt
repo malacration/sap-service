@@ -1,4 +1,4 @@
-package br.andrew.sap.schedules
+package br.andrew.sap.schedules.desonerado
 
 import br.andrew.sap.infrastructure.odata.Condicao
 import br.andrew.sap.infrastructure.odata.Filter
