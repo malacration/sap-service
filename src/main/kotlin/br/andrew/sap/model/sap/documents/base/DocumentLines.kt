@@ -40,6 +40,7 @@ abstract class DocumentLines(
     var MeasureUnit : String? = null
     var PriceList : Int? = null
     var ListName : String? = null
+    var OnHand : Int? = null
     var LineTotal : Double? = null
 
     @JsonIgnore

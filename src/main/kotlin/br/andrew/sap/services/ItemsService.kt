@@ -34,12 +34,13 @@ class ItemsService(env : SapEnvrioment,
             .firstOrNull()?.Price ?: throw Exception("Price[$priceListId] not found; ItemCode[$itemCode]")
     }
 
-    fun fullSearchText(keyWord : String, idVendedor : Int): NextLink<Product> {
+    fun fullSearchText(keyWord : String, idVendedor : Int, branchId : Int): NextLink<Product> {
         val parameters = listOf(
             Parameter("search","'%${keyWord.uppercase()}%'"),
             Parameter("zero",0),
             Parameter("yes","'Y'"),
-            Parameter("vendedor",idVendedor)
+            Parameter("vendedor",idVendedor),
+            Parameter("branchId",branchId)
         )
         if(keyWord.contains("SQLQueries('produto-tabela.sql')"))
             return sqlQueriesService.nextLink(keyWord)!!.tryGetNextValues<Product>()

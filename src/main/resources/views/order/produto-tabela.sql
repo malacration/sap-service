@@ -7,12 +7,15 @@ SELECT
 	c."U_desconto",
 	"OITM"."SalUnitMsr",
 	(SELECT "FirmName"  FROM OMRC WHERE "FirmCode" = -1) AS "MARCA",
-	"OITM"."UserText"
+	"OITM"."UserText",
+	"OITW"."OnHand"
 FROM
 	"OITM"
 	INNER JOIN "ITM1" on("ITM1"."ItemCode" = "OITM"."ItemCode")
 	INNER JOIN OPLN p on(p."ListNum" = "ITM1"."PriceList")
 	INNER JOIN "@COMISSAO" c on(c."Code" = p."U_tipoComissao")
+	INNER JOIN "OITW" on "OITW"."ItemCode" = "OITM"."ItemCode"
+    INNER JOIN "OBPL" on "OBPL"."DflWhs" = "OITW"."WhsCode"
 WHERE
     (
         "OITM"."ItemCode" like :search
@@ -21,6 +24,7 @@ WHERE
     )
     AND "ITM1"."Price" > :zero
     AND p."U_publica_forca" = 1
+    AND "OBPL"."BPLId" = :branchId
 	AND "ITM1"."PriceList" IN(SELECT
                               	"OPLN"."ListNum"
                               FROM
