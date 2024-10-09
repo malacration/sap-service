@@ -1,4 +1,4 @@
-package br.andrew.sap.schedules
+package br.andrew.sap.schedules.desonerado
 
 import br.andrew.sap.infrastructure.odata.Condicao
 import br.andrew.sap.infrastructure.odata.Filter
@@ -6,10 +6,6 @@ import br.andrew.sap.infrastructure.odata.Predicate
 import br.andrew.sap.model.sap.documents.base.Document
 import br.andrew.sap.services.document.DesoneradoService
 import br.andrew.sap.services.document.QuotationsService
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties
-import com.fasterxml.jackson.annotation.JsonInclude
-import com.fasterxml.jackson.databind.PropertyNamingStrategies
-import com.fasterxml.jackson.databind.annotation.JsonNaming
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
@@ -45,13 +41,4 @@ class QuotationCalculaDesoneradoSchedule(
             }
         }
     }
-}
-
-
-@JsonNaming(PropertyNamingStrategies.UpperCamelCaseStrategy::class)
-@JsonIgnoreProperties(ignoreUnknown = true)
-@JsonInclude(JsonInclude.Include.NON_EMPTY)
-class FalhaAoCalcularDesonerado(){
-    var comments = "O desconto precisa ser removido para o calculo funcionar adequadamente"
-    var u_pedido_update = "0"
 }

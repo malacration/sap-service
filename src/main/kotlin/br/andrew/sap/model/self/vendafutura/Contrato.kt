@@ -24,7 +24,6 @@ class Contrato(
     val itens : List<Item>,
     val U_vendedor : Int,
     val U_cardName : String,
-    //TODO testar valor maior que zero para frete
     val U_valorFrete  : Double = 0.0,
     dataCriacao : Date = Date()
 ) {

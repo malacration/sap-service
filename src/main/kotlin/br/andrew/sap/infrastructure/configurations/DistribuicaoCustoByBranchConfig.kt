@@ -28,7 +28,6 @@ class DistribuicaoCustoByBranchConfig(@Value("\${distibuicao.custo:[]}") val dis
         }
     }
 
-    //TODO fazer uma configuração do sistema para isso
     companion object{
         var distibucoesCustos : List<DistribuicaoCustoByBranch> = listOf(
                 DistribuicaoCustoByBranch("2","500","50000201"),

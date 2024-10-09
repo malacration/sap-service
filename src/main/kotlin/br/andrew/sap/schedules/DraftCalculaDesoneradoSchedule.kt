@@ -5,6 +5,7 @@ import br.andrew.sap.infrastructure.odata.Filter
 import br.andrew.sap.infrastructure.odata.Predicate
 import br.andrew.sap.model.sap.SapUser
 import br.andrew.sap.model.sap.documents.base.Document
+import br.andrew.sap.schedules.desonerado.FalhaAoCalcularDesonerado
 import br.andrew.sap.services.DraftsService
 import br.andrew.sap.services.document.DesoneradoService
 import org.slf4j.Logger

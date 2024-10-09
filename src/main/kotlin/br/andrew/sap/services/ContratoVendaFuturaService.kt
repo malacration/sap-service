@@ -23,6 +23,6 @@ class ContratoVendaFuturaService(restTemplate: RestTemplate,
         return if(resultado.size == 1)
             throw Exception("Nao e possivel criar contrado de vende de pedido que ja tem contrato. Pedido entry [${contrato.U_orderDocEntry}]")
         else
-            save(contrato).tryGetValue()
+            save(contrato).tryGetValue<Contrato>()
     }
 }

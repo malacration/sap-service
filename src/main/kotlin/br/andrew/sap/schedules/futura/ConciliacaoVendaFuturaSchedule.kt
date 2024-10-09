@@ -48,6 +48,7 @@ class ConciliacaoVendaFuturaSchedule(
     fun execute() {
         val filterReclassificacaoEntrega = Filter(
             Predicate("TransactionCode", TransactionCodeTypes.VFET, Condicao.EQUAL),
+            Predicate("TaxDate", "2024-10-02", Condicao.GREAT),
         )
 
         journalEntriesService.get(filterReclassificacaoEntrega).tryGetValues<JournalEntry>().forEach { journalReclassificado ->
