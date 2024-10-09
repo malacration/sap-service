@@ -15,6 +15,7 @@ class Product(itemCode : String, quantity : String, unitPrice : String, usage : 
 
     init {
         this.ItemCode = itemCode
+        this.OnHand = OnHand
     }
 
     @JsonIgnore

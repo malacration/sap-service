@@ -24,9 +24,9 @@ class ItemController(val service: ItemsService) {
     }
 
     @PostMapping("search/branch/{branchId}")
-    fun fullSearchText(@RequestBody keyword : String, auth : Authentication): ResponseEntity<NextLink<Product>>? {
+    fun fullSearchText(@RequestBody keyword : String, auth : Authentication,  @PathVariable branchId : Int): ResponseEntity<NextLink<Product>>? {
         return if(auth is User)
-            ResponseEntity.ok(service.fullSearchText(keyword,auth.getIdInt()))
+            ResponseEntity.ok(service.fullSearchText(keyword,auth.getIdInt(), branchId))
         else
             ResponseEntity.noContent().build()
     }
