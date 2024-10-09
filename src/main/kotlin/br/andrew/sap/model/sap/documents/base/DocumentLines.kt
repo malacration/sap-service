@@ -5,6 +5,7 @@ import br.andrew.sap.services.ItemsService
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonInclude
+import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.*
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import java.math.BigDecimal
@@ -24,7 +25,8 @@ abstract class DocumentLines(
     var DocEntry: Int? = null
     var ItemDescription: String? = null
     var CommisionPercent: Double? = null
-    var u_idTabela : Int? = null
+    @JsonProperty("U_idTabela")
+    var U_idTabela : Int? = null
     var ItemCode : String? = null
     var LineNum : Int? = null
     var TaxCode : String? = null
@@ -60,7 +62,7 @@ abstract class DocumentLines(
     fun aplicaBase(precoBase: Double, idTabela: Int, comissao: Comissao) {
         if(this is Product)
             this.U_preco_base = precoBase
-        this.u_idTabela = idTabela
+        this.U_idTabela = idTabela
         this.CommisionPercent = comissao.U_porcentagem
     }
 
@@ -103,7 +105,7 @@ abstract class DocumentLines(
 
     fun atualizaPrecoBase(itemService: ItemsService) {
         if(this.ItemCode != null  && PriceList != null) {
-            u_idTabela = PriceList
+            U_idTabela = PriceList
             U_preco_base = itemService.getPriceBase(this.ItemCode!!, PriceList!!)
         }
     }

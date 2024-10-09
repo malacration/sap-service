@@ -56,7 +56,7 @@ class OrderSales(CardCode: String,
                 it.U_preco_negociado = item.U_preco_negociado
                 it.U_preco_base = item.U_preco_base
                 it.U_id_item_forca = item.U_id_item_forca
-                it.u_idTabela = item.u_idTabela
+                it.U_idTabela = item.U_idTabela
                 it.u_venda_futura = item.u_venda_futura
                 it.LineTotal = null
             }

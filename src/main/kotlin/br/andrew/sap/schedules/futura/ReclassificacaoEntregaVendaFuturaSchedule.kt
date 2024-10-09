@@ -49,6 +49,7 @@ class ReclassificacaoEntregaVendaFuturaSchedule(
     fun execute() {
         val entregasFilter = Filter(
             Predicate("U_venda_futura",0,Condicao.GREAT),
+            Predicate("DocDate", "2024-10-02", Condicao.GREAT),
             Predicate("DocumentStatus",DocumentStatus.bost_Open,Condicao.EQUAL),
         )
 

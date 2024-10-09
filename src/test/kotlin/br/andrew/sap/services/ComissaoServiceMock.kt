@@ -2,6 +2,7 @@ package br.andrew.sap.services
 
 import br.andrew.sap.model.Comissao
 import br.andrew.sap.services.pricing.ComissaoService
+import org.junit.jupiter.api.Test
 import org.mockito.Mockito
 import org.mockito.Mockito.*
 

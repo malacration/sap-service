@@ -68,7 +68,6 @@ class DownPaymentService(env: SapEnvrioment,
         val adiantamentoFilter = Filter(
             Predicate("U_venda_futura",invoice.U_venda_futura?: throw exp,Condicao.EQUAL),
             Predicate("CardCode",invoice.CardCode,Condicao.EQUAL),
-            Predicate("DownPaymentStatus","so_Open",Condicao.EQUAL),
             Predicate("DocumentStatus", DocumentStatus.bost_Close,Condicao.EQUAL),
             //Talvez DownPaymentStatus indique se tem saldo a apropriar ou nao
         )

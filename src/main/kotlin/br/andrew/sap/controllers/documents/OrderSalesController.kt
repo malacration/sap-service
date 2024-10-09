@@ -9,7 +9,10 @@ import br.andrew.sap.model.sap.documents.OrderSales
 import br.andrew.sap.model.exceptions.CreditException
 import br.andrew.sap.model.forca.PedidoVenda
 import br.andrew.sap.model.sap.documents.Invoice
+import br.andrew.sap.model.sap.documents.Quotation
+import br.andrew.sap.model.sap.documents.base.Document
 import br.andrew.sap.services.*
+import br.andrew.sap.services.document.DocumentForAngular
 import br.andrew.sap.services.document.OrdersService
 import br.andrew.sap.services.pricing.ComissaoService
 import org.slf4j.LoggerFactory
@@ -26,6 +29,7 @@ import java.util.*
 class OrderSalesController(val ordersService: OrdersService,
                            val itemService : ItemsService,
                            val comissaoService: ComissaoService,
+                           val telegramService : TelegramRequestService,
                            val applicationEventPublisher: ApplicationEventPublisher) {
 
     val logger = LoggerFactory.getLogger(OrderSalesController::class.java)
@@ -75,6 +79,18 @@ class OrderSalesController(val ordersService: OrdersService,
             .get(Filter(predicados), OrderBy(mapOf("DocEntry" to Order.DESC)), page)
             .tryGetPageValues<OrderSales>(page)
         )
+    }
 
+    @PostMapping("angular")
+    fun saveForAngular(@RequestBody pedido : OrderSales, auth : Authentication): Document {
+        val document = DocumentForAngular().prepareToSave(pedido,itemService,auth)
+        telegramService.send("Criando pedido pelo portal cliente")
+        return ordersService.save(document).tryGetValue<Document>().also {
+            try{
+                applicationEventPublisher.publishEvent(it)
+            }catch (e : Exception){
+                logger.error(e.message,e)
+            }
+        }
     }
 }

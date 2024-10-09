@@ -10,6 +10,7 @@ import br.andrew.sap.model.sap.documents.Quotation
 import br.andrew.sap.model.sap.documents.base.Document
 import br.andrew.sap.model.forca.PedidoVenda
 import br.andrew.sap.services.*
+import br.andrew.sap.services.document.DocumentForAngular
 import br.andrew.sap.services.document.QuotationsService
 import br.andrew.sap.services.pricing.ComissaoService
 import org.slf4j.LoggerFactory
@@ -48,13 +49,9 @@ class QuotationsController(val quotationsService: QuotationsService,
 
     @PostMapping("angular")
     fun saveForAngular(@RequestBody pedido : Quotation, auth : Authentication): Document {
-        pedido.usaBrenchDefaultWarehouse(WarehouseDefaultConfig.warehouses)
-        pedido.setDistribuicaoCusto(DistribuicaoCustoByBranchConfig.distibucoesCustos)
-        pedido.atualizaPrecoBase(itemService)
-        pedido.u_pedido_update = "1"
-        pedido.salesPersonCode = auth.principal.toString().toInt()
+        val document = DocumentForAngular().prepareToSave(pedido,itemService,auth)
         telegramService.send("Criando pedido pelo portal cliente")
-        return quotationsService.save(pedido).tryGetValue<Document>().also {
+        return quotationsService.save(document).tryGetValue<Document>().also {
             try{
                 applicationEventPublisher.publishEvent(it)
             }catch (e : Exception){
