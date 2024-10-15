@@ -8,5 +8,4 @@ import com.fasterxml.jackson.databind.annotation.JsonNaming
 @JsonNaming(PropertyNamingStrategies.UpperCamelCaseStrategy::class)
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-class PrazoPagamentoDto(val GroupNum : String, val PymntGroup : String, val Code : String, val ListNum : String, val U_desconto : Number
-                        , val U_juros : Number){ }
+class PrazoPagamentoDto(val GroupNum : String, val PymntGroup : String, val Code : String, val ListNum : String, val U_desconto : Number, val U_juros : Number){ }
