@@ -2,7 +2,9 @@ SELECT
 	"OCTG"."GroupNum",
 	"OCTG"."PymntGroup",
 	c."Code",
-	"OPLN"."ListNum"
+	"OPLN"."ListNum",
+    cond."U_desconto",
+    cond."U_juros"
 FROM
 	"OPLN"
 	INNER JOIN OPLN tt ON tt."ListNum" =  "OPLN"."ListNum"
