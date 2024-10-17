@@ -47,6 +47,13 @@ class User(val id : String,
         authenticated = isAuthenticated
     }
 
+    fun superVendedor(): Int {
+        return if(roles.contains(RolesEnum.super_vendedor) || roles.contains(RolesEnum.admin))
+            Int.MAX_VALUE
+        else
+            -1
+    }
+
     override fun getPassword(): String {
         TODO("Not yet implemented")
     }
@@ -68,6 +75,6 @@ class User(val id : String,
     }
 
     override fun isEnabled(): Boolean {
-        TODO("Not yet implemented")
+        return true
     }
 }

@@ -65,7 +65,6 @@ class VendaFuturaScheduled(
                             }catch (e : Exception){
                                 logger.error("Erro ao gerar boleto",e)
                             }
-
                         }
                         orderService.close(order.docEntry.toString())
                     }

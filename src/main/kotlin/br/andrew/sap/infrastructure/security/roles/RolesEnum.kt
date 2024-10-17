@@ -9,6 +9,7 @@ enum class RolesEnum {
     admin,
     vendedor,
     cliente,
+    super_vendedor,
     vendedor_admin;
 
     fun getGrantedAuthority(): SimpleGrantedAuthority {

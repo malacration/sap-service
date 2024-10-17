@@ -54,7 +54,9 @@ class BusinessPartnersController(
 
     @PostMapping("search")
     fun search(@RequestBody keyWord : String, auth : Authentication): NextLink<BusinessPartnerSlin> {
-        return service.fullSearchTextFallBack(keyWord,auth)
+        if(auth is User)
+            return service.fullSearchTextFallBack(keyWord,auth)
+        return NextLink(listOf(),"")
     }
 
     @GetMapping("/key/{hashcode}")
