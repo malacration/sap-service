@@ -19,6 +19,22 @@ roles:
       actions: [ "get" ]
     - url: "/forma-pagamento/filial/*/cardcode/*"
       actions: [ "get" ]
+    - url: "/quotation/**"
+      actions: [ "get" ]
+    - url: "/pedido-venda/listar"
+      actions: [ "get" ]
+    - url: "/pedido-venda/angular"
+      actions: [ "post" ]
+    - url: "/future-sales/contrato-venda-futura/*"
+      actions: [ "get" ]
+    - url: "/down-payment/contrato-venda-futura/*"
+      actions: [ "get" ]
+    - url: "/contrato-venda-futura/pedido-retirada"
+      actions: [ "*" ]
+    - url: "/business-partners/cientes"
+      actions: [ "get" ]
+    - url: "/business-partners/*"
+      actions: [ "get" ]
   vendedor_admin:
     - url: "/sales-person/search"
       actions: [ "*" ]
