@@ -1,6 +1,8 @@
 package br.andrew.sap.services
 
 import br.andrew.sap.infrastructure.odata.*
+import br.andrew.sap.infrastructure.toInt
+import br.andrew.sap.model.authentication.User
 import br.andrew.sap.model.bank.PaymentMethod
 import br.andrew.sap.model.enums.Cancelled
 import br.andrew.sap.model.envrioments.SapEnvrioment
@@ -83,11 +85,14 @@ class BusinessPartnersService(
         return restT.exchange(request, OData::class.java).body!!.tryGetNextValues()
     }
 
-    fun fullSearchTextFallBack(fullText: String, auth: Authentication): NextLink<BusinessPartnerSlin> {
+    fun fullSearchTextFallBack(fullText: String, user: User): NextLink<BusinessPartnerSlin> {
         if(fullText.startsWith("SQLQueries('parceiro-full-search-text.sql')"))
             return sqlQueriesService.nextLink(fullText)!!.tryGetNextValues()
-        val busca = if(fullText.toDoubleOrNull() == null )  fullText.uppercase().replace("*","%") else CpfCnpj(fullText).getWithMask();
-        val parametros = listOf(Parameter("valor","'%${busca}%'"),Parameter("vendedor",auth.principal))
+        val busca = if(fullText.toDoubleOrNull() == null )  fullText.replace("*","%") else CpfCnpj(fullText).getWithMask();
+        val parametros = listOf(
+            Parameter("superVendedor",user.superVendedor()),
+            Parameter("valor","'%${busca}%'"),
+            Parameter("vendedor",user.principal))
         return sqlQueriesService
             .execute("parceiro-full-search-text.sql", parametros)!!
             .tryGetNextValues()
