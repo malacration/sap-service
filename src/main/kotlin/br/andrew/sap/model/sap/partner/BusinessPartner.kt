@@ -60,6 +60,8 @@ class BusinessPartner() {
 
     var U_keyUpdate : String? = null
     var U_dataSerasa : Date? = null
+    var CreditLimit : Double? = null
+    var CurrentAccountBalance : Double? = null
 
 
 

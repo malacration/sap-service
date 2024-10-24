@@ -13,6 +13,8 @@ class BusinessPartnerSlin(
     val CardCode : String,
     val CardName : String?,
     val TaxId0 : String? = null,
-    val TaxId4 : String? = null
+    val TaxId4 : String? = null,
+    val CreditLine : Double? = null,
+    val Balance : Double? = null
 ) {
 }
