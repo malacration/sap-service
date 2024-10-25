@@ -11,6 +11,7 @@ import br.andrew.sap.model.forca.PedidoVenda
 import br.andrew.sap.model.sap.documents.Invoice
 import br.andrew.sap.model.sap.documents.Quotation
 import br.andrew.sap.model.sap.documents.base.Document
+import br.andrew.sap.model.sap.documents.base.TaxExtension
 import br.andrew.sap.services.*
 import br.andrew.sap.services.document.DocumentForAngular
 import br.andrew.sap.services.document.OrdersService
@@ -84,6 +85,7 @@ class OrderSalesController(val ordersService: OrdersService,
     @PostMapping("angular")
     fun saveForAngular(@RequestBody pedido : OrderSales, auth : Authentication): Document {
         val document = DocumentForAngular().prepareToSave(pedido,itemService,auth)
+        document.configurarTaxExtension(pedido.VehicleState ?: "")
         telegramService.send("Criando pedido pelo portal cliente")
         return ordersService.save(document).tryGetValue<Document>().also {
             try{

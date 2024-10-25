@@ -3,7 +3,9 @@ SELECT
     "OCRD"."CardName",
     "CRD7"."TaxId0",
     "CRD7"."TaxId4",
-    "OCRD"."SlpCode"
+    "OCRD"."SlpCode",
+    "OCRD"."CreditLine",
+    "OCRD"."Balance"
 FROM
 	"OCRD"
     LEFT JOIN "CRD7" ON ("OCRD"."CardCode" = "CRD7"."CardCode" AND "CRD7"."Address" = '')
