@@ -44,7 +44,7 @@ class JournalEntriesService(env: SapEnvrioment, restTemplate: RestTemplate, auth
                     list[6]).also {
                         it.taxDate = SimpleDateFormat("yyy-MM-dd").format(SimpleDateFormat("dd/MM/yyy").parse(list[2]))
                         it.ReferenceDate = it.taxDate
-                        it.costingCodes("501",list[8].trim().replace(";",""))
+                        it.costingCodes(list.getOrNull(7)?:"501",list[8].trim().replace(";",""))
                         it.Reference = list.getOrNull(9)
                         it.Reference2 = list.getOrNull(10)
                         it.Reference3 = list.getOrNull(11)
