@@ -1,5 +1,6 @@
 package br.andrew.sap.model.uzzipay
 
+import br.andrew.sap.model.sap.documents.DocumentTypes
 import br.andrew.sap.model.sap.documents.base.Document
 import br.andrew.sap.model.sap.documents.base.Installment
 import org.junit.jupiter.api.Assertions
@@ -27,7 +28,7 @@ class RequestQrCodeTests {
             it.documentInstallments = listOf(installment)
             it.docEntry = 123
             it.docNum = "333"
-            it.docObjectCode = "invoice"
+            it.docObjectCode = DocumentTypes.oInvoices
         }
     @Test
     fun defragmentacaoDocEntryAndInstallId(){

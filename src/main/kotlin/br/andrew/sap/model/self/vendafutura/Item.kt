@@ -15,7 +15,7 @@ class Item(
     val U_itemCode : String,
     val U_description : String,
     val U_precoNegociado : Double,
-    val U_quantity : Double,
+    var U_quantity : Double,
     val U_precoBase : Double,
     val U_desconto : Double,
     val U_comissao : Double,

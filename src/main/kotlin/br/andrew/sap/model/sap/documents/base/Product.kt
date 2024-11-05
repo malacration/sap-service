@@ -10,7 +10,7 @@ import com.fasterxml.jackson.databind.annotation.JsonNaming
 @JsonNaming(PropertyNamingStrategies.UpperCamelCaseStrategy::class)
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-class Product(itemCode : String, quantity : String, unitPrice : String, usage : Int = 9)
+class Product(itemCode : String, quantity : String, unitPrice : String, usage : Int? = 9)
     : DocumentLines(unitPrice, quantity, usage){
 
     init {

@@ -54,14 +54,13 @@ class VendaFuturaScheduled(
                         )
                         val contrato = contratoService.saveOnly(ContratoParse.parse(order))
                         hanndlePaymentTerms.calculaVencimentos(contrato).map {
-                            val adiantamento = adiantamentoService.adiantamentosVendaFutura(order,contrato,it)
+                            val adiantamento = adiantamentoService.adiantamentosVendaFutura(contrato,it)
                             try{
                                 bankplus.geraBoletos(
                                     adiantamento.getBPL_IDAssignedToInvoice().toInt(),
                                     adiantamento.docEntry ?: throw Exception("Falha ao obter docentry do adiantamento"),
                                     0,
                                     OrigemBoletoEnum.adiantamento)
-
                             }catch (e : Exception){
                                 logger.error("Erro ao gerar boleto",e)
                             }

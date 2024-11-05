@@ -65,6 +65,14 @@ abstract class EntitiesService<T>(protected val env: SapEnvrioment,
         return restT.exchange(request, OData::class.java).body
     }
 
+    fun windson(id : String): OData? {
+        val request = RequestEntity
+            .post(env.host+this.path()+"($id)/CreateCancellationDocument")
+            .header("cookie","B1SESSION=${session().sessionId}")
+            .build()
+        return restT.exchange(request, OData::class.java).body
+    }
+
     open fun get(filter : Filter = Filter(), order : OrderBy = OrderBy(), page : Pageable = Pageable.ofSize(20)) : OData {
         val aditional = listOf(filter,order).filter { it.toString().isNotEmpty() }.joinToString("&","&")
         val skip = (page.pageNumber*page.pageSize).toString()+"&\$inlinecount=allpages"
