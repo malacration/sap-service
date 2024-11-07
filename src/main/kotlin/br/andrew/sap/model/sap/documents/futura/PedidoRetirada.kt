@@ -33,6 +33,7 @@ class PedidoRetirada(
         ).also {
             it.salesPersonCode = contrato.U_vendedor
             it.U_venda_futura = contrato.DocEntry
+            it.U_entrega_vf = 1
             if(contrato.U_valorFrete > 0){
                 val proporcao = it.totalProdutos().divide(it.totalProdutos(), RoundingMode.HALF_DOWN)
                 it.documentAdditionalExpenses = it.documentAdditionalExpenses.map {

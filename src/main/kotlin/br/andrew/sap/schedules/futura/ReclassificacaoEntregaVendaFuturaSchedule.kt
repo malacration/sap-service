@@ -4,20 +4,14 @@ import JournalEntry
 import JournalEntryLines
 import br.andrew.sap.infrastructure.odata.Condicao
 import br.andrew.sap.infrastructure.odata.Filter
-import br.andrew.sap.infrastructure.odata.Parameter
 import br.andrew.sap.infrastructure.odata.Predicate
 import br.andrew.sap.model.sap.InternalReconciliationsBuilder
 import br.andrew.sap.model.sap.documents.DocumentStatus
-import br.andrew.sap.model.sap.documents.DownPayment
 import br.andrew.sap.model.sap.documents.Invoice
-import br.andrew.sap.model.sap.documents.base.Document
-import br.andrew.sap.model.sap.documents.base.Product
-import br.andrew.sap.model.sap.documents.base.adiantamento.ApropriacaoAdiantamento
 import br.andrew.sap.model.transaction.TransactionCodeTypes
 import br.andrew.sap.services.AuthService
 import br.andrew.sap.services.InternalReconciliationsService
-import br.andrew.sap.services.abstracts.SqlQueriesService
-import br.andrew.sap.services.document.DownPaymentService
+import br.andrew.sap.services.batch.BatchService
 import br.andrew.sap.services.document.InvoiceService
 import br.andrew.sap.services.invent.BankPlusService
 import br.andrew.sap.services.journal.JournalEntriesService
@@ -28,7 +22,6 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.context.annotation.Profile
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
-import java.math.BigDecimal
 
 
 @Component
@@ -37,6 +30,7 @@ import java.math.BigDecimal
 class ReclassificacaoEntregaVendaFuturaSchedule(
     protected val authService: AuthService,
     val bankplus : BankPlusService,
+    val batchService: BatchService,
     val journalEntriesService : JournalEntriesService,
     val internalReconciliationsService: InternalReconciliationsService,
     val inoviceService : InvoiceService,
@@ -49,10 +43,10 @@ class ReclassificacaoEntregaVendaFuturaSchedule(
     fun execute() {
         val entregasFilter = Filter(
             Predicate("U_venda_futura",0,Condicao.GREAT),
-            Predicate("DocDate", "2024-10-02", Condicao.GREAT),
+            Predicate("DocDate", "2024-11-05", Condicao.GREAT),
+            Predicate("U_entrega_vf", "1", Condicao.EQUAL),
             Predicate("DocumentStatus",DocumentStatus.bost_Open,Condicao.EQUAL),
         )
-
         inoviceService.get(entregasFilter).tryGetValues<Invoice>().forEach { invoice ->
             val filial = invoice.getBPL_IDAssignedToInvoice()
             val docTotal = invoice.DocTotal?.toDoubleOrNull() ?: throw Exception("valor Documento nao e valido")
@@ -72,7 +66,6 @@ class ReclassificacaoEntregaVendaFuturaSchedule(
                         it.TransactionCode = TransactionCodeTypes.VFET.toString()
                         it.Reference = invoice.docNum
                     })
-
             internalReconciliationsService.save(
                 InternalReconciliationsBuilder(invoice,journalEntrie,docTotal).build()
             )

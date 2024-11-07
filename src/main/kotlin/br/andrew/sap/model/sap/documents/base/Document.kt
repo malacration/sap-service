@@ -17,9 +17,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonProperty
-import com.fasterxml.jackson.databind.EnumNamingStrategy
 import com.fasterxml.jackson.databind.PropertyNamingStrategies
-import com.fasterxml.jackson.databind.annotation.EnumNaming
 import com.fasterxml.jackson.databind.annotation.JsonNaming
 import java.math.BigDecimal
 import java.math.RoundingMode
@@ -35,7 +33,6 @@ open class Document(val CardCode : String,
                     val DocDueDate : String?,
                     val DocumentLines : List<DocumentLines>,
                     private val BPL_IDAssignedToInvoice : String) : ReconciliationRow, BatchId{
-
 
     var comments: String? = null
     var docDate :String? = null
@@ -76,6 +73,7 @@ open class Document(val CardCode : String,
     var U_assinatura : String = "0"
     var U_rd_station : String? = null
     var U_venda_futura: Int? = null
+    var U_entrega_vf: Int = 0
     var downPaymentsToDraw : List<DownPaymentsToDraw>? = null
     var TransNum : Int? = null
     var SequenceCode : Int? = null

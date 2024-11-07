@@ -75,7 +75,6 @@ class BatchService(val rest : RestTemplate,
             .header("OData-Version","4.0")
             .header("cookie","B1SESSION=${session().sessionId}")
             .header("Content-Length",body.size.toString())
-        val retorno =  rest.exchange(request.body(body), String::class.java).body
-        return retorno
+        return rest.exchange(request.body(body), String::class.java).body
     }
 }

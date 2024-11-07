@@ -10,12 +10,9 @@ import br.andrew.sap.model.sap.documents.base.Document
 import br.andrew.sap.model.sap.documents.base.Product
 import br.andrew.sap.model.sap.documents.base.adiantamento.ApropriacaoAdiantamento
 import br.andrew.sap.model.transaction.TransactionCodeTypes
-import br.andrew.sap.services.AuthService
 import br.andrew.sap.services.InternalReconciliationsService
-import br.andrew.sap.services.abstracts.SqlQueriesService
 import br.andrew.sap.services.document.DownPaymentService
 import br.andrew.sap.services.document.InvoiceService
-import br.andrew.sap.services.invent.BankPlusService
 import br.andrew.sap.services.journal.JournalEntriesService
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -48,7 +45,7 @@ class ConciliacaoVendaFuturaSchedule(
     fun execute() {
         val filterReclassificacaoEntrega = Filter(
             Predicate("TransactionCode", TransactionCodeTypes.VFET, Condicao.EQUAL),
-            Predicate("TaxDate", "2024-10-02", Condicao.GREAT),
+            Predicate("TaxDate", "2024-11-05", Condicao.GREAT),
         )
 
         journalEntriesService.get(filterReclassificacaoEntrega).tryGetValues<JournalEntry>().forEach { journalReclassificado ->
@@ -76,8 +73,10 @@ class ConciliacaoVendaFuturaSchedule(
                             it.controlAccount = contaControle
                             it.SequenceCode = sequenceCode
                             it.salesPersonCode = invoice.salesPersonCode
+                            it.journalMemo = "Apropriacao de adt LC ${journalReclassificado.JdtNum} para NF $ref"
                         }
 
+                    //TODO esse metodo esta apropriando N vezes o adiantamento, fazer uma forma de evitar essa apropriacao
                     val apropriado = inoviceService
                         .save(invoiceApropiacao)
                         .tryGetValue<Document>()
@@ -89,6 +88,9 @@ class ConciliacaoVendaFuturaSchedule(
                             invoice.DocTotal?.toDoubleOrNull() ?: throw Exception("Documento sem total adequado")
                         ).setDebitTransRowId(1).build()
                     )
+
+                    journalReclassificado.TransactionCode = TransactionCodeTypes.VFEC.name
+                    journalEntriesService.update(journalReclassificado,journalReclassificado.JdtNum.toString())
                 }
             }
         }

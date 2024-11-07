@@ -62,7 +62,10 @@ abstract class DocumentLines(
     @JsonIgnore
     fun total(): BigDecimal {
         val desconto = BigDecimal(1 -(DiscountPercent ?: 0.0)/100)
-        return BigDecimal(UnitPrice.toDouble()).setScale(4,RoundingMode.HALF_DOWN).multiply(BigDecimal(Quantity).multiply(desconto))
+        return BigDecimal(UnitPrice.toDouble())
+            .setScale(4,RoundingMode.HALF_DOWN)
+            .multiply(BigDecimal(Quantity).multiply(desconto))
+            .setScale(2,RoundingMode.HALF_UP)
     }
 
     fun aplicaBase(precoBase: Double, idTabela: Int, comissao: Comissao): DocumentLines {
