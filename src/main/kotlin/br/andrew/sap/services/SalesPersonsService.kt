@@ -20,7 +20,7 @@ class SalesPersonsService(val sqlQueriesService : SqlQueriesService , env: SapEn
 
     fun getEnviaRelatorio(): List<SalePerson> {
         val filter = Filter("U_envia_relatorio","1",Condicao.EQUAL)
-        return get(filter).tryGetValues()
+        return getAll(filter)
     }
 
     fun search(keyword: String, page : Pageable): Page<SalePerson>? {
