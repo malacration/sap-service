@@ -43,7 +43,7 @@ class MailController(val mailService: MailService,
 
     @GetMapping("/enviar")
     fun enviarInadimplencia() {
-        salesService.getEnviaRelatorio().forEach{
+        salesService.getEnviaRelatorio().parallelStream().forEach{
             try{
                 val titulos = service.getAllBySql(it.SalesEmployeeCode)
                 val body = templateEngine.process("relatorio-inadiplencia",
@@ -58,7 +58,6 @@ class MailController(val mailService: MailService,
                 telegramMsg.send(erro,TipoMensagem.eventos)
                 logger.error(erro,e)
             }
-
         }
     }
 
