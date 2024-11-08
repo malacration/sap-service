@@ -58,6 +58,7 @@ class MailController(val mailService: MailService,
                 telegramMsg.send(erro,TipoMensagem.eventos)
                 logger.error(erro,e)
             }
+
         }
     }
 
