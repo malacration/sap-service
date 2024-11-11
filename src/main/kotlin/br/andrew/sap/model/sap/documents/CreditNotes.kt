@@ -18,13 +18,17 @@ import br.andrew.sap.model.enums.Cancelled.tYES as tYES
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 class CreditNotes(CardCode: String,
                   @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "YYY-MM-dd", timezone = "UTC")
-                 DocDueDate: String?,
+                  DocDueDate: String?,
                   DocumentLines: List<DocumentLines> = listOf(),
                   BPL_IDAssignedToInvoice: String)
     : Document(CardCode, DocDueDate, DocumentLines, BPL_IDAssignedToInvoice), EntryOriginalJournal {
 
     //TODO não achei onde fica esse propriedade
     var header : String? = null
+
+    constructor(document: Document) : this(document.CardCode, document.DocDueDate, document.reverseDocumentLine(),document.getBPL_IDAssignedToInvoice()){
+        this.SequenceCode = 1
+    }
 
     override fun toString(): String {
         return "CreditNotes(CardCode='$CardCode', Branch='${getBPL_IDAssignedToInvoice()}', docEntry=$docEntry, docNum=$docNum, pedido_forca=$u_id_pedido_forca)"

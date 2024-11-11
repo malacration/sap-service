@@ -2,6 +2,7 @@ package br.andrew.sap.controllers
 
 
 import br.andrew.sap.model.Version
+import br.andrew.sap.services.batch.BatchService
 import org.slf4j.LoggerFactory
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
@@ -9,7 +10,10 @@ import org.springframework.web.bind.annotation.RestController
 
 
 @RestController
-class IndexController(val version : Version){
+class IndexController(
+    val version : Version,
+    val service : BatchService
+){
 
     val logger = LoggerFactory.getLogger(IndexController::class.java)
 

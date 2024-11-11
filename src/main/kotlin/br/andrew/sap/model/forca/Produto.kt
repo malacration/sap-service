@@ -15,8 +15,14 @@ class Produto(val idProduto : String,
     var desconto : Double = 0.0
     var precoUnitario : Double = 0.0
     var idItem: String? = null
+    var ItemDescription : String? = null
+    var MeasureUnit : String? = null
+
+    constructor(ItemCode : String, valorTabela : Double, quantidade : Double, listapreco : Int, none : String = "0") :
+            this(ItemCode,valorTabela,quantidade,listapreco)
 
 
+    //TODO criar uma classe que faz essa atividade para manter o padrao.
     @JsonIgnore
     fun getProduct(tipoPedido: Int, itemService: ItemsService, comissaoService: ComissaoService): Product {
         val precoBase = itemService.getPriceBase(idProduto,listapreco)
@@ -27,6 +33,8 @@ class Produto(val idProduto : String,
                     it.U_preco_negociado = precoUnitario
                     it.U_id_item_forca = idItem
                     it.aplicaBase(precoBase,listapreco,comissao)
+                    it.ItemDescription = ItemDescription
+                    it.MeasureUnit = MeasureUnit
                 }
     }
 

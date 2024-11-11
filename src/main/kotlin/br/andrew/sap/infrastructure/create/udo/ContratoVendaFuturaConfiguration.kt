@@ -48,7 +48,7 @@ class ContratoVendaFuturaConfiguration(val userFieldsMDService: UserFieldsMDServ
             FieldMd("cardName","Nome Cliente","@AR_CONTRATO_FUTURO", DbType.db_Alpha),
             FieldMd("dataCriacao","Data de Criação","@AR_CONTRATO_FUTURO", DbType.db_Date),
             FieldMd("valorFrete","Valor Frete","@AR_CONTRATO_FUTURO", DbType.db_Float),
-
+            FieldMd("filial","Filial","@AR_CONTRATO_FUTURO", DbType.db_Numeric),
             FieldMd("vendedor","Vendedor","@AR_CONTRATO_FUTURO", DbType.db_Float).also {
                 //TODO um dia ver se existe vendedor nesse vinculo
                 it.LinkedSystemObject = LinkedSystemObject.ulInventoryGenExit

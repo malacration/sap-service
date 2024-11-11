@@ -2,6 +2,7 @@ package br.andrew.sap.model.sap.documents
 
 import br.andrew.sap.model.sap.documents.base.Document
 import br.andrew.sap.model.sap.documents.base.DocumentLines
+import br.andrew.sap.services.batch.BatchId
 import com.fasterxml.jackson.annotation.JsonFormat
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
@@ -35,3 +36,15 @@ class DownPayment(CardCode: String,
     }
 }
 //data de entrega - ORDRdocduedate
+
+
+@JsonNaming(PropertyNamingStrategies.UpperCamelCaseStrategy::class)
+@JsonIgnoreProperties(ignoreUnknown = true)
+class DownPaymentUnsetVendaFutura(private val _id : String) : BatchId{
+    constructor(document: Document) : this(document.docEntry.toString())
+
+    val U_venda_futura : String? = null
+    override fun getId(): String {
+        return _id
+    }
+}

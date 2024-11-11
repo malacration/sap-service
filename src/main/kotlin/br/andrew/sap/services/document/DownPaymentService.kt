@@ -1,9 +1,6 @@
 package br.andrew.sap.services.document
 
-import br.andrew.sap.infrastructure.odata.Condicao
-import br.andrew.sap.infrastructure.odata.Filter
-import br.andrew.sap.infrastructure.odata.Parameter
-import br.andrew.sap.infrastructure.odata.Predicate
+import br.andrew.sap.infrastructure.odata.*
 import br.andrew.sap.model.enums.Cancelled
 import br.andrew.sap.model.envrioments.SapEnvrioment
 import br.andrew.sap.model.payment.PaymentDueDates
@@ -24,6 +21,7 @@ import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
 import org.springframework.web.client.RestTemplate
 import java.math.BigDecimal
+import java.time.LocalDate
 
 @Service
 class DownPaymentService(env: SapEnvrioment,
@@ -32,8 +30,7 @@ class DownPaymentService(env: SapEnvrioment,
                          @Value("\${adiantamento-vf.formaPagamento:none}") vfFormaPagamento : String,
                          restTemplate: RestTemplate,
                          authService: AuthService,
-) :
-        EntitiesService<Document>(env, restTemplate, authService) {
+) : EntitiesService<Document>(env, restTemplate, authService) {
 
     val vfFormaPagamento: String? = if(vfFormaPagamento == "none")  null else vfFormaPagamento
 
@@ -41,26 +38,37 @@ class DownPaymentService(env: SapEnvrioment,
         return "/b1s/v1/DownPayments"
     }
 
-    fun adiantamentosVendaFutura(document: Document, contrato: Contrato, paymentInfo: PaymentDueDates): Document {
-        val linhas = listOf(Product(vfItemAdiantamento,paymentInfo.value.toString(),"1"))
-        val adiantamento = DownPayment(
-            document.CardCode,
-            paymentInfo.dueDate.toString(),
-            linhas,
-            document.getBPL_IDAssignedToInvoice())
-        if(vfFormaPagamento != null)
-            adiantamento.paymentMethod = vfFormaPagamento
-        adiantamento.U_venda_futura = contrato.DocEntry;
+    fun adiantamentosVendaFutura(contrato: Contrato, paymentInfo: PaymentDueDates): Document {
+        val adiantamento = adiantamentosVendaFuturaWithoutSave(contrato,paymentInfo)
         return save(adiantamento).tryGetValue<Document>()
     }
 
-    fun getByContratoVendaFutura(id: Int): List<Document> {
+    fun adiantamentosVendaFuturaWithoutSave(contrato: Contrato, paymentInfo: PaymentDueDates): Document {
+        val linhas = listOf(Product(vfItemAdiantamento,paymentInfo.value.toString(),"1"))
+        val adiantamento = DownPayment(
+            contrato.U_cardCode,
+            paymentInfo.dueDate.toString(),
+            linhas,
+            contrato.U_filial.toString())
+        if(vfFormaPagamento != null)
+            adiantamento.paymentMethod = vfFormaPagamento
+        adiantamento.U_venda_futura = contrato.DocEntry;
+        return adiantamento
+    }
+
+    fun getLastInstallment(contrato: Contrato): String {
+        val boleto = getByContratoVendaFutura(
+            contrato.DocEntry?: throw Exception("O id do contrato nao pode ser nullo"),
+            OrderBy("DocDueDate",Order.DESC)
+        ).firstOrNull() ?: throw Exception("Contrato invalido pois nao tem nenhum boleto")
+        return boleto.DocDueDate ?: throw Exception("O ultimo boleto nao tem data de vencimento")
+    }
+
+    fun getByContratoVendaFutura(id: Int, orderBy : OrderBy = OrderBy()): List<Document> {
         val filter = Filter(
-            Predicate(Cancelled.column, Cancelled.tNO, Condicao.EQUAL),
             Predicate("U_venda_futura",id,Condicao.EQUAL)
         )
-        return get(filter).tryGetValues()
-
+        return get(filter,orderBy).tryGetValues()
     }
 
     fun adiantamentosAbertos(invoice : Invoice): List<DownPayment> {

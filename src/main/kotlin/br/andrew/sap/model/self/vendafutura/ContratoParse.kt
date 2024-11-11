@@ -4,6 +4,7 @@ import br.andrew.sap.infrastructure.odata.OData
 import br.andrew.sap.model.entity.ChildTables
 import br.andrew.sap.model.sap.documents.base.Document
 import br.andrew.sap.model.sap.documents.base.DocumentLines
+import br.andrew.sap.model.sap.documents.base.Product
 import kotlin.math.exp
 
 
@@ -18,11 +19,12 @@ class ContratoParse {
                 parseDocumentLines(doc.DocumentLines),
                 doc.salesPersonCode,
                 doc.cardName ?: throw Exception("Nome do cliente nao pode ser nulo"),
+                doc.getBPL_IDAssignedToInvoice().toIntOrNull() ?: throw Exception("Nao foi possivel obter o id da filial"),
                 doc.totalDespesaAdicional().toDouble() ?: 0.0,
             )
         }
 
-        private fun parse(line : DocumentLines) : Item{
+        fun parse(line : DocumentLines) : Item{
             return Item(
                 line.ItemCode ?: throw Exception("A propriedade ItemCode nao pode ser null"),
                 line.ItemDescription ?: throw Exception("A propriedade ItemDescription nao pode ser null"),
@@ -35,8 +37,11 @@ class ContratoParse {
             )
         }
 
-        fun parseDocumentLines(itens : List<DocumentLines>): List<Item> {
-            return itens.mapIndexed{ index: Int, it: DocumentLines -> parse(it).also { it.LineId = index } }
+
+        fun parseDocumentLines(itens : List<DocumentLines>): MutableList<Item> {
+            return itens
+                .mapIndexed{ index: Int, it: DocumentLines -> parse(it).also { it.LineId = index } }
+                .toMutableList()
         }
     }
 }

@@ -8,7 +8,8 @@ SELECT
 	"OITM"."SalUnitMsr",
 	(SELECT "FirmName"  FROM OMRC WHERE "FirmCode" = -1) AS "MARCA",
 	"OITM"."UserText",
-	"OITW"."OnHand"
+	"OITW"."OnHand",
+	"OITM"."PriceUnit"
 FROM
 	"OITM"
 	INNER JOIN "ITM1" on("ITM1"."ItemCode" = "OITM"."ItemCode")

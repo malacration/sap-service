@@ -40,5 +40,6 @@ enum class LinkedSystemObject {
     ulBlanketAgreementsService,
     ulProjectManagementService,
     ulReturnRequest,
-    ulGoodsReturnRequest
+    ulGoodsReturnRequest,
+    ulSalesEmployee
 }
