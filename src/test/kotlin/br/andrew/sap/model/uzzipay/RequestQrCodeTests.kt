@@ -15,9 +15,9 @@ import java.util.*
 class RequestQrCodeTests {
 
     val player = Payer(
-        "01847004261",
+        "123545546",
         "Andrew",
-        "andrewc3po@gmail.com",
+        "windson@gmail.com",
         "Rua dos Bobos",
         "São Paulo",
         "SP",
@@ -42,10 +42,10 @@ class RequestQrCodeTests {
 
         Assertions.assertEquals(666,request.getInstallmentId())
         Assertions.assertEquals("333",request.docNum())
-        Assertions.assertEquals("invoice",request.docType())
+        Assertions.assertEquals("oInvoices",request.docType())
         Assertions.assertEquals(123,request.docEntry())
         Assertions.assertTrue(
-            request.externalIdentifier.contains("Num333-Entry123-ins:666-invoice"))
+            request.externalIdentifier.contains("Num333-Entry123-ins:666-oInvoices"))
         Assertions.assertEquals("", Installment.reverseExternalIdentifier(""))
     }
 

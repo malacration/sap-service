@@ -36,8 +36,7 @@ class Contrato(
             throw Exception("Nao e permitido contrato sem valor")
     }
     fun total(): BigDecimal {
-        return itens.map{ it.total() }
-            .sumOf { it }
+        return totalProdutos()
             .plus(BigDecimal(U_valorFrete.toString()))
             .setScale(2, RoundingMode.HALF_DOWN)
     }
@@ -74,5 +73,9 @@ class Contrato(
 
     override fun getId(): String {
         return this.DocEntry.toString()
+    }
+
+    fun totalProdutos(): BigDecimal {
+        return itens.map{ it.total() }.sumOf { it }
     }
 }

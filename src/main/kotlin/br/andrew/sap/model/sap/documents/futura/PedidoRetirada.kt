@@ -35,11 +35,8 @@ class PedidoRetirada(
             it.U_venda_futura = contrato.DocEntry
             it.U_entrega_vf = 1
             if(contrato.U_valorFrete > 0){
-                val proporcao = it.totalProdutos().divide(it.totalProdutos(), RoundingMode.HALF_DOWN)
-                it.documentAdditionalExpenses = it.documentAdditionalExpenses.map {
-                    val lineTotal = BigDecimal(it.LineTotal.toString()).multiply(proporcao).setScale(2, RoundingMode.HALF_DOWN).toDouble()
-                    AdditionalExpenses(it.expenseCode,lineTotal)
-                }.toMutableList()
+                val proporcao = it.totalProdutos().divide(contrato.totalProdutos(), RoundingMode.HALF_DOWN)
+                it.frete = BigDecimal(contrato.U_valorFrete.toString()).multiply(proporcao).setScale(2, RoundingMode.HALF_DOWN).toDouble()
             }
         }
     }
