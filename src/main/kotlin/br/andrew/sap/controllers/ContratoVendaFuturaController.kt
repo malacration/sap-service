@@ -25,6 +25,7 @@ import br.andrew.sap.services.document.OrdersService
 import br.andrew.sap.services.pricing.ComissaoService
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.context.annotation.Role
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.http.ResponseEntity
@@ -56,6 +57,15 @@ class ContratoVendaFuturaController(
         if(auth !is User)
             return ResponseEntity.noContent().build()
         val contratos = service.get(Filter("U_vendedor",auth.getIdInt(),Condicao.EQUAL),
+            OrderBy(mapOf("U_dataCriacao" to Order.DESC, "DocEntry" to Order.DESC)),
+            page
+        ).tryGetPageValues<Contrato>(page)
+        return ResponseEntity.ok(contratos)
+    }
+
+    @GetMapping("all")
+    fun getAll(auth : Authentication, page : Pageable): ResponseEntity<Page<Contrato>> {
+        val contratos = service.get(Filter(),
             OrderBy(mapOf("U_dataCriacao" to Order.DESC, "DocEntry" to Order.DESC)),
             page
         ).tryGetPageValues<Contrato>(page)

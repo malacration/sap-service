@@ -45,7 +45,11 @@ class VendaFuturaScheduled(
     @Scheduled(fixedDelay = 3000)
     fun execute() {
         sqlQueriesService
-            .execute("vendafutura-aberto.sql", Parameter("utilizacao",idUtilizacao))
+            .execute(
+                "vendafutura-aberto.sql",
+                listOf(Parameter("utilizacao",idUtilizacao),
+                      Parameter("startDate","2024-12-09"))
+            )
             ?.tryGetValues<DocEntry>()?.forEach {
                 orderService.get(Filter("DocEntry",it.DocEntry!!,Condicao.EQUAL))
                     .tryGetValues<Document>().forEach { order ->

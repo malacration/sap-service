@@ -26,10 +26,14 @@ class ContratoVendaFuturaService(restTemplate: RestTemplate,
     }
 
     fun saveOnly(contrato: Contrato): Contrato {
-        val resultado = get(Filter("U_orderDocEntry",contrato.U_orderDocEntry,Condicao.EQUAL))
-            .tryGetValues<Contrato>()
-        return if(resultado.size == 1)
+        val resultado = get(Filter(
+            "U_orderDocEntry",
+            contrato.U_orderDocEntry,Condicao.EQUAL)
+        ).tryGetValues<Contrato>()
+        return if(resultado.size > 1)
             throw Exception("Nao e possivel criar contrado de vende de pedido que ja tem contrato. Pedido entry [${contrato.U_orderDocEntry}]")
+        else if(resultado.size == 1)
+            resultado.first()
         else
             save(contrato).tryGetValue<Contrato>()
     }

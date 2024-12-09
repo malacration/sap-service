@@ -48,6 +48,7 @@ abstract class DocumentLines(
     var BaseType : Int? = null
     var BaseEntry : Int? = null
     var BaseLine : Int? = null
+    var SalUnitMsr : String? = null
 
 
     @JsonIgnore

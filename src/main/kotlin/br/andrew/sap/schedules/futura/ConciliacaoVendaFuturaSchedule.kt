@@ -5,6 +5,7 @@ import br.andrew.sap.infrastructure.odata.Condicao
 import br.andrew.sap.infrastructure.odata.Filter
 import br.andrew.sap.infrastructure.odata.Predicate
 import br.andrew.sap.model.sap.InternalReconciliationsBuilder
+import br.andrew.sap.model.sap.documents.DocumentStatus
 import br.andrew.sap.model.sap.documents.Invoice
 import br.andrew.sap.model.sap.documents.base.Document
 import br.andrew.sap.model.sap.documents.base.Product
@@ -45,7 +46,7 @@ class ConciliacaoVendaFuturaSchedule(
     fun execute() {
         val filterReclassificacaoEntrega = Filter(
             Predicate("TransactionCode", TransactionCodeTypes.VFET, Condicao.EQUAL),
-            Predicate("TaxDate", "2024-11-05", Condicao.GREAT),
+            Predicate("TaxDate", "2024-12-04", Condicao.GREAT),
         )
 
         journalEntriesService.get(filterReclassificacaoEntrega).tryGetValues<JournalEntry>().forEach { journalReclassificado ->
@@ -62,7 +63,9 @@ class ConciliacaoVendaFuturaSchedule(
                 if (adiantamentosDisponiveis.isNotEmpty()) {
                     val invoiceApropiacao = Invoice(
                         invoice.CardCode, null,
-                        listOf(Product(itemConciliacaoVendaFutura, "1", "0", 9).also {
+                        listOf(Product(itemConciliacaoVendaFutura, "1",
+                            "0",
+                            9).also {
                             it.U_preco_base = 1.0
                         }),
                         invoice.getBPL_IDAssignedToInvoice()
@@ -76,7 +79,6 @@ class ConciliacaoVendaFuturaSchedule(
                             it.journalMemo = "Apropriacao de adt LC ${journalReclassificado.JdtNum} para NF $ref"
                         }
 
-                    //TODO esse metodo esta apropriando N vezes o adiantamento, fazer uma forma de evitar essa apropriacao
                     val apropriado = inoviceService
                         .save(invoiceApropiacao)
                         .tryGetValue<Document>()

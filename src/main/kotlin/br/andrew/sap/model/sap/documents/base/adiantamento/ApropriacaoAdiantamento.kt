@@ -11,6 +11,8 @@ class ApropriacaoAdiantamento(val invoice : Invoice, val adiantamentos : List<Do
         var resultado = mutableListOf<DownPaymentsToDraw>()
         adiantamentos.filter { it.adiantamentoDisponivel().compareTo(BigDecimal.ZERO) > 0}
             .forEach { adiantamento ->
+                if(totalNecessario.compareTo(BigDecimal.ZERO) == 0)
+                    return@forEach
                 if(adiantamento.adiantamentoDisponivel().compareTo(totalNecessario) >= 0) {
                     resultado.add(DownPaymentsToDraw().also {
                         it.docEntry = adiantamento.docEntry
@@ -24,8 +26,6 @@ class ApropriacaoAdiantamento(val invoice : Invoice, val adiantamentos : List<Do
                     })
                     totalNecessario = totalNecessario.minus(adiantamento.adiantamentoDisponivel())
                 }
-            if(totalNecessario.compareTo(BigDecimal.ZERO) == 0)
-                return@forEach
         }
         return if(totalNecessario.compareTo(BigDecimal.ZERO) == 0)
             resultado
