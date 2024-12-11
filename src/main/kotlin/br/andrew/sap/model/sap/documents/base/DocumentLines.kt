@@ -20,7 +20,7 @@ import kotlin.reflect.jvm.javaField
 @JsonDeserialize(using = DocumentLinesDeserializer::class)
 abstract class DocumentLines(
     var UnitPrice : String,
-    var Quantity : String, var Usage : Int = 9) {
+    var Quantity : String, var Usage : Int? = 9) {
 
     var DocEntry: Int? = null
     var ItemDescription: String? = null
@@ -35,7 +35,6 @@ abstract class DocumentLines(
     var U_preco_negociado: Double? = null
     var WarehouseCode: String? = null
     var U_id_item_forca: String? = null
-    var u_venda_futura: Int? = null
     var CostingCode: String? = null
     var CostingCode2: String? =null
     var AccountCode : String? = null
@@ -44,6 +43,13 @@ abstract class DocumentLines(
     var ListName : String? = null
     var OnHand : Int? = null
     var LineTotal : Double? = null
+    var PriceUnit : Int? = null
+
+    var BaseType : Int? = null
+    var BaseEntry : Int? = null
+    var BaseLine : Int? = null
+    var SalUnitMsr : String? = null
+
 
     @JsonIgnore
     var valorDesonerado : BigDecimal = BigDecimal(0)
@@ -57,14 +63,18 @@ abstract class DocumentLines(
     @JsonIgnore
     fun total(): BigDecimal {
         val desconto = BigDecimal(1 -(DiscountPercent ?: 0.0)/100)
-        return BigDecimal(UnitPrice.toDouble()).setScale(4,RoundingMode.HALF_DOWN).multiply(BigDecimal(Quantity).multiply(desconto))
+        return BigDecimal(UnitPrice.toDouble())
+            .setScale(4,RoundingMode.HALF_DOWN)
+            .multiply(BigDecimal(Quantity).multiply(desconto))
+            .setScale(2,RoundingMode.HALF_UP)
     }
 
-    fun aplicaBase(precoBase: Double, idTabela: Int, comissao: Comissao) {
+    fun aplicaBase(precoBase: Double, idTabela: Int, comissao: Comissao): DocumentLines {
         if(this is Product)
             this.U_preco_base = precoBase
         this.U_idTabela = idTabela
         this.CommisionPercent = comissao.U_porcentagem
+        return this
     }
 
 
@@ -98,16 +108,17 @@ abstract class DocumentLines(
                 try {
                     it.setter.call(this, null)
                 } catch (e: Exception) {
-                    println(e.message)
+                    e.printStackTrace()
                 }
             }
         }
     }
 
-    fun atualizaPrecoBase(itemService: ItemsService) {
+    fun atualizaPrecoBase(itemService: ItemsService) : DocumentLines {
         if(this.ItemCode != null  && PriceList != null) {
             U_idTabela = PriceList
             U_preco_base = itemService.getPriceBase(this.ItemCode!!, PriceList!!)
         }
+        return this
     }
 }

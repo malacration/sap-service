@@ -5,17 +5,15 @@ import br.andrew.sap.infrastructure.odata.Condicao
 import br.andrew.sap.infrastructure.odata.Filter
 import br.andrew.sap.infrastructure.odata.Predicate
 import br.andrew.sap.model.sap.InternalReconciliationsBuilder
+import br.andrew.sap.model.sap.documents.DocumentStatus
 import br.andrew.sap.model.sap.documents.Invoice
 import br.andrew.sap.model.sap.documents.base.Document
 import br.andrew.sap.model.sap.documents.base.Product
 import br.andrew.sap.model.sap.documents.base.adiantamento.ApropriacaoAdiantamento
 import br.andrew.sap.model.transaction.TransactionCodeTypes
-import br.andrew.sap.services.AuthService
 import br.andrew.sap.services.InternalReconciliationsService
-import br.andrew.sap.services.abstracts.SqlQueriesService
 import br.andrew.sap.services.document.DownPaymentService
 import br.andrew.sap.services.document.InvoiceService
-import br.andrew.sap.services.invent.BankPlusService
 import br.andrew.sap.services.journal.JournalEntriesService
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -48,7 +46,7 @@ class ConciliacaoVendaFuturaSchedule(
     fun execute() {
         val filterReclassificacaoEntrega = Filter(
             Predicate("TransactionCode", TransactionCodeTypes.VFET, Condicao.EQUAL),
-            Predicate("TaxDate", "2024-10-02", Condicao.GREAT),
+            Predicate("TaxDate", "2024-12-04", Condicao.GREAT),
         )
 
         journalEntriesService.get(filterReclassificacaoEntrega).tryGetValues<JournalEntry>().forEach { journalReclassificado ->
@@ -65,7 +63,9 @@ class ConciliacaoVendaFuturaSchedule(
                 if (adiantamentosDisponiveis.isNotEmpty()) {
                     val invoiceApropiacao = Invoice(
                         invoice.CardCode, null,
-                        listOf(Product(itemConciliacaoVendaFutura, "1", "0", 9).also {
+                        listOf(Product(itemConciliacaoVendaFutura, "1",
+                            "0",
+                            9).also {
                             it.U_preco_base = 1.0
                         }),
                         invoice.getBPL_IDAssignedToInvoice()
@@ -76,6 +76,7 @@ class ConciliacaoVendaFuturaSchedule(
                             it.controlAccount = contaControle
                             it.SequenceCode = sequenceCode
                             it.salesPersonCode = invoice.salesPersonCode
+                            it.journalMemo = "Apropriacao de adt LC ${journalReclassificado.JdtNum} para NF $ref"
                         }
 
                     val apropriado = inoviceService
@@ -89,6 +90,9 @@ class ConciliacaoVendaFuturaSchedule(
                             invoice.DocTotal?.toDoubleOrNull() ?: throw Exception("Documento sem total adequado")
                         ).setDebitTransRowId(1).build()
                     )
+
+                    journalReclassificado.TransactionCode = TransactionCodeTypes.VFEC.name
+                    journalEntriesService.update(journalReclassificado,journalReclassificado.JdtNum.toString())
                 }
             }
         }

@@ -45,7 +45,11 @@ class VendaFuturaScheduled(
     @Scheduled(fixedDelay = 3000)
     fun execute() {
         sqlQueriesService
-            .execute("vendafutura-aberto.sql", Parameter("utilizacao",idUtilizacao))
+            .execute(
+                "vendafutura-aberto.sql",
+                listOf(Parameter("utilizacao",idUtilizacao),
+                      Parameter("startDate","2024-12-09"))
+            )
             ?.tryGetValues<DocEntry>()?.forEach {
                 orderService.get(Filter("DocEntry",it.DocEntry!!,Condicao.EQUAL))
                     .tryGetValues<Document>().forEach { order ->
@@ -54,14 +58,13 @@ class VendaFuturaScheduled(
                         )
                         val contrato = contratoService.saveOnly(ContratoParse.parse(order))
                         hanndlePaymentTerms.calculaVencimentos(contrato).map {
-                            val adiantamento = adiantamentoService.adiantamentosVendaFutura(order,contrato,it)
+                            val adiantamento = adiantamentoService.adiantamentosVendaFutura(contrato,it)
                             try{
                                 bankplus.geraBoletos(
                                     adiantamento.getBPL_IDAssignedToInvoice().toInt(),
                                     adiantamento.docEntry ?: throw Exception("Falha ao obter docentry do adiantamento"),
                                     0,
                                     OrigemBoletoEnum.adiantamento)
-
                             }catch (e : Exception){
                                 logger.error("Erro ao gerar boleto",e)
                             }

@@ -4,6 +4,7 @@ import br.andrew.sap.controllers.RdStationController
 import br.andrew.sap.infrastructure.odata.Condicao
 import br.andrew.sap.infrastructure.odata.Filter
 import br.andrew.sap.infrastructure.odata.Predicate
+import br.andrew.sap.model.sap.documents.DocumentStatus
 import br.andrew.sap.model.sap.documents.OrderSales
 import br.andrew.sap.model.telegram.TipoMensagem
 import br.andrew.sap.services.TelegramRequestService
@@ -38,6 +39,7 @@ class SendOrderToEventToRdStation(
             Predicate("DocDate", data, Condicao.GREAT),
             Predicate("U_rd_station", "null", Condicao.EQUAL),
             Predicate("CardCode", "CLI0003676", Condicao.NOT_EQUAL),
+            Predicate("DocumentStatus", DocumentStatus.bost_Open,Condicao.EQUAL),
             Predicate("BPL_IDAssignedToInvoice", filiais, Condicao.IN),
         )
         ordersService.get(Filter(predicados)).tryGetValues<OrderSales>().forEach{
@@ -47,8 +49,8 @@ class SendOrderToEventToRdStation(
                 logger.info("Pedido - DocNum: ${it.docNum} - Enviado ao RdStation")
                 telegramRequestService.send("Pedido - DocNum: ${it.docNum} - Enviado ao RdStation",TipoMensagem.eventos)
             }catch (e : Exception){
-                telegramRequestService.send("Erro ao enviar pedido para RD-Station - DocNum: ${it.docNum}",TipoMensagem.erros)
                 logger.error("Erro ao enviar pedido para RD-Station - DocNum: ${it.docNum}",e)
+                telegramRequestService.send("Erro ao enviar pedido para RD-Station - DocNum: ${it.docNum}",TipoMensagem.erros)
             }
         }
     }

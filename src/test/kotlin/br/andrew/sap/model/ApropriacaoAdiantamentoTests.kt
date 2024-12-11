@@ -10,8 +10,6 @@ import java.math.BigDecimal
 class ApropriacaoAdiantamentoTests {
 
 
-    val invoice = Invoice("","", listOf(),"")
-
     @Test
     fun teste(){
         val adiantamento1 = DownPayment("","", listOf(),"").also {
@@ -23,6 +21,9 @@ class ApropriacaoAdiantamentoTests {
         val adiantamentos : List<DownPayment> = listOf(
             adiantamento1
         )
+        val invoice = Invoice("","", listOf(),"").also {
+            it.DocTotal = "100"
+        }
         val resultado = ApropriacaoAdiantamento(invoice,adiantamentos).get()
 
         Assertions.assertEquals(1,resultado.size)
@@ -40,8 +41,43 @@ class ApropriacaoAdiantamentoTests {
         val adiantamentos : List<DownPayment> = listOf(
             adiantamento1
         )
+        val invoice = Invoice("","", listOf(),"").also {
+            it.DocTotal = "120"
+        }
         val resultado = ApropriacaoAdiantamento(invoice,adiantamentos).get()
 
         Assertions.assertEquals(0,resultado.size)
+    }
+
+
+    @Test
+    fun `3 adiantamento, volta 2`(){
+        val adiantamento1 = DownPayment("","", listOf(),"").also {
+            it.docEntry = 1
+            it.docNum = "1"
+            it.apropriado = BigDecimal.ZERO
+            it.DocTotal = "100.00"
+        }
+        val adiantamento2 = DownPayment("","", listOf(),"").also {
+            it.docEntry = 1
+            it.docNum = "1"
+            it.apropriado = BigDecimal.ZERO
+            it.DocTotal = "100.00"
+        }
+        val adiantamento3 = DownPayment("","", listOf(),"").also {
+            it.docEntry = 1
+            it.docNum = "1"
+            it.apropriado = BigDecimal.ZERO
+            it.DocTotal = "100.00"
+        }
+
+        val invoice = Invoice("","", listOf(),"")
+        invoice.DocTotal = "150"
+        val adiantamentos : List<DownPayment> = listOf(
+            adiantamento1,adiantamento2,adiantamento3
+        )
+        val resultado = ApropriacaoAdiantamento(invoice,adiantamentos).get()
+
+        Assertions.assertEquals(2,resultado.size)
     }
 }

@@ -1,5 +1,6 @@
 package br.andrew.sap.model.uzzipay
 
+import br.andrew.sap.model.sap.documents.DocumentTypes
 import br.andrew.sap.model.sap.documents.base.Document
 import br.andrew.sap.model.sap.documents.base.Installment
 import org.junit.jupiter.api.Assertions
@@ -14,9 +15,9 @@ import java.util.*
 class RequestQrCodeTests {
 
     val player = Payer(
-        "01847004261",
+        "123545546",
         "Andrew",
-        "andrewc3po@gmail.com",
+        "windson@gmail.com",
         "Rua dos Bobos",
         "São Paulo",
         "SP",
@@ -27,7 +28,7 @@ class RequestQrCodeTests {
             it.documentInstallments = listOf(installment)
             it.docEntry = 123
             it.docNum = "333"
-            it.docObjectCode = "invoice"
+            it.docObjectCode = DocumentTypes.oInvoices
         }
     @Test
     fun defragmentacaoDocEntryAndInstallId(){
@@ -41,10 +42,10 @@ class RequestQrCodeTests {
 
         Assertions.assertEquals(666,request.getInstallmentId())
         Assertions.assertEquals("333",request.docNum())
-        Assertions.assertEquals("invoice",request.docType())
+        Assertions.assertEquals("oInvoices",request.docType())
         Assertions.assertEquals(123,request.docEntry())
         Assertions.assertTrue(
-            request.externalIdentifier.contains("Num333-Entry123-ins:666-invoice"))
+            request.externalIdentifier.contains("Num333-Entry123-ins:666-oInvoices"))
         Assertions.assertEquals("", Installment.reverseExternalIdentifier(""))
     }
 

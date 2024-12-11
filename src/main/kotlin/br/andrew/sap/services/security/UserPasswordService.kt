@@ -59,7 +59,7 @@ class UserPasswordService(
         return service.update(salePerson,salePerson.SalesEmployeeCode.toString()).also {
             if(isChangePassword) {
                 val body = "Sua senha foi modificada. Caso não tenha realizado esta ação, entre em contato com o administrador do sistema."
-                mailService.sendEmail(MyMailMessage("andrewc3po@gmail.com", "Senha modificada - Portal de vendas", body))
+                mailService.sendEmail(MyMailMessage(salePerson.getEmailAddress(), "Senha modificada - Portal de vendas", body))
             }
         }
     }

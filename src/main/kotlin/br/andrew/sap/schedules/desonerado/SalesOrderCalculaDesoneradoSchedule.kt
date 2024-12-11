@@ -14,7 +14,7 @@ import org.springframework.stereotype.Component
 
 
 @Component
-@ConditionalOnProperty(value = ["jobs.quotation"], havingValue = "true", matchIfMissing = true)
+@ConditionalOnProperty(value = ["jobs.desonerado.salesorder"], havingValue = "true", matchIfMissing = false)
 class SalesOrderCalculaDesoneradoSchedule(
     val desoneradoService: DesoneradoService,
     val ordersService: OrdersService) {

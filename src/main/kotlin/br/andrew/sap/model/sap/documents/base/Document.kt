@@ -5,22 +5,25 @@ import br.andrew.sap.model.WarehouseDefault
 import br.andrew.sap.model.sap.documents.DocumentStatus
 import br.andrew.sap.model.forca.EnderecoId
 import br.andrew.sap.model.sap.ReconciliationRow
+import br.andrew.sap.model.sap.documents.DocumentTypes
 import br.andrew.sap.model.sap.documents.base.adiantamento.DownPaymentsToDraw
 import br.andrew.sap.model.uzzipay.DataRetonroPixQrCode
 import br.andrew.sap.model.uzzipay.RequestPixDueDate
 import br.andrew.sap.model.uzzipay.Transaction
 import br.andrew.sap.services.ItemsService
+import br.andrew.sap.services.batch.BatchId
 import com.fasterxml.jackson.annotation.JsonFormat
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonProperty
-import com.fasterxml.jackson.databind.EnumNamingStrategy
 import com.fasterxml.jackson.databind.PropertyNamingStrategies
-import com.fasterxml.jackson.databind.annotation.EnumNaming
 import com.fasterxml.jackson.databind.annotation.JsonNaming
 import java.math.BigDecimal
 import java.math.RoundingMode
+import java.time.LocalDateTime
+import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter
 
 @JsonNaming(PropertyNamingStrategies.UpperCamelCaseStrategy::class)
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -29,8 +32,7 @@ open class Document(val CardCode : String,
                     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "YYY-MM-dd", timezone = "UTC")
                     val DocDueDate : String?,
                     val DocumentLines : List<DocumentLines>,
-                    private val BPL_IDAssignedToInvoice : String) : ReconciliationRow{
-
+                    private val BPL_IDAssignedToInvoice : String) : ReconciliationRow, BatchId{
 
     var comments: String? = null
     var docDate :String? = null
@@ -61,7 +63,7 @@ open class Document(val CardCode : String,
     var controlAccount: String? = null
     var model : Int? = null
     var docType: String? = null
-    var docObjectCode : String? = null
+    var docObjectCode : DocumentTypes? = null
 
     @JsonProperty("DocumentStatus")
     val DocumentStatus : DocumentStatus? = null
@@ -71,6 +73,7 @@ open class Document(val CardCode : String,
     var U_assinatura : String = "0"
     var U_rd_station : String? = null
     var U_venda_futura: Int? = null
+    var U_entrega_vf: Int = 0
     var downPaymentsToDraw : List<DownPaymentsToDraw>? = null
     var TransNum : Int? = null
     var SequenceCode : Int? = null
@@ -154,6 +157,10 @@ open class Document(val CardCode : String,
         return this.TransNum ?: throw Exception("Nao existe numero de transaction")
     }
 
+    override fun getId(): String {
+        return this.docEntry.toString()
+    }
+
     override fun toString(): String {
         return "Document(CardCode='$CardCode', Branch='$BPL_IDAssignedToInvoice', docEntry=$docEntry, docNum=$docNum, pedido_forca=$u_id_pedido_forca)"
     }
@@ -206,6 +213,34 @@ open class Document(val CardCode : String,
                 this.documentAdditionalExpenses.add(AdditionalExpenses.frete(value))
             field = null
         }
+
+    fun calcularDataDeVencimento(minimoDias : Long = 5): LocalDateTime {
+        return calcularDataDeVencimento(
+            this.DocDueDate?: throw Exception("Documento sem data de vencimento")
+            ,minimoDias)
+    }
+    fun calcularDataDeVencimento(dataEntradaString: String, minimoDias : Long = 5): LocalDateTime {
+        val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'")
+        val dataEntrada = LocalDateTime.parse(dataEntradaString, formatter)
+        val dataMinimaDeVencimento = LocalDateTime.now(ZoneOffset.UTC).plusDays(minimoDias)
+        return listOf(dataEntrada, dataMinimaDeVencimento)
+            .maxBy{ it }
+    }
+
+    @JsonIgnore
+    fun reverseDocumentLine(): List<DocumentLines> {
+        return this.DocumentLines.map {
+            val pt = if(it.ItemCode != null)
+                Product(it.ItemCode!!,it.Quantity,it.UnitPrice,it.Usage)
+            else
+                Service(it.UnitPrice,it.Quantity)
+            pt.BaseLine = it.LineNum
+            pt.BaseEntry = this.docEntry
+            pt.BaseType = this.docObjectCode?.value ?: throw Exception("Sem object type")
+            pt
+        }
+
+    }
 
 }
 

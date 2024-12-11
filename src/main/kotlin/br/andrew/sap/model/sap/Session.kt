@@ -15,11 +15,8 @@ class Session(val sessionId : String,
     }
 
     fun isExpire(): Boolean {
-        return Date().after(Date(date.time.plus((sessionTimeout*1000)-30)))
-    }
-
-    fun expireDate(): Date {
-        return Date(date.time.plus((sessionTimeout*1000)))
+        val plusDate = sessionTimeout*60*1000-(30*1000)
+        return Date().after(Date(date.time.plus(plusDate)))
     }
 
 }

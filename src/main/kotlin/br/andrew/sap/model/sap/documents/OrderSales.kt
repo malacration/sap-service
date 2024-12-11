@@ -43,38 +43,5 @@ class OrderSales(CardCode: String,
             it.controlAccount = this.controlAccount
         }
     }
-
-    fun getQuotationVendaFutura(pedidoRetirada: PedidoRetirada, utilizacao : Int) : Quotation{
-        val docLines : List<DocumentLines> = pedidoRetirada.itensRetirada.map {  retirada ->
-            val item = this.DocumentLines
-                .firstOrNull{ it.ItemCode == retirada.itemCode } ?: throw Exception("Erro ao selecionar item para retirada")
-            Product(item.ItemCode ?: throw Exception("nao e um produto"),
-                    retirada.quantity.toString(),
-                    item.UnitPrice,
-                    utilizacao
-            ).also {
-                it.DiscountPercent = item.DiscountPercent
-                it.U_preco_negociado = item.U_preco_negociado
-                it.U_preco_base = item.U_preco_base
-                it.U_id_item_forca = item.U_id_item_forca
-                it.U_idTabela = item.U_idTabela
-                it.u_venda_futura = item.u_venda_futura
-                it.LineTotal = null
-            }
-        }
-        return Quotation(CardCode,DocDueDate,docLines, getBPL_IDAssignedToInvoice()).also {
-            it.U_venda_futura = pedidoRetirada.docEntryVendaFutura
-        }.also {
-            if(this.totalDespesaAdicional().compareTo(BigDecimal.ZERO) > 0){
-                val proporcao = it.totalProdutos().divide(this.totalProdutos(),RoundingMode.HALF_DOWN)
-                it.documentAdditionalExpenses = this.documentAdditionalExpenses.map {
-                    val lineTotal = BigDecimal(it.LineTotal.toString()).multiply(proporcao).setScale(2,RoundingMode.HALF_DOWN).toDouble()
-                    AdditionalExpenses(it.expenseCode,lineTotal)
-                }.toMutableList()
-            }
-
-
-        }
-    }
 }
 //data de entrega - ORDRdocduedate
