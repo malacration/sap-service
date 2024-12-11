@@ -46,11 +46,6 @@ dependencies {
 
 	implementation("com.squareup.okhttp3:okhttp:4.12.0")
 
-	// https://mvnrepository.com/artifact/org.odata4j/odata4j-core
-	implementation("org.odata4j:odata4j-core:0.7.0")
-
-
-
 	//** Observability
 	implementation("org.springframework.boot:spring-boot-starter-actuator")
 	//implementation("org.springframework.boot:spring-boot-starter-log4j2")
