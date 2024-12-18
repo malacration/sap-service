@@ -51,6 +51,8 @@ open class Document(val CardCode : String,
     var SequenceSerial : String? = null
     var sequenceModel : String? = null //->
     var CreateDate : String? = null
+    var SeriesString : String? = null
+    var U_ChaveAcesso : String? = null
 
     @JsonProperty("U_id_pedido_forca")
     var u_id_pedido_forca: String? = null
@@ -81,9 +83,10 @@ open class Document(val CardCode : String,
     @JsonProperty("TaxExtension")
     var TaxExtension: TaxExtension? = null
 
-    fun configurarTaxExtension(estadoVeiculo: String = "") {
+    fun configurarTaxExtension(estadoVeiculo: String = "", incoterms: Int) {
         this.TaxExtension = TaxExtension().apply {
             VehicleState = estadoVeiculo
+            Incoterms = incoterms
         }
     }
 

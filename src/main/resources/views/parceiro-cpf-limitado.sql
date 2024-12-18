@@ -1,9 +1,7 @@
 SELECT
-	r."DocNum",
-	l."InstId"
+    "CardCode"
 FROM
-	RCT2 l
-	INNER JOIN ORCT r ON r."DocEntry"  = l."DocNum"
+    CRD7
 WHERE
-	l."DocEntry" = :docEntryInvoice
-	AND (r."Canceled" = 'N' OR r."Canceled" IS NULL)
+    ("TaxId0" like :valor or "TaxId4" like :valor)
+    AND "CardCode" like 'FOR%'
