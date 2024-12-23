@@ -158,4 +158,9 @@ class BusinessPartnersController(
         )
     }
 
+    @GetMapping("/cpf-cnpj/{cpfCnpj}")
+    fun cpfCnpjWithLike(@PathVariable cpfCnpj: String, @RequestParam(name = "type", defaultValue = "S") tipo: BusinessPartnerType): List<BusinessPartner> {
+        val teste = service.getByCpfCnpjWithLike(cpfCnpj, tipo)
+        return teste
+    }
 }
