@@ -16,9 +16,7 @@ import java.util.*
 
 @RestController
 @RequestMapping("nf-entrada")
-class PurchaseInvoicesController(val purchaseInvoiceService: PurchaseInvoiceService,
-                                 val itemService : ItemsService
-) {
+class PurchaseInvoicesController(val purchaseInvoiceService: PurchaseInvoiceService, val itemService : ItemsService) {
 
     @GetMapping("duplicate/{id}")
     fun duplicate(@PathVariable id : String) : Any{
@@ -43,6 +41,8 @@ class PurchaseInvoicesController(val purchaseInvoiceService: PurchaseInvoiceServ
         return purchaseInvoiceService.get(Filter(mutableListOf(predicate)))
     }
 
+    // TODO criar funcionalidade para retorno, para que retorne a mensageria de retorno no softexpert
+
     @PostMapping("criar")
     fun criarNotaFiscalEntrada(@RequestBody notaFiscal: PurchaseInvoice, auth: Authentication): PurchaseInvoice {
         try {
@@ -51,5 +51,7 @@ class PurchaseInvoicesController(val purchaseInvoiceService: PurchaseInvoiceServ
         } catch (e: Exception) {
             throw RuntimeException("Erro ao criar a nota fiscal de entrada: ${e.message}",e)
         }
+
+//        return "{\"retorno\" : \"funcionou\"}"
     }
 }

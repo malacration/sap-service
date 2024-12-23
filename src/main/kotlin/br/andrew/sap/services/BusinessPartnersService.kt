@@ -135,7 +135,7 @@ class BusinessPartnersService(
     fun getByCpfCnpjWithLike(cpfCnpj: String, type: BusinessPartnerType): List<BusinessPartner> {
         val url = env.host + "/b1s/v1/"
         val cpfCnpjComWildcard = "%${CpfCnpj(cpfCnpj).getWithMask()}%"
-        val uri = "${url}SQLQueries('parceiro-cpf-limitado.sql')/List?valor='${cpfCnpjComWildcard}'&type='${type.getForSql()}'"
+        val uri = "${url}SQLQueries('parceiro-cpf-limitado2.sql')/List?valor='${cpfCnpjComWildcard}%'&type='${type.getForSql()}'"
         val request = RequestEntity
             .get(uri)
             .header("cookie", "B1SESSION=${session().sessionId}")
