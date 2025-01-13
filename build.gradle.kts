@@ -62,8 +62,6 @@ dependencies {
 	implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
 
 	developmentOnly("org.springframework.boot:spring-boot-devtools")
-	testImplementation("org.springframework.boot:spring-boot-starter-test")
-	implementation("org.mockito:mockito-core:5.3.0")
 
 	//** - SOAP
 	implementation("org.apache.axis:axis:1.7.9")
@@ -80,6 +78,14 @@ dependencies {
 	implementation("org.jetbrains.kotlinx:kotlinx-serialization-json-jvm:1.7.0")
 	implementation("com.itextpdf:itext-core:8.0.2")
 	implementation("com.itextpdf:html2pdf:5.0.2")
+
+
+
+	testImplementation("org.springframework.boot:spring-boot-starter-test")
+
+	testImplementation("org.mockito:mockito-core:5.3.0")
+	testImplementation("org.mockito.kotlin:mockito-kotlin:5.3.0")
+
 
 }
 
