@@ -66,7 +66,7 @@ class BatchService(val rest : RestTemplate,
                 if(http.endsWith("Cancel")) "" else "$json\n"
     }
 
-    fun run(bathList: BatchList): String? {
+    fun run(bathList: BatchList): List<BatchResponse> {
         val batchUUID = UUID.randomUUID().toString()
         var body = body(batchUUID,bathList)
         val request = RequestEntity
@@ -75,6 +75,15 @@ class BatchService(val rest : RestTemplate,
             .header("OData-Version","4.0")
             .header("cookie","B1SESSION=${session().sessionId}")
             .header("Content-Length",body.size.toString())
-        return rest.exchange(request.body(body), String::class.java).body
+        val retorno = rest.exchange(request.body(body), String::class.java).body
+        val resposta = BatchRespondeHandler().parseBatchResponse(retorno!!)
+        resposta.filter { !it.success}
+            .map { it.errorMessage }
+            .reduce { str, batchResponse -> "$batchResponse. \n$str" }
+            .also {
+                if(it?.isNotEmpty() == true)
+                    throw Exception(it)
+            }
+        return resposta
     }
 }

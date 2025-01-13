@@ -18,6 +18,7 @@ import br.andrew.sap.services.ContratoVendaFuturaService
 import br.andrew.sap.services.ItemsService
 import br.andrew.sap.services.batch.BatchList
 import br.andrew.sap.services.batch.BatchMethod
+import br.andrew.sap.services.batch.BatchResponse
 import br.andrew.sap.services.batch.BatchService
 import br.andrew.sap.services.document.CreditNotesService
 import br.andrew.sap.services.document.DownPaymentService
@@ -85,7 +86,7 @@ class ContratoVendaFuturaController(
     }
 
     @PostMapping("troca")
-    fun troca(@RequestBody pedidoTroca : PedidoTroca, auth : Authentication): String? {
+    fun troca(@RequestBody pedidoTroca : PedidoTroca, auth : Authentication): List<BatchResponse> {
         val bathcList = BatchList()
         val contrato = service
             .getById(pedidoTroca.docEntry)
