@@ -21,6 +21,11 @@ class AdditionalExpenses(val expenseCode : Int, val LineTotal : Double){
 //    val LineGross : Double = lineTotalSys
 //    val LineGrossSys : Double = lineTotalSys
 
+    fun setDistribuicaoCusto(custoByBranch: DistribuicaoCustoByBranch) {
+        DistributionRule = custoByBranch.grupoEconomico
+        DistributionRule2 = custoByBranch.centroCusto
+    }
+
     companion object{
         @JsonIgnore
         fun frete(valor : Double) : AdditionalExpenses {

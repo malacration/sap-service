@@ -31,11 +31,7 @@ import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.Authentication
-import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.RequestBody
-import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.bind.annotation.*
 import java.math.BigDecimal
 
 
@@ -62,6 +58,14 @@ class ContratoVendaFuturaController(
             page
         ).tryGetPageValues<Contrato>(page)
         return ResponseEntity.ok(contratos)
+    }
+
+    @GetMapping("/{id}")
+    //TODO fazer metodo de validacao de acesso, admin ou o vendedor
+    fun get(@PathVariable id : String, auth : Authentication): ResponseEntity<Contrato> {
+        if(auth !is User)
+            return ResponseEntity.noContent().build()
+        return ResponseEntity.ok(service.getById(id).tryGetValue<Contrato>())
     }
 
     @GetMapping("all")
