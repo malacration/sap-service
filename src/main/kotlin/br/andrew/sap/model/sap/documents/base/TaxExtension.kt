@@ -11,4 +11,5 @@ import com.fasterxml.jackson.databind.annotation.JsonNaming
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 class TaxExtension(
     var VehicleState: String? = null,
+    var Incoterms: String? = null
 )
