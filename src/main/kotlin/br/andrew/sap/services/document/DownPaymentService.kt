@@ -26,7 +26,7 @@ import java.time.LocalDate
 @Service
 class DownPaymentService(env: SapEnvrioment,
                          val sqlQueriesService: SqlQueriesService,
-                         @Value("\${adiantamento-vf.itemcode:none}") val vfItemAdiantamento : String,
+                         @Value("\${venda-futura.adiantamento-item:none}") val vfItemAdiantamento : String,
                          @Value("\${adiantamento-vf.formaPagamento:none}") vfFormaPagamento : String,
                          restTemplate: RestTemplate,
                          authService: AuthService,
@@ -44,6 +44,8 @@ class DownPaymentService(env: SapEnvrioment,
     }
 
     fun adiantamentosVendaFuturaWithoutSave(contrato: Contrato, paymentInfo: PaymentDueDates): Document {
+        if(vfItemAdiantamento == "none")
+            throw Exception("O parametro [venda-futura.adiantamento-item] nao pode ser $vfItemAdiantamento")
         val linhas = listOf(Product(vfItemAdiantamento,paymentInfo.value.toString(),"1"))
         val adiantamento = DownPayment(
             contrato.U_cardCode,
