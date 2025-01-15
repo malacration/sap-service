@@ -83,12 +83,23 @@ open class Document(val CardCode : String,
     @JsonProperty("TaxExtension")
     var TaxExtension: TaxExtension? = null
 
-    fun configurarTaxExtension(estadoVeiculo: String = "", incoterms: Int) {
-        this.TaxExtension = TaxExtension().apply {
-            VehicleState = estadoVeiculo
-            Incoterms = incoterms
+    var VehicleState: String? = null
+        set(value) {
+            field = value
+            if (this.TaxExtension == null) {
+                this.TaxExtension = TaxExtension()
+            }
+            this.TaxExtension?.VehicleState = value
         }
-    }
+
+    var Incoterms: Int? = null
+        set(value) {
+            field = value
+            if (this.TaxExtension == null) {
+                this.TaxExtension = TaxExtension()
+            }
+            this.TaxExtension?.Incoterms = value
+        }
 
     @JsonProperty("BPL_IDAssignedToInvoice")
     fun getBPL_IDAssignedToInvoice(): String {
