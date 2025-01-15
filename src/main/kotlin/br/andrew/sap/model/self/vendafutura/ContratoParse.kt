@@ -1,11 +1,7 @@
 package br.andrew.sap.model.self.vendafutura
 
-import br.andrew.sap.infrastructure.odata.OData
-import br.andrew.sap.model.entity.ChildTables
 import br.andrew.sap.model.sap.documents.base.Document
 import br.andrew.sap.model.sap.documents.base.DocumentLines
-import br.andrew.sap.model.sap.documents.base.Product
-import kotlin.math.exp
 
 
 class ContratoParse {
