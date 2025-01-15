@@ -29,7 +29,7 @@ class AtualizarObservacaoGrupoCP(
     fun execute() {
         val filter = Filter(
             Predicate("U_Atualizar_Observacao_Grupo_CP", 0, Condicao.EQUAL),
-            Predicate("JdtNum", 969095, Condicao.EQUAL)
+            Predicate("JdtNum", 803560, Condicao.EQUAL)
         )
 
         val resultados = journalEntriesService.get(filter, OrderBy("ReferenceDate", Order.DESC))

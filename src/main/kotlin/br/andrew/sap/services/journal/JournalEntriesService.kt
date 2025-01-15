@@ -86,7 +86,7 @@ class JournalEntriesService(env: SapEnvrioment, restTemplate: RestTemplate, auth
         val journalEntry = getByDocEntry(jdtNum) ?: return null
 
         val validLines = journalEntry.journalEntryLines.filter {
-            it.AccountCode.matches(Regex("^[1-3]\\.\\d+\\.\\d+\\.\\d+\\.\\d+$")) &&
+            it.AccountCode.matches(Regex("^[3-5]\\.\\d+\\.\\d+\\.\\d+\\.\\d+$")) &&
                     (it.costingCode.isNullOrEmpty() && it.costingCode2.isNullOrEmpty())
         }
 

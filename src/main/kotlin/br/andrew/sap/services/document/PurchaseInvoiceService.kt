@@ -64,18 +64,18 @@ class PurchaseInvoiceService(env: SapEnvrioment,
     }
 
     fun getCostingCodeFromPurchaseInvoice(reference: Int): String? {
-        val purchaseInvoice = getPurchaseInvoiceByReference(reference.toString())
+        val purchaseInvoice = getPurchaseInvoiceByReference(reference)
         return purchaseInvoice?.DocumentLines?.firstOrNull()?.CostingCode
     }
 
     fun getCostingCode2FromPurchaseInvoice(reference: Int): String? {
-        val purchaseInvoice = getPurchaseInvoiceByReference(reference.toString())
+        val purchaseInvoice = getPurchaseInvoiceByReference(reference)
         return purchaseInvoice?.DocumentLines?.firstOrNull()?.CostingCode2
     }
 
-    fun getPurchaseInvoiceByReference(reference: String): PurchaseInvoice? {
+    fun getPurchaseInvoiceByReference(reference: Int): PurchaseInvoice? {
         val filter = Filter(
-            Predicate("Reference1", reference, Condicao.EQUAL)
+            Predicate("DocEntry", reference, Condicao.EQUAL)
         )
         return get(filter).tryGetValues<PurchaseInvoice>().firstOrNull()
     }

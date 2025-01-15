@@ -22,6 +22,12 @@ class PurchaseInvoicesController(val purchaseInvoiceService: PurchaseInvoiceServ
         return purchaseInvoiceService.save(duplicado)
     }
 
+    @GetMapping("entrada/{id}")
+    fun nota(@PathVariable id : Int) : Any{
+        return purchaseInvoiceService.getById(id)
+    }
+
+
     @GetMapping("cancel/{id}")
     fun cancel(@PathVariable id : String) : OData? {
         return purchaseInvoiceService.cancel(id)

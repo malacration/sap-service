@@ -1,5 +1,6 @@
 package br.andrew.sap.services.journal
 
+import br.andrew.sap.services.bank.VendorPaymentService
 import br.andrew.sap.services.document.PurchaseInvoiceService
 import okhttp3.internal.concurrent.TaskRunner.Companion.logger
 import org.springframework.stereotype.Service
@@ -8,6 +9,7 @@ import org.springframework.stereotype.Service
 class JournalMemoHandle(
     val journalEntryService: JournalEntriesService,
     val purchaseInvoiceService: PurchaseInvoiceService,
+    val vendorPaymentService: VendorPaymentService,
     val services: List<ServiceOriginalJournal>){
 
     fun updateMemoJournal(idJournal: Int) {
@@ -34,9 +36,18 @@ class JournalMemoHandle(
             val isRelevantService = journalEntry.OriginalJournal == "ttVendorPayment" || journalEntry.OriginalJournal == "ttReceipt"
 
             if (isRelevantService) {
+                val docEntry = journalEntry.Original ?: return
+                val vendorPayment = vendorPaymentService.getById(docEntry)
+                val codigo = (vendorPayment["PaymentInvoices"] as? List<*>)?.firstOrNull()?.let { invoice ->
+                    (invoice as? Map<*, *>)?.get("DocEntry") as? Int
+                } ?: run {
+                    logger.warning("Não foi possível obter o código do DocEntry em PaymentInvoices para docEntry $docEntry")
+                    return
+                }
+
                 val reference = journalEntry.Reference ?: return
-                val costingCode = purchaseInvoiceService.getCostingCodeFromPurchaseInvoice(reference.toInt())
-                val centrodeCusto = purchaseInvoiceService.getCostingCode2FromPurchaseInvoice(reference.toInt())
+                val costingCode = purchaseInvoiceService.getCostingCodeFromPurchaseInvoice(codigo.toInt())
+                val centrodeCusto = purchaseInvoiceService.getCostingCode2FromPurchaseInvoice(codigo.toInt())
 
                 if (costingCode != null && centrodeCusto != null) {
                     journalEntryService.updateGrupoEconomicoJournalEntry(idJournal, costingCode, centrodeCusto)
