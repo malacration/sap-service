@@ -27,15 +27,13 @@ class AtualizarObservacaoGrupoCP(
 
     @Scheduled(fixedDelay = 60000)
     fun atualizarLancamentosContabeis() {
-        val filtro = Filter(
-            Predicate("U_Atualizar_Observacao_Grupo_CP", 0, Condicao.EQUAL),
-            Predicate("JdtNum", 803560, Condicao.EQUAL)
+        val dataLimite = LocalDate.now().minusDays(dias).toString()
+        val filter = Filter(
+            Predicate("U_Atualizar_Observacao", 0, Condicao.EQUAL),
+            Predicate("ReferenceDate", dataLimite, Condicao.GREAT_EQUAL)
         )
-
-        val lancamentos = journalEntriesService
-            .get(filtro, OrderBy("ReferenceDate", Order.DESC))
+        val lancamentos = journalEntriesService.get(filter,OrderBy("ReferenceDate", Order.DESC))
             .tryGetPageValues<JournalEntry>(Pageable.unpaged())
-
         lancamentos.forEach { lancamento ->
             try {
                 logger.info("Atualizando observação do lançamento contábil ${lancamento.JdtNum}")
