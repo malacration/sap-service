@@ -17,10 +17,10 @@ import java.time.LocalDate
 @Component
 @ConditionalOnProperty(value = ["lc.memo.enable"], havingValue = "true", matchIfMissing = false)
 class AtualizarObservacaoLancamento(
-    val journalEntriesService: JournalEntriesService,
-    val journalMemoHandle : JournalMemoHandle,
-    @Value("\${lc.memo.dias:5}") val dias : Long,
-    val currentSapUser : SapUser
+    private val journalEntriesService: JournalEntriesService,
+    private val journalMemoHandle: JournalMemoHandle,
+    @Value("\${lc.memo.dias:5}") private val dias: Long,
+    private val currentSapUser: SapUser
 ) {
 
     val logger: Logger = LoggerFactory.getLogger(AtualizarObservacaoLancamento::class.java)
