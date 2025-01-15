@@ -16,6 +16,7 @@ class JournalEntry(val journalEntryLines : List<JournalEntryLines>, val memo : S
     var OriginalJournal : String? = null
     var Original : Int? = null
     var U_Atualizar_Observacao : Int? = null
+    var U_Atualizar_Observacao_Grupo_CP : Int? = null
     var TransactionCode : String? = null
 
 

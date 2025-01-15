@@ -62,4 +62,21 @@ class PurchaseInvoiceService(env: SapEnvrioment,
     override fun getOriginalJournal(): OriginalJournal {
         return OriginalJournal.ttAPInvoice
     }
+
+    fun getCostingCodeFromPurchaseInvoice(reference: Int): String? {
+        val purchaseInvoice = getPurchaseInvoiceByReference(reference.toString())
+        return purchaseInvoice?.DocumentLines?.firstOrNull()?.CostingCode
+    }
+
+    fun getCostingCode2FromPurchaseInvoice(reference: Int): String? {
+        val purchaseInvoice = getPurchaseInvoiceByReference(reference.toString())
+        return purchaseInvoice?.DocumentLines?.firstOrNull()?.CostingCode2
+    }
+
+    fun getPurchaseInvoiceByReference(reference: String): PurchaseInvoice? {
+        val filter = Filter(
+            Predicate("Reference1", reference, Condicao.EQUAL)
+        )
+        return get(filter).tryGetValues<PurchaseInvoice>().firstOrNull()
+    }
 }

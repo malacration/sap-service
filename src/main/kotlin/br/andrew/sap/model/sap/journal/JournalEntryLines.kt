@@ -17,6 +17,7 @@ class JournalEntryLines(
     var costingCode2 : String? = null
 ){
 
+    var Line_ID : Int? = null
     var ShortName : String? = null
     @JsonProperty("BPLID")
     fun getBPLID() : Int {
