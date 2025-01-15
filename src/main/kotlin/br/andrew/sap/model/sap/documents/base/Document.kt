@@ -79,7 +79,7 @@ open class Document(val CardCode : String,
     var SequenceCode : Int? = null
 
     @JsonProperty("TaxExtension")
-    var TaxExtension: TaxExtension? = null
+    var TaxExtension: TaxExtension? = TaxExtension()
 
     @JsonProperty("BPL_IDAssignedToInvoice")
     fun getBPL_IDAssignedToInvoice(): String {
@@ -98,9 +98,12 @@ open class Document(val CardCode : String,
 
     }
     fun setDistribuicaoCusto(distCusto : List<DistribuicaoCustoByBranch>){
-        distCusto.firstOrNull{it.branch == BPL_IDAssignedToInvoice}?.also { branch ->
+        distCusto.firstOrNull{it.branch == BPL_IDAssignedToInvoice}?.also { custoByBranch ->
+            this.documentAdditionalExpenses.forEach{
+                it.setDistribuicaoCusto(custoByBranch)
+            }
             this.DocumentLines.forEach{
-                it.setDistribuicaoCusto( branch)
+                it.setDistribuicaoCusto(custoByBranch)
             }
         }
     }

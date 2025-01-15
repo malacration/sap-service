@@ -88,9 +88,9 @@ abstract class DocumentLines(
         return total().toDouble()*rate/100
     }
 
-    fun setDistribuicaoCusto(branch: DistribuicaoCustoByBranch) {
-        CostingCode = branch.grupoEconomico
-        CostingCode2 = branch.centroCusto
+    fun setDistribuicaoCusto(custoByBranch: DistribuicaoCustoByBranch) {
+        CostingCode = custoByBranch.grupoEconomico
+        CostingCode2 = custoByBranch.centroCusto
     }
 
     fun setJson(node: JsonNode){

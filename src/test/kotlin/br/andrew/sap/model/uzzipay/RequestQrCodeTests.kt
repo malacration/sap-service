@@ -36,7 +36,7 @@ class RequestQrCodeTests {
             installment.createExternalIdentifier(document),
             ContaUzziPayPix().also { it.chavePix = "" },
             100.00.toBigDecimal(),
-            "2024-12-31",
+            "2924-12-31",
             player,
             "1")
 

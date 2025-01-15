@@ -18,6 +18,7 @@ import br.andrew.sap.services.ContratoVendaFuturaService
 import br.andrew.sap.services.ItemsService
 import br.andrew.sap.services.batch.BatchList
 import br.andrew.sap.services.batch.BatchMethod
+import br.andrew.sap.services.batch.BatchResponse
 import br.andrew.sap.services.batch.BatchService
 import br.andrew.sap.services.document.CreditNotesService
 import br.andrew.sap.services.document.DownPaymentService
@@ -30,11 +31,7 @@ import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.Authentication
-import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.RequestBody
-import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.bind.annotation.*
 import java.math.BigDecimal
 
 
@@ -63,6 +60,14 @@ class ContratoVendaFuturaController(
         return ResponseEntity.ok(contratos)
     }
 
+    @GetMapping("/{id}")
+    //TODO fazer metodo de validacao de acesso, admin ou o vendedor
+    fun get(@PathVariable id : String, auth : Authentication): ResponseEntity<Contrato> {
+        if(auth !is User)
+            return ResponseEntity.noContent().build()
+        return ResponseEntity.ok(service.getById(id).tryGetValue<Contrato>())
+    }
+
     @GetMapping("all")
     fun getAll(auth : Authentication, page : Pageable): ResponseEntity<Page<Contrato>> {
         val contratos = service.get(Filter(),
@@ -85,7 +90,7 @@ class ContratoVendaFuturaController(
     }
 
     @PostMapping("troca")
-    fun troca(@RequestBody pedidoTroca : PedidoTroca, auth : Authentication): String? {
+    fun troca(@RequestBody pedidoTroca : PedidoTroca, auth : Authentication): List<BatchResponse> {
         val bathcList = BatchList()
         val contrato = service
             .getById(pedidoTroca.docEntry)
