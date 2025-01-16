@@ -1,8 +1,8 @@
 package br.andrew.sap.model.sap.documents.base
 
 import br.andrew.sap.model.bankplus.Boleto
-import br.andrew.sap.model.sap.documents.base.Document
 import br.andrew.sap.model.uzzipay.Transaction
+import com.fasterxml.jackson.annotation.JsonFormat
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonProperty
@@ -14,7 +14,10 @@ import java.util.*
 @JsonNaming(PropertyNamingStrategies.UpperCamelCaseStrategy::class)
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-class Installment(@JsonProperty("DueDate") private val _dueDate : Date?, val total : Double) {
+class Installment(
+    @JsonProperty("DueDate")
+    @JsonFormat(shape=JsonFormat.Shape.STRING, timezone="America/Porto_Velho")
+    private val _dueDate : Date?, val total : Double) {
 
     var InstallmentId : Int? = null
     var PaymentOrdered : String? = null
