@@ -63,14 +63,15 @@ class PurchaseInvoiceService(env: SapEnvrioment,
         return OriginalJournal.ttAPInvoice
     }
 
-    fun getCostingCodeFromPurchaseInvoice(reference: Int): String? {
+    fun getCostingCode(reference: Int, field: String): String? {
         val purchaseInvoice = getPurchaseInvoiceByReference(reference)
-        return purchaseInvoice?.DocumentLines?.firstOrNull()?.CostingCode
-    }
-
-    fun getCostingCode2FromPurchaseInvoice(reference: Int): String? {
-        val purchaseInvoice = getPurchaseInvoiceByReference(reference)
-        return purchaseInvoice?.DocumentLines?.firstOrNull()?.CostingCode2
+        return purchaseInvoice?.DocumentLines?.firstOrNull()?.let { documentLine ->
+            when (field) {
+                "CostingCode" -> documentLine.CostingCode
+                "CostingCode2" -> documentLine.CostingCode2
+                else -> null
+            }
+        }
     }
 
     fun getPurchaseInvoiceByReference(reference: Int): PurchaseInvoice? {

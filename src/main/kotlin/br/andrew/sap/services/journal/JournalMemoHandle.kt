@@ -29,34 +29,33 @@ class JournalMemoHandle(
         }
     }
 
-    fun updateGrupoEconomicoCentroCusto(idJournal: Int) {
-        val journalEntry = journalEntryService.getByDocEntry(idJournal)
+    fun atualizarGrupoEconomicoECentroCusto(journalId: Int) {
+        val lancamento = journalEntryService.getByDocEntry(journalId) ?: return
+        val docEntryOriginal = lancamento.Original ?: return
 
-        journalEntry?.Original?.let {
-            val isRelevantService = journalEntry.OriginalJournal == "ttVendorPayment" || journalEntry.OriginalJournal == "ttReceipt"
+        if (lancamento.OriginalJournal in listOf("ttVendorPayment", "ttReceipt")) {
+            val pagamento = vendorPaymentService.getById(docEntryOriginal)
+            val docEntryNota = extrairDocEntryNota(pagamento, docEntryOriginal) ?: return
 
-            if (isRelevantService) {
-                val docEntry = journalEntry.Original ?: return
-                val vendorPayment = vendorPaymentService.getById(docEntry)
-                val codigo = (vendorPayment["PaymentInvoices"] as? List<*>)?.firstOrNull()?.let { invoice ->
-                    (invoice as? Map<*, *>)?.get("DocEntry") as? Int
-                } ?: run {
-                    logger.warning("Não foi possível obter o código do DocEntry em PaymentInvoices para docEntry $docEntry")
-                    return
-                }
+            val grupoEconomico = purchaseInvoiceService.getCostingCode(docEntryNota, "CostingCode")
+            val centroDeCusto = purchaseInvoiceService.getCostingCode(docEntryNota, "CostingCode2")
 
-                val reference = journalEntry.Reference ?: return
-                val costingCode = purchaseInvoiceService.getCostingCodeFromPurchaseInvoice(codigo.toInt())
-                val centrodeCusto = purchaseInvoiceService.getCostingCode2FromPurchaseInvoice(codigo.toInt())
-
-                if (costingCode != null && centrodeCusto != null) {
-                    journalEntryService.updateGrupoEconomicoJournalEntry(idJournal, costingCode, centrodeCusto)
-                } else {
-                    logger.warning("CostingCode ou Centro de Custo não encontrado para o Reference: $reference")
-                }
+            if (grupoEconomico != null && centroDeCusto != null) {
+                journalEntryService.updateGrupoEconomicoJournalEntry(journalId, grupoEconomico, centroDeCusto)
             } else {
-                journalEntryService.markGrupoEconomicoChecked(idJournal)
+                logger.warning("Grupo Econômico ou Centro de Custo não encontrado para a nota fiscal com referência: ${lancamento.Reference}")
             }
+        } else {
+            journalEntryService.markGrupoEconomicoChecked(journalId)
+        }
+    }
+
+    private fun extrairDocEntryNota(pagamento: Map<String, Any?>, docEntryOriginal: Int): Int? {
+        return (pagamento["PaymentInvoices"] as? List<*>)?.firstOrNull()?.let { invoice ->
+            (invoice as? Map<*, *>)?.get("DocEntry") as? Int
+        } ?: run {
+            logger.warning("Não foi possível obter o DocEntry da nota fiscal em 'PaymentInvoices' para docEntry $docEntryOriginal")
+            null
         }
     }
 }

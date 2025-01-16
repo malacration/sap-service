@@ -23,24 +23,36 @@ class AtualizarObservacaoGrupoCP(
     private val currentSapUser: SapUser
 ) {
 
-    val logger: Logger = LoggerFactory.getLogger(AtualizarObservacaoLancamento::class.java)
+    private val logger: Logger = LoggerFactory.getLogger(AtualizarObservacaoGrupoCP::class.java)
 
     @Scheduled(fixedDelay = 60000)
     fun atualizarLancamentosContabeis() {
         val dataLimite = LocalDate.now().minusDays(dias).toString()
-        val filter = Filter(
-            Predicate("U_Atualizar_Observacao", 0, Condicao.EQUAL),
+        val filtroLancamentos = criarFiltroLancamentos(dataLimite)
+
+        val lancamentos = journalEntriesService.get(filtroLancamentos, OrderBy("ReferenceDate", Order.DESC))
+            .tryGetPageValues<JournalEntry>(Pageable.unpaged())
+
+        lancamentos.forEach { lancamento ->
+            processarLancamento(lancamento)
+        }
+    }
+
+    private fun criarFiltroLancamentos(dataLimite: String): Filter {
+        return Filter(
+            Predicate("U_Atualizar_Observacao_Grupo_CP", 0, Condicao.EQUAL),
             Predicate("ReferenceDate", dataLimite, Condicao.GREAT_EQUAL)
         )
-        val lancamentos = journalEntriesService.get(filter,OrderBy("ReferenceDate", Order.DESC))
-            .tryGetPageValues<JournalEntry>(Pageable.unpaged())
-        lancamentos.forEach { lancamento ->
-            try {
-                logger.info("Atualizando observação do lançamento contábil ${lancamento.JdtNum}")
-//                journalMemoHandle.atualizarGrupoEconomicoECentroCusto(lancamento.JdtNum!!)
-            } catch (ex: Exception) {
-                logger.error("Erro ao atualizar a descrição do lançamento contábil ${lancamento.JdtNum}", ex)
-            }
+    }
+
+    private fun processarLancamento(lancamento: JournalEntry) {
+        try {
+            logger.info("Atualizando observação do lançamento contábil ${lancamento.JdtNum}")
+            lancamento.JdtNum?.let {
+                journalMemoHandle.atualizarGrupoEconomicoECentroCusto(it)
+            } ?: logger.warn("Lançamento contábil com JdtNum nulo. Ignorando processamento.")
+        } catch (ex: Exception) {
+            logger.error("Erro ao atualizar o lançamento contábil ${lancamento.JdtNum}", ex)
         }
     }
 }
