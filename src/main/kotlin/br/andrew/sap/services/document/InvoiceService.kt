@@ -151,4 +151,22 @@ class InvoiceService(env: SapEnvrioment, restTemplate: RestTemplate, authService
         val result = get(filter,page)
         return result.tryGetPageValues<Invoice>(page)
     }
+
+    fun getCostingCodeInvoice(reference: Int, field: String): String? {
+        val invoice = getInvoiceByReference(reference)
+        return invoice?.DocumentLines?.firstOrNull()?.let { documentLine ->
+            when (field) {
+                "CostingCode" -> documentLine.CostingCode
+                "CostingCode2" -> documentLine.CostingCode2
+                else -> null
+            }
+        }
+    }
+
+    fun getInvoiceByReference(reference: Int): Invoice? {
+        val filter = Filter(
+            Predicate("DocEntry", reference, Condicao.EQUAL)
+        )
+        return get(filter).tryGetValues<Invoice>().firstOrNull()
+    }
 }

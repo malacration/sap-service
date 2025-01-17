@@ -82,6 +82,44 @@ class JournalEntriesService(env: SapEnvrioment, restTemplate: RestTemplate, auth
 
     }
 
+    fun updateGrupoEconomicoJournalEntry(jdtNum: Int, grupoEconomico: String, centroDeCusto: String): OData? {
+        val journalEntry = getByDocEntry(jdtNum) ?: return null
+
+        val validLines = journalEntry.journalEntryLines.filter {
+            it.AccountCode.matches(Regex("^[3-5]\\.\\d+\\.\\d+\\.\\d+\\.\\d+$")) &&
+                    it.costingCode.isNullOrEmpty() &&
+                    it.costingCode2.isNullOrEmpty()
+        }
+
+        val json = if (validLines.isNotEmpty()) {
+            """
+        {
+            "JournalEntryLines": [
+                ${validLines.joinToString(",") { line ->
+                """
+                    {
+                        "Line_ID": ${line.Line_ID},
+                        "CostingCode": "$grupoEconomico",
+                        "CostingCode2": "$centroDeCusto"
+                    }
+                    """
+            }}
+            ],
+            "U_Atualizar_Observacao_Grupo_CP": "1"
+        }
+        """.trimIndent()
+        } else {
+            """{"U_Atualizar_Observacao_Grupo_CP": "1"}"""
+        }
+
+        return update(json, jdtNum.toString())
+    }
+
+    fun markGrupoEconomicoChecked(idJournal: Int): OData? {
+        val json = """{"U_Atualizar_Observacao_Grupo_CP": "1"}"""
+        return update(json, idJournal.toString())
+    }
+
     fun saveOrRecouverReference(entry: JournalEntry): JournalEntry {
         //TODO fazer a query para evitar registro cancelados
         //Nao encontrei uma forma de identificar se o registro esta cancelado

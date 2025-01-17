@@ -6,6 +6,7 @@ import br.andrew.sap.infrastructure.odata.Predicate
 import br.andrew.sap.model.enums.Cancelled
 import br.andrew.sap.model.envrioments.SapEnvrioment
 import br.andrew.sap.model.bank.Payment
+import br.andrew.sap.model.sap.documents.Invoice
 import br.andrew.sap.model.sap.documents.PurchaseInvoice
 import br.andrew.sap.model.sap.documents.PurchaseReturns
 import br.andrew.sap.model.sap.journal.OriginalJournal
@@ -61,5 +62,23 @@ class PurchaseInvoiceService(env: SapEnvrioment,
 
     override fun getOriginalJournal(): OriginalJournal {
         return OriginalJournal.ttAPInvoice
+    }
+
+    fun getCostingCode(reference: Int, field: String): String? {
+        val purchaseInvoice = getPurchaseInvoiceByReference(reference)
+        return purchaseInvoice?.DocumentLines?.firstOrNull()?.let { documentLine ->
+            when (field) {
+                "CostingCode" -> documentLine.CostingCode
+                "CostingCode2" -> documentLine.CostingCode2
+                else -> null
+            }
+        }
+    }
+
+    fun getPurchaseInvoiceByReference(reference: Int): PurchaseInvoice? {
+        val filter = Filter(
+            Predicate("DocEntry", reference, Condicao.EQUAL)
+        )
+        return get(filter).tryGetValues<PurchaseInvoice>().firstOrNull()
     }
 }
