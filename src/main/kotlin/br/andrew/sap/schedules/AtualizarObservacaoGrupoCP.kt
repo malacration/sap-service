@@ -25,7 +25,7 @@ class AtualizarObservacaoGrupoCP(
 
     private val logger: Logger = LoggerFactory.getLogger(AtualizarObservacaoGrupoCP::class.java)
 
-    @Scheduled(fixedDelay = 15000)
+    @Scheduled(fixedDelay = 60000)
     fun atualizarLancamentosContabeis() {
         val dataLimite = LocalDate.now().minusDays(dias).toString()
         val filtroLancamentos = criarFiltroLancamentos(dataLimite)
