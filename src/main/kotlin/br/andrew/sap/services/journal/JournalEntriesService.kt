@@ -1,6 +1,7 @@
 package br.andrew.sap.services.journal
 
 import JournalEntry
+import JournalEntryLines
 import br.andrew.sap.infrastructure.odata.Condicao
 import br.andrew.sap.infrastructure.odata.Filter
 import br.andrew.sap.infrastructure.odata.OData
@@ -82,14 +83,15 @@ class JournalEntriesService(env: SapEnvrioment, restTemplate: RestTemplate, auth
 
     }
 
-    fun updateGrupoEconomicoJournalEntry(jdtNum: Int, grupoEconomico: String, centroDeCusto: String): OData? {
-        val journalEntry = getByDocEntry(jdtNum) ?: return null
-
-        val validLines = journalEntry.journalEntryLines.filter {
-            it.AccountCode.matches(Regex("^[3-5]\\.\\d+\\.\\d+\\.\\d+\\.\\d+$")) &&
-                    it.costingCode.isNullOrEmpty() &&
-                    it.costingCode2.isNullOrEmpty()
+    fun getValidJournalLines(jdtNum: Int): List<JournalEntryLines> {
+        val journalEntry = getByDocEntry(jdtNum) ?: return emptyList()
+        return journalEntry.journalEntryLines.filter {
+            it.isContaResultado() && it.costingCode.isNullOrEmpty() && it.costingCode2.isNullOrEmpty()
         }
+    }
+
+    fun updateGrupoEconomicoJournalEntry(jdtNum: Int, grupoEconomico: String, centroDeCusto: String): OData? {
+        val validLines = getValidJournalLines(jdtNum)
 
         val json = if (validLines.isNotEmpty()) {
             """
@@ -105,18 +107,18 @@ class JournalEntriesService(env: SapEnvrioment, restTemplate: RestTemplate, auth
                     """
             }}
             ],
-            "U_Atualizar_Observacao_Grupo_CP": "1"
+            "U_Atualizar_Centro_de_Custo": "1"
         }
         """.trimIndent()
         } else {
-            """{"U_Atualizar_Observacao_Grupo_CP": "1"}"""
+            """{"U_Atualizar_Centro_de_Custo": "1"}"""
         }
 
         return update(json, jdtNum.toString())
     }
 
     fun markGrupoEconomicoChecked(idJournal: Int): OData? {
-        val json = """{"U_Atualizar_Observacao_Grupo_CP": "1"}"""
+        val json = """{"U_Atualizar_Centro_de_Custo": "1"}"""
         return update(json, idJournal.toString())
     }
 

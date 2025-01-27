@@ -65,7 +65,7 @@ class PurchaseInvoiceService(env: SapEnvrioment,
     }
 
     fun getCostingCode(reference: Int, field: String): String? {
-        val purchaseInvoice = getPurchaseInvoiceByReference(reference)
+        val purchaseInvoice = getById(reference).tryGetValue<PurchaseInvoice>()
         return purchaseInvoice?.DocumentLines?.firstOrNull()?.let { documentLine ->
             when (field) {
                 "CostingCode" -> documentLine.CostingCode
@@ -73,12 +73,5 @@ class PurchaseInvoiceService(env: SapEnvrioment,
                 else -> null
             }
         }
-    }
-
-    fun getPurchaseInvoiceByReference(reference: Int): PurchaseInvoice? {
-        val filter = Filter(
-            Predicate("DocEntry", reference, Condicao.EQUAL)
-        )
-        return get(filter).tryGetValues<PurchaseInvoice>().firstOrNull()
     }
 }

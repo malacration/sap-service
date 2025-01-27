@@ -34,43 +34,48 @@ class JournalMemoHandle(
     }
 
     fun atualizarGrupoEconomicoECentroCusto(journalId: Int) {
-        val lancamento = journalEntryService.getByDocEntry(journalId) ?: return
-        val docEntryOriginal = lancamento.Original ?: return
+        val lancamento = journalEntryService.getByDocEntry(journalId)
+            ?: throw Exception("Não encontrou JournalEntry para o docEntry $journalId")
 
-        if (lancamento.OriginalJournal in listOf("ttVendorPayment", "ttReceipt")) {
-            val pagamento = incomingPaymentService.getById(docEntryOriginal)
-            val docEntryNota = extrairDocEntryNota(pagamento, docEntryOriginal) ?: return
+        val docEntryOriginal = lancamento.Original
+            ?: throw Exception("Campo 'Original' está nulo para o JournalEntry $journalId")
 
-            val (grupoEconomico, centroDeCusto) = when (lancamento.OriginalJournal) {
-                "ttVendorPayment" -> {
-                    val grupo = purchaseInvoiceService.getCostingCode(docEntryNota, "CostingCode")
-                    val centro = purchaseInvoiceService.getCostingCode(docEntryNota, "CostingCode2")
-                    grupo to centro
-                }
-                "ttReceipt" -> {
-                    val grupo = invoiceService.getCostingCodeInvoice(docEntryNota, "CostingCode")
-                    val centro = invoiceService.getCostingCodeInvoice(docEntryNota, "CostingCode2")
-                    grupo to centro
-                }
-                else -> null to null
+        when (lancamento.OriginalJournal) {
+            "ttVendorPayment" -> {
+                val pagamento = vendorPaymentService.getById(docEntryOriginal)
+                val docEntryNota = extrairDocEntryNota(pagamento, docEntryOriginal)
+                    ?: throw Exception("Não foi possível obter o DocEntry da nota fiscal em 'PaymentInvoices'. no $docEntryOriginal")
+
+                val grupo = purchaseInvoiceService.getCostingCode(docEntryNota, "CostingCode")
+                    ?: throw Exception("Grupo Econômico não encontrado na nota fiscal $docEntryNota")
+                val centro = purchaseInvoiceService.getCostingCode(docEntryNota, "CostingCode2")
+                    ?: throw Exception("Centro de Custo não encontrado na nota fiscal $docEntryNota")
+
+                journalEntryService.updateGrupoEconomicoJournalEntry(journalId, grupo, centro)
             }
 
-            if (grupoEconomico != null && centroDeCusto != null) {
-                journalEntryService.updateGrupoEconomicoJournalEntry(journalId, grupoEconomico, centroDeCusto)
-            } else {
-                logger.warning("Grupo Econômico ou Centro de Custo não encontrado para a nota fiscal com referência: ${lancamento.Reference}")
+            "ttReceipt" -> {
+                val pagamento = incomingPaymentService.getById(docEntryOriginal)
+                val docEntryNota = extrairDocEntryNota(pagamento, docEntryOriginal)
+                    ?: throw Exception(
+                        "Não foi possível obter o DocEntry da nota fiscal em 'PaymentInvoices' no $docEntryOriginal")
+
+                val grupo = invoiceService.getCostingCodeInvoice(docEntryNota, "CostingCode")
+                    ?: throw Exception("Grupo Econômico não encontrado na nota fiscal $docEntryNota")
+                val centro = invoiceService.getCostingCodeInvoice(docEntryNota, "CostingCode2")
+                    ?: throw Exception("Centro de Custo não encontrado na nota fiscal $docEntryNota")
+
+                journalEntryService.updateGrupoEconomicoJournalEntry(journalId, grupo, centro)
             }
-        } else {
-            journalEntryService.markGrupoEconomicoChecked(journalId)
+            else -> {
+                journalEntryService.markGrupoEconomicoChecked(journalId)
+            }
         }
     }
 
     private fun extrairDocEntryNota(pagamento: Map<String, Any?>, docEntryOriginal: Int): Int? {
         return (pagamento["PaymentInvoices"] as? List<*>)?.firstOrNull()?.let { invoice ->
             (invoice as? Map<*, *>)?.get("DocEntry") as? Int
-        } ?: run {
-            logger.warning("Não foi possível obter o DocEntry da nota fiscal em 'PaymentInvoices' para docEntry $docEntryOriginal")
-            null
         }
     }
 }

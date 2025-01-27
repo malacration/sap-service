@@ -23,4 +23,9 @@ class JournalEntryLines(
     fun getBPLID() : Int {
         return BPLID
     }
+
+    fun isContaResultado(): Boolean {
+        val number = AccountCode.trim().split("").getOrNull(1)?.toIntOrNull() ?: throw Exception("A string deve comecar com um numero")
+        return number >= 3 && number  <= 5
+    }
 }

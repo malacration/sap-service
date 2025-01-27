@@ -11,13 +11,13 @@ import org.springframework.context.annotation.Profile
 @Configuration
 @Profile("!test")
 @ConditionalOnProperty(value = ["fields"], havingValue = "true", matchIfMissing = true)
-class AtualizarObservacaoGrupoeCentro(
+class AtualizarCentrodeCusto(
     val userFieldsMDService: UserFieldsMDService
 ) {
 
     init {
         listOf(
-            FieldMd("Atualizar_Observacao_Grupo_CP", "Atualizar Observação de Grupo Econômico/CC", "OJDT", DbType.db_Numeric).also {
+            FieldMd("Atualizar_Centro_de_Custo", "Atualizar Centro de Custo", "OJDT", DbType.db_Numeric).also {
                 it.defaultValue = "0"
             }
         ).forEach { userFieldsMDService.findOrCreate(it) }
