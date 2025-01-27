@@ -1,5 +1,8 @@
+import br.andrew.sap.model.uzzipay.Payer
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
+import java.lang.Exception
 
 class JournalEntriesServiceTest {
 
@@ -23,11 +26,13 @@ class JournalEntriesServiceTest {
         assertEquals(2, validLines.size)
     }
 
-//    @Test
-//    fun `string vazia`() {
-//        assertEquals(false, JournalEntryLines("", 0.0, 0.0, 1)
-//            .isContaResultado().toString())
-//    }
+    @Test
+    fun `string vazia`() {
+        val erro = assertThrows<Exception> {
+            assertEquals(false, JournalEntryLines("", 0.0, 0.0, 1)
+                .isContaResultado().toString())
+        }
+    }
 
     @Test
     fun `string comeca com espaco`() {

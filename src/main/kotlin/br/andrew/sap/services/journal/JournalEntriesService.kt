@@ -83,6 +83,7 @@ class JournalEntriesService(env: SapEnvrioment, restTemplate: RestTemplate, auth
 
     }
 
+    @Deprecated("Se o metodo atribuiCentroCustoEmContasRecebeOuPagar funcionar remover esse")
     fun getValidJournalLines(jdtNum: Int): List<JournalEntryLines> {
         val journalEntry = getByDocEntry(jdtNum) ?: return emptyList()
         return journalEntry.journalEntryLines.filter {
@@ -90,6 +91,7 @@ class JournalEntriesService(env: SapEnvrioment, restTemplate: RestTemplate, auth
         }
     }
 
+    @Deprecated("Se o metodo atribuiCentroCustoEmContasRecebeOuPagar funcionar remover esse")
     fun updateGrupoEconomicoJournalEntry(jdtNum: Int, grupoEconomico: String, centroDeCusto: String): OData? {
         val validLines = getValidJournalLines(jdtNum)
 
@@ -117,6 +119,7 @@ class JournalEntriesService(env: SapEnvrioment, restTemplate: RestTemplate, auth
         return update(json, jdtNum.toString())
     }
 
+    @Deprecated("Se o metodo atribuiCentroCustoEmContasRecebeOuPagar funcionar remover esse")
     fun markGrupoEconomicoChecked(idJournal: Int): OData? {
         val json = """{"U_Atualizar_Centro_de_Custo": "1"}"""
         return update(json, idJournal.toString())

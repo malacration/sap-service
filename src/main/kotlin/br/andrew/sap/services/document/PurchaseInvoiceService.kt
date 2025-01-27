@@ -64,6 +64,7 @@ class PurchaseInvoiceService(env: SapEnvrioment,
         return OriginalJournal.ttAPInvoice
     }
 
+    @Deprecated("Remover essa funcionalidade, chame getById e acesse os atribudos individualmente")
     fun getCostingCode(reference: Int, field: String): String? {
         val purchaseInvoice = getById(reference).tryGetValue<PurchaseInvoice>()
         return purchaseInvoice?.DocumentLines?.firstOrNull()?.let { documentLine ->

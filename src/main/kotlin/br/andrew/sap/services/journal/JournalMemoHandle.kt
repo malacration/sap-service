@@ -1,5 +1,11 @@
 package br.andrew.sap.services.journal
 
+import JournalEntry
+import br.andrew.sap.model.bank.Payment
+import br.andrew.sap.model.sap.documents.PurchaseInvoice
+import br.andrew.sap.model.sap.documents.base.Document
+import br.andrew.sap.model.sap.journal.OriginalJournal
+import br.andrew.sap.services.abstracts.EntitiesService
 import br.andrew.sap.services.bank.IncomingPaymentService
 import org.springframework.stereotype.Service
 import br.andrew.sap.services.bank.VendorPaymentService
@@ -33,17 +39,17 @@ class JournalMemoHandle(
         }
     }
 
-    fun atualizarGrupoEconomicoECentroCusto(journalId: Int) {
-        val lancamento = journalEntryService.getByDocEntry(journalId)
-            ?: throw Exception("Não encontrou JournalEntry para o docEntry $journalId")
 
+
+    fun atualizarGrupoEconomicoECentroCusto(lancamento: JournalEntry) {
+        var journalId = lancamento.JdtNum ?: throw Exception("O id de JournalEntry nao pode ser nulo, esse registro")
         val docEntryOriginal = lancamento.Original
             ?: throw Exception("Campo 'Original' está nulo para o JournalEntry $journalId")
 
         when (lancamento.OriginalJournal) {
             "ttVendorPayment" -> {
                 val pagamento = vendorPaymentService.getById(docEntryOriginal)
-                val docEntryNota = extrairDocEntryNota(pagamento, docEntryOriginal)
+                val docEntryNota = extrairDocEntryNota(pagamento)
                     ?: throw Exception("Não foi possível obter o DocEntry da nota fiscal em 'PaymentInvoices'. no $docEntryOriginal")
 
                 val grupo = purchaseInvoiceService.getCostingCode(docEntryNota, "CostingCode")
@@ -56,7 +62,7 @@ class JournalMemoHandle(
 
             "ttReceipt" -> {
                 val pagamento = incomingPaymentService.getById(docEntryOriginal)
-                val docEntryNota = extrairDocEntryNota(pagamento, docEntryOriginal)
+                val docEntryNota = extrairDocEntryNota(pagamento)
                     ?: throw Exception(
                         "Não foi possível obter o DocEntry da nota fiscal em 'PaymentInvoices' no $docEntryOriginal")
 
@@ -73,7 +79,31 @@ class JournalMemoHandle(
         }
     }
 
-    private fun extrairDocEntryNota(pagamento: Map<String, Any?>, docEntryOriginal: Int): Int? {
+    //TODO testar o metodo em homologacao e verificar se funciona adequadamente
+    fun atribuiCentroCustoEmContasRecebeOuPagar(lancamento: JournalEntry): JournalEntry {
+        val docEntryOriginal = lancamento.Original
+            ?: throw Exception("Campo 'Original' está nulo para o JournalEntry ${lancamento.JdtNum}")
+
+        val services : Pair<EntitiesService<Payment>, EntitiesService<*>> =  when (lancamento.OriginalJournal) {
+            OriginalJournal.ttVendorPayment.toString() -> Pair(vendorPaymentService,purchaseInvoiceService)
+            OriginalJournal.ttReceipt.toString() -> Pair(incomingPaymentService,invoiceService)
+            else -> throw IllegalArgumentException("O registro precisa ser de origem de um dos valores esperados.")
+        }
+        val paymentService = services.first
+        val documentService = services.second
+        val payment : Payment = paymentService.getById(docEntryOriginal)
+            .tryGetValue<Payment>()
+
+        val paymentDocEntry : Int = payment.paymentInvoices.firstOrNull()?.docEntry
+            ?: throw IllegalArgumentException("O pagamento relacionado no lancamento contabil deve existir")
+
+        val document = documentService.getById(paymentDocEntry).tryGetValue<Document>()
+        lancamento.costingCodes(document)
+        return lancamento
+    }
+
+    @Deprecated("Se o metodo atribuiCentroCustoEmContasRecebeOuPagar funcionar remover esse")
+    private fun extrairDocEntryNota(pagamento: Map<String, Any?>): Int? {
         return (pagamento["PaymentInvoices"] as? List<*>)?.firstOrNull()?.let { invoice ->
             (invoice as? Map<*, *>)?.get("DocEntry") as? Int
         }

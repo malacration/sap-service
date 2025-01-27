@@ -11,7 +11,7 @@ import org.springframework.context.annotation.Profile
 @Configuration
 @Profile("!test")
 @ConditionalOnProperty(value = ["fields"], havingValue = "true", matchIfMissing = true)
-class AtualizarCentrodeCusto(
+class AtualizarCentrodeCustoConfiguration(
     val userFieldsMDService: UserFieldsMDService
 ) {
 

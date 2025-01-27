@@ -144,6 +144,7 @@ class InvoiceService(env: SapEnvrioment, restTemplate: RestTemplate, authService
         return OriginalJournal.ttARInvoice
     }
 
+    @Deprecated("Usar o metodo generico findById")
     fun findInvoiceById(id: Int, page : Pageable): Page<Invoice>? {
         val filter = Filter(
             Predicate("DocEntry", id,Condicao.EQUAL )
@@ -152,6 +153,7 @@ class InvoiceService(env: SapEnvrioment, restTemplate: RestTemplate, authService
         return result.tryGetPageValues<Invoice>(page)
     }
 
+    @Deprecated("Se o metodo atribuiCentroCustoEmContasRecebeOuPagar funcionar remover esse")
     fun getCostingCodeInvoice(reference: Int, field: String): String? {
         val invoice = getById(reference).tryGetValue<Invoice>()
         return invoice?.DocumentLines?.firstOrNull()?.let { documentLine ->

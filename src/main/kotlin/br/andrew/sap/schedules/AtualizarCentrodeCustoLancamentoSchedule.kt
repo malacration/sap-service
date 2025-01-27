@@ -16,14 +16,14 @@ import java.time.LocalDate
 
 @Component
 @ConditionalOnProperty(value = ["lc.centrodecusto.grupoeconomico.enable"], havingValue = "true", matchIfMissing = false)
-class AtualizarCentrodeCustoLancamento(
+class AtualizarCentrodeCustoLancamentoSchedule(
     val journalEntriesService: JournalEntriesService,
     val journalMemoHandle: JournalMemoHandle,
     @Value("\${lc.memo.dias:5}") private val dias: Long,
     val currentSapUser: SapUser
 ) {
 
-    private val logger: Logger = LoggerFactory.getLogger(AtualizarCentrodeCustoLancamento::class.java)
+    private val logger: Logger = LoggerFactory.getLogger(AtualizarCentrodeCustoLancamentoSchedule::class.java)
 
     @Scheduled(fixedDelay = 60000)
     fun atualizarLancamentosContabeis() {
@@ -38,13 +38,20 @@ class AtualizarCentrodeCustoLancamento(
                 OrderBy("ReferenceDate", Order.DESC)
             ).tryGetPageValues<JournalEntry>(Pageable.unpaged())
 
-            lancamentos.forEach { lancamento ->
+
+            lancamentos.filter{
+                it.hasContaResultado()
+            }.forEach { lancamento ->
+                lancamento.U_Atualizar_Observacao = 1
                 try {
-                    lancamento.JdtNum?.let {
-                        logger.info("Atualizando observação do lançamento contábil $it")
-                        journalMemoHandle.atualizarGrupoEconomicoECentroCusto(it)
-                    } ?: logger.warn("Lançamento contábil com JdtNum nulo. Ignorando processamento.")
+                    if(lancamento.JdtNum == null)
+                        throw Exception("Lançamento contábil com JdtNum nulo. Ignorando processamento.")
+                    logger.info("Atualizando observação do lançamento contábil. JdtNum[${lancamento.JdtNum}]")
+                    val lcComCentro : JournalEntry = journalMemoHandle
+                        .atribuiCentroCustoEmContasRecebeOuPagar(lancamento)
+                    journalEntriesService.update(lcComCentro,lcComCentro.JdtNum.toString())
                 } catch (ex: Exception) {
+                    journalEntriesService.update(lancamento,lancamento.JdtNum.toString())
                     logger.error("Erro ao atualizar o lançamento contábil ${lancamento.JdtNum}", ex)
                 }
             }

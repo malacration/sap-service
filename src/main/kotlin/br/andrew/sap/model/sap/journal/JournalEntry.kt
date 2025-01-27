@@ -1,4 +1,6 @@
 import br.andrew.sap.model.sap.ReconciliationRow
+import br.andrew.sap.model.sap.documents.base.Document
+import br.andrew.sap.model.sap.documents.base.DocumentLines
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonProperty
@@ -31,6 +33,20 @@ class JournalEntry(val journalEntryLines : List<JournalEntryLines>, val memo : S
         }
     }
 
+    fun costingCodes(document: Document) {
+        val line : DocumentLines = document.DocumentLines.filter {
+            it.CostingCode != null
+            it.CostingCode2 != null
+        }.firstOrNull()
+            ?: throw Exception("Esse documento nao possuiu nenhuma linha de produto")
+        costingCodes(line.CostingCode!!,line.CostingCode2!!)
+    }
+
+    //Todo fazer teste de unidade para esse cara
+    fun hasContaResultado(): Boolean {
+        return journalEntryLines.any { it.isContaResultado() }
+    }
+
     constructor(filial : Int,
                 accDebit : String,
                 accCredit : String,
@@ -46,4 +62,6 @@ class JournalEntry(val journalEntryLines : List<JournalEntryLines>, val memo : S
     override fun transNumReconciliation(): Int {
         return this.JdtNum ?:throw Exception("Numero do LC esta null")
     }
+
+
 }

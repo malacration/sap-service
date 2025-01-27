@@ -9,5 +9,6 @@ enum class OriginalJournal {
     ttAPCreditNote,
     ttReturn,
     ttARCredItnote,
-    ttVendorPayment;
+    ttVendorPayment,
+    ttReceipt;
 }
