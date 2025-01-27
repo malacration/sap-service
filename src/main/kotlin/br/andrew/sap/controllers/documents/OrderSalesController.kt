@@ -8,10 +8,7 @@ import br.andrew.sap.model.authentication.User
 import br.andrew.sap.model.sap.documents.OrderSales
 import br.andrew.sap.model.exceptions.CreditException
 import br.andrew.sap.model.forca.PedidoVenda
-import br.andrew.sap.model.sap.documents.Invoice
-import br.andrew.sap.model.sap.documents.Quotation
 import br.andrew.sap.model.sap.documents.base.Document
-import br.andrew.sap.model.sap.documents.base.TaxExtension
 import br.andrew.sap.services.*
 import br.andrew.sap.services.document.DocumentForAngular
 import br.andrew.sap.services.document.OrdersService
@@ -23,7 +20,6 @@ import org.springframework.data.domain.Pageable
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.Authentication
 import org.springframework.web.bind.annotation.*
-import java.util.*
 
 @RestController
 @RequestMapping("pedido-venda")
