@@ -1,6 +1,7 @@
 import br.andrew.sap.model.sap.ReconciliationRow
 import br.andrew.sap.model.sap.documents.base.Document
 import br.andrew.sap.model.sap.documents.base.DocumentLines
+import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonProperty
@@ -18,7 +19,7 @@ class JournalEntry(val journalEntryLines : List<JournalEntryLines>, val memo : S
     var OriginalJournal : String? = null
     var Original : Int? = null
     var U_Atualizar_Observacao : Int? = null
-    var U_Atualizar_Observacao_Grupo_CP : Int? = null
+    var U_Atualizar_Centro_de_Custo : Int? = null
     var TransactionCode : String? = null
 
 
@@ -43,6 +44,7 @@ class JournalEntry(val journalEntryLines : List<JournalEntryLines>, val memo : S
     }
 
     //Todo fazer teste de unidade para esse cara
+    @JsonIgnore
     fun hasContaResultado(): Boolean {
         return journalEntryLines.any { it.isContaResultado() }
     }

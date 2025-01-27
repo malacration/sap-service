@@ -42,11 +42,11 @@ class AtualizarCentrodeCustoLancamentoSchedule(
             lancamentos.filter{
                 it.hasContaResultado()
             }.forEach { lancamento ->
-                lancamento.U_Atualizar_Observacao = 1
+                lancamento.U_Atualizar_Centro_de_Custo = 1
                 try {
                     if(lancamento.JdtNum == null)
                         throw Exception("Lançamento contábil com JdtNum nulo. Ignorando processamento.")
-                    logger.info("Atualizando observação do lançamento contábil. JdtNum[${lancamento.JdtNum}]")
+                    logger.info("Atualizando centro de custo do lançamento contábil. JdtNum[${lancamento.JdtNum}]")
                     val lcComCentro : JournalEntry = journalMemoHandle
                         .atribuiCentroCustoEmContasRecebeOuPagar(lancamento)
                     journalEntriesService.update(lcComCentro,lcComCentro.JdtNum.toString())

@@ -39,47 +39,6 @@ class JournalMemoHandle(
         }
     }
 
-
-
-    fun atualizarGrupoEconomicoECentroCusto(lancamento: JournalEntry) {
-        var journalId = lancamento.JdtNum ?: throw Exception("O id de JournalEntry nao pode ser nulo, esse registro")
-        val docEntryOriginal = lancamento.Original
-            ?: throw Exception("Campo 'Original' está nulo para o JournalEntry $journalId")
-
-        when (lancamento.OriginalJournal) {
-            "ttVendorPayment" -> {
-                val pagamento = vendorPaymentService.getById(docEntryOriginal)
-                val docEntryNota = extrairDocEntryNota(pagamento)
-                    ?: throw Exception("Não foi possível obter o DocEntry da nota fiscal em 'PaymentInvoices'. no $docEntryOriginal")
-
-                val grupo = purchaseInvoiceService.getCostingCode(docEntryNota, "CostingCode")
-                    ?: throw Exception("Grupo Econômico não encontrado na nota fiscal $docEntryNota")
-                val centro = purchaseInvoiceService.getCostingCode(docEntryNota, "CostingCode2")
-                    ?: throw Exception("Centro de Custo não encontrado na nota fiscal $docEntryNota")
-
-                journalEntryService.updateGrupoEconomicoJournalEntry(journalId, grupo, centro)
-            }
-
-            "ttReceipt" -> {
-                val pagamento = incomingPaymentService.getById(docEntryOriginal)
-                val docEntryNota = extrairDocEntryNota(pagamento)
-                    ?: throw Exception(
-                        "Não foi possível obter o DocEntry da nota fiscal em 'PaymentInvoices' no $docEntryOriginal")
-
-                val grupo = invoiceService.getCostingCodeInvoice(docEntryNota, "CostingCode")
-                    ?: throw Exception("Grupo Econômico não encontrado na nota fiscal $docEntryNota")
-                val centro = invoiceService.getCostingCodeInvoice(docEntryNota, "CostingCode2")
-                    ?: throw Exception("Centro de Custo não encontrado na nota fiscal $docEntryNota")
-
-                journalEntryService.updateGrupoEconomicoJournalEntry(journalId, grupo, centro)
-            }
-            else -> {
-                journalEntryService.markGrupoEconomicoChecked(journalId)
-            }
-        }
-    }
-
-    //TODO testar o metodo em homologacao e verificar se funciona adequadamente
     fun atribuiCentroCustoEmContasRecebeOuPagar(lancamento: JournalEntry): JournalEntry {
         val docEntryOriginal = lancamento.Original
             ?: throw Exception("Campo 'Original' está nulo para o JournalEntry ${lancamento.JdtNum}")
@@ -100,12 +59,5 @@ class JournalMemoHandle(
         val document = documentService.getById(paymentDocEntry).tryGetValue<Document>()
         lancamento.costingCodes(document)
         return lancamento
-    }
-
-    @Deprecated("Se o metodo atribuiCentroCustoEmContasRecebeOuPagar funcionar remover esse")
-    private fun extrairDocEntryNota(pagamento: Map<String, Any?>): Int? {
-        return (pagamento["PaymentInvoices"] as? List<*>)?.firstOrNull()?.let { invoice ->
-            (invoice as? Map<*, *>)?.get("DocEntry") as? Int
-        }
     }
 }
