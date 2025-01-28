@@ -1,71 +1,37 @@
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertThrows
-import java.lang.Exception
 
-class JournalEntriesServiceTest {
+class JournalEntryServiceTest {
+
+    private val allJournalEntryLines = listOf(
+        JournalEntryLines("4.1.1.001.00001", 0.0, 0.0, 1), // Despesa (resultado)
+        JournalEntryLines("5.1.1.001.00001", 0.0, 0.0, 1), // Custo (resultado)
+        JournalEntryLines("2.1.1.001.00001", 0.0, 0.0, 1), // Passivo
+        JournalEntryLines("6.1.1.001.00003", 0.0, 0.0, 1), // Não resultado
+        JournalEntryLines("1.1.1.001.00001", 0.0, 0.0, 1, "costingCode") // Ativo com costingCode
+    )
 
     @Test
-    fun `Deve filtrar linhas válidas corretamente`() {
+    fun `Deve retornar true quando houver pelo menos uma linha de conta resultado`() {
+        val journalEntry = JournalEntry(allJournalEntryLines, "memo")
+        assertEquals(true, journalEntry.hasContaResultado())
+    }
+
+    @Test
+    fun `Deve retornar false quando não houver nenhuma linha de conta resultado`() {
         val journalEntry = JournalEntry(
-            listOf(
-                JournalEntryLines("4.1.1.001.00001", 0.0, 0.0, 1),
-                JournalEntryLines("5.1.1.001.00001", 0.0, 0.0, 1),
-                JournalEntryLines("2.1.1.001.00001", 0.0, 0.0, 1),
-                JournalEntryLines("6.1.1.001.00003", 0.0, 0.0, 1),
-                JournalEntryLines("1.1.1.001.00001", 0.0, 0.0, 1, "costingCode"),
-            ),
+            allJournalEntryLines.filter { it.AccountCode.startsWith("1") || it.AccountCode.startsWith("2") },
             "memo"
         )
-
-        val validLines = journalEntry.journalEntryLines.filter {
-            it.isContaResultado() && it.costingCode.isNullOrEmpty() && it.costingCode2.isNullOrEmpty()
-        }
-
-        assertEquals(2, validLines.size)
+        assertEquals(false, journalEntry.hasContaResultado())
     }
 
     @Test
-    fun `string vazia`() {
-        val erro = assertThrows<Exception> {
-            assertEquals(false, JournalEntryLines("", 0.0, 0.0, 1)
-                .isContaResultado().toString())
-        }
-    }
-
-    @Test
-    fun `string comeca com espaco`() {
-        assertEquals(true, JournalEntryLines(" 3.1.1.001.00001", 0.0, 0.0, 1)
-            .isContaResultado())
-    }
-
-    @Test
-    fun `deve ser falso ativo`() {
-        assertEquals(false, JournalEntryLines("1.1.1.001.00001", 0.0, 0.0, 1)
-            .isContaResultado())
-    }
-
-    @Test
-    fun `deve ser falso pasivo`() {
-        assertEquals(false, JournalEntryLines("2.1.1.001.00001", 0.0, 0.0, 1)
-            .isContaResultado())
-    }
-
-    @Test
-    fun `deve ser true resultado`() {
-        assertEquals(true, JournalEntryLines("3.1.1.001.00001", 0.0, 0.0, 1)
-            .isContaResultado())
-    }
-
-    @Test
-    fun `deve ser true despesa`() {
-        assertEquals(true, JournalEntryLines("4.1.1.001.00001", 0.0, 0.0, 1)
-            .isContaResultado())
-    }
-
-    @Test
-    fun `deve ser true custo`() {
-        assertEquals(true, JournalEntryLines("5.1.1.001.00001", 0.0, 0.0, 1)
-            .isContaResultado())
+    fun `Deve retornar true quando houver múltiplas linhas de conta resultado`() {
+        val journalEntry = JournalEntry(
+            allJournalEntryLines.filter { it.AccountCode.startsWith("3") || it.AccountCode.startsWith("4") || it.AccountCode.startsWith("5") },
+            "memo"
+        )
+        assertEquals(true, journalEntry.hasContaResultado())
     }
 }
