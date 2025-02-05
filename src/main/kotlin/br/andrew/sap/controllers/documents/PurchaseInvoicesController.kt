@@ -8,6 +8,7 @@ import br.andrew.sap.model.sap.documents.PurchaseInvoice
 import br.andrew.sap.services.ItemsService
 import br.andrew.sap.services.document.PurchaseInvoiceService
 import br.andrew.sap.services.document.PurchaseInvoiceforSoftExpert
+import org.slf4j.MDC
 import org.springframework.security.core.Authentication
 import org.springframework.web.bind.annotation.*
 import java.text.SimpleDateFormat
@@ -44,14 +45,20 @@ class PurchaseInvoicesController(val purchaseInvoiceService: PurchaseInvoiceServ
     // TODO criar funcionalidade para retorno, para que retorne a mensageria de retorno no softexpert
 
     @PostMapping("criar")
-    fun criarNotaFiscalEntrada(@RequestBody notaFiscal: PurchaseInvoice, auth: Authentication): PurchaseInvoice {
+    fun criarNotaFiscalEntrada(@RequestBody notaFiscal: PurchaseInvoice, auth: Authentication): RespostaSoftExpert {
         try {
             val document = PurchaseInvoiceforSoftExpert().prepareToSave(notaFiscal, itemService, auth)
-            return purchaseInvoiceService.save(document).tryGetValue<PurchaseInvoice>()
+            purchaseInvoiceService.save(document).tryGetValue<PurchaseInvoice>()
+            return RespostaSoftExpert("Deu tudo certo")
         } catch (e: Exception) {
-            throw RuntimeException("Erro ao criar a nota fiscal de entrada: ${e.message}",e)
-        }
+            return RespostaSoftExpert("Erro ao criar a nota fiscal de entrada: ${e.message}, ")
+            val mdc = if(MDC.get("X-B3-TraceId") == null) "" else MDC.get("X-B3-TraceId")
+            throw RuntimeException("Erro ao criar a nota fiscal de entrada [$mdc]: ${e.message}",e)
 
-//        return "{\"retorno\" : \"funcionou\"}"
+        }
     }
+}
+
+class RespostaSoftExpert(val mensagem){
+
 }
