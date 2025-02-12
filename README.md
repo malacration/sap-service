@@ -3,7 +3,7 @@ Middleware para o SAP B1 Service Layer
 
 Atualmente o projeto utiliza a stack do [spring boot](https://spring.io/).
 
-## Como executar o projeto em produção
+## Como executar o projeto em produção.
 
 A maneira mais facil de se executar o projeto é utilizando docker.
 O mais recomendado é com o docker compose - [Link de instação](https://docs.docker.com/compose/install/).
