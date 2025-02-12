@@ -11,6 +11,7 @@ env:
 
 jobs:
   push_rc_to_registry:
+    if: github.event.pull_request.merged == true
     name: Build and Push RC Docker image to Docker Hub
     runs-on: ubuntu-latest
     steps:
