@@ -158,4 +158,8 @@ class BusinessPartnersController(
         )
     }
 
+    @GetMapping("/cpf-cnpj/{cpfCnpj}")
+    fun getCpfCnpjLimitado(@PathVariable cpfCnpj : String, @RequestParam(name = "type", defaultValue = "S") tipo : BusinessPartnerType): List<ContactOpaque> {
+        return service.getByCpfCnpjLimitado(cpfCnpj,tipo).getContactOpaque()
+    }
 }

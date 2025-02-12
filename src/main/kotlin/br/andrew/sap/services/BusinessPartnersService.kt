@@ -20,56 +20,80 @@ import java.util.*
 
 @Service
 class BusinessPartnersService(
-    val sqlQueriesService : SqlQueriesService,
+    val sqlQueriesService: SqlQueriesService,
     env: SapEnvrioment,
     restTemplate: RestTemplate,
-     authService: AuthService) :
-        EntitiesService<BusinessPartner>(env, restTemplate, authService) {
+    authService: AuthService
+) :
+    EntitiesService<BusinessPartner>(env, restTemplate, authService) {
     override fun path(): String {
         return "/b1s/v1/BusinessPartners"
     }
 
-    fun addPaymentMethod(cardCode : String, idFormaPagamento: String): OData? {
-        val bp : BusinessPartner = BusinessPartner().also {
+    fun addPaymentMethod(cardCode: String, idFormaPagamento: String): OData? {
+        val bp: BusinessPartner = BusinessPartner().also {
             it.setBPPaymentMethods(listOf(PaymentMethod(idFormaPagamento)))
         }
-        return update(bp,"'${cardCode}'")
+        return update(bp, "'${cardCode}'")
     }
 
-    fun addBusinesPlace(cardCode : String, idBusinesPlace: String): OData? {
-        val bp : BusinessPartner = BusinessPartner().also {
+    fun addBusinesPlace(cardCode: String, idBusinesPlace: String): OData? {
+        val bp: BusinessPartner = BusinessPartner().also {
             it.bpBranchAssignment = listOf(BPBranchAssignment().also {
                 it.BPCode = cardCode
                 it.bplid = idBusinesPlace
                 it.DisabledForBP = Cancelled.tNO
             })
         }
-        return update(bp,"'${bp.cardCode}'")
+        return update(bp, "'${bp.cardCode}'")
     }
 
     fun atualizaKey(key: String, bp: BusinessPartner): OData? {
-        return update("{" +
-                " \"U_keyUpdate\" : \"$key\", " +
-                " \"U_fazer_fluxo_prazo\" : 0 "+
-                "}","'${bp.cardCode}'")
+        return update(
+            "{" +
+                    " \"U_keyUpdate\" : \"$key\", " +
+                    " \"U_fazer_fluxo_prazo\" : 0 " +
+                    "}", "'${bp.cardCode}'"
+        )
     }
 
-    fun atualizaDataSerasa(date : Date,bp: BusinessPartner): OData? {
+    fun atualizaDataSerasa(date: Date, bp: BusinessPartner): OData? {
         val strDate = SimpleDateFormat("yyyy-MM-dd").format(date)
-        return update("{" +
-                " \"U_dataSerasa\" : \"$strDate\" "+
-                "}","'${bp.cardCode}'")
+        return update(
+            "{" +
+                    " \"U_dataSerasa\" : \"$strDate\" " +
+                    "}", "'${bp.cardCode}'"
+        )
     }
 
-    fun getByCpfCnpj(cpfCnpj: String, type : BusinessPartnerType): BusinessPartner {
-        val url = env.host+"/b1s/v1/"
-        var uri = "${url}SQLQueries('parceiro.sql')/List?valor='${CpfCnpj(cpfCnpj).getWithMask()}'&type='${type.getForSql()}'"
+    fun getByCpfCnpj(cpfCnpj: String, type: BusinessPartnerType): BusinessPartner {
+        val url = env.host + "/b1s/v1/"
+        var uri =
+            "${url}SQLQueries('parceiro.sql')/List?valor='${CpfCnpj(cpfCnpj).getWithMask()}'&type='${type.getForSql()}'"
         val request = RequestEntity
             .get(uri)
-            .header("cookie","B1SESSION=${session().sessionId}")
+            .header("cookie", "B1SESSION=${session().sessionId}")
             .build()
         val odata = restT.exchange(request, OData::class.java)
-            .body?.tryGetValues<BusinessPartner>() ?: throw Exception("O ${CpfCnpj(cpfCnpj).getWithMask()} não foi encontrado")
+            .body?.tryGetValues<BusinessPartner>()
+            ?: throw Exception("O ${CpfCnpj(cpfCnpj).getWithMask()} não foi encontrado")
+        return getById(
+            "'${odata.firstOrNull()?.cardCode ?: throw Exception("O ${CpfCnpj(cpfCnpj).getWithMask()} não foi encontrado")}'"
+        )
+            .tryGetValue<BusinessPartner>()
+    }
+
+    fun getByCpfCnpjLimitado(cpfCnpj: String, type: BusinessPartnerType): BusinessPartner {
+        val url = env.host + "/b1s/v1/"
+        var uri =
+            "${url}SQLQueries('parceiro-cpf.sql')/List?valor='${CpfCnpj(cpfCnpj).getWithMask()}'&type='${type.getForSql()}'"
+        val request = RequestEntity
+            .get(uri)
+            .header("cookie", "B1SESSION=${session().sessionId}")
+            .build()
+        val odata = restT.exchange(request, OData::class.java)
+            .body?.tryGetValues<BusinessPartner>()
+            ?: throw Exception("O ${CpfCnpj(cpfCnpj).getWithMask()} não foi encontrado")
         return getById(
             "'${odata.firstOrNull()?.cardCode ?: throw Exception("O ${CpfCnpj(cpfCnpj).getWithMask()} não foi encontrado")}'"
         )
@@ -79,20 +103,22 @@ class BusinessPartnersService(
     //TODO melhorar depois
     fun fullSearchText(fullText: String, auth: Authentication): NextLink<BusinessPartnerSlin> {
         val request = RequestEntity
-            .get(env.host+"/b1s/v1/sml.svc/CLIENTE_VENDEDORParameters(searchText='$fullText',vendedor=${auth.principal})/CLIENTE_VENDEDOR")
-            .header("cookie","B1SESSION=${session().sessionId}")
+            .get(env.host + "/b1s/v1/sml.svc/CLIENTE_VENDEDORParameters(searchText='$fullText',vendedor=${auth.principal})/CLIENTE_VENDEDOR")
+            .header("cookie", "B1SESSION=${session().sessionId}")
             .build()
         return restT.exchange(request, OData::class.java).body!!.tryGetNextValues()
     }
 
     fun fullSearchTextFallBack(fullText: String, user: User): NextLink<BusinessPartnerSlin> {
-        if(fullText.startsWith("SQLQueries('parceiro-full-search-text.sql')"))
+        if (fullText.startsWith("SQLQueries('parceiro-full-search-text.sql')"))
             return sqlQueriesService.nextLink(fullText)!!.tryGetNextValues()
-        val busca = if(fullText.toDoubleOrNull() == null )  fullText.replace("*","%") else CpfCnpj(fullText).getWithMask();
+        val busca =
+            if (fullText.toDoubleOrNull() == null) fullText.replace("*", "%") else CpfCnpj(fullText).getWithMask();
         val parametros = listOf(
-            Parameter("superVendedor",user.superVendedor()),
-            Parameter("valor","'%${busca}%'"),
-            Parameter("vendedor",user.principal))
+            Parameter("superVendedor", user.superVendedor()),
+            Parameter("valor", "'%${busca}%'"),
+            Parameter("vendedor", user.principal)
+        )
         return sqlQueriesService
             .execute("parceiro-full-search-text.sql", parametros)!!
             .tryGetNextValues()
@@ -105,16 +131,16 @@ class BusinessPartnersService(
         val novo = BusinessPartner().also {
             it.setAddresses(bp.getAddresses())
         }
-        update(novo,"'${bp.cardCode}'")
+        update(novo, "'${bp.cardCode}'")
 
     }
 
-    fun findAllBySalePerson(idSalesPerson: Int, page: Pageable) : Page<BusinessPartner> {
-        val filter = Filter((mutableListOf(Predicate("SalesPersonCode",idSalesPerson, Condicao.EQUAL))))
-        return  get(filter).tryGetPageValues<BusinessPartner>(page)
+    fun findAllBySalePerson(idSalesPerson: Int, page: Pageable): Page<BusinessPartner> {
+        val filter = Filter((mutableListOf(Predicate("SalesPersonCode", idSalesPerson, Condicao.EQUAL))))
+        return get(filter).tryGetPageValues<BusinessPartner>(page)
     }
 
-    fun modificarVendedor(businessPartners: BusinessPartner, idSalesPerson: Int) : BusinessPartner {
+    fun modificarVendedor(businessPartners: BusinessPartner, idSalesPerson: Int): BusinessPartner {
         return businessPartners.also {
             val json =
                 "{ \n" +
@@ -124,11 +150,11 @@ class BusinessPartnersService(
         }
     }
 
-    fun findBusinessPartnersBySalesPersonCode(salesPersonCode: Int, page : Pageable): Page<BusinessPartner>? {
+    fun findBusinessPartnersBySalesPersonCode(salesPersonCode: Int, page: Pageable): Page<BusinessPartner>? {
         val filter = Filter(
-            Predicate("SalesPersonCode", salesPersonCode,Condicao.EQUAL )
+            Predicate("SalesPersonCode", salesPersonCode, Condicao.EQUAL)
         )
-        val result = get(filter,page)
+        val result = get(filter, page)
         return result.tryGetPageValues<BusinessPartner>(page)
     }
 }
