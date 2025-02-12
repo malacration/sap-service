@@ -1,9 +1,11 @@
 name: Push Release Candidate to Docker Hub
 
 on:
-  push:
-    branches: [dev ]
-
+  pull_request:
+    types:
+      - closed
+    branches:
+      - dev
 env:
   FULL_IMAGE_NAME: malacration/sap-service
 
