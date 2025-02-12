@@ -3,13 +3,10 @@ package br.andrew.sap.json
 import br.andrew.sap.model.forca.PedidoVenda
 import br.andrew.sap.model.forca.Produto
 import br.andrew.sap.services.ComissaoServiceMock
-import br.andrew.sap.services.ItemsService
-import br.andrew.sap.services.pricing.ComissaoService
+import br.andrew.sap.services.stock.ItemsService
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.kotlin.KotlinFeature
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.fasterxml.jackson.module.kotlin.jacksonTypeRef
-import br.andrew.sap.model.sap.partner.BPBranchAssignment
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito

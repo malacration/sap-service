@@ -84,10 +84,15 @@ abstract class EntitiesService<T>(protected val env: SapEnvrioment,
         return restT.exchange(request, OData::class.java).body ?: OData()
     }
 
+    //Se nao for int adicionar aspas! Se ja existir aspas nao fazer nada.
     fun getById(id : String) : OData {
         try{
+            val idNew = if(id.toIntOrNull() == null && id[0] != "'"[0])
+                "'$id'"
+            else
+                id
             val request = RequestEntity
-                .get(env.host+this.path()+"(${id})")
+                .get(env.host+this.path()+"(${idNew})")
                 .header("cookie","B1SESSION=${session().sessionId}")
                 .build()
             return restT.exchange(request, OData::class.java).body!!
@@ -97,11 +102,7 @@ abstract class EntitiesService<T>(protected val env: SapEnvrioment,
     }
 
     open fun getById(id : Int) : OData {
-        val request = RequestEntity
-                .get(env.host+this.path()+"(${id})")
-                .header("cookie","B1SESSION=${session().sessionId}")
-                .build()
-        return restT.exchange(request, OData::class.java).body!!
+        return getById(id.toString())
     }
 
     fun delete(id : String) : OData? {

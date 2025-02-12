@@ -1,23 +1,33 @@
-package br.andrew.sap.services
+package br.andrew.sap.services.stock
 
 import br.andrew.sap.infrastructure.odata.NextLink
 import br.andrew.sap.infrastructure.odata.Parameter
 import br.andrew.sap.model.Item
+import br.andrew.sap.model.calculadora.ProdutoSelecao
 import br.andrew.sap.model.envrioments.SapEnvrioment
 import br.andrew.sap.model.sap.documents.base.Product
+import br.andrew.sap.services.AuthService
 import br.andrew.sap.services.abstracts.EntitiesService
 import br.andrew.sap.services.abstracts.SqlQueriesService
+import org.springframework.boot.context.event.ApplicationReadyEvent
+import org.springframework.cache.CacheManager
+import org.springframework.cache.annotation.Cacheable
+import org.springframework.cache.annotation.Caching
+import org.springframework.context.event.EventListener
+import org.springframework.scheduling.annotation.Async
 import org.springframework.stereotype.Service
 import org.springframework.web.client.RestTemplate
+import kotlin.concurrent.thread
 
 
 @Service
-class ItemsService(env : SapEnvrioment,
-                   restTemplate: RestTemplate,
-                   authService: AuthService,
-                   val sqlQueriesService: SqlQueriesService
-        )
-    : EntitiesService<Item>(env, restTemplate,authService) {
+class ItemsService(
+    env : SapEnvrioment,
+    restTemplate: RestTemplate,
+    authService: AuthService,
+    val sqlQueriesService: SqlQueriesService,
+    val cacheManager : CacheManager
+) : EntitiesService<Item>(env, restTemplate,authService) {
 
     override fun path(): String {
         return "/b1s/v1/Items"
@@ -47,7 +57,26 @@ class ItemsService(env : SapEnvrioment,
         return sqlQueriesService.execute("produto-tabela.sql", parameters)!!.tryGetNextValues<Product>()
     }
 
+    fun produtosComEstrutura(prefix : String): List<ProdutoSelecao> {
+        val parameters = listOf(
+            Parameter("search","'$prefix%'"),
+        )
+        return sqlQueriesService.getAll<ProdutoSelecao>("calculadora-produtos.sql", parameters)
+    }
 
+
+    fun produtosComEstrutura(): List<ProdutoSelecao> {
+        return produtosComEstrutura("")
+    }
+
+//    @Async
+//    @EventListener(ApplicationReadyEvent::class)
+//    fun preloadCache() {
+//        thread {
+//            cacheManager.getCache("produto-estrutura-selecao")
+//                ?.put("cacheKey", produtosComEstrutura("%"))
+//        }
+//    }
 }
 
 

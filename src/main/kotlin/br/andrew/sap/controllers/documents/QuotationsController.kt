@@ -1,6 +1,5 @@
 package br.andrew.sap.controllers.documents
 
-import br.andrew.sap.events.OrderSalesSaveEvent
 import br.andrew.sap.infrastructure.WarehouseDefaultConfig
 import br.andrew.sap.infrastructure.configurations.DistribuicaoCustoByBranchConfig
 import br.andrew.sap.infrastructure.odata.*
@@ -13,6 +12,7 @@ import br.andrew.sap.services.*
 import br.andrew.sap.services.document.DocumentForAngular
 import br.andrew.sap.services.document.QuotationsService
 import br.andrew.sap.services.pricing.ComissaoService
+import br.andrew.sap.services.stock.ItemsService
 import org.slf4j.LoggerFactory
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.data.domain.Page
@@ -20,7 +20,6 @@ import org.springframework.data.domain.Pageable
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.Authentication
 import org.springframework.web.bind.annotation.*
-import java.util.*
 
 @RestController
 @RequestMapping("quotation")

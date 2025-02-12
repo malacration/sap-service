@@ -13,6 +13,7 @@ import br.andrew.sap.services.*
 import br.andrew.sap.services.document.DocumentForAngular
 import br.andrew.sap.services.document.OrdersService
 import br.andrew.sap.services.pricing.ComissaoService
+import br.andrew.sap.services.stock.ItemsService
 import org.slf4j.LoggerFactory
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.data.domain.Page

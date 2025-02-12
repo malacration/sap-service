@@ -10,7 +10,7 @@ import br.andrew.sap.model.sap.documents.base.adiantamento.DownPaymentsToDraw
 import br.andrew.sap.model.uzzipay.DataRetonroPixQrCode
 import br.andrew.sap.model.uzzipay.RequestPixDueDate
 import br.andrew.sap.model.uzzipay.Transaction
-import br.andrew.sap.services.ItemsService
+import br.andrew.sap.services.stock.ItemsService
 import br.andrew.sap.services.batch.BatchId
 import com.fasterxml.jackson.annotation.JsonFormat
 import com.fasterxml.jackson.annotation.JsonIgnore
