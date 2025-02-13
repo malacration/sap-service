@@ -1,6 +1,7 @@
 name: Push Release Candidate to Docker Hub
 
 on:
+  workflow_dispatch:
   pull_request:
     types:
       - closed
