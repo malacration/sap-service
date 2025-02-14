@@ -21,59 +21,71 @@ class RequestQrCodeTests {
         "Rua dos Bobos",
         "São Paulo",
         "SP",
-        "12345678")
-    val installment = Installment(Date(), 100.00).also { it.InstallmentId = 666 }
-    val document = Document("gabriel", "1", listOf(),"windson")
+        "12345678"
+    )
+    val installment = Installment(LocalDate.now(), 100.00).also { it.InstallmentId = 666 }
+    val document = Document("gabriel", "1", listOf(), "windson")
         .also {
             it.documentInstallments = listOf(installment)
             it.docEntry = 123
             it.docNum = "333"
             it.docObjectCode = DocumentTypes.oInvoices
         }
+
     @Test
-    fun defragmentacaoDocEntryAndInstallId(){
+    fun defragmentacaoDocEntryAndInstallId() {
         val request = RequestPixDueDate(
             installment.createExternalIdentifier(document),
             ContaUzziPayPix().also { it.chavePix = "" },
             100.00.toBigDecimal(),
             "2924-12-31",
             player,
-            "1")
+            "1"
+        )
 
-        Assertions.assertEquals(666,request.getInstallmentId())
-        Assertions.assertEquals("333",request.docNum())
-        Assertions.assertEquals("oInvoices",request.docType())
-        Assertions.assertEquals(123,request.docEntry())
+        Assertions.assertEquals(666, request.getInstallmentId())
+        Assertions.assertEquals("333", request.docNum())
+        Assertions.assertEquals("oInvoices", request.docType())
+        Assertions.assertEquals(123, request.docEntry())
         Assertions.assertTrue(
-            request.externalIdentifier.contains("Num333-Entry123-ins:666-oInvoices"))
+            request.externalIdentifier.contains("Num333-Entry123-ins:666-oInvoices")
+        )
         Assertions.assertEquals("", Installment.reverseExternalIdentifier(""))
     }
 
     @Test
-    fun dataHojeRetornaUmDiaMais(){
+    fun dataHojeRetornaUmDiaMais() {
         val request = RequestPixDueDate(
             installment.createExternalIdentifier(document),
             ContaUzziPayPix().also { it.chavePix = "" },
             100.00.toBigDecimal(),
             LocalDate.now(),
             player,
-            "1")
+            "1"
+        )
         val saida = SimpleDateFormat("yyyy-MM-dd")
-            .format(Date.from(LocalDate.now().plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant()))
-        Assertions.assertEquals(saida,request.getDueDate())
+            .format(
+                Date.from(
+                    LocalDate.now().plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant()
+                )
+            )
+        Assertions.assertEquals(saida, request.getDueDate())
     }
 
     @Test
-    fun dataHoraVencidoDeveDarErro(){
+    fun dataHoraVencidoDeveDarErro() {
         val erro = assertThrows<Exception> {
             RequestPixDueDate(
                 installment.createExternalIdentifier(document),
                 ContaUzziPayPix().also { it.chavePix = "" },
                 100.00.toBigDecimal(),
-                LocalDate.now().plusDays(-10),
+                LocalDate.now().minusDays(10),
                 player,
-                "1")
+                "1"
+            )
         }
-        Assertions.assertTrue((erro.message ?: "").contains("vencimento não pode ser menor que a data atual"))
+        Assertions.assertTrue(
+            (erro.message ?: "").contains("vencimento não pode ser menor que a data atual")
+        )
     }
 }
