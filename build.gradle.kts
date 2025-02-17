@@ -57,6 +57,7 @@ dependencies {
 	implementation("org.apache.httpcomponents.client5:httpclient5:5.2.1")
 	implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.16.1")
 	implementation("com.fasterxml.jackson.core:jackson-databind:2.16.1")
+	implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.18.2")
 	implementation("org.jetbrains.kotlin:kotlin-reflect")
 
 	implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")

@@ -51,6 +51,8 @@ open class Document(val CardCode : String,
     var SequenceSerial : String? = null
     var sequenceModel : String? = null //->
     var CreateDate : String? = null
+    var SeriesString : String? = null
+    var U_ChaveAcesso : String? = null
 
     @JsonProperty("U_id_pedido_forca")
     var u_id_pedido_forca: String? = null
@@ -79,7 +81,25 @@ open class Document(val CardCode : String,
     var SequenceCode : Int? = null
 
     @JsonProperty("TaxExtension")
-    var TaxExtension: TaxExtension? = TaxExtension()
+    var TaxExtension: TaxExtension? = null
+
+    var VehicleState: String? = null
+        set(value) {
+            field = value
+            if (this.TaxExtension == null) {
+                this.TaxExtension = TaxExtension()
+            }
+            this.TaxExtension?.VehicleState = value
+        }
+
+    var Incoterms: Int? = null
+        set(value) {
+            field = value
+            if (this.TaxExtension == null) {
+                this.TaxExtension = TaxExtension()
+            }
+            this.TaxExtension?.Incoterms = value
+        }
 
     @JsonProperty("BPL_IDAssignedToInvoice")
     fun getBPL_IDAssignedToInvoice(): String {

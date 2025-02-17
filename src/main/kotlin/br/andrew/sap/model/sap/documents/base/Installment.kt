@@ -9,15 +9,15 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.PropertyNamingStrategies
 import com.fasterxml.jackson.databind.annotation.JsonNaming
 import java.text.SimpleDateFormat
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 import java.util.*
 
 @JsonNaming(PropertyNamingStrategies.UpperCamelCaseStrategy::class)
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 class Installment(
-    @JsonProperty("DueDate")
-    @JsonFormat(shape=JsonFormat.Shape.STRING, timezone="America/Porto_Velho")
-    private val _dueDate : Date?, val total : Double) {
+    @JsonProperty("DueDate") private val _dueDate : LocalDate?, val total : Double) {
 
     var InstallmentId : Int? = null
     var PaymentOrdered : String? = null
@@ -33,7 +33,7 @@ class Installment(
 
 
     val dueDate : String?
-        get() = if(_dueDate == null) null else SimpleDateFormat("yyyy-MM-dd").format(_dueDate)
+        get() = if(_dueDate == null) null else _dueDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))
 
     fun createExternalIdentifier(document : Document): String {
         return  "Num${document.docNum}" +
