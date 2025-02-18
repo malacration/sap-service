@@ -158,9 +158,17 @@ class BusinessPartnersController(
         )
     }
 
+<<<<<<< HEAD
     @GetMapping("/cpf-cnpj/teste/{cpfCnpj}")
     fun teste(@PathVariable cpfCnpj : String, @RequestParam(name = "type", defaultValue = "C") tipo : BusinessPartnerType): List<ContactOpaque> {
         return service.getByCpfCnpj(cpfCnpj,tipo).getContactOpaque()
     }
 
+=======
+    @GetMapping("/cpf-cnpj/{cpfCnpj}")
+    fun cpfCnpjWithLike(@PathVariable cpfCnpj: String, @RequestParam(name = "type", defaultValue = "S") tipo: BusinessPartnerType): List<BusinessPartner> {
+        val teste = service.getByCpfCnpjWithLike(cpfCnpj, tipo)
+        return teste
+    }
+>>>>>>> e848f19f65c789d7ec1ccb855c5e1ba198b6c15b
 }

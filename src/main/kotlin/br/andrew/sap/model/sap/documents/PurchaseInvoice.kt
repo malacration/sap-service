@@ -24,6 +24,7 @@ class PurchaseInvoice(CardCode: String,
             it.journalMemo = this.journalMemo
             it.docDate = this.docDate
             it.controlAccount = this.controlAccount
+            it.U_ChaveAcesso = U_ChaveAcesso
         }
     }
 
