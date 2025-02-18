@@ -1,6 +1,7 @@
 package br.andrew.sap.services.journal
 
 import JournalEntry
+import JournalEntryLines
 import br.andrew.sap.infrastructure.odata.Condicao
 import br.andrew.sap.infrastructure.odata.Filter
 import br.andrew.sap.infrastructure.odata.OData

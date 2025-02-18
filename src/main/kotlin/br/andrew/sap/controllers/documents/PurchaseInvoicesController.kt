@@ -33,4 +33,9 @@ class PurchaseInvoicesController(val purchaseInvoiceService: PurchaseInvoiceServ
         val predicate = Predicate("CardCode",cardCode,Condicao.EQUAL)
         return purchaseInvoiceService.get(Filter(mutableListOf(predicate)))
     }
+
+    @GetMapping("entrada/{id}")
+    fun nota(@PathVariable id : Int) : Any{
+        return purchaseInvoiceService.getById(id)
+    }
 }
