@@ -1,14 +1,13 @@
 package br.andrew.sap.controllers
 
 import br.andrew.sap.infrastructure.odata.*
-import br.andrew.sap.model.calculadora.Produto
-import br.andrew.sap.model.calculadora.Receita
+import br.andrew.sap.model.calculadora.*
 import br.andrew.sap.model.enums.YesNo
-import br.andrew.sap.model.sap.stock.UnitOfMeasurementGroups
 import br.andrew.sap.services.stock.ItemsService
 import br.andrew.sap.services.ProductTreesService
-import br.andrew.sap.services.stock.UnitOfMeasurementGroupsService
-import br.andrew.sap.services.pricing.PriceListsService
+import br.andrew.sap.services.calculadora.CalculadoraHanddleService
+import br.andrew.sap.services.stock.ResourceService
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.data.domain.Pageable
 import org.springframework.security.core.Authentication
 import org.springframework.web.bind.annotation.*
@@ -18,71 +17,38 @@ import java.math.BigDecimal
 @RequestMapping("calculadora-preco")
 class CalculadoraPrecoController(
     val itemService: ItemsService,
+    val calculadoraHandle : CalculadoraHanddleService,
     val productTreesService: ProductTreesService,
-    val priceListService : PriceListsService,
-    val unitGroupsService: UnitOfMeasurementGroupsService
+    val resourceService : ResourceService,
+    @Value("\${ggf.code:GGF00001}") val ggfId : String,
 ) {
 
     @GetMapping("/itens/all")
     fun get(
-        @RequestParam(name = "itemCodePrefix", defaultValue = "PAC0000259") itemCodePrefix: String,
+        @RequestParam(name = "itemCodeStart") start: String,
+        @RequestParam(name = "itemCodeEnd") end: String,
         @RequestParam(name = "warehouse") warehouse: String,
         page : Pageable,
         auth : Authentication): List<Produto> {
-        val itensComEstrutura = itemService.produtosComEstrutura().map { it.ItemCode }
+
+        val ggf = resourceService.getById(ggfId).tryGetValue<Resource>()
+        var itensComEstrutura = itemService.produtosComEstrutura("").map { it.ItemCode }
+
         val filter = Filter(
-            Predicate("ItemCode",itemCodePrefix, Condicao.STARTS_WITH),
+            Predicate("ItemCode",start, Condicao.GREAT_EQUAL),
+            Predicate("ItemCode",end, Condicao.LESS_EQUAL),
             Predicate("Valid", YesNo.tYES, Condicao.EQUAL)
         )
 
-        //Mudar para get all
-        return itemService.get(filter).tryGetValues<Produto>()
+        return itemService.getAll(Produto::class.java,filter)
             .filter { itensComEstrutura.contains(it.ItemCode) }
-            .parallelStream()
-            .toList().also {
+            .also {
                 it.forEach{
                     it.defaultWareHouse = warehouse
-                    it.kgsPorUnidade = try { getKgsPorUnidade(it) }catch (e : Exception) { BigDecimal(1.0) }
-                    it.custoGgf = BigDecimal(3.5)
-                    it.ingredientes = getBasicIngredientes(it.ItemCode,itensComEstrutura,BigDecimal("1.0"),warehouse)
+                    it.kgsPorUnidade = try { calculadoraHandle.getKgsPorUnidade(it) }catch (e : Exception) { BigDecimal(1.0) }
+                    it.custoGgf = ggf.sumCost()
+                    it.ingredientes = calculadoraHandle.getBasicIngredientes(it.ItemCode,itensComEstrutura,BigDecimal("1.0"),warehouse)
             }}
-    }
-    fun getBasicIngredientes(itemCode: String, itensComEstrutura: List<String>,qtdMutiplo : BigDecimal, warehouse: String): List<Produto> {
-        val receita = try {
-             productTreesService.getById(itemCode).tryGetValue<Receita>()
-        }catch (e : Exception){
-            return listOf()
-        }
-
-        val materiasPrimas : List<Produto>  = receita.ProductTreeLines
-            .filter { !itensComEstrutura.contains(it.ItemCode) }
-            .flatMap { itemReceita -> itemService.getAll<Produto>(Filter("ItemCode", itemReceita.ItemCode,Condicao.IN)).also {
-                it.forEach {
-                    it.defaultWareHouse = itemReceita.Warehouse
-                    it.pai = itemCode
-                }
-            } }
-
-        val itensRecurcao : List<Produto> = receita.ProductTreeLines
-            .filter { itensComEstrutura.contains(it.ItemCode) }
-            .flatMap { getBasicIngredientes(it.ItemCode, itensComEstrutura, it.Quantity*qtdMutiplo , warehouse) }
-
-        return itensRecurcao + materiasPrimas
-            .filter { !itensComEstrutura.contains(it.ItemCode) }
-            .also {
-                it.forEach {it.QuantidadeNaReceita = qtdMutiplo.multiply(receita.qtdMaterial(it.ItemCode)) }
-            }
-    }
-
-    fun getKgsPorUnidade(produto : Produto) : BigDecimal{
-        val grupoUnidade = unitGroupsService
-            .getById(produto.UoMGroupEntry ?: throw Exception("o UoMGroupEntry no item ${produto.ItemCode} esta nulo"))
-            .tryGetValue<UnitOfMeasurementGroups>()
-        //TODO remover magic number
-        var magicNumber = 4
-        return grupoUnidade.UoMGroupDefinitionCollection
-            .find { it.AlternateUoM == magicNumber }
-            ?.AlternateQuantity?.toBigDecimal() ?: throw Exception("AlternateQuantity is nulo para o ${produto.ItemCode}")
     }
 
     @GetMapping("/product-trees-service/all")

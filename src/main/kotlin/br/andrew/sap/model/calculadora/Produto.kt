@@ -52,28 +52,26 @@ class Produto(
 
     var pai : String? = null
 
-
-
-    @get:JsonIgnore
-    var TreeType : String? = null
-    @get:JsonIgnore
     var UoMGroupEntry : Int? = null
+    var InventoryUoMEntry : Int? = null
 
     @JsonIgnore
     override fun toString(): String {
         return "$ItemCode - $descricao"
     }
-}
 
-@JsonNaming(PropertyNamingStrategies.UpperCamelCaseStrategy::class)
-@JsonIgnoreProperties(ignoreUnknown = true)
-@JsonInclude(JsonInclude.Include.NON_EMPTY)
-class Deposito(
-    val WarehouseCode : String,
-    val StandardAveragePrice : BigDecimal,
-    val InStock : Double,
-    val Committed : Double,
-    val Ordered : Double,
-){
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as Produto
+
+        return ItemCode == other.ItemCode
+    }
+
+    override fun hashCode(): Int {
+        return ItemCode.hashCode()
+    }
+
 
 }
