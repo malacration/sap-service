@@ -5,6 +5,8 @@ roles:
   vendedor:
     - url: "/contrato-venda-futura"
       actions: ["*"]
+    - url: "/contrato-venda-futura/**"
+      actions: [ "*" ]
     - url: "branch"
       actions: ["get"]
     - url : "/business-partners/search"
