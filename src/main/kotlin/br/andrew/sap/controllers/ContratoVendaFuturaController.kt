@@ -7,15 +7,12 @@ import br.andrew.sap.model.authentication.User
 import br.andrew.sap.model.payment.PaymentDueDates
 import br.andrew.sap.model.sap.documents.CreditNotes
 import br.andrew.sap.model.sap.documents.DownPaymentUnsetVendaFutura
-import br.andrew.sap.model.sap.documents.OrderSales
 import br.andrew.sap.model.sap.documents.base.Document
-import br.andrew.sap.model.sap.documents.base.Product
 import br.andrew.sap.model.sap.documents.futura.PedidoRetirada
 import br.andrew.sap.model.self.vendafutura.Contrato
-import br.andrew.sap.model.self.vendafutura.ItemTroca
 import br.andrew.sap.model.self.vendafutura.PedidoTroca
 import br.andrew.sap.services.ContratoVendaFuturaService
-import br.andrew.sap.services.ItemsService
+import br.andrew.sap.services.stock.ItemsService
 import br.andrew.sap.services.batch.BatchList
 import br.andrew.sap.services.batch.BatchMethod
 import br.andrew.sap.services.batch.BatchResponse
@@ -26,7 +23,6 @@ import br.andrew.sap.services.document.OrdersService
 import br.andrew.sap.services.pricing.ComissaoService
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
-import org.springframework.context.annotation.Role
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.http.ResponseEntity

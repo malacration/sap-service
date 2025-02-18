@@ -1,5 +1,6 @@
 package br.andrew.sap.services
 
+import br.andrew.sap.services.stock.ItemsService
 import org.mockito.Mockito.*
 
 class ItemServiceMock {

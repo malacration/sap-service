@@ -24,7 +24,7 @@ class StateService(env : SapEnvrioment,
 
     @Cacheable("states")
     fun getAllCached(filter: Filter = Filter()): List<State>{
-        return super.getAll(filter)
+        return super.getAll(State::class.java,filter)
     }
 
 }

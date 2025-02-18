@@ -3,7 +3,7 @@ package br.andrew.sap.controllers
 import br.andrew.sap.infrastructure.odata.NextLink
 import br.andrew.sap.model.authentication.User
 import br.andrew.sap.model.sap.documents.base.Product
-import br.andrew.sap.services.ItemsService
+import br.andrew.sap.services.stock.ItemsService
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.Authentication
 import org.springframework.web.bind.annotation.*

@@ -1,7 +1,6 @@
 package br.andrew.sap.model.sap.documents.base
 import br.andrew.sap.model.Comissao
-import br.andrew.sap.model.sap.price.PriceList
-import br.andrew.sap.services.ItemsService
+import br.andrew.sap.services.stock.ItemsService
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonInclude

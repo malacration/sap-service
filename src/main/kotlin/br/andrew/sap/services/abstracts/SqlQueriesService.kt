@@ -1,5 +1,7 @@
 package br.andrew.sap.services.abstracts
 
+import br.andrew.sap.infrastructure.odata.Filter
+import br.andrew.sap.infrastructure.odata.NextLink
 import br.andrew.sap.infrastructure.odata.OData
 import br.andrew.sap.infrastructure.odata.Parameter
 import br.andrew.sap.model.sap.Session
@@ -45,5 +47,16 @@ class SqlQueriesService(
 
     fun getParameter(p : List<Parameter>) : String{
         return p.joinToString("&")
+    }
+
+    final inline fun <reified T: Any> getAll(viewName : String, parameters : List<Parameter> = listOf()): List<T> {
+        var content : MutableList<T> = mutableListOf()
+        var nextLink : NextLink<T> = execute(viewName,parameters)!!.tryGetNextValues<T>()
+        content.addAll(nextLink.content)
+        while (nextLink.hasNext()){
+            nextLink = nextLink(nextLink.nextLink)!!.tryGetNextValues()
+            content.addAll(nextLink.content)
+        }
+        return content
     }
 }

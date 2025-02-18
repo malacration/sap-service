@@ -4,7 +4,7 @@ import br.andrew.sap.model.sap.documents.base.AdditionalExpenses
 import br.andrew.sap.model.sap.documents.OrderSales
 import br.andrew.sap.model.sap.documents.Quotation
 import br.andrew.sap.model.sap.documents.base.Document
-import br.andrew.sap.services.ItemsService
+import br.andrew.sap.services.stock.ItemsService
 import br.andrew.sap.services.pricing.ComissaoService
 import com.fasterxml.jackson.annotation.*
 import java.text.SimpleDateFormat

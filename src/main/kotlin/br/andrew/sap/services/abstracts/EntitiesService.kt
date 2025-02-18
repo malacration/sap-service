@@ -14,7 +14,7 @@ import org.springframework.web.client.HttpClientErrorException
 import org.springframework.web.client.RestTemplate
 import java.net.URLDecoder
 
-abstract class EntitiesService<T>(protected val env: SapEnvrioment,
+open abstract class EntitiesService<T>(protected val env: SapEnvrioment,
                                   protected val restT: RestTemplate,
                                   protected val authService: AuthService) : EntitiesBase{
     override fun session() : Session {
@@ -84,10 +84,15 @@ abstract class EntitiesService<T>(protected val env: SapEnvrioment,
         return restT.exchange(request, OData::class.java).body ?: OData()
     }
 
-    fun getById(id : String) : OData {
+    //Se nao for int adicionar aspas! Se ja existir aspas nao fazer nada.
+    open fun getById(id : String) : OData {
         try{
+            val idNew = if(id.toIntOrNull() == null && id[0] != "'"[0])
+                "'$id'"
+            else
+                id
             val request = RequestEntity
-                .get(env.host+this.path()+"(${id})")
+                .get(env.host+this.path()+"(${idNew})")
                 .header("cookie","B1SESSION=${session().sessionId}")
                 .build()
             return restT.exchange(request, OData::class.java).body!!
@@ -97,11 +102,7 @@ abstract class EntitiesService<T>(protected val env: SapEnvrioment,
     }
 
     open fun getById(id : Int) : OData {
-        val request = RequestEntity
-                .get(env.host+this.path()+"(${id})")
-                .header("cookie","B1SESSION=${session().sessionId}")
-                .build()
-        return restT.exchange(request, OData::class.java).body!!
+        return getById(id.toString())
     }
 
     fun delete(id : String) : OData? {
@@ -132,11 +133,11 @@ abstract class EntitiesService<T>(protected val env: SapEnvrioment,
         return get(filter, OrderBy(), page)
     }
 
-    fun next(odata : OData) : OData {
+    open fun next(odata : OData) : OData {
         return next(odata.nextLink())
     }
 
-    fun next(next : String) : OData {
+    open fun next(next : String) : OData {
         val regex = "/([^/]+)$".toRegex()
         val url = (env.host+this.path()).replace(regex,"/")+next
         val request = RequestEntity
@@ -146,13 +147,13 @@ abstract class EntitiesService<T>(protected val env: SapEnvrioment,
         return restT.exchange(request, OData::class.java).body!!
     }
 
-    inline fun <reified T> getAll(filter: Filter = Filter()): List<T> {
+    fun <T> getAll(clazz: Class<T>, filter: Filter = Filter()): List<T> {
         var content : MutableList<T> = mutableListOf()
         var odata : OData = get(filter)
-        content.addAll(odata.tryGetValues())
+        content.addAll(odata.tryGetValues(clazz))
         while (odata.hasNext()){
             odata = next(odata)
-            content.addAll(odata.tryGetValues())
+            content.addAll(odata.tryGetValues(clazz))
         }
         return content;
     }
