@@ -27,7 +27,7 @@ class PurchaseInvoicesController(val purchaseInvoiceService: PurchaseInvoiceServ
         return purchaseInvoiceService.save(duplicado)
     }
 
-    @GetMapping("teste/{id}")
+    @GetMapping("notas/{id}")
     fun notaEntrada(@PathVariable id : Int) : Any{
         return purchaseInvoiceService.getById(id).tryGetValue<PurchaseInvoice>()
     }

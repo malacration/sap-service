@@ -15,14 +15,15 @@ class InstallmentJsonTests {
 
 
     @Test
-    fun teste(){
+    fun teste() {
         val json = "{\"DueDate\":\"2025-01-15\",\"Total\":1200}"
         val mapper = ObjectMapper()
-            .registerModule(KotlinModule.Builder().build())
-            .setTimeZone(TimeZone.getDefault())
+            .registerModule(KotlinModule())
+            .registerModule(JavaTimeModule())
+            .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
         val obj = mapper.readValue(json, jacksonTypeRef<Installment>())
-
-        Assertions.assertEquals("2025-01-15",obj.dueDate)
+        println(obj)
+        Assertions.assertEquals("2025-01-15", obj.dueDate.toString())
     }
 
     @Test
