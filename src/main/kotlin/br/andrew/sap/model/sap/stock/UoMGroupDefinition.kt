@@ -11,8 +11,8 @@ import com.fasterxml.jackson.databind.annotation.JsonNaming
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 class UoMGroupDefinition {
     var AlternateUoM: Int? = null
-    var AlternateQuantity: Double? = null
-    var BaseQuantity: Double? = null
+    var AlternateQuantity: Double = 0.0
+    var BaseQuantity: Double = 0.0
     var WeightFactor: Int? = null
     var UdfFactor: Int? = null
     var Active: String? = null

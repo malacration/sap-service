@@ -58,6 +58,6 @@ class CalculadoraHanddleService(
     fun getKgsPorUnidade(produto : Produto) : BigDecimal{
         val grupoUnidade = unitGroupsService
             .getByIdCacheable(produto.UoMGroupEntry ?: throw Exception("o UoMGroupEntry no item ${produto.ItemCode} esta nulo"))
-        return grupoUnidade.convertQuantity(produto.InventoryUoMEntry ?: 0,this.idKg,1.0)
+        return grupoUnidade.convertQuantity(this.idKg)
     }
 }
