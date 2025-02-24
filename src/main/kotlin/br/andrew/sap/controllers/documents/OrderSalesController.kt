@@ -82,7 +82,6 @@ class OrderSalesController(val ordersService: OrdersService,
     @PostMapping("angular")
     fun saveForAngular(@RequestBody pedido : OrderSales, auth : Authentication): Document {
         val document = DocumentForAngular().prepareToSave(pedido,itemService,auth)
-        document.configurarTaxExtension(pedido.VehicleState ?: "")
         telegramService.send("Criando pedido pelo portal cliente")
         return ordersService.save(document).tryGetValue<Document>().also {
             try{

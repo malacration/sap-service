@@ -24,7 +24,7 @@ Para verificar os logs da aplicação. O parameto -f colocar os logs em streamer
 docker compose logs
 ```
 
-### Instruções basicas de como utilizar o docker
+### Instruções basicas de como utilizar o docker.
 
 ```shell
 docker run malacration/sap-service

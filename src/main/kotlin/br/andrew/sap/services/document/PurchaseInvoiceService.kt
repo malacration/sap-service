@@ -6,6 +6,7 @@ import br.andrew.sap.infrastructure.odata.Predicate
 import br.andrew.sap.model.enums.Cancelled
 import br.andrew.sap.model.envrioments.SapEnvrioment
 import br.andrew.sap.model.bank.Payment
+import br.andrew.sap.model.sap.documents.Invoice
 import br.andrew.sap.model.sap.documents.PurchaseInvoice
 import br.andrew.sap.model.sap.documents.PurchaseReturns
 import br.andrew.sap.model.sap.journal.OriginalJournal
@@ -61,5 +62,17 @@ class PurchaseInvoiceService(env: SapEnvrioment,
 
     override fun getOriginalJournal(): OriginalJournal {
         return OriginalJournal.ttAPInvoice
+    }
+
+    @Deprecated("Remover essa funcionalidade, chame getById e acesse os atribudos individualmente")
+    fun getCostingCode(reference: Int, field: String): String? {
+        val purchaseInvoice = getById(reference).tryGetValue<PurchaseInvoice>()
+        return purchaseInvoice?.DocumentLines?.firstOrNull()?.let { documentLine ->
+            when (field) {
+                "CostingCode" -> documentLine.CostingCode
+                "CostingCode2" -> documentLine.CostingCode2
+                else -> null
+            }
+        }
     }
 }
