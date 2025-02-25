@@ -1,12 +1,11 @@
 package br.andrew.sap.model
 
-import br.andrew.sap.model.forca.Produto
 import br.andrew.sap.model.sap.documents.base.Product
 import br.andrew.sap.model.self.vendafutura.Contrato
 import br.andrew.sap.model.self.vendafutura.Item
 import br.andrew.sap.model.self.vendafutura.ItemTroca
 import br.andrew.sap.model.self.vendafutura.PedidoTroca
-import br.andrew.sap.services.ItemsService
+import br.andrew.sap.services.stock.ItemsService
 import br.andrew.sap.services.pricing.ComissaoService
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test

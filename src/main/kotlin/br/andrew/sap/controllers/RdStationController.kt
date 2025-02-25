@@ -32,7 +32,7 @@ class RdStationController(
     fun getByCodParceiro(documento: Document): Any {
         val businessPartner: BusinessPartner = bussinesPartenerService.getById("'${documento.CardCode}'").tryGetValue<BusinessPartner>()
         val salesPersonCode = documento.salesPersonCode
-        val salesPersonCodeAll = slService.getAll<SalePerson>()
+        val salesPersonCodeAll = slService.getAll(SalePerson::class.java)
         val salePerson = salesPersonCodeAll.find { it.SalesEmployeeCode == salesPersonCode }
         if (salePerson == null) {
             return ResponseEntity.notFound()

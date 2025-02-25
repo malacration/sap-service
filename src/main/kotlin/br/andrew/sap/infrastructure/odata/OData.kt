@@ -11,11 +11,11 @@ import com.fasterxml.jackson.module.kotlin.jacksonTypeRef
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.Pageable
-import org.springframework.web.client.RestTemplate
 
 class OData : LinkedHashMap<String,Any>(){
 
-    val mapper = JsonMapper.builder()
+
+  val mapper = JsonMapper.builder()
         .enable(StreamReadFeature.INCLUDE_SOURCE_IN_LOCATION) // Ativa o source location
         .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
         .addModule(JavaTimeModule())
@@ -44,6 +44,17 @@ class OData : LinkedHashMap<String,Any>(){
             return mapper.readValue(json, jacksonTypeRef<List<T>>())
         else if(json is List<*>)
             return json.map { mapper.readValue(mapper.writeValueAsString(it), T::class.java) }
+        throw Exception("Não foi possivel fazer o parse")
+    }
+
+
+    fun <T> tryGetValues(clazz: Class<T>): List<T> {
+        val json = this.get("value")
+        val collectionType = mapper.typeFactory.constructCollectionType(List::class.java, clazz)
+        if(json is String)
+            return mapper.readValue(json, collectionType)
+        else if(json is List<*>)
+            return mapper.readValue(mapper.writeValueAsString(json), collectionType)
         throw Exception("Não foi possivel fazer o parse")
     }
 

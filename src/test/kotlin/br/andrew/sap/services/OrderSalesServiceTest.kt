@@ -5,6 +5,7 @@ import br.andrew.sap.model.sap.tax.SalesTaxAuthorities
 import br.andrew.sap.model.sap.documents.OrderSales
 import br.andrew.sap.model.sap.documents.base.Product
 import br.andrew.sap.model.forca.PedidoVenda
+import br.andrew.sap.services.stock.ItemsService
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.fasterxml.jackson.module.kotlin.jacksonTypeRef

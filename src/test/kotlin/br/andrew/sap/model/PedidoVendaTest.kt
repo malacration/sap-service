@@ -1,7 +1,7 @@
 package br.andrew.sap.model
 
 import br.andrew.sap.model.forca.PedidoVenda
-import br.andrew.sap.services.ItemsService
+import br.andrew.sap.services.stock.ItemsService
 import br.andrew.sap.services.pricing.ComissaoService
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test

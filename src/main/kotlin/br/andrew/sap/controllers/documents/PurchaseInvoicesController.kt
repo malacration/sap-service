@@ -5,9 +5,9 @@ import br.andrew.sap.infrastructure.odata.Filter
 import br.andrew.sap.infrastructure.odata.OData
 import br.andrew.sap.infrastructure.odata.Predicate
 import br.andrew.sap.model.sap.documents.PurchaseInvoice
-import br.andrew.sap.services.ItemsService
 import br.andrew.sap.services.document.PurchaseInvoiceService
 import br.andrew.sap.services.document.PurchaseInvoiceforSoftExpert
+import br.andrew.sap.services.stock.ItemsService
 import org.slf4j.LoggerFactory
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
@@ -42,6 +42,12 @@ class PurchaseInvoicesController(val purchaseInvoiceService: PurchaseInvoiceServ
         //TODO terminar essa logica
         val predicate = Predicate("CardCode",cardCode,Condicao.EQUAL)
         return purchaseInvoiceService.get(Filter(mutableListOf(predicate)))
+    }
+
+
+    @GetMapping("entrada/{id}")
+    fun nota(@PathVariable id : Int) : Any{
+        return purchaseInvoiceService.getById(id)
     }
 
     @PostMapping("criar")

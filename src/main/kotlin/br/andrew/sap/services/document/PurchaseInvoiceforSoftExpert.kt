@@ -3,8 +3,7 @@ package br.andrew.sap.services.document
 import br.andrew.sap.infrastructure.WarehouseDefaultConfig
 import br.andrew.sap.infrastructure.configurations.DistribuicaoCustoByBranchConfig
 import br.andrew.sap.model.sap.documents.PurchaseInvoice
-import br.andrew.sap.model.sap.documents.base.Document
-import br.andrew.sap.services.ItemsService
+import br.andrew.sap.services.stock.ItemsService
 import org.springframework.security.core.Authentication
 
 class PurchaseInvoiceforSoftExpert {

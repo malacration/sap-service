@@ -2,8 +2,8 @@ import org.jetbrains.kotlin.ir.backend.js.compile
 
 plugins {
 	id("jacoco")
-	id("org.springframework.boot") version "3.3.1"
-	id("io.spring.dependency-management") version "1.1.5"
+	id("org.springframework.boot") version "3.4.2"
+	id("io.spring.dependency-management") version "1.1.7"
 	kotlin("jvm") version "2.0.0"
 	kotlin("plugin.spring") version "2.0.0"
 }
@@ -52,9 +52,10 @@ dependencies {
 	implementation("biz.paluch.logging:logstash-gelf:1.15.1")
 
 	implementation("io.micrometer:micrometer-tracing-bridge-brave")
-	implementation("com.github.ben-manes.caffeine:caffeine:3.1.8")
+	implementation("com.github.ben-manes.caffeine:caffeine:3.2.0")
 
-	implementation("org.apache.httpcomponents.client5:httpclient5:5.2.1")
+	implementation("org.apache.httpcomponents.client5:httpclient5:5.4.2")
+
 	implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.16.1")
 	implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.18.2")
 	implementation("com.fasterxml.jackson.core:jackson-databind:2.16.1")

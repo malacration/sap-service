@@ -1,19 +1,12 @@
 package br.andrew.sap.model.sap.documents
 
-import br.andrew.sap.model.sap.documents.base.AdditionalExpenses
 import br.andrew.sap.model.sap.documents.base.Document
 import br.andrew.sap.model.sap.documents.base.DocumentLines
-import br.andrew.sap.model.sap.documents.base.Product
-import br.andrew.sap.model.sap.documents.futura.ItemRetirada
-import br.andrew.sap.model.sap.documents.futura.PedidoRetirada
 import com.fasterxml.jackson.annotation.JsonFormat
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.databind.PropertyNamingStrategies
 import com.fasterxml.jackson.databind.annotation.JsonNaming
-import java.math.BigDecimal
-import java.math.RoundingMode
-import java.util.*
 
 @JsonNaming(PropertyNamingStrategies.UpperCamelCaseStrategy::class)
 @JsonIgnoreProperties(ignoreUnknown = true)
