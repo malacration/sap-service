@@ -59,6 +59,11 @@ class BusinessPartnersController(
         return NextLink(listOf(),"")
     }
 
+    @GetMapping("search-vendedor")
+    fun searchVendedor(@RequestParam search: String): List<BusinessPartnerSlin> {
+        return service.searchBusinessPartners(search)
+    }
+
     @GetMapping("/key/{hashcode}")
     fun getPnByHashUpdate(@PathVariable hashcode : String): BusinessPartner {
         return service.get(Filter(Predicate("U_keyUpdate","$hashcode",Condicao.EQUAL)))

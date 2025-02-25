@@ -98,6 +98,23 @@ class BusinessPartnersService(
             .tryGetNextValues()
     }
 
+    fun searchBusinessPartners(search: String): List<BusinessPartnerSlin> {
+        if (search.isBlank()) {
+            throw IllegalArgumentException("O parâmetro de busca não pode estar vazio.")
+        }
+
+        val busca = if (search.toDoubleOrNull() == null) search.replace("*", "%") else CpfCnpj(search).getWithMask()
+        val parametros = listOf(
+            Parameter("valor", "'%$busca%'")
+        )
+
+        val result: NextLink<BusinessPartnerSlin> = sqlQueriesService
+            .execute("parceiro-limitado-cpf.sql", parametros)!!
+            .tryGetNextValues()
+
+        return result.content
+    }
+
     fun normalizeAddressName(bp: BusinessPartner) {
         bp.getAddresses().forEach {
             it.addressName = it.normalize()
