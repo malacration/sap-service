@@ -22,7 +22,7 @@ class RequestQrCodeTests {
         "São Paulo",
         "SP",
         "12345678")
-    val installment = Installment(Date(), 100.00).also { it.InstallmentId = 666 }
+    val installment = Installment(LocalDate.now(), 100.00).also { it.InstallmentId = 666 }
     val document = Document("gabriel", "1", listOf(),"windson")
         .also {
             it.documentInstallments = listOf(installment)
