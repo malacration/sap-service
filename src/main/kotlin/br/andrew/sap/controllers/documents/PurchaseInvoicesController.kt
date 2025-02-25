@@ -5,9 +5,9 @@ import br.andrew.sap.infrastructure.odata.Filter
 import br.andrew.sap.infrastructure.odata.OData
 import br.andrew.sap.infrastructure.odata.Predicate
 import br.andrew.sap.model.sap.documents.PurchaseInvoice
-import br.andrew.sap.services.ItemsService
 import br.andrew.sap.services.document.PurchaseInvoiceService
 import br.andrew.sap.services.document.PurchaseInvoiceforSoftExpert
+import br.andrew.sap.services.stock.ItemsService
 import org.slf4j.LoggerFactory
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
@@ -51,9 +51,7 @@ class PurchaseInvoicesController(val purchaseInvoiceService: PurchaseInvoiceServ
     }
 
     @PostMapping("criar")
-    fun criarNotaFiscalEntrada(@RequestBody notaFiscal: PurchaseInvoice, auth: Authentication): 
-  
-  {
+    fun criarNotaFiscalEntrada(@RequestBody notaFiscal: PurchaseInvoice, auth: Authentication): RespostaSoftExpert {
         try {
             val document = PurchaseInvoiceforSoftExpert().prepareToSave(notaFiscal, itemService, auth)
             purchaseInvoiceService.save(document).tryGetValue<PurchaseInvoice>()
