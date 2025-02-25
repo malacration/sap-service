@@ -44,6 +44,7 @@ abstract class DocumentLines(
     var OnHand : Int? = null
     var LineTotal : Double? = null
     var PriceUnit : Int? = null
+    var U_LBR_Destinacao : String? = null
 
     var BaseType : Int? = null
     var BaseEntry : Int? = null
