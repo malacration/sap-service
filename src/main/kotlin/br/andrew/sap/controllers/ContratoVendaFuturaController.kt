@@ -5,6 +5,9 @@ import br.andrew.sap.controllers.documents.QuotationsController
 import br.andrew.sap.infrastructure.odata.*
 import br.andrew.sap.model.authentication.User
 import br.andrew.sap.model.payment.PaymentDueDates
+import br.andrew.sap.model.sap.InternalReconciliationOpenTransRow
+import br.andrew.sap.model.sap.InternalReconciliations
+import br.andrew.sap.model.sap.ReconType
 import br.andrew.sap.model.sap.documents.CreditNotes
 import br.andrew.sap.model.sap.documents.DownPaymentUnsetVendaFutura
 import br.andrew.sap.model.sap.documents.base.Document
@@ -12,6 +15,8 @@ import br.andrew.sap.model.sap.documents.futura.PedidoRetirada
 import br.andrew.sap.model.self.vendafutura.Contrato
 import br.andrew.sap.model.self.vendafutura.PedidoTroca
 import br.andrew.sap.services.ContratoVendaFuturaService
+import br.andrew.sap.services.InternalReconciliationsService
+import br.andrew.sap.services.RecomNum
 import br.andrew.sap.services.stock.ItemsService
 import br.andrew.sap.services.batch.BatchList
 import br.andrew.sap.services.batch.BatchMethod
@@ -19,6 +24,7 @@ import br.andrew.sap.services.batch.BatchResponse
 import br.andrew.sap.services.batch.BatchService
 import br.andrew.sap.services.document.CreditNotesService
 import br.andrew.sap.services.document.DownPaymentService
+import br.andrew.sap.services.document.InvoiceService
 import br.andrew.sap.services.document.OrdersService
 import br.andrew.sap.services.pricing.ComissaoService
 import org.slf4j.LoggerFactory
@@ -37,9 +43,11 @@ class ContratoVendaFuturaController(
     val service : ContratoVendaFuturaService,
     val pedidoService : OrdersService,
     val itemService: ItemsService,
+    val invoiceService : InvoiceService,
     val comissaoService: ComissaoService,
     val adiantamentoService : DownPaymentService,
     val creditNoteService: CreditNotesService,
+    val internalReconciliationsService: InternalReconciliationsService,
     val batchService: BatchService,
     @Value("\${venda-futura.entrega:9}") val utilizacaoEntregaVendaFutura : Int,
     val cotacaoController : QuotationsController){
@@ -83,6 +91,21 @@ class ContratoVendaFuturaController(
         )).tryGetValues<Contrato>().firstOrNull() ?: throw  Exception("O contrato nao foi encontrado")
         val cotacao = pedidoRetirada.parse(contrato,utilizacaoEntregaVendaFutura)
         return ResponseEntity.ok(cotacaoController.saveForAngular(cotacao,auth))
+    }
+
+
+    @GetMapping("/devolver/{docEntry}")
+    fun devolver(@PathVariable docEntry : Int): List<RecomNum> {
+        val recomNums = internalReconciliationsService.reconciliacaoByDocument(docEntry,13)
+
+        if(recomNums.isEmpty())
+            throw Exception("Nao existe conciliacao para o documento, proceda com a devolucao no SAP! [$docEntry]")
+        if(recomNums.size != 1)
+            throw Exception("Nao pode existir mais de uma reconciliacao para esse documento! [$docEntry]")
+        invoiceService.update("{ \"U_conciliar_automatico\" : \"0\"}",docEntry.toString())
+        internalReconciliationsService
+            .serviceCancel("{ \"InternalReconciliationParams\": { \"ReconNum\": \"${recomNums.first().ReconNum}\"} }")
+        return recomNums
     }
 
     @PostMapping("troca")

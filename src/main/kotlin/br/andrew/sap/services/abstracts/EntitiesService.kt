@@ -173,6 +173,14 @@ open abstract class EntitiesService<T>(protected val env: SapEnvrioment,
                 .body(body)
         return restT.exchange(request, OData::class.java).body!!
     }
+
+    fun serviceCancel(payload : String) {
+        val request = RequestEntity
+            .post(env.host+this.path()+"Service_Cancel")
+            .header("cookie","B1SESSION=${session().sessionId}")
+            .body(payload)
+        restT.exchange(request, Void::class.java)
+    }
 }
 
 

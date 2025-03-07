@@ -1,6 +1,10 @@
 package br.andrew.sap.infrastructure.odata
 
+import com.fasterxml.jackson.core.StreamReadFeature
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.SerializationFeature
+import com.fasterxml.jackson.databind.json.JsonMapper
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.KotlinFeature
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.fasterxml.jackson.module.kotlin.jacksonTypeRef
@@ -10,23 +14,24 @@ import org.springframework.data.domain.Pageable
 
 class OData : LinkedHashMap<String,Any>(){
 
-    val mapper = ObjectMapper().registerModule(KotlinModule.Builder()
-        .withReflectionCacheSize(512)
-        .configure(KotlinFeature.NullToEmptyCollection, true)
-        .configure(KotlinFeature.NullToEmptyMap, true)
-        .configure(KotlinFeature.NullIsSameAsDefault, true)
-        .configure(KotlinFeature.SingletonSupport, true)
-        .configure(KotlinFeature.StrictNullChecks, true)
-        .build())
+
+  val mapper = JsonMapper.builder()
+        .enable(StreamReadFeature.INCLUDE_SOURCE_IN_LOCATION) // Ativa o source location
+        .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
+        .addModule(JavaTimeModule())
+        .addModule(
+            KotlinModule.Builder()
+                .withReflectionCacheSize(512)
+                .configure(KotlinFeature.NullToEmptyCollection, true)
+                .configure(KotlinFeature.NullToEmptyMap, true)
+                .configure(KotlinFeature.NullIsSameAsDefault, true)
+                .configure(KotlinFeature.SingletonSupport, true)
+                .configure(KotlinFeature.StrictNullChecks, true)
+                .build()
+        )
+        .build()
+
     inline fun <reified T: Any> tryGetValue() : T {
-        val mapper = ObjectMapper().registerModule(KotlinModule.Builder()
-            .withReflectionCacheSize(512)
-            .configure(KotlinFeature.NullToEmptyCollection, true)
-            .configure(KotlinFeature.NullToEmptyMap, true)
-            .configure(KotlinFeature.NullIsSameAsDefault, true)
-            .configure(KotlinFeature.SingletonSupport, true)
-            .configure(KotlinFeature.StrictNullChecks, true)
-            .build())
         val json = this.get("value") ?: mapper.writeValueAsString(this)
         if(json is LinkedHashMap<*,*>)
             return mapper.readValue(mapper.writeValueAsString(json), T::class.java)
@@ -35,14 +40,6 @@ class OData : LinkedHashMap<String,Any>(){
 
     inline fun <reified T> tryGetValues() : List<T> {
         val json = this.get("value")
-        val mapper = ObjectMapper().registerModule(KotlinModule.Builder()
-            .withReflectionCacheSize(512)
-            .configure(KotlinFeature.NullToEmptyCollection, true)
-            .configure(KotlinFeature.NullToEmptyMap, true)
-            .configure(KotlinFeature.NullIsSameAsDefault, true)
-            .configure(KotlinFeature.SingletonSupport, true)
-            .configure(KotlinFeature.StrictNullChecks, true)
-            .build())
         if(json is String)
             return mapper.readValue(json, jacksonTypeRef<List<T>>())
         else if(json is List<*>)

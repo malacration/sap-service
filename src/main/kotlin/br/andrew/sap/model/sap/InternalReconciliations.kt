@@ -19,10 +19,10 @@ class InternalReconciliations {
     var reconNum: Int? = null
     var reconDate: String? = SimpleDateFormat("yyyy-MM-dd").format(Date())
     var cardOrAccount: String? = null
-    var reconType: String? = null
+    var reconType: ReconType? = null
     var total: Double? = null
-    var cancelAbs: Int? = null
-    var internalReconciliationRows: Int? = null
+    var cancelAbs: Int? = null //Id da reconciliacao anterior
+    var internalReconciliationRows: List<InternalReconciliationOpenTransRow>? = null
     var electronicProtocols: Int? = null
     var internalReconciliationOpenTransRows: List<InternalReconciliationOpenTransRow>? = null
 }
@@ -42,6 +42,11 @@ class InternalReconciliationOpenTransRow(
     var transRowId: Int? = null
 ){
 
+}
+enum class ReconType{
+    rtCancellation,
+    rtManual,
+    rtPayment,
 }
 
 interface ReconciliationRow{
