@@ -22,6 +22,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.context.annotation.Profile
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
+import java.util.concurrent.TimeUnit
 
 
 @Component
@@ -39,12 +40,13 @@ class ReclassificacaoEntregaVendaFuturaSchedule(
     val logger: Logger = LoggerFactory.getLogger(ConciliacaoVendaFuturaSchedule::class.java)
 
 
-    @Scheduled(fixedDelay = 3000)
+    @Scheduled(fixedDelay = 5, timeUnit = TimeUnit.MINUTES)
     fun execute() {
         val entregasFilter = Filter(
             Predicate("U_venda_futura",0,Condicao.GREAT),
             Predicate("DocDate", "2024-11-05", Condicao.GREAT),
             Predicate("U_entrega_vf", "1", Condicao.EQUAL),
+            Predicate("U_conciliar_automatico", "1", Condicao.EQUAL),
             Predicate("DocumentStatus",DocumentStatus.bost_Open,Condicao.EQUAL),
         )
         inoviceService.get(entregasFilter).tryGetValues<Invoice>().forEach { invoice ->
