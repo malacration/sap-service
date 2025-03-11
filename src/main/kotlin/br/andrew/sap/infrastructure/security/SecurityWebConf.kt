@@ -82,6 +82,7 @@ class SecurityWebConf(
                         "/business-partners/key/*/attachment",
                         "/invoice/cardcode/*/payment/**",
                         "/installment/*/paid",
+                        "/barter/**",
                         "/invoice/*/parcela/**",
                         "/logar"
                     ).permitAll()
