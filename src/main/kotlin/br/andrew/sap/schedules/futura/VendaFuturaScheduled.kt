@@ -49,6 +49,7 @@ class VendaFuturaScheduled(
         sqlQueriesService.execute(
             "vendafutura-aberto.sql",
             listOf(Parameter("utilizacao",idUtilizacao),
+            Parameter("filiais",filial),
             Parameter("startDate","2024-12-09"))
         )?.tryGetValues<DocEntry>()?.forEach {
             orderService.get(Filter("DocEntry",it.DocEntry!!,Condicao.EQUAL))
