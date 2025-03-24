@@ -23,6 +23,7 @@ import org.springframework.context.annotation.Profile
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
 import java.math.BigDecimal
+import java.util.concurrent.TimeUnit
 
 
 @Component
@@ -36,41 +37,43 @@ class ConciliacaoVendaFuturaSchedule(
     val internalReconciliationsService: InternalReconciliationsService,
     val inoviceService : InvoiceService,
     @Value("\${venda-futura.adiantamento-item}") val itemConciliacaoVendaFutura : String,
+    @Value("\${venda-futura.filiais:-2}") val filiais : List<Int>,
     @Value("\${venda-futura.sequencia_adiantamento}") val sequenceCode : Int,
     @Value("\${venda-futura.conta-controle}") val contaControle : String) {
 
     val logger: Logger = LoggerFactory.getLogger(ConciliacaoVendaFuturaSchedule::class.java)
 
 
-    @Scheduled(fixedDelay = 3000)
+    @Scheduled(fixedDelay = 30, timeUnit = TimeUnit.MINUTES)
     fun execute() {
         val filterReclassificacaoEntrega = Filter(
             Predicate("TransactionCode", TransactionCodeTypes.VFET, Condicao.EQUAL),
             Predicate("TaxDate", "2024-12-04", Condicao.GREAT),
         )
 
-        journalEntriesService.get(filterReclassificacaoEntrega).tryGetValues<JournalEntry>().forEach { journalReclassificado ->
-            val ref = journalReclassificado.Reference?.toIntOrNull() ?: throw Exception("Nao tem numero de referencia. ${journalReclassificado.JdtNum}")
-            val invoiceFilter = Filter(
-                Predicate("U_venda_futura", 0, Condicao.GREAT),
-                Predicate("DocNum", ref, Condicao.EQUAL)
-            )
-            inoviceService.get(invoiceFilter).tryGetValues<Invoice>().forEach { invoice ->
-
-                val adiantamentos = adiantamentoService.adiantamentosAbertos(invoice)
-
-                val adiantamentosDisponiveis = ApropriacaoAdiantamento(invoice, adiantamentos).get()
-                if (adiantamentosDisponiveis.isNotEmpty()) {
-                    val invoiceApropiacao = Invoice(
-                        invoice.CardCode, null,
-                        listOf(Product(itemConciliacaoVendaFutura, "1",
-                            "0",
-                            9).also {
-                            it.U_preco_base = 1.0
-                        }),
-                        invoice.getBPL_IDAssignedToInvoice()
-                    )
-                        .also {
+        journalEntriesService.getAll(JournalEntry::class.java,filterReclassificacaoEntrega)
+            .filter { filiais.contains(it.getFilial()) }
+            .forEach { journalReclassificado ->
+                val ref = journalReclassificado.Reference
+                    ?.toIntOrNull()
+                    ?: throw Exception("Nao tem numero de referencia. ${journalReclassificado.JdtNum}")
+                val invoiceFilter = Filter(
+                    Predicate("U_venda_futura", 0, Condicao.GREAT),
+                    Predicate("DocNum", ref, Condicao.EQUAL)
+                )
+                inoviceService.get(invoiceFilter).tryGetValues<Invoice>().forEach { invoice ->
+                    val adiantamentos = adiantamentoService.adiantamentosAbertos(invoice)
+                    val adiantamentosDisponiveis = ApropriacaoAdiantamento(invoice, adiantamentos).get()
+                    if (adiantamentosDisponiveis.isNotEmpty()) {
+                        val invoiceApropiacao = Invoice(
+                            invoice.CardCode, null,
+                            listOf(Product(itemConciliacaoVendaFutura, "1",
+                                "0",
+                                9).also {
+                                it.U_preco_base = 1.0
+                            }),
+                            invoice.getBPL_IDAssignedToInvoice()
+                        ).also {
                             it.downPaymentsToDraw = adiantamentosDisponiveis
                             it.U_venda_futura = invoice.U_venda_futura
                             it.controlAccount = contaControle
@@ -79,24 +82,23 @@ class ConciliacaoVendaFuturaSchedule(
                             it.journalMemo = "Apropriacao de adt LC ${journalReclassificado.JdtNum} para NF $ref"
                         }
 
-                    val apropriado = inoviceService
-                        .save(invoiceApropiacao)
-                        .tryGetValue<Document>()
+                        val apropriado = inoviceService
+                            .save(invoiceApropiacao)
+                            .tryGetValue<Document>()
 
-                    internalReconciliationsService.save(
-                        InternalReconciliationsBuilder(
-                            journalReclassificado,
-                            apropriado,
-                            invoice.DocTotal?.toDoubleOrNull() ?: throw Exception("Documento sem total adequado")
-                        ).setDebitTransRowId(1).build()
-                    )
+                        internalReconciliationsService.save(
+                            InternalReconciliationsBuilder(
+                                journalReclassificado,
+                                apropriado,
+                                invoice.DocTotal?.toDoubleOrNull() ?: throw Exception("Documento sem total adequado")
+                            ).setDebitTransRowId(1).build()
+                        )
 
-                    journalReclassificado.TransactionCode = TransactionCodeTypes.VFEC.name
-                    journalEntriesService.update(journalReclassificado,journalReclassificado.JdtNum.toString())
+                        journalReclassificado.TransactionCode = TransactionCodeTypes.VFEC.name
+                        journalEntriesService.update(journalReclassificado,journalReclassificado.JdtNum.toString())
+                    }
                 }
-            }
         }
-
     }
 }
 

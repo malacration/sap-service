@@ -26,6 +26,9 @@ class JournalEntry(val journalEntryLines : List<JournalEntryLines>, val memo : S
     var Reference : String? = null
     var Reference2 : String? = null
     var Reference3 : String? = null
+    fun getFilial() : Int? {
+        return this.journalEntryLines.map { it.getBPLID() }.firstOrNull()
+    }
 
     fun costingCodes(costingCode: String, costingCode2: String) {
         journalEntryLines.forEach{

@@ -37,6 +37,7 @@ class VendaFuturaScheduled(
     val bankplus : BankPlusService,
     val orderService : OrdersService,
     @Value("\${venda-futura.utilizacao:-1}") val idUtilizacao : Long,
+    @Value("\${venda-futura.filiais:-2}") val filiais : List<Int>,
     protected val env: SapEnvrioment) {
 
     val logger: Logger = LoggerFactory.getLogger(VendaFuturaScheduled::class.java)
@@ -44,33 +45,33 @@ class VendaFuturaScheduled(
 
     @Scheduled(fixedDelay = 3000)
     fun execute() {
-        sqlQueriesService
-            .execute(
-                "vendafutura-aberto.sql",
-                listOf(Parameter("utilizacao",idUtilizacao),
-                      Parameter("startDate","2024-12-09"))
-            )
-            ?.tryGetValues<DocEntry>()?.forEach {
-                orderService.get(Filter("DocEntry",it.DocEntry!!,Condicao.EQUAL))
-                    .tryGetValues<Document>().forEach { order ->
-                        val hanndlePaymentTerms = HandlePaymentTermsLines(
-                            paymentService.getParcelas(order.paymentGroupCode?: throw Exception("Erro ao pegar da condicao de pagamento"))
-                        )
-                        val contrato = contratoService.saveOnly(ContratoParse.parse(order))
-                        hanndlePaymentTerms.calculaVencimentos(contrato).map {
-                            val adiantamento = adiantamentoService.adiantamentosVendaFutura(contrato,it)
-                            try{
-                                bankplus.geraBoletos(
-                                    adiantamento.getBPL_IDAssignedToInvoice().toInt(),
-                                    adiantamento.docEntry ?: throw Exception("Falha ao obter docentry do adiantamento"),
-                                    0,
-                                    OrigemBoletoEnum.adiantamento)
-                            }catch (e : Exception){
-                                logger.error("Erro ao gerar boleto",e)
-                            }
+        filiais.forEach { filial ->
+        sqlQueriesService.execute(
+            "vendafutura-aberto.sql",
+            listOf(Parameter("utilizacao",idUtilizacao),
+            Parameter("startDate","2024-12-09"),
+            Parameter("startDate","2024-12-09"))
+        )?.tryGetValues<DocEntry>()?.forEach {
+            orderService.get(Filter("DocEntry",it.DocEntry!!,Condicao.EQUAL))
+                .tryGetValues<Document>().forEach { order ->
+                    val hanndlePaymentTerms = HandlePaymentTermsLines(
+                        paymentService.getParcelas(order.paymentGroupCode?: throw Exception("Erro ao pegar da condicao de pagamento"))
+                    )
+                    val contrato = contratoService.saveOnly(ContratoParse.parse(order))
+                    hanndlePaymentTerms.calculaVencimentos(contrato).map {
+                        val adiantamento = adiantamentoService.adiantamentosVendaFutura(contrato,it)
+                        try{
+                            bankplus.geraBoletos(
+                                adiantamento.getBPL_IDAssignedToInvoice().toInt(),
+                                adiantamento.docEntry ?: throw Exception("Falha ao obter docentry do adiantamento"),
+                                0,
+                                OrigemBoletoEnum.adiantamento)
+                        }catch (e : Exception){
+                            logger.error("Erro ao gerar boleto",e)
                         }
-                        orderService.close(order.docEntry.toString())
                     }
-            }
+                    orderService.close(order.docEntry.toString())
+                }
+            }}
     }
 }
