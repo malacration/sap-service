@@ -41,7 +41,7 @@ class ReclassificacaoEntregaVendaFuturaSchedule(
     val logger: Logger = LoggerFactory.getLogger(ConciliacaoVendaFuturaSchedule::class.java)
 
 
-    @Scheduled(fixedDelay = 5, timeUnit = TimeUnit.MINUTES)
+    @Scheduled(fixedDelay = 1, timeUnit = TimeUnit.MINUTES)
     fun execute() {
         val entregasFilter = Filter(
             Predicate("U_venda_futura",0,Condicao.GREAT),
