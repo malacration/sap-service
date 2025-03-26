@@ -49,6 +49,8 @@ class BusinessPartner() {
     var attachmentEntry : Int? = null
     var CreateDate : String? = null
     var SlpCode : Int? = null
+    var U_Localidade : Int? = null
+    var Name: String? = null
 
     var RemoveContacts : List<Int>? = null
 //    var BPLID : String? = null

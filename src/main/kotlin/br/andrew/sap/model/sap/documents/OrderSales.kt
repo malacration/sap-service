@@ -15,11 +15,18 @@ class OrderSales(CardCode: String,
                  @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "YYY-MM-dd", timezone = "UTC")
                  DocDueDate: String?,
                  DocumentLines: List<DocumentLines>,
-                 BPL_IDAssignedToInvoice: String)
+                 BPL_IDAssignedToInvoice: String = "2")
     : Document(CardCode, DocDueDate, DocumentLines, BPL_IDAssignedToInvoice) {
 
     var header : String? = null
     var VehicleState : String? = null
+    var BuyUnitMsr : String? = null
+    var Weight1: Int? = null
+    var ItemCode : String? = null
+    var Dscription : String? = null
+    var U_Localidade : Int? = null
+    var Quantity: Double? = null
+    var Name : String? = null
 
     override fun toString(): String {
         return "OrderSales(CardCode='$CardCode', Branch='${getBPL_IDAssignedToInvoice()}', docEntry=$docEntry, docNum=$docNum, pedido_forca=$u_id_pedido_forca)"

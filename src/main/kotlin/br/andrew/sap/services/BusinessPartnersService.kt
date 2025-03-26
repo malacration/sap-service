@@ -98,6 +98,10 @@ class BusinessPartnersService(
             .tryGetNextValues()
     }
 
+    fun searchLocalidade(): List<BusinessPartner> {
+        return sqlQueriesService.execute("search-localidade.sql")!!.tryGetValues()
+    }
+
     fun normalizeAddressName(bp: BusinessPartner) {
         bp.getAddresses().forEach {
             it.addressName = it.normalize()

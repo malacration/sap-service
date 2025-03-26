@@ -4,12 +4,17 @@ import br.andrew.sap.events.OrderSalesSaveEvent
 import br.andrew.sap.infrastructure.WarehouseDefaultConfig
 import br.andrew.sap.infrastructure.configurations.DistribuicaoCustoByBranchConfig
 import br.andrew.sap.infrastructure.odata.*
+import br.andrew.sap.model.ContactOpaque
 import br.andrew.sap.model.authentication.User
 import br.andrew.sap.model.sap.documents.OrderSales
 import br.andrew.sap.model.exceptions.CreditException
 import br.andrew.sap.model.forca.PedidoVenda
 import br.andrew.sap.model.sap.documents.base.Document
+import br.andrew.sap.model.sap.partner.BusinessPartner
+import br.andrew.sap.model.sap.partner.BusinessPartnerSlin
+import br.andrew.sap.model.sap.partner.BusinessPartnerType
 import br.andrew.sap.services.*
+import br.andrew.sap.services.abstracts.SqlQueriesService
 import br.andrew.sap.services.document.DocumentForAngular
 import br.andrew.sap.services.document.OrdersService
 import br.andrew.sap.services.pricing.ComissaoService
@@ -25,6 +30,7 @@ import org.springframework.web.bind.annotation.*
 @RestController
 @RequestMapping("pedido-venda")
 class OrderSalesController(val ordersService: OrdersService,
+                           val sqlQueriesService : SqlQueriesService,
                            val itemService : ItemsService,
                            val comissaoService: ComissaoService,
                            val telegramService : TelegramRequestService,
@@ -33,8 +39,8 @@ class OrderSalesController(val ordersService: OrdersService,
     val logger = LoggerFactory.getLogger(OrderSalesController::class.java)
 
     @PostMapping("")
-    fun saveForSovis(@RequestBody pedido : PedidoVenda): Any {
-        val order = pedido.getOrder(itemService,comissaoService).also {
+    fun saveForSovis(@RequestBody pedido: PedidoVenda): Any {
+        val order = pedido.getOrder(itemService, comissaoService).also {
             it.usaBrenchDefaultWarehouse(WarehouseDefaultConfig.warehouses)
             it.setDistribuicaoCusto(DistribuicaoCustoByBranchConfig.distibucoesCustos)
         }
@@ -42,8 +48,8 @@ class OrderSalesController(val ordersService: OrdersService,
             val retorno = ordersService.save(order).tryGetValue<OrderSales>()
             applicationEventPublisher.publishEvent(OrderSalesSaveEvent(retorno))
             return retorno;
-        }catch (t : CreditException){
-            logger.warn(t.message,t)
+        } catch (t: CreditException) {
+            logger.warn(t.message, t)
             return t.getDocumentFake(order).also { applicationEventPublisher.publishEvent(t) }
         }
     }
@@ -60,35 +66,52 @@ class OrderSalesController(val ordersService: OrdersService,
     }
 
     @GetMapping("raw/{id}")
-    fun rawById(@PathVariable id : String): OData {
+    fun rawById(@PathVariable id: String): OData {
         return ordersService.getById(id)
     }
 
     @GetMapping("listar")
-    fun get(page : Pageable, auth : Authentication): ResponseEntity<Page<OrderSales>> {
-        if(!(auth is User))
+    fun get(page: Pageable, auth: Authentication): ResponseEntity<Page<OrderSales>> {
+        if (!(auth is User))
             return ResponseEntity.noContent().build()
         val predicados = mutableListOf<Predicate>(
-            Predicate("SalesPersonCode",
+            Predicate(
+                "SalesPersonCode",
                 auth.getIdInt(),
-                Condicao.EQUAL)
+                Condicao.EQUAL
+            )
         )
-        return ResponseEntity.ok(ordersService
-            .get(Filter(predicados), OrderBy(mapOf("DocEntry" to Order.DESC)), page)
-            .tryGetPageValues<OrderSales>(page)
+        return ResponseEntity.ok(
+            ordersService
+                .get(Filter(predicados), OrderBy(mapOf("DocEntry" to Order.DESC)), page)
+                .tryGetPageValues<OrderSales>(page)
         )
     }
 
     @PostMapping("angular")
-    fun saveForAngular(@RequestBody pedido : OrderSales, auth : Authentication): Document {
-        val document = DocumentForAngular().prepareToSave(pedido,itemService,auth)
+    fun saveForAngular(@RequestBody pedido: OrderSales, auth: Authentication): Document {
+        val document = DocumentForAngular().prepareToSave(pedido, itemService, auth)
         telegramService.send("Criando pedido pelo portal cliente")
         return ordersService.save(document).tryGetValue<Document>().also {
-            try{
+            try {
                 applicationEventPublisher.publishEvent(it)
-            }catch (e : Exception){
-                logger.error(e.message,e)
+            } catch (e: Exception) {
+                logger.error(e.message, e)
             }
         }
     }
+
+    @PostMapping("search")
+    fun search(@RequestBody filter: OrderSalesFilter): NextLink<OrderSales> {
+        val teste = ordersService.fullSearch(filter)
+        return teste
+    }
+
+    data class OrderSalesFilter(
+        val dataInicial: String,
+        val dataFinal: String,
+        val localidade: String,
+        val filial: String,
+        val skip: Int?
+    )
 }
