@@ -11,15 +11,15 @@ class HandlePaymentTermsLines(val paymenetLines: List<PaymentTermsLines>) {
             throw Exception("A soma das porcentagens nao e igual a 100%")
     }
 
-    fun calculaVencimentos(docTotal: String, dataInicial: LocalDate): List<PaymentDueDates> {
+    fun calculaVencimentos(docTotal: String, dataInicial: LocalDate, carenciaEmDias: Int = 0): List<PaymentDueDates> {
         if(paymenetLines.isEmpty())
-            return listOf(PaymentDueDates(BigDecimal(docTotal).setScale(2), dataInicial))
+            return listOf(PaymentDueDates(BigDecimal(docTotal).setScale(2), dataInicial.plusDays(carenciaEmDias.toLong())))
         var remainingAmount = BigDecimal.ZERO
         val dueDates = paymenetLines.map {
             val percentage = BigDecimal(it.InstPrcnt).divide(BigDecimal(100))
             val valorEhResto = RestoParcelamento().getResto(percentage.multiply(BigDecimal(docTotal)))
             remainingAmount += valorEhResto.second
-            PaymentDueDates(valorEhResto.first, dataInicial.plusDays(it.InstDays.toLong()).plusMonths(it.InstMonth.toLong()))
+            PaymentDueDates(valorEhResto.first, dataInicial.plusDays(it.InstDays.toLong()+carenciaEmDias).plusMonths(it.InstMonth.toLong()))
         }
         var valorAhDistribuir = RestoParcelamento().getResto(remainingAmount).first
         var index = 0
@@ -33,8 +33,8 @@ class HandlePaymentTermsLines(val paymenetLines: List<PaymentTermsLines>) {
         return dueDates
     }
 
-    fun calculaVencimentos(total: Contrato): List<PaymentDueDates> {
-        return calculaVencimentos(total.total().toString(),LocalDate.now())
+    fun calculaVencimentos(total: Contrato, carenciaEmDias: Int = 0): List<PaymentDueDates> {
+        return calculaVencimentos(total.total().toString(),LocalDate.now(),carenciaEmDias)
     }
 }
 

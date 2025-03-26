@@ -38,6 +38,7 @@ class VendaFuturaScheduled(
     val orderService : OrdersService,
     @Value("\${venda-futura.utilizacao:-1}") val idUtilizacao : Long,
     @Value("\${venda-futura.filiais:-2}") val filiais : List<Int>,
+    @Value("\${venda-futura.carencia:7}") val carenciaDias : Int,
     protected val env: SapEnvrioment) {
 
     val logger: Logger = LoggerFactory.getLogger(VendaFuturaScheduled::class.java)
@@ -58,7 +59,7 @@ class VendaFuturaScheduled(
                         paymentService.getParcelas(order.paymentGroupCode?: throw Exception("Erro ao pegar da condicao de pagamento"))
                     )
                     val contrato = contratoService.saveOnly(ContratoParse.parse(order))
-                    hanndlePaymentTerms.calculaVencimentos(contrato).map {
+                    hanndlePaymentTerms.calculaVencimentos(contrato,carenciaDias).map {
                         val adiantamento = adiantamentoService.adiantamentosVendaFutura(contrato,it)
                         try{
                             bankplus.geraBoletos(
