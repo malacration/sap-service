@@ -13,6 +13,7 @@ class JournalEntriesServiceTest {
                 JournalEntryLines("5.1.1.001.00001", 0.0, 0.0, 1),
                 JournalEntryLines("2.1.1.001.00001", 0.0, 0.0, 1),
                 JournalEntryLines("6.1.1.001.00003", 0.0, 0.0, 1),
+                JournalEntryLines("1.9.1.002.00003", 0.0, 0.0, 1),
                 JournalEntryLines("1.1.1.001.00001", 0.0, 0.0, 1, "costingCode"),
             ),
             "memo"

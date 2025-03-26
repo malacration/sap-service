@@ -31,6 +31,7 @@ class QuerysServices(env: SapEnvrioment, restTemplate: RestTemplate,
             this.update(query,"$code")
         }catch (t : HttpClientErrorException){
             if(t.statusCode == org.springframework.http.HttpStatus.NOT_FOUND){
+                logger.info("INFO ao criar view ${query.sqlName}",t)
                 handdleError(query)
             }else
                 logger.error("Erro ao criar view ${query.sqlName}",t)
@@ -43,16 +44,7 @@ class QuerysServices(env: SapEnvrioment, restTemplate: RestTemplate,
         try {
             this.save(query)
         }catch (e : Exception){
-            logger.error("Erro ao criar campo ${query.sqlCode}",e)
+            logger.error("Erro ao criar view ${query.sqlCode}",e)
         }
     }
-
-//    fun expose(viewName: String): OData? {
-//        val request = RequestEntity
-//            .post(env.host+"/b1s/v1/SQLViews('$viewName')/Expose")
-//            .header("cookie","B1SESSION=${session().sessionId}")
-//            .build()
-//        return restTemplate.exchange(request, OData::class.java).body
-//
-//    }
 }

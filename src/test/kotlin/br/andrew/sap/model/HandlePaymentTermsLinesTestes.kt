@@ -163,4 +163,15 @@ class HandlePaymentTermsLinesTestes {
             Assertions.assertEquals(expected.dueDate, actual.dueDate)
         }
     }
+
+
+    @Test
+    fun paymentAdicionaCarencia(){
+        val inputDate = LocalDate.of(2024, 8, 9)
+        val expectedDate = LocalDate.of(2024, 8, 16)
+        val resultado = HandlePaymentTermsLines(listOf()).calculaVencimentos("100.0",inputDate,7)
+        Assertions.assertEquals(1, resultado.size)
+        Assertions.assertEquals(expectedDate, resultado[0].dueDate)
+        Assertions.assertEquals(BigDecimal("100.00"), resultado[0].value)
+    }
 }

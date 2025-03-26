@@ -35,6 +35,7 @@ class ReclassificacaoEntregaVendaFuturaSchedule(
     val journalEntriesService : JournalEntriesService,
     val internalReconciliationsService: InternalReconciliationsService,
     val inoviceService : InvoiceService,
+    @Value("\${venda-futura.filiais:-2}") val filiais : List<Int>,
     @Value("\${venda-futura.conta-controle}") val contaControle : String) {
 
     val logger: Logger = LoggerFactory.getLogger(ConciliacaoVendaFuturaSchedule::class.java)
@@ -48,6 +49,7 @@ class ReclassificacaoEntregaVendaFuturaSchedule(
             Predicate("U_entrega_vf", "1", Condicao.EQUAL),
             Predicate("U_conciliar_automatico", "1", Condicao.EQUAL),
             Predicate("DocumentStatus",DocumentStatus.bost_Open,Condicao.EQUAL),
+            Predicate("BPL_IDAssignedToInvoice", filiais, Condicao.IN),
         )
         inoviceService.get(entregasFilter).tryGetValues<Invoice>().forEach { invoice ->
             val filial = invoice.getBPL_IDAssignedToInvoice()
@@ -64,7 +66,7 @@ class ReclassificacaoEntregaVendaFuturaSchedule(
 
             val journalEntrie = journalEntriesService
                 .saveOrRecouverReference(
-                    JournalEntry(listOf(cred,deb),"Reclassificação entrega de mercadoria venda futura").also {
+                    JournalEntry(listOf(cred,deb),"Reclassificação entrega. Mercadoria venda futura [${invoice.U_venda_futura}]. NF Num ${invoice.docNum}").also {
                         it.TransactionCode = TransactionCodeTypes.VFET.toString()
                         it.Reference = invoice.docNum
                     })
