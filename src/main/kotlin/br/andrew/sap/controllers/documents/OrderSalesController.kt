@@ -91,4 +91,18 @@ class OrderSalesController(val ordersService: OrdersService,
             }
         }
     }
+
+    @PostMapping("search")
+    fun search(@RequestBody filter: OrderSalesFilter): NextLink<OrderSales> {
+        val teste = ordersService.fullSearch(filter)
+            return teste
+        }
+
+    data class OrderSalesFilter(
+        val dataInicial: String,
+        val dataFinal: String,
+        val localidade: String,
+        val filial: String,
+        val skip: Int?
+    )
 }

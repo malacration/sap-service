@@ -19,6 +19,13 @@ class OrderSales(CardCode: String,
     : Document(CardCode, DocDueDate, DocumentLines, BPL_IDAssignedToInvoice) {
 
     var header : String? = null
+    var BuyUnitMsr : String? = null
+    var Weight1: Int? = null
+    var ItemCode : String? = null
+    var Dscription : String? = null
+    var U_Localidade : Int? = null
+    var Quantity: Double? = null
+    var Name : String? = null
 
     override fun toString(): String {
         return "OrderSales(CardCode='$CardCode', Branch='${getBPL_IDAssignedToInvoice()}', docEntry=$docEntry, docNum=$docNum, pedido_forca=$u_id_pedido_forca)"

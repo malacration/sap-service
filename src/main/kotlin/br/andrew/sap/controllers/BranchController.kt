@@ -23,5 +23,10 @@ class BranchController(val branchService : BranchService) {
         logger.info("Buscando filiais para ${auth.getIdInt()}")
         return ResponseEntity.ok(branchService.getFilialBy(auth.getIdInt()))
     }
+
+    @GetMapping("search-branch")
+    fun searchSustenBranch(): List<Branch> {
+       return branchService.searchBranchLimited()
+    }
 }
 

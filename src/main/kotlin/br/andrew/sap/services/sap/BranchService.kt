@@ -13,4 +13,8 @@ class BranchService(private val sqlQuerysServices: SqlQueriesService) {
     fun getFilialBy(idVendedor : Int): List<Branch> {
         return sqlQuerysServices.execute("filiais-vendedor.sql",Parameter("vendedor",idVendedor))!!.tryGetValues<Branch>()
     }
+
+    fun searchBranchLimited(): List<Branch> {
+        return sqlQuerysServices.execute("search-branch-susten.sql")!!.tryGetValues()
+    }
 }
