@@ -15,7 +15,7 @@ class OrderSales(CardCode: String,
                  @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "YYY-MM-dd", timezone = "UTC")
                  DocDueDate: String?,
                  DocumentLines: List<DocumentLines>,
-                 BPL_IDAssignedToInvoice: String)
+                 BPL_IDAssignedToInvoice: String = "")
     : Document(CardCode, DocDueDate, DocumentLines, BPL_IDAssignedToInvoice) {
 
     var header : String? = null
