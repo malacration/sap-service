@@ -89,7 +89,9 @@ class ContratoVendaFuturaController(
         val contrato = service.get(Filter(
             Predicate("DocEntry",pedidoRetirada.docEntryVendaFutura,Condicao.EQUAL)
         )).tryGetValues<Contrato>().firstOrNull() ?: throw  Exception("O contrato nao foi encontrado")
-        val cotacao = pedidoRetirada.parse(contrato,utilizacaoEntregaVendaFutura)
+        val cotacao = pedidoRetirada.parse(contrato,utilizacaoEntregaVendaFutura).also {
+            it.journalMemo = "NF. Entrega de mercadoria ref a contrato Nº ${contrato.DocEntry}"
+        }
         return ResponseEntity.ok(cotacaoController.saveForAngular(cotacao,auth))
     }
 
