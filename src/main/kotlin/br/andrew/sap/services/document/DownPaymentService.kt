@@ -40,6 +40,7 @@ class DownPaymentService(env: SapEnvrioment,
 
     fun adiantamentosVendaFutura(contrato: Contrato, paymentInfo: PaymentDueDates): Document {
         val adiantamento = adiantamentosVendaFuturaWithoutSave(contrato,paymentInfo)
+        adiantamento.journalMemo = "Fatura de adiantamento venda futura. Contrato ${contrato.DocEntry}"
         return save(adiantamento).tryGetValue<Document>()
     }
 
