@@ -12,6 +12,9 @@ import br.andrew.sap.model.sap.documents.base.Product
 import br.andrew.sap.model.sap.documents.base.adiantamento.ApropriacaoAdiantamento
 import br.andrew.sap.model.transaction.TransactionCodeTypes
 import br.andrew.sap.services.InternalReconciliationsService
+import br.andrew.sap.services.batch.BatchList
+import br.andrew.sap.services.batch.BatchMethod
+import br.andrew.sap.services.batch.BatchService
 import br.andrew.sap.services.document.DownPaymentService
 import br.andrew.sap.services.document.InvoiceService
 import br.andrew.sap.services.journal.JournalEntriesService
@@ -24,6 +27,7 @@ import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
 import java.math.BigDecimal
 import java.util.concurrent.TimeUnit
+import kotlin.concurrent.thread
 
 
 @Component
@@ -36,6 +40,7 @@ class ConciliacaoVendaFuturaSchedule(
     val journalEntriesService : JournalEntriesService,
     val internalReconciliationsService: InternalReconciliationsService,
     val inoviceService : InvoiceService,
+    val batchService: BatchService,
     @Value("\${venda-futura.adiantamento-item}") val itemConciliacaoVendaFutura : String,
     @Value("\${venda-futura.filiais:-2}") val filiais : List<Int>,
     @Value("\${venda-futura.sequencia_adiantamento}") val sequenceCode : Int,
@@ -44,7 +49,7 @@ class ConciliacaoVendaFuturaSchedule(
     val logger: Logger = LoggerFactory.getLogger(ConciliacaoVendaFuturaSchedule::class.java)
 
 
-    @Scheduled(fixedDelay = 30, timeUnit = TimeUnit.MINUTES)
+    @Scheduled(fixedDelay = 10, timeUnit = TimeUnit.MINUTES)
     fun execute() {
         val filterReclassificacaoEntrega = Filter(
             Predicate("TransactionCode", TransactionCodeTypes.VFET, Condicao.EQUAL),
@@ -52,7 +57,7 @@ class ConciliacaoVendaFuturaSchedule(
         )
 
         journalEntriesService.getAll(JournalEntry::class.java,filterReclassificacaoEntrega)
-            .filter { filiais.contains(it.getFilial()) }
+            .filter { filiais.contains(it.getFilial())}
             .forEach { journalReclassificado ->
                 val ref = journalReclassificado.Reference
                     ?.toIntOrNull()
@@ -86,16 +91,21 @@ class ConciliacaoVendaFuturaSchedule(
                             .save(invoiceApropiacao)
                             .tryGetValue<Document>()
 
-                        internalReconciliationsService.save(
-                            InternalReconciliationsBuilder(
-                                journalReclassificado,
-                                apropriado,
-                                invoice.DocTotal?.toDoubleOrNull() ?: throw Exception("Documento sem total adequado")
-                            ).setDebitTransRowId(1).build()
-                        )
-
-                        journalReclassificado.TransactionCode = TransactionCodeTypes.VFEC.name
-                        journalEntriesService.update(journalReclassificado,journalReclassificado.JdtNum.toString())
+                        try {
+                            internalReconciliationsService.save(
+                                InternalReconciliationsBuilder(
+                                    journalReclassificado,
+                                    apropriado,
+                                    invoice.DocTotal?.toDoubleOrNull() ?: throw Exception("Documento sem total adequado")
+                                ).setDebitTransRowId(1).build()
+                            )
+                            Thread.sleep(1000)
+                            val json = "{ \"TransactionCode\" : \"${TransactionCodeTypes.VFEC.name}\"}"
+                            journalEntriesService.update(json,journalReclassificado.JdtNum.toString())
+                        }catch (e : Exception){
+                            inoviceService.cancel(apropriado.docEntry.toString())
+                            throw Exception("Não foi possivel realizar a reconciliação, fazendo o cancelamento da apropriação do adiantamento",e)
+                        }
                     }
                 }
         }
