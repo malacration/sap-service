@@ -12,6 +12,6 @@ class OrdemCarregamentoService(env: SapEnvrioment, restTemplate: RestTemplate, a
     EntitiesService<OrdemCarregamento>(env, restTemplate, authService) {
 
     override fun path(): String {
-        return "/b1s/v1/RO_ORD_CARREGAMENTO"
+        return "/b1s/v1/RV_ORD_CARREGAMENTO"
     }
 }
