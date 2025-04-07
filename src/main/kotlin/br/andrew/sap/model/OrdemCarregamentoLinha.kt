@@ -11,6 +11,7 @@ import com.fasterxml.jackson.databind.annotation.JsonNaming
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 data class OrdemCarregamentoLinha(
+    val DocEntry: Int? = null, // Adicionado
     @JsonProperty("U_docEntryPedido") val docEntryPedido: Int? = null,
     @JsonProperty("U_docNum") val docNum: Int? = null,
     @JsonProperty("U_codItemPedido") val codItemPedido: String? = null,

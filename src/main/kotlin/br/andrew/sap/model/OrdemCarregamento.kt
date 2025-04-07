@@ -7,11 +7,12 @@ import com.fasterxml.jackson.databind.PropertyNamingStrategies
 import com.fasterxml.jackson.databind.annotation.JsonNaming
 import java.util.*
 
-// br.andrew.sap.model.sap.partner/OrdemCarregamento.kt
 @JsonNaming(PropertyNamingStrategies.UpperCamelCaseStrategy::class)
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 data class OrdemCarregamento(
+    val DocEntry: Int? = null, // Adicionado
+    val docNum : Int? = null,
     @JsonProperty("U_orderDocEntry") val orderDocEntry: Int? = null,
     @JsonProperty("U_cardCode") val cardCode: String? = null,
     @JsonProperty("U_cardName") val cardName: String? = null,
