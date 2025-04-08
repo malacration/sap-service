@@ -84,13 +84,16 @@ class JournalEntriesService(env: SapEnvrioment, restTemplate: RestTemplate, auth
     }
 
     fun saveOrRecouverReference(entry: JournalEntry): JournalEntry {
-        //TODO fazer a query para evitar registro cancelados
-        //Nao encontrei uma forma de identificar se o registro esta cancelado
         return if(entry.Reference != null){
-            val filter = Filter(
-                Predicate("Reference", entry.Reference!!, Condicao.EQUAL),
-                Predicate("TransactionCode", entry.TransactionCode!!, Condicao.EQUAL),
-            )
+            val filter = if(entry.TransactionCode == null)
+                Filter(
+                    Predicate("Reference", entry.Reference!!, Condicao.EQUAL),
+                )
+            else
+                Filter(
+                    Predicate("Reference", entry.Reference!!, Condicao.EQUAL),
+                    Predicate("TransactionCode", entry.TransactionCode!!, Condicao.EQUAL),
+                )
             get(filter).tryGetValues<JournalEntry>().firstOrNull() ?: save(entry).tryGetValue()
         }
         else

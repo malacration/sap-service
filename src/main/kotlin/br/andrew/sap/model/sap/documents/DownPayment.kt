@@ -1,5 +1,6 @@
 package br.andrew.sap.model.sap.documents
 
+import br.andrew.sap.model.sap.ReconciliationRow
 import br.andrew.sap.model.sap.documents.base.Document
 import br.andrew.sap.model.sap.documents.base.DocumentLines
 import br.andrew.sap.services.batch.BatchId
