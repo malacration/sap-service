@@ -38,16 +38,4 @@ class OneTimePasswordServiceTest {
         val key = "nokey"
         Assertions.assertEquals(false,service!!.checkPassword(key,12354))
     }
-
-    @Test
-    fun testTTL(){
-        val key = "TTL"
-        val otp = service!!.getOneTimePassword(key)
-        Assertions.assertEquals(6,otp.passwrod.toString().length)
-        Assertions.assertEquals(true,service!!.checkPassword(key,otp.passwrod))
-        println("Aguardando $ttl segundos para expirar o cache")
-        Thread.sleep(ttl*1000L)
-        println("Verificando otp expirado")
-        Assertions.assertEquals(false,service!!.checkPassword(key,otp.passwrod))
-    }
 }

@@ -79,6 +79,7 @@ open class Document(val CardCode : String,
     var downPaymentsToDraw : List<DownPaymentsToDraw>? = null
     var TransNum : Int? = null
     var SequenceCode : Int? = null
+    var U_TX_DocEntryRef : Int? = null
 
     @JsonProperty("TaxExtension")
     var TaxExtension: TaxExtension? = null

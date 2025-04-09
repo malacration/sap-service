@@ -3,7 +3,11 @@ package br.andrew.sap.controllers.documents
 import br.andrew.sap.infrastructure.odata.*
 import br.andrew.sap.model.authentication.User
 import br.andrew.sap.model.sap.documents.Invoice
+import br.andrew.sap.model.sap.documents.base.Document
+import br.andrew.sap.services.document.CreditNotesService
 import br.andrew.sap.services.document.InvoiceService
+import br.andrew.sap.services.document.OrdersService
+import br.andrew.sap.services.document.QuotationsService
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.http.ResponseEntity
@@ -17,7 +21,11 @@ import org.springframework.web.bind.annotation.RestController
 
 @RestController
 @RequestMapping("future-sales")
-class FutureDeliverySalesController(val invoiceService: InvoiceService) {
+class FutureDeliverySalesController(
+    val invoiceService: InvoiceService,
+    val creditNotesService: CreditNotesService,
+    val ordersService: OrdersService,
+    val quotationsService : QuotationsService) {
 
     @GetMapping("/{id}/saida")
     fun entrada(@PathVariable id: Int, page : Pageable): Page<Invoice>?{
@@ -25,16 +33,28 @@ class FutureDeliverySalesController(val invoiceService: InvoiceService) {
     }
 
     @GetMapping("/contrato-venda-futura/{idContrato}")
-    fun get(auth : Authentication, @PathVariable idContrato: Int): ResponseEntity<List<Invoice>> {
-        if(!(auth is User))
-            return ResponseEntity.noContent().build()
-        val predicados = mutableListOf(
-            Predicate("U_venda_futura", idContrato, Condicao.EQUAL),
-            Predicate("DownPaymentAmountSC", 0, Condicao.EQUAL),
-        )
-        return ResponseEntity.ok(invoiceService
-            .get(Filter(predicados), OrderBy(mapOf("DocEntry" to Order.DESC)))
-            .tryGetValues<Invoice>()
-        )
+    fun get(@PathVariable idContrato: Int): List<Document> {
+        val filter = Filter(Predicate("U_venda_futura", idContrato, Condicao.EQUAL),
+            Predicate("DownPaymentAmountSC", 0, Condicao.EQUAL))
+        return listOf(creditNotesService,invoiceService)
+            .map { it.getAll(Document::class.java,filter) }
+            .flatMap { it }
+            .sortedWith(compareBy(
+                { it.docDate },
+                { it.docObjectCode?.ordinal }
+            ))
+    }
+
+    @GetMapping("/pedidos/{idContrato}")
+    fun pedidos(@PathVariable idContrato: Int): List<Document> {
+        val filter = Filter(Predicate("U_venda_futura", idContrato, Condicao.EQUAL),
+            Predicate("DownPaymentAmountSC", 0, Condicao.EQUAL))
+        return listOf(ordersService,quotationsService)
+            .map { it.getAll(Document::class.java,filter) }
+            .flatMap { it }
+            .sortedWith(compareBy(
+                { it.docDate },
+                { it.docObjectCode?.ordinal }
+            ))
     }
 }

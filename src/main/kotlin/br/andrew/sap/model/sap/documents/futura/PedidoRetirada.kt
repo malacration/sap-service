@@ -54,7 +54,7 @@ class PedidoRetirada(
             it.U_preco_negociado = item.U_precoNegociado
             it.MeasureUnit = item.U_MeasureUnit
             it.CommisionPercent = item.U_comissao
-            it.DiscountPercent = item.U_desconto
+            it.DiscountPercent = 0.0
             it.U_preco_base = item.U_precoBase
             // talvez adicionar? provavel it.U_idTabela = item.U_idtabela
             it.LineTotal = null

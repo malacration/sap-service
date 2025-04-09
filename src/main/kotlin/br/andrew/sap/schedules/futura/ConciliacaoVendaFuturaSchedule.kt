@@ -49,7 +49,7 @@ class ConciliacaoVendaFuturaSchedule(
     val logger: Logger = LoggerFactory.getLogger(ConciliacaoVendaFuturaSchedule::class.java)
 
 
-    @Scheduled(fixedDelay = 10, timeUnit = TimeUnit.MINUTES)
+    @Scheduled(fixedDelay = 1, timeUnit = TimeUnit.MINUTES)
     fun execute() {
         val filterReclassificacaoEntrega = Filter(
             Predicate("TransactionCode", TransactionCodeTypes.VFET, Condicao.EQUAL),
@@ -84,7 +84,9 @@ class ConciliacaoVendaFuturaSchedule(
                             it.controlAccount = contaControle
                             it.SequenceCode = sequenceCode
                             it.salesPersonCode = invoice.salesPersonCode
-                            it.journalMemo = "Apropriacao de adt LC ${journalReclassificado.JdtNum} para NF $ref"
+                            it.journalMemo = "Apropriacao de adt Com LC ${journalReclassificado.JdtNum} da entrega. NF $ref"
+                            it.U_TX_DocEntryRef = invoice.docEntry
+                            //TODO coloocar a referencia da nf de forma estruturada.
                         }
 
                         val apropriado = inoviceService
