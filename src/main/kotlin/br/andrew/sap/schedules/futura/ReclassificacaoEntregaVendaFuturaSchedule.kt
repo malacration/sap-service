@@ -4,17 +4,13 @@ import JournalEntry
 import JournalEntryLines
 import br.andrew.sap.infrastructure.odata.Condicao
 import br.andrew.sap.infrastructure.odata.Filter
-import br.andrew.sap.infrastructure.odata.Parameter
 import br.andrew.sap.infrastructure.odata.Predicate
-import br.andrew.sap.model.payment.PaymentDueDates
 import br.andrew.sap.model.sap.InternalReconciliationsBuilder
 import br.andrew.sap.model.sap.documents.DocumentStatus
 import br.andrew.sap.model.sap.documents.DocumentTypes
 import br.andrew.sap.model.sap.documents.DownPayment
 import br.andrew.sap.model.sap.documents.Invoice
-import br.andrew.sap.model.sap.documents.base.Document
 import br.andrew.sap.model.sap.documents.base.Product
-import br.andrew.sap.model.self.vendafutura.Contrato
 import br.andrew.sap.model.transaction.TransactionCodeTypes
 import br.andrew.sap.services.AuthService
 import br.andrew.sap.services.InternalReconciliationsService
@@ -50,7 +46,7 @@ class ReclassificacaoEntregaVendaFuturaSchedule(
     @Value("\${venda-futura.sequencia_adiantamento}") val sequenceCode : Int,
     @Value("\${venda-futura.conta-adiantamento}") val contaAdiantamento : String,
     @Value("\${venda-futura.adiantamento-item:none}") val vfItemAdiantamento : String,
-    @Value("\${venda-futura.conta-controle}") val contaControle : String) {
+    @Value("\${venda-futura.conta-controle}") val contaControleRedutoraPassivo : String) {
 
     val logger: Logger = LoggerFactory.getLogger(ConciliacaoVendaFuturaSchedule::class.java)
 
@@ -74,7 +70,7 @@ class ReclassificacaoEntregaVendaFuturaSchedule(
                 filial.toIntOrNull() ?: throw Exception("Lancamento sem filial")).also {
                 it.ShortName = invoice.CardCode
             }
-            val deb = JournalEntryLines(contaControle,docTotal,0.0,filial.toIntOrNull() ?: throw Exception("Lancamento sem filial")).also {
+            val deb = JournalEntryLines(contaControleRedutoraPassivo,docTotal,0.0,filial.toIntOrNull() ?: throw Exception("Lancamento sem filial")).also {
                 it.ShortName = invoice.CardCode
             }
 
@@ -93,31 +89,12 @@ class ReclassificacaoEntregaVendaFuturaSchedule(
     @Scheduled(fixedDelay = 1, timeUnit = TimeUnit.MINUTES)
     fun estorno() {
         val filter = Filter(
-            //TODO
             Predicate("U_venda_futura",0,Condicao.GREAT),
             Predicate("U_conciliar_automatico",'1',Condicao.EQUAL),
             Predicate("DocDate", "2024-11-05", Condicao.GREAT)
         )
 
         creditnotesservice.get(filter).tryGetValues<Invoice>().forEach { devolucao ->
-            val filial = devolucao.getBPL_IDAssignedToInvoice()
-            val docTotal = devolucao.DocTotal?.toDoubleOrNull() ?: throw Exception("valor Documento nao e valido")
-
-            val deb = JournalEntryLines(
-                devolucao.controlAccount?: throw Exception("Lancamento sem conta controle"),
-                docTotal,0.0,
-                filial.toIntOrNull() ?: throw Exception("Lancamento sem filial")).also {
-                it.ShortName = devolucao.CardCode
-            }
-            val cred = JournalEntryLines(contaAdiantamento,0.0,docTotal,filial.toIntOrNull() ?: throw Exception("Lancamento sem filial"))
-
-            val journalEntrie = journalEntriesService
-                .saveOrRecouverReference(
-                    JournalEntry(listOf(cred,deb),"Reclassificação Devolução venda futura [${devolucao.U_venda_futura}]. NF Num ${devolucao.docNum}").also {
-                        it.TransactionCode = TransactionCodeTypes.VFDV.toString()
-                        it.Reference = devolucao.docNum
-                    })
-
 
             val apropriacoes = creditnotesservice.getById(devolucao.docEntry.toString())
                 .tryGetValue<Invoice>().DocumentLines
@@ -130,6 +107,30 @@ class ReclassificacaoEntregaVendaFuturaSchedule(
                     )
                     this.inoviceService.get(filter).tryGetValues<Invoice>()
                 }
+
+            val filial = devolucao.getBPL_IDAssignedToInvoice()
+            val docTotal = devolucao.DocTotal?.toDoubleOrNull() ?: throw Exception("valor Documento nao e valido")
+
+            val deb = JournalEntryLines(
+                devolucao.controlAccount?: throw Exception("Lancamento sem conta controle"),
+                docTotal,0.0,
+                filial.toIntOrNull() ?: throw Exception("Lancamento sem filial")).also {
+                it.ShortName = devolucao.CardCode
+            }
+            val cred = if(apropriacoes.isNotEmpty())
+                JournalEntryLines(contaAdiantamento,0.0,docTotal,filial.toIntOrNull() ?: throw Exception("Lancamento sem filial"))
+            else
+                JournalEntryLines(contaControleRedutoraPassivo,0.0,docTotal,filial.toIntOrNull() ?: throw Exception("Lancamento sem filial")).also {
+                    it.ShortName = devolucao.CardCode
+                }
+
+            val journalEntrie = journalEntriesService
+                .saveOrRecouverReference(
+                    JournalEntry(listOf(cred,deb),"Reclassificação Devolução venda futura [${devolucao.U_venda_futura}]. NF Num ${devolucao.docNum}").also {
+                        it.TransactionCode = TransactionCodeTypes.VFDV.toString()
+                        it.Reference = devolucao.docNum
+                    })
+
             //Teve apropriacao entao fazer estorno do adiantamento
             if(apropriacoes.isNotEmpty()){
                 val cred = JournalEntryLines(
@@ -145,6 +146,8 @@ class ReclassificacaoEntregaVendaFuturaSchedule(
                         it.Reference = apropriacoes.first().docNum
                         it.TransactionCode = TransactionCodeTypes.AROU.toString()
                     })
+
+                //----- adiantamento ----
 
                 if(vfItemAdiantamento == "none")
                     throw Exception("O parametro [venda-futura.adiantamento-item] nao pode ser $vfItemAdiantamento")
