@@ -27,6 +27,7 @@ class Invoice(CardCode: String,
 
     //TODO não achei onde fica esse propriedade
     var header : String? = null
+    var WarehouseCode: String? = null
 
     override fun toString(): String {
         return "OrderSales(CardCode='$CardCode', Branch='${getBPL_IDAssignedToInvoice()}', docEntry=$docEntry, docNum=$docNum, pedido_forca=$u_id_pedido_forca)"

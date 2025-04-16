@@ -13,6 +13,7 @@ import java.util.*
 data class OrdemCarregamento(
     val DocEntry: Int? = null, // Adicionado
     val docNum : Int? = null,
+    val CreateDate: String? = null,
     @JsonProperty("U_orderDocEntry") val orderDocEntry: Int? = null,
     @JsonProperty("U_cardCode") val cardCode: String? = null,
     @JsonProperty("U_cardName") val cardName: String? = null,

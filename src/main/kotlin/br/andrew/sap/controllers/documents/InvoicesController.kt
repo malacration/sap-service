@@ -2,6 +2,7 @@ package br.andrew.sap.controllers.documents
 
 import br.andrew.sap.infrastructure.BoletoIdsConfig
 import br.andrew.sap.infrastructure.odata.*
+import br.andrew.sap.model.WarehouseDefault
 import br.andrew.sap.model.sap.DocEntry
 import br.andrew.sap.model.bankplus.Boleto
 import br.andrew.sap.model.sap.documents.Fatura

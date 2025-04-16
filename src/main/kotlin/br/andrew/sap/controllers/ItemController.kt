@@ -1,6 +1,7 @@
 package br.andrew.sap.controllers
 
 import br.andrew.sap.infrastructure.odata.NextLink
+import br.andrew.sap.model.WarehouseDefault
 import br.andrew.sap.model.authentication.User
 import br.andrew.sap.model.sap.documents.base.Product
 import br.andrew.sap.services.stock.ItemsService

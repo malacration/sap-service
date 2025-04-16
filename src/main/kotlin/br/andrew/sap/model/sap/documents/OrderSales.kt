@@ -21,6 +21,7 @@ class OrderSales(CardCode: String,
     var header : String? = null
     var BuyUnitMsr : String? = null
     var Weight1: Int? = null
+    var WhsCode: String? = null
     var ItemCode : String? = null
     var Dscription : String? = null
     var U_Localidade : Int? = null

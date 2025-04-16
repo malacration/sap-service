@@ -39,36 +39,58 @@ class OrdemCarregamentoConfiguration(
         ).forEach { tableService.findOrCreate(it) }
 
         listOf(
+            //TODO verificar se esse campo e usando realmente, pq uma ordem deveria ter varios pedidos, nesse caso tem somente uma
             FieldMd("orderDocEntry", "Pedido", "@RV_ORD_CARREGAMENTO", null).also {
                 it.LinkedSystemObject = LinkedSystemObject.ulOrders
                 it.subType = "st_None"
             },
+            //TODO nao precisa disso
             FieldMd("cardCode", "Cliente", "@RV_ORD_CARREGAMENTO", DbType.db_Alpha).also {
                 it.LinkedSystemObject = LinkedSystemObject.ulBusinessPartners
             },
+            //TODO nao precisa disso
             FieldMd("cardName", "Nome Cliente", "@RV_ORD_CARREGAMENTO", DbType.db_Alpha),
+
+            //TODO nao precisa disso
             FieldMd("dataCriacao", "Data de Criação", "@RV_ORD_CARREGAMENTO", DbType.db_Date),
+
+            //TODO nao precisa disso
             FieldMd("valorFrete", "Valor Frete", "@RV_ORD_CARREGAMENTO", DbType.db_Float),
+
+            //TODO verificar se o carregamento pode conter mutiplas filiais
             FieldMd("filial", "Filial", "@RV_ORD_CARREGAMENTO", DbType.db_Numeric),
+
+            //TODO Nao precisa
             FieldMd("vendedor", "Vendedor", "@RV_ORD_CARREGAMENTO", DbType.db_Float).also {
                 it.LinkedSystemObject = LinkedSystemObject.ulInventoryGenExit
             },
+            //TODO Nao precisa, acredito que ja tem docEntry ou code
             FieldMd("orderCode", "Código Ordem", "@RV_ORD_CARREGAMENTO", DbType.db_Alpha),
+            //todo o sap cria por padrao description, mas vale confirmar. se nao for o caso deveria usar somente name e nao orderName
             FieldMd("ordemName", "Nome Ordem", "@RV_ORD_CARREGAMENTO", DbType.db_Alpha),
+            //TODO nao precisa do total do frete
             FieldMd("totalFrete", "Total Frete", "@RV_ORD_CARREGAMENTO", DbType.db_Float),
+            //TODO nao precisa do total do frete
             FieldMd("pesoTotal", "Peso Total", "@RV_ORD_CARREGAMENTO", DbType.db_Float),
+            //Provavelmente sera necessario fazer uma view que retorne todos os dados da colecao de pedidos do carregamento, tais como frete, peso entre outros
             FieldMd("valorTotal", "Valor Total", "@RV_ORD_CARREGAMENTO", DbType.db_Float),
+            //TODO a ordem de carregamento pode ter diferentes regioes?
             FieldMd("codRegiao", "Código Região", "@RV_ORD_CARREGAMENTO", DbType.db_Numeric),
+            //TODO nao precisa
             FieldMd("nomeRegiao", "Nome Região", "@RV_ORD_CARREGAMENTO", DbType.db_Alpha),
         ).forEach {
             userFieldsMDService.findOrCreate(it)
         }
 
+        //TODO fazer uma transaction notification para a ordem de carreggamento,
+        // quando um pedido estiver em uma ordem de carregamento, somente o usuario de integracao pode mudar o status do pedido?
+        // Ou se o pedido indo para closed que no caso esta sendo faturado, ai sim pode modificar!
         // Line fields
         listOf(
             FieldMd("docEntryPedido", "DocEntry Pedido", "@RV_ORD_LINHA", DbType.db_Numeric).also {
                 it.LinkedSystemObject = LinkedSystemObject.ulOrders
             },
+            //TODO do que se trata o docnum?
             FieldMd("docNum", "DocNum Pedido", "@RV_ORD_LINHA", DbType.db_Numeric),
             FieldMd("codItemPedido", "Código Item Pedido", "@RV_ORD_LINHA", DbType.db_Alpha).also {
                 it.LinkedSystemObject = LinkedSystemObject.ulItems

@@ -5,6 +5,7 @@ import br.andrew.sap.infrastructure.odata.Filter
 import br.andrew.sap.infrastructure.odata.Predicate
 import br.andrew.sap.controllers.documents.OrderSalesController
 import br.andrew.sap.infrastructure.odata.*
+import br.andrew.sap.model.WarehouseDefault
 import br.andrew.sap.model.authentication.User
 import br.andrew.sap.model.envrioments.SapEnvrioment
 import br.andrew.sap.model.sap.documents.DocumentStatus
@@ -26,7 +27,7 @@ import org.springframework.stereotype.Service
 import org.springframework.web.client.RestTemplate
 
 @Service
-class OrdersService(val sqlQueriesService : SqlQueriesService, env: SapEnvrioment, restTemplate: RestTemplate, authService: AuthService) :
+class OrdersService(val sqlQueriesService : SqlQueriesService, env: SapEnvrioment, restTemplate: RestTemplate, authService: AuthService, val warehouseDefault: List<WarehouseDefault>) :
         EntitiesService<Document>(env, restTemplate, authService), ClosableEntitiesService<OrderSales> {
     override fun path(): String {
         return "/b1s/v1/Orders"
@@ -61,8 +62,18 @@ class OrdersService(val sqlQueriesService : SqlQueriesService, env: SapEnvriomen
             Parameter("filial", filial),
             Parameter("skip", skip.toString())
         )
-        return sqlQueriesService
+        val result = sqlQueriesService
             .execute("search-pedido-venda-carregamento.sql", parametros)!!
-            .tryGetNextValues()
+            .tryGetNextValues<OrderSales>()
+
+        result.content.forEach { order ->
+            order.DocumentLines.forEach { line ->
+                if (line.WarehouseCode == null) {
+                    val warehouse = warehouseDefault.find { it.BPLID == filial }?.defaultWarehouseID
+                    line.WarehouseCode = warehouse ?: "01"
+                }
+            }
+        }
+        return result
     }
 }

@@ -4,6 +4,7 @@ import br.andrew.sap.events.OrderSalesSaveEvent
 import br.andrew.sap.infrastructure.WarehouseDefaultConfig
 import br.andrew.sap.infrastructure.configurations.DistribuicaoCustoByBranchConfig
 import br.andrew.sap.infrastructure.odata.*
+import br.andrew.sap.model.WarehouseDefault
 import br.andrew.sap.model.authentication.User
 import br.andrew.sap.model.sap.documents.OrderSales
 import br.andrew.sap.model.exceptions.CreditException
@@ -28,7 +29,8 @@ class OrderSalesController(val ordersService: OrdersService,
                            val itemService : ItemsService,
                            val comissaoService: ComissaoService,
                            val telegramService : TelegramRequestService,
-                           val applicationEventPublisher: ApplicationEventPublisher) {
+                           val applicationEventPublisher: ApplicationEventPublisher,
+                           val warehouseDefault: List<WarehouseDefault>) {
 
     val logger = LoggerFactory.getLogger(OrderSalesController::class.java)
 
@@ -95,8 +97,16 @@ class OrderSalesController(val ordersService: OrdersService,
     @PostMapping("search")
     fun search(@RequestBody filter: OrderSalesFilter): NextLink<OrderSales> {
         val teste = ordersService.fullSearch(filter)
-            return teste
+        teste.content.forEach { order ->
+            order.DocumentLines.forEach { line ->
+                if (line.WarehouseCode == null) {
+                    val warehouse = warehouseDefault.find { it.BPLID == filter.filial }?.defaultWarehouseID
+                    line.WarehouseCode = warehouse ?: "01" // Fallback para um depósito padrão, se necessário
+                }
+            }
         }
+        return teste
+    }
 
     data class OrderSalesFilter(
         val dataInicial: String,
