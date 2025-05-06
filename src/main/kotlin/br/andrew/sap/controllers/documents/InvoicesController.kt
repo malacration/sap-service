@@ -2,17 +2,21 @@ package br.andrew.sap.controllers.documents
 
 import br.andrew.sap.infrastructure.BoletoIdsConfig
 import br.andrew.sap.infrastructure.odata.*
+import br.andrew.sap.model.authentication.User
 import br.andrew.sap.model.sap.DocEntry
 import br.andrew.sap.model.bankplus.Boleto
 import br.andrew.sap.model.sap.documents.Fatura
 import br.andrew.sap.model.sap.documents.Invoice
 import br.andrew.sap.model.sap.documents.base.Document
 import br.andrew.sap.model.enums.Cancelled
+import br.andrew.sap.model.forca.PedidoVenda
+import br.andrew.sap.model.sap.partner.BusinessPartnerSlin
 import br.andrew.sap.services.document.InvoiceService
 import br.andrew.sap.services.invent.BankPlusService
 import org.slf4j.LoggerFactory
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
+import org.springframework.security.core.Authentication
 import org.springframework.web.bind.annotation.*
 
 @RestController
@@ -90,5 +94,13 @@ class InvoicesController(
     @GetMapping("pix")
     fun teste() : Any{
         return invoice.getAllPixs();
+    }
+
+    @GetMapping("/search")
+    fun search(@RequestParam("dataInicial", required = false) dataInicial: String?, @RequestParam("dataFinal", required = false) dataFinal: String?, @RequestParam("filial") filial: Int, @RequestParam("localidade") localidade: String): NextLink<Invoice> {
+        val startDate = dataInicial ?: "1900-01-01"
+        val endDate = dataFinal ?: "2100-12-31"
+        val result = invoice.fullSearchTextFallBack(startDate, endDate, filial, localidade)
+        return result ?: NextLink(emptyList(), "")
     }
 }

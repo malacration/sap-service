@@ -1,9 +1,7 @@
 package br.andrew.sap.services.document
 
-import br.andrew.sap.infrastructure.odata.Condicao
-import br.andrew.sap.infrastructure.odata.Filter
-import br.andrew.sap.infrastructure.odata.OData
-import br.andrew.sap.infrastructure.odata.Predicate
+import br.andrew.sap.infrastructure.odata.*
+import br.andrew.sap.model.authentication.User
 import br.andrew.sap.model.sap.BussinessPlace
 import br.andrew.sap.model.sap.DocEntry
 import br.andrew.sap.model.bank.Payment
@@ -12,9 +10,12 @@ import br.andrew.sap.model.envrioments.SapEnvrioment
 import br.andrew.sap.model.sap.documents.base.Installment
 import br.andrew.sap.model.sap.documents.Invoice
 import br.andrew.sap.model.exceptions.PixPaymentException
+import br.andrew.sap.model.forca.PedidoVenda
 import br.andrew.sap.model.sap.SalePerson
 import br.andrew.sap.model.sap.journal.OriginalJournal
 import br.andrew.sap.model.sap.partner.BusinessPartner
+import br.andrew.sap.model.sap.partner.BusinessPartnerSlin
+import br.andrew.sap.model.sap.partner.CpfCnpj
 import br.andrew.sap.model.uzzipay.ContaUzziPayPix
 import br.andrew.sap.model.uzzipay.Transaction
 import br.andrew.sap.model.uzzipay.builder.RequestPixDueDateSemContaBuilder
@@ -23,6 +24,7 @@ import br.andrew.sap.services.invent.BankPlusService
 import br.andrew.sap.services.BusinessPartnersService
 import br.andrew.sap.services.BussinessPlaceService
 import br.andrew.sap.services.abstracts.EntitiesService
+import br.andrew.sap.services.abstracts.SqlQueriesService
 import br.andrew.sap.services.bank.IncomingPaymentService
 import br.andrew.sap.services.journal.EntryOriginalJournal
 import br.andrew.sap.services.journal.ServiceOriginalJournal
@@ -43,7 +45,8 @@ class InvoiceService(env: SapEnvrioment, restTemplate: RestTemplate, authService
                      val bussinesPartnersService: BusinessPartnersService,
                      val incomingPaymentService: IncomingPaymentService,
                      val transactionPixService : TransactionsPixService,
-                     val bankPlusService: BankPlusService
+                     val bankPlusService: BankPlusService,
+                     val sqlQueriesService : SqlQueriesService,
 ) :
         EntitiesService<Invoice>(env, restTemplate, authService), ServiceOriginalJournal {
     override fun path(): String {
@@ -163,5 +166,17 @@ class InvoiceService(env: SapEnvrioment, restTemplate: RestTemplate, authService
                 else -> null
             }
         }
+    }
+
+    fun fullSearchTextFallBack(dataInicial: String, dataFinal: String, filial: Int, localidade: String): NextLink<Invoice>? {
+        val parameters = listOf(
+            Parameter("startDate", dataInicial),
+            Parameter("finalDate", dataFinal),
+            Parameter("filial", filial),
+            Parameter("localidade", localidade)
+        )
+        return sqlQueriesService
+            .execute("search-pedido-venda-carregamento.sql", parameters)
+            ?.tryGetNextValues()
     }
 }

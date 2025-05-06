@@ -22,11 +22,13 @@ class Invoice(CardCode: String,
               @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "YYY-MM-dd", timezone = "UTC")
               DocDueDate: String?,
               DocumentLines: List<DocumentLines> = listOf(),
-              BPL_IDAssignedToInvoice: String)
+              BPL_IDAssignedToInvoice: String = "")
     : Document(CardCode, DocDueDate, DocumentLines, BPL_IDAssignedToInvoice), EntryOriginalJournal {
 
     //TODO não achei onde fica esse propriedade
     var header : String? = null
+    var BuyUnitMsr : String? = null
+    var U_Localidade : Int? = null
 
     override fun toString(): String {
         return "OrderSales(CardCode='$CardCode', Branch='${getBPL_IDAssignedToInvoice()}', docEntry=$docEntry, docNum=$docNum, pedido_forca=$u_id_pedido_forca)"
