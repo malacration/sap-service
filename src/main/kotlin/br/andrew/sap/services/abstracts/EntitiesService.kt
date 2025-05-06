@@ -42,8 +42,12 @@ open abstract class EntitiesService<T>(protected val env: SapEnvrioment,
     }
 
     fun update(entry : Any, id : String): OData?{
+        val idNew = if(id.toIntOrNull() == null && id[0] != "'"[0])
+            "'$id'"
+        else
+            id
         val request = RequestEntity
-                .patch(env.host+this.path()+"($id)")
+                .patch(env.host+this.path()+"($idNew)")
                 .header("cookie","B1SESSION=${session().sessionId}")
                 .body(entry)
         return restT.exchange(request, OData::class.java).body
@@ -62,14 +66,6 @@ open abstract class EntitiesService<T>(protected val env: SapEnvrioment,
                 .post(env.host+this.path()+"($id)/Cancel")
                 .header("cookie","B1SESSION=${session().sessionId}")
                 .build()
-        return restT.exchange(request, OData::class.java).body
-    }
-
-    fun windson(id : String): OData? {
-        val request = RequestEntity
-            .post(env.host+this.path()+"($id)/CreateCancellationDocument")
-            .header("cookie","B1SESSION=${session().sessionId}")
-            .build()
         return restT.exchange(request, OData::class.java).body
     }
 
