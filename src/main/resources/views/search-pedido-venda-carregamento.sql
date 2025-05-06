@@ -11,6 +11,7 @@ SELECT DISTINCT
     o."BuyUnitMsr",
     r."U_Localidade",
     o."SWeight1" AS "Weight1",
+    c."BPLId" as "BPL_IDAssignedToInvoice",
     l."Name"
 FROM
     "ORDR" c

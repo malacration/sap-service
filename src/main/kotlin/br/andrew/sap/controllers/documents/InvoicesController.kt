@@ -97,7 +97,10 @@ class InvoicesController(
     }
 
     @GetMapping("/search")
-    fun search(@RequestParam("dataInicial", required = false) dataInicial: String?, @RequestParam("dataFinal", required = false) dataFinal: String?, @RequestParam("filial") filial: Int, @RequestParam("localidade") localidade: String): NextLink<Invoice> {
+    fun search(@RequestParam("dataInicial", required = false) dataInicial: String?,
+               @RequestParam("dataFinal", required = false) dataFinal: String?,
+               @RequestParam("filial") filial: Int,
+               @RequestParam("localidade") localidade: String): NextLink<Invoice> {
         val startDate = dataInicial ?: "1900-01-01"
         val endDate = dataFinal ?: "2100-12-31"
         val result = invoice.fullSearchTextFallBack(startDate, endDate, filial, localidade)
