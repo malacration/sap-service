@@ -106,4 +106,10 @@ class InvoicesController(
         val result = invoice.fullSearchTextFallBack(startDate, endDate, filial, localidade)
         return result ?: NextLink(emptyList(), "")
     }
+
+    @PostMapping("/searchAll")
+    fun search(@RequestBody nextLink : String): NextLink<Invoice> {
+        val result = invoice.fullSearchTextFallBack2(nextLink)
+        return result ?: NextLink(emptyList(), "")
+    }
 }

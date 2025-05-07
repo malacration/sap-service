@@ -179,4 +179,8 @@ class InvoiceService(env: SapEnvrioment, restTemplate: RestTemplate, authService
             .execute("search-pedido-venda-carregamento.sql", parameters)
             ?.tryGetNextValues()
     }
+
+    fun fullSearchTextFallBack2(nextPage : String): NextLink<Invoice>? {
+            return sqlQueriesService.nextLink(nextPage)!!.tryGetNextValues()
+    }
 }
