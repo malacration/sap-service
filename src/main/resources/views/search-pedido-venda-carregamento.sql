@@ -12,12 +12,18 @@ SELECT DISTINCT
     r."U_Localidade",
     o."SWeight1" AS "Weight1",
     c."BPLId" as "BPL_IDAssignedToInvoice",
-    l."Name"
+    l."Name",
+    w."OnHand",
+    d."Quantity",
+    b."DflWhs"
+
 FROM
     "ORDR" c
 INNER JOIN "CRD1" r ON c."CardCode" = r."CardCode"
 INNER JOIN "RDR1" d ON c."DocEntry" = d."DocEntry"
 INNER JOIN "OITM" o ON d."ItemCode" = o."ItemCode"
+INNER JOIN "OITW" w ON o."ItemCode" = w."ItemCode"
+INNER JOIN "OBPL" b ON c."BPLId" = b."BPLId"
 INNER JOIN "@RO_LOCAIS" l ON r."U_Localidade" = l."Code"
 WHERE
     c."DocDate" >= :startDate
