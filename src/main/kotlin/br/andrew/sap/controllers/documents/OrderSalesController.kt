@@ -8,6 +8,7 @@ import br.andrew.sap.model.authentication.User
 import br.andrew.sap.model.sap.documents.OrderSales
 import br.andrew.sap.model.exceptions.CreditException
 import br.andrew.sap.model.forca.PedidoVenda
+import br.andrew.sap.model.sap.Localidade
 import br.andrew.sap.model.sap.documents.base.Document
 import br.andrew.sap.services.*
 import br.andrew.sap.services.document.DocumentForAngular
@@ -90,5 +91,12 @@ class OrderSalesController(val ordersService: OrdersService,
                 logger.error(e.message,e)
             }
         }
+    }
+
+    @PostMapping("search")
+    fun search(@RequestBody keyWord : String, auth : Authentication): NextLink<Localidade> {
+        if(auth is User)
+            return ordersService.fullSearchTextFallBack(keyWord,auth)
+        return NextLink(listOf(),"")
     }
 }

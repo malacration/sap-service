@@ -6,4 +6,6 @@ import com.fasterxml.jackson.databind.annotation.JsonNaming
 
 @JsonNaming(PropertyNamingStrategies.UpperCamelCaseStrategy::class)
 @JsonIgnoreProperties(ignoreUnknown = true)
-class Localidade {}
+class Localidade (val Code : String?, val Name : String?){
+
+}
