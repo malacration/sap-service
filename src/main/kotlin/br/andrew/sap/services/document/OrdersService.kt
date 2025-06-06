@@ -40,15 +40,17 @@ class OrdersService(val sqlQueriesService : SqlQueriesService, env: SapEnvriomen
         return get(filter).tryGetPageValues<Document>(page)
     }
 
-    fun fullSearchTextFallBack(fullText: String, user: User): NextLink<Localidade> {
-        if(fullText.startsWith("SQLQueries('localidade-search.sql')"))
-            return sqlQueriesService.nextLink(fullText)!!.tryGetNextValues()
-        val busca = if(fullText.toDoubleOrNull() == null )  fullText.replace("*","%") else CpfCnpj(fullText).getWithMask();
+    fun fullSearchTextFallBack(dataInicial: String, dataFinal: String, branchId: String, localidade: String): NextLink<OrderSales> {
         val parametros = listOf(
-            Parameter("valor","'%${busca}%'"),
+            Parameter("startDate", dataInicial),
+            Parameter("finalDate", dataFinal),
+            Parameter("localidade", localidade), // Mapeia para r."U_Localidade"
+            Parameter("filial", branchId)        // Mapeia para c."BPLId"
         )
+
         return sqlQueriesService
-            .execute("localidade-search.sql", parametros)!!
-            .tryGetNextValues()
+            .execute("pedido-search.sql", parametros)
+            ?.tryGetNextValues()
+            ?: NextLink(listOf(), "")
     }
 }

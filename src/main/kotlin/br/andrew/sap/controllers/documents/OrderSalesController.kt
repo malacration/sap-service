@@ -94,9 +94,19 @@ class OrderSalesController(val ordersService: OrdersService,
     }
 
     @PostMapping("search")
-    fun search(@RequestBody keyWord : String, auth : Authentication): NextLink<Localidade> {
-        if(auth is User)
-            return ordersService.fullSearchTextFallBack(keyWord,auth)
-        return NextLink(listOf(),"")
+    fun search(@RequestBody request: SearchRequest): NextLink<OrderSales> {
+        return ordersService.fullSearchTextFallBack(
+            request.dataInicial,
+            request.dataFinal,
+            request.branchId,
+            request.localidade
+        )
     }
+
+    data class SearchRequest(
+        val dataInicial: String,
+        val dataFinal: String,
+        val branchId: String,
+        val localidade: String
+    )
 }
