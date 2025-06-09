@@ -1,15 +1,18 @@
 package br.andrew.sap.controller
 
+import br.andrew.sap.infrastructure.odata.OData
 import br.andrew.sap.model.sap.SalePerson
 import br.andrew.sap.model.sap.partner.BusinessPartner
 import br.andrew.sap.services.BusinessPartnersService
 import br.andrew.sap.services.SalesPersonsService
+import br.andrew.sap.services.abstracts.SqlQueriesService
 import org.springframework.data.domain.*
 import org.springframework.web.bind.annotation.*
 
 @RestController
 @RequestMapping("/sales-person")
 class SalesPersonController(
+    val sqlQueriesService : SqlQueriesService,
     val salesPersonsService: SalesPersonsService,
     val businessPartnersService: BusinessPartnersService
 ){
@@ -18,7 +21,7 @@ class SalesPersonController(
     fun get(page : Pageable): Page<SalePerson> {
         return salesPersonsService.get(page).tryGetPageValues(page)
     }
-    
+
     @PostMapping("search")
     fun search(@RequestBody salesPerson1: String, page : Pageable): Page<SalePerson>? {
         return salesPersonsService.search(salesPerson1, page)
@@ -52,6 +55,11 @@ class SalesPersonController(
     fun getBusinessPartners(@PathVariable salesEmployeeCode: Int, page : Pageable): Page<BusinessPartner>?{
         return businessPartnersService.findBusinessPartnersBySalesPersonCode(salesEmployeeCode, page)
     }
-}
 
+    @GetMapping("/teste")
+    fun getOrdersCarregamentos(): OData? {
+        return sqlQueriesService.execute("pedidos-carregamento.sql")
+    }
+
+}
 
