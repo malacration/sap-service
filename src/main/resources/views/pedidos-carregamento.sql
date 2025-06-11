@@ -6,7 +6,7 @@ P."CardName",
 V."SlpCode",
 V."SlpName",
 L."ItemCode",
-L."Dscription" AS "Description",
+L."Dscription",
 L."Usage",
 L."DistribSum",
 L."Quantity"
@@ -18,4 +18,13 @@ AND L."Usage" = 9
 AND P."BPLId" in (2,4,11,17,18)
 AND P."DocDate" >= :startDate
 AND P."DocDate" <= :finalDate
+AND  (
+      L."ItemCode" like :search
+    )
+AND (
+        V."SlpCode" like :salesPerson
+)
+AND (
+        P."CardCode" like :partner
+)
 ORDER BY P."DocDate" desc

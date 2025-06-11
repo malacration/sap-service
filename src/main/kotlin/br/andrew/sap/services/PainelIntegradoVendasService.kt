@@ -16,14 +16,27 @@ class PainelIntegradoVendasService(
 ) {
     fun fullSearchPedidos(
         dataInicial: String,
-        dataFinal: String
+        dataFinal: String,
+        cliente: String?,
+        item: String?,
+        vendedor: String?,
     ): NextLink<PainelIntegradoVendas>? {
+        val clienteSearch = cliente?.let { "%${it}%" } ?: "%"
+        val vendedorSearch = vendedor?.let { "%${it}%" } ?: "%"
+        val itemSearch = item?.let { "%${it}%" } ?: "%"
         val params = listOf(
             Parameter("startDate", dataInicial),
-            Parameter("finalDate", dataFinal)
+            Parameter("finalDate", dataFinal),
+            Parameter("partner", clienteSearch),
+            Parameter("search", itemSearch),
+            Parameter("salesPerson", vendedorSearch)
         )
         return sqlQueriesService
             .execute("pedidos-carregamento.sql", params)
             ?.tryGetNextValues<PainelIntegradoVendas>()
     }
+
+
+
+
 }
