@@ -62,6 +62,17 @@ open class ItemsService(
         return sqlQueriesService.execute("produto-tabela.sql", parameters)!!.tryGetNextValues<Product>()
     }
 
+    fun fullItemSearch(keyWord: String): NextLink<Product>{
+        val parameters = listOf(
+            Parameter("item","'%${keyWord.uppercase()}%'"),
+            Parameter("zero",0),
+        )
+        if(keyWord.contains("SQLQueries('search-product.sql')"))
+            return sqlQueriesService.nextLink(keyWord)!!.tryGetNextValues<Product>()
+        return sqlQueriesService.execute("search-product.sql", parameters)!!.tryGetNextValues<Product>()
+
+    }
+
     @Cacheable("produto-estrutura-selecao")
     fun produtosComEstrutura(prefix : String): List<ProdutoSelecao> {
         val parameters = listOf(

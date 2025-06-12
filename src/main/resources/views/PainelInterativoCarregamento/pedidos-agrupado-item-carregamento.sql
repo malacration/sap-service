@@ -1,0 +1,28 @@
+SELECT
+L."ItemCode",
+L."Dscription" AS "Description",
+sum(L."Quantity") AS "Quantity",
+sum(D."OnHand") AS "OnHand"
+FROM ORDR P
+INNER JOIN RDR1 L ON P."DocEntry" = L."DocEntry"
+left JOIN OSLP V ON V."SlpCode" = P."SlpCode"
+LEFT JOIN OITW D ON D."WhsCode" = L."WhsCode" AND D."ItemCode" = L."ItemCode"
+WHERE P."DocStatus" = 'O'
+AND L."Usage" = 9
+AND P."DocDate" >= :startDate
+AND P."DocDate" <= :finalDate
+AND P."BPLId" = :branch
+AND  (
+        L."ItemCode" like :search
+    )
+AND (
+        V."SlpCode" like :salesPerson
+)
+AND (
+        P."CardCode" like :partner
+)
+GROUP BY
+L."ItemCode",
+L."Dscription"
+ORDER BY L."ItemCode"
+

@@ -58,7 +58,7 @@ class SalesPersonController(
 
     @GetMapping("/teste")
     fun getOrdersCarregamentos(): OData? {
-        return sqlQueriesService.execute("pedidos-carregamento.sql")
+        return sqlQueriesService.execute("pedidos-sem-agrupamento-carregamento.sql")
     }
 
 }
