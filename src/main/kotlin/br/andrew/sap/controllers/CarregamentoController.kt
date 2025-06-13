@@ -70,4 +70,15 @@ class CarregamentoController(val carregamentoServico: CarregamentoService,
         ).tryGetPageValues<Carregamento>(page)
         return ResponseEntity.ok(carregamento)
     }
+
+    @PostMapping("/angular")
+    fun saveCarregamento(@RequestBody ordem: Carregamento): ResponseEntity<Any> {
+        return try {
+            val result = carregamentoServico.save(ordem)
+            ResponseEntity.ok(result)
+        } catch (e: Exception) {
+            logger.error("Erro ao salvar ordem de carregamento", e)
+            ResponseEntity.badRequest().body(mapOf("error" to e.message))
+        }
+    }
 }
