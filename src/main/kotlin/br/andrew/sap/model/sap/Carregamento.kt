@@ -13,7 +13,6 @@ import com.fasterxml.jackson.databind.annotation.JsonNaming
 data class Carregamento(
     val DocEntry: Int,
     val U_nameOrdem: String?,
-    val U_docNumPedido: Int?,
     val U_Status: String?,
     val U_pesoTotal : Int,
     @JsonProperty("ORD_CRG_LINHACollection")
@@ -32,5 +31,7 @@ class LinhaCarregamento {
     var U_cardName: String? = null
     var U_quantidade: Int? = null
     var U_pesoItem: Int? = null
+    var U_itemCode: String? = null
+    var U_description: String? = null
 }
 

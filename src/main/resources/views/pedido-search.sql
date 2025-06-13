@@ -8,12 +8,13 @@ SELECT
     d."ItemCode",
     d."Dscription",
     d."Quantity",
-    o."BuyUnitMsr",
     r."U_LocalidadeS",
-    o."SWeight1" AS "Weight1",
     c."BPLId" AS "BPL_IDAssignedToInvoice",
     l."Name",
     w."OnHand",
+    d."UomCode",
+    d."Weight1",
+    grupo."BaseQty", AS "KgConversao"
     w."IsCommited",
     w."OnOrder",
     b."DflWhs"
@@ -26,8 +27,10 @@ INNER JOIN "OITW" w ON o."ItemCode" = w."ItemCode"
 AND d."WhsCode" = w."WhsCode"
 INNER JOIN "OBPL" b ON c."BPLId" = b."BPLId"
 INNER JOIN "@RO_LOCAIS" l ON r."U_LocalidadeS" = l."Code"
+LEFT JOIN "UGP1" grupo ON grupo."UgpEntry" = 4 AND grupo."UomEntry" = d."UomEntry"
 WHERE
     c."DocDate" >= :startDate
     AND c."DocDate" <= :finalDate
     AND r."U_LocalidadeS" = :localidade
     AND c."BPLId" = :filial
+    AND c."DocStatus" = 'O'
