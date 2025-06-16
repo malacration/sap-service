@@ -62,6 +62,9 @@ class CarregamentoConfiguration(val userFieldsMDService: UserFieldsMDService,
             },
             FieldMd("cardName","Nome Cliente","@ORD_CRG_LINHA", DbType.db_Alpha),
             FieldMd("quantidade","Quantidade","@ORD_CRG_LINHA", DbType.db_Numeric),
+            FieldMd("pesoItem","Peso Item","@ORD_CRG_LINHA", DbType.db_Numeric),
+            FieldMd("unMedida","Unidade de Medida","@ORD_CRG_LINHA", DbType.db_Alpha),
+            FieldMd("qtdEstoque","Unidade de Medida","@ORD_CRG_LINHA", DbType.db_Numeric),
         ).forEach {
             userFieldsMDService.findOrCreate(it)
         }
