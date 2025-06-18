@@ -14,10 +14,11 @@ SELECT
     w."OnHand",
     d."UomCode",
     d."Weight1",
-    grupo."BaseQty", AS "KgConversao"
+    grupo."BaseQty" AS "KgConversao",
     w."IsCommited",
     w."OnOrder",
-    b."DflWhs"
+    b."DflWhs",
+    x."U_Status"
 FROM
     "ORDR" c
 INNER JOIN "RDR12" r ON c."DocEntry" = r."DocEntry"
@@ -28,9 +29,12 @@ AND d."WhsCode" = w."WhsCode"
 INNER JOIN "OBPL" b ON c."BPLId" = b."BPLId"
 INNER JOIN "@RO_LOCAIS" l ON r."U_LocalidadeS" = l."Code"
 LEFT JOIN "UGP1" grupo ON grupo."UgpEntry" = 4 AND grupo."UomEntry" = d."UomEntry"
+LEFT JOIN "@ORD_CRG_LINHA" m ON d."DocEntry" = m."U_orderDocEntry"
+LEFT JOIN "@ORD_CARREGAMENTO" x ON m."DocEntry" = x."DocEntry"
 WHERE
     c."DocDate" >= :startDate
     AND c."DocDate" <= :finalDate
     AND r."U_LocalidadeS" = :localidade
     AND c."BPLId" = :filial
     AND c."DocStatus" = 'O'
+    AND (x."U_Status" != 'Cancelado' OR x."U_Status" IS NULL)
