@@ -37,4 +37,4 @@ WHERE
     AND r."U_LocalidadeS" = :localidade
     AND c."BPLId" = :filial
     AND c."DocStatus" = 'O'
-    AND (x."U_Status" != 'Cancelado' OR x."U_Status" IS NULL)
+    AND (x."U_Status" <> 'Aberto' OR x."U_Status" IS NULL)
