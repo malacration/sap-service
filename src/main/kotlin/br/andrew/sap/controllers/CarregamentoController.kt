@@ -81,4 +81,16 @@ class CarregamentoController(val carregamentoServico: CarregamentoService,
             ResponseEntity.badRequest().body(mapOf("error" to e.message))
         }
     }
+
+    @PostMapping("/{id}/cancel")
+    fun cancel(@PathVariable id : String, auth : Authentication): ResponseEntity<Carregamento> {
+        if(auth !is User)
+            return ResponseEntity.noContent().build()
+
+        val carregamento = carregamentoServico.getById(id).tryGetValue<Carregamento>()
+        carregamento.U_Status = "Cancelado"
+
+        val result = carregamentoServico.update(carregamento, id)
+        return ResponseEntity.ok(result?.tryGetValue<Carregamento>())
+    }
 }
