@@ -8,7 +8,9 @@ import br.andrew.sap.model.sap.documents.Fatura
 import br.andrew.sap.model.sap.documents.Invoice
 import br.andrew.sap.model.sap.documents.base.Document
 import br.andrew.sap.model.enums.Cancelled
+import br.andrew.sap.model.sap.partner.BusinessPartner
 import br.andrew.sap.services.document.InvoiceService
+import br.andrew.sap.services.document.InvoiceOrdemCarregamento
 import br.andrew.sap.services.invent.BankPlusService
 import org.slf4j.LoggerFactory
 import org.springframework.data.domain.Page
@@ -90,5 +92,15 @@ class InvoicesController(
     @GetMapping("pix")
     fun teste() : Any{
         return invoice.getAllPixs();
+    }
+
+    @PostMapping("criar")
+    fun criarNotaFiscalEntrada(@RequestBody notaFiscal: Invoice) {
+        try {
+            val document = InvoiceOrdemCarregamento().prepareToSave(notaFiscal)
+            invoice.save(document).tryGetValue<Invoice>()
+        } catch (e: Exception) {
+            logger.error(e.message,e)
+        }
     }
 }
