@@ -35,7 +35,7 @@ class CarregamentoConfiguration(val userFieldsMDService: UserFieldsMDService,
             FieldMd("nameOrdem","Nome da Ordem","@ORD_CARREGAMENTO", DbType.db_Alpha),
 //            FieldMd("dataCancelamento","Data de Cancelamento","@ORD_CARREGAMENTO", DbType.db_Date),
             FieldMd("dataCancela","Data Cancela","@ORD_CARREGAMENTO", DbType.db_Alpha),
-            FieldMd("filial","Filial","@ORD_CARREGAMENTO", DbType.db_Numeric),
+            FieldMd("filial3","Filial","@ORD_CARREGAMENTO", DbType.db_Alpha),
             FieldMd("Status", "Status", "@ORD_CARREGAMENTO")
                 .also {
                     it.ValidValuesMD = listOf(

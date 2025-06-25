@@ -16,7 +16,7 @@ data class Carregamento(
     var U_Status: String?,
     val U_pesoTotal : Int,
     val CreateDate : String?,
-    val U_filial : Int?,
+    val U_filial3 : Int?,
     @JsonProperty("ORD_CRG_LINHACollection")
     var linhas: List<LinhaCarregamento>? = null
 ){}
