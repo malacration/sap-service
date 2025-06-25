@@ -10,5 +10,7 @@ import com.fasterxml.jackson.databind.annotation.JsonNaming
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 class BatchNumbers(
+    var BatchNumber: String? = null,
+    var Quantity: Int? = null,
     var ItemCode: String? = null
 )
