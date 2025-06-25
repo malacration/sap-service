@@ -30,7 +30,13 @@ class OrderSales(CardCode: String,
     var DflWhs : String? = null
     var Weight1 : Number? = null
     var IsCommited : Number? = null
-    var OnOrder : Number? = null
+    var UnitPrice : Number? = null
+    var WarehouseCode : String? = null
+    var Usage : Number? = null
+    var TaxCode : String? = null
+    var CostingCode : String? = null
+    var CostingCode2 : String? = null
+    var BaseLine : Number? = null
 
     override fun toString(): String {
         return "OrderSales(CardCode='$CardCode', Branch='${getBPL_IDAssignedToInvoice()}', docEntry=$docEntry, docNum=$docNum, pedido_forca=$u_id_pedido_forca)"

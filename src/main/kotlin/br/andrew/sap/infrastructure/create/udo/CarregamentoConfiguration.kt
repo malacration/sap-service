@@ -35,6 +35,7 @@ class CarregamentoConfiguration(val userFieldsMDService: UserFieldsMDService,
             FieldMd("nameOrdem","Nome da Ordem","@ORD_CARREGAMENTO", DbType.db_Alpha),
 //            FieldMd("dataCancelamento","Data de Cancelamento","@ORD_CARREGAMENTO", DbType.db_Date),
             FieldMd("dataCancela","Data Cancela","@ORD_CARREGAMENTO", DbType.db_Alpha),
+            FieldMd("filial","Filial","@ORD_CARREGAMENTO", DbType.db_Numeric),
             FieldMd("Status", "Status", "@ORD_CARREGAMENTO")
                 .also {
                     it.ValidValuesMD = listOf(
@@ -67,6 +68,17 @@ class CarregamentoConfiguration(val userFieldsMDService: UserFieldsMDService,
             FieldMd("pesoItem","Peso Item","@ORD_CRG_LINHA", DbType.db_Numeric),
             FieldMd("unMedida","Unidade de Medida","@ORD_CRG_LINHA", DbType.db_Alpha),
             FieldMd("qtdEstoque","Unidade de Medida","@ORD_CRG_LINHA", DbType.db_Numeric),
+
+            FieldMd("precoUnitario","Preço Unitário","@ORD_CRG_LINHA", DbType.db_Numeric),
+            FieldMd("codigoDeposito","Código de Depósito","@ORD_CRG_LINHA", DbType.db_Alpha),
+            FieldMd("usage","Usage","@ORD_CRG_LINHA", DbType.db_Numeric),
+            FieldMd("taxCode","TaxCode","@ORD_CRG_LINHA", DbType.db_Alpha),
+            FieldMd("costingCode","CostingCode","@ORD_CRG_LINHA", DbType.db_Alpha),
+            FieldMd("costingCode2","CostingCode2","@ORD_CRG_LINHA", DbType.db_Alpha),
+            FieldMd("baseType","BaseType","@ORD_CRG_LINHA", DbType.db_Numeric),
+            FieldMd("baseEntry","BaseEntry","@ORD_CRG_LINHA", DbType.db_Numeric),
+            FieldMd("baseLine","BaseLine","@ORD_CRG_LINHA", DbType.db_Numeric),
+
         ).forEach {
             userFieldsMDService.findOrCreate(it)
         }

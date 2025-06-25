@@ -18,7 +18,14 @@ SELECT
     w."IsCommited",
     w."OnOrder",
     b."DflWhs",
-    x."U_Status"
+    x."U_Status",
+    d."Price" AS "UnitPrice",
+    d."WhsCode" AS "WarehouseCode",
+    d."Usage",
+    d."TaxCode",
+    d."OcrCode" AS "CostingCode",
+    d."OcrCode2" AS "CostingCode2",
+    d."LineNum" AS "BaseLine"
 FROM
     "ORDR" c
 INNER JOIN "RDR12" r ON c."DocEntry" = r."DocEntry"

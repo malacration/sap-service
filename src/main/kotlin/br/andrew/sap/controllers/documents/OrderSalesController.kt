@@ -100,7 +100,7 @@ class OrderSalesController(val ordersService: OrdersService,
                @RequestParam("localidade") localidade: String): NextLink<OrderSales> {
         val startDate = dataInicial ?: "1900-01-01"
         val endDate = dataFinal ?: "2100-12-31"
-        val result = ordersService.fullSearchTextFallBack(startDate, endDate, 11, localidade)
+        val result = ordersService.fullSearchTextFallBack(startDate, endDate, filial, localidade)
         return result ?: NextLink(emptyList(), "")
     }
 

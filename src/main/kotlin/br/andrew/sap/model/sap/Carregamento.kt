@@ -16,6 +16,7 @@ data class Carregamento(
     var U_Status: String?,
     val U_pesoTotal : Int,
     val CreateDate : String?,
+    val U_filial : Int?,
     @JsonProperty("ORD_CRG_LINHACollection")
     var linhas: List<LinhaCarregamento>? = null
 ){}
@@ -34,5 +35,14 @@ class LinhaCarregamento {
     var U_pesoItem: Int? = null
     var U_itemCode: String? = null
     var U_description: String? = null
+    var U_precoUnitario: Int? = null
+    var U_codigoDeposito: String? = null
+    var U_usage: Int? = null
+    var U_taxCode: String? = null
+    var U_costingCode: String? = null
+    var U_costingCode2: String? = null
+    var U_baseType: Int? = null
+    var U_baseEntry: Int? = null
+    var U_baseLine: Int? = null
 }
 
