@@ -93,4 +93,16 @@ class CarregamentoController(val carregamentoServico: CarregamentoService,
         val result = carregamentoServico.update(carregamento, id)
         return ResponseEntity.ok(result?.tryGetValue<Carregamento>())
     }
+
+    @PostMapping("/{id}/finalizar")
+    fun finalizar(@PathVariable id : String, auth : Authentication): ResponseEntity<Carregamento> {
+        if(auth !is User)
+            return ResponseEntity.noContent().build()
+
+        val carregamento = carregamentoServico.getById(id).tryGetValue<Carregamento>()
+        carregamento.U_Status = "Fechado"
+
+        val result = carregamentoServico.update(carregamento, id)
+        return ResponseEntity.ok(result?.tryGetValue<Carregamento>())
+    }
 }
