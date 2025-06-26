@@ -105,4 +105,10 @@ class CarregamentoController(val carregamentoServico: CarregamentoService,
         val result = carregamentoServico.update(carregamento, id)
         return ResponseEntity.ok(result?.tryGetValue<Carregamento>())
     }
+
+    @GetMapping("estoque-em-carregamento")
+    fun getEstoqueEmCarregamento(@RequestParam("ItemCode") ItemCode: String): ResponseEntity<Int> {
+        val result = carregamentoServico.getEstoqueEmCarregamento(ItemCode)
+        return ResponseEntity.ok(result)
+    }
 }
