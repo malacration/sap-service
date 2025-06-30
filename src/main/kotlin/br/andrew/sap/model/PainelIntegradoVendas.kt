@@ -20,4 +20,5 @@ import java.math.BigDecimal
     val DistribSum: BigDecimal?,
     val Quantity: BigDecimal?,
     val OnHand :BigDecimal,
+    val EmOrdemDeCarregamento: String?
 )

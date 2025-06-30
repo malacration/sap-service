@@ -46,6 +46,7 @@ class PainelIntegradoVendasService(
         return sqlQueriesService
             .execute(sqlFile, params)
             ?.tryGetNextValues<PainelIntegradoVendas>()
+
     }
 
 }
