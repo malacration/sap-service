@@ -9,19 +9,26 @@ import br.andrew.sap.model.sap.documents.Invoice
 import br.andrew.sap.model.sap.documents.base.Document
 import br.andrew.sap.model.enums.Cancelled
 import br.andrew.sap.model.sap.partner.BusinessPartner
+import br.andrew.sap.services.CarregamentoService
+import br.andrew.sap.services.batch.BatchList
+import br.andrew.sap.services.batch.BatchMethod
+import br.andrew.sap.services.batch.BatchService
 import br.andrew.sap.services.document.InvoiceService
 import br.andrew.sap.services.document.InvoiceOrdemCarregamento
 import br.andrew.sap.services.invent.BankPlusService
 import org.slf4j.LoggerFactory
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
+import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 
 @RestController
 @RequestMapping("invoice")
 class InvoicesController(
     val invoice: InvoiceService,
-    val bankPlusService : BankPlusService
+    val bankPlusService : BankPlusService,
+    val service : BatchService,
+    val carregamentoService : CarregamentoService
 ) {
 
     val logger = LoggerFactory.getLogger(InvoicesController::class.java)
@@ -95,12 +102,32 @@ class InvoicesController(
     }
 
     @PostMapping("criar")
-    fun criarNotaFiscalEntrada(@RequestBody notaFiscal: Invoice) {
+    fun criarNotaFiscalEntrada(@RequestBody notaFiscal: Invoice): ResponseEntity<Any> {
         try {
+            // Transforma a ordem de carregamento em nota fiscal
             val document = InvoiceOrdemCarregamento().prepareToSave(notaFiscal)
-            invoice.save(document).tryGetValue<Invoice>()
+
+            // Cria a nota fiscal diretamente (sem batch)
+            val notaCriada = invoice.save(document).tryGetValue<Invoice>()
+
+            // Atualiza o status da ordem de carregamento
+            val ordemUpdate = mapOf(
+                "DocEntry" to notaFiscal.U_ordemCarregamento ?.toInt(),
+                "U_Status" to "Fechado"
+            )
+
+            // Verifica se o DocEntry existe antes de atualizar
+            if (notaFiscal.U_ordemCarregamento  != null) {
+                carregamentoService.update(ordemUpdate, notaFiscal.U_ordemCarregamento.toString())
+            }
+
+            return ResponseEntity.ok(notaCriada)
         } catch (e: Exception) {
-            logger.error(e.message,e)
+            logger.error("Erro ao criar nota fiscal", e)
+            return ResponseEntity.badRequest().body(mapOf(
+                "error" to "Erro ao criar nota fiscal",
+                "message" to e.message
+            ))
         }
     }
 }
