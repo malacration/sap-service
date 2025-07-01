@@ -9,9 +9,11 @@ import br.andrew.sap.model.sap.documents.Fatura
 import br.andrew.sap.model.sap.documents.Invoice
 import br.andrew.sap.model.sap.documents.base.Document
 import br.andrew.sap.model.enums.Cancelled
+import br.andrew.sap.model.sap.partner.BusinessPartner
 import br.andrew.sap.model.forca.PedidoVenda
 import br.andrew.sap.model.sap.partner.BusinessPartnerSlin
 import br.andrew.sap.services.document.InvoiceService
+import br.andrew.sap.services.document.InvoiceOrdemCarregamento
 import br.andrew.sap.services.invent.BankPlusService
 import org.slf4j.LoggerFactory
 import org.springframework.data.domain.Page
@@ -105,5 +107,15 @@ class InvoicesController(
         val endDate = dataFinal ?: "2100-12-31"
         val result = invoice.fullSearchTextFallBack(startDate, endDate, filial, localidade)
         return result ?: NextLink(emptyList(), "")
+    }
+
+    @PostMapping("criar")
+    fun criarNotaFiscalEntrada(@RequestBody notaFiscal: Invoice) {
+        try {
+            val document = InvoiceOrdemCarregamento().prepareToSave(notaFiscal)
+            invoice.save(document).tryGetValue<Invoice>()
+        } catch (e: Exception) {
+            logger.error(e.message,e)
+        }
     }
 }

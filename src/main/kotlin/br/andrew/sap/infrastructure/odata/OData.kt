@@ -44,7 +44,11 @@ class OData : LinkedHashMap<String,Any>(){
             return mapper.readValue(json, jacksonTypeRef<List<T>>())
         else if(json is List<*>)
             return json.map { mapper.readValue(mapper.writeValueAsString(it), T::class.java) }
-        throw Exception("Não foi possivel fazer o parse")
+        try {
+            return listOf(tryGetValue())
+        } catch (e : Exception){
+            throw Exception("Não foi possivel fazer o parse",e)
+        }
     }
 
 

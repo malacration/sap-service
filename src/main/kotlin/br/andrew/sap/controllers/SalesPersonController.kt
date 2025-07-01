@@ -1,4 +1,4 @@
-package br.andrew.sap.controller
+package br.andrew.sap.controllers
 
 import br.andrew.sap.infrastructure.odata.OData
 import br.andrew.sap.model.sap.SalePerson
