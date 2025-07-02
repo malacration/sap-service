@@ -59,7 +59,7 @@ class CarregamentoConfiguration(val userFieldsMDService: UserFieldsMDService,
                 it.LinkedSystemObject = LinkedSystemObject.ulItems
             },
             FieldMd("description","Descrição","@ORD_CRG_LINHA", DbType.db_Alpha),
-            FieldMd("docNumPedido","DocNum Pedido","@ORD_CRG_LINHA", DbType.db_Numeric),
+            FieldMd("numDocPedido","DocNum Pedido","@ORD_CRG_LINHA", null),
             FieldMd("cardCode","Cliente","@ORD_CRG_LINHA", DbType.db_Alpha).also {
                 it.LinkedSystemObject = LinkedSystemObject.ulBusinessPartners
             },

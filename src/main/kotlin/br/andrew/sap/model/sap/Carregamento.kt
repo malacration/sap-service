@@ -28,7 +28,7 @@ class LinhaCarregamento {
     var DocEntry: Int? = null
     var LineId: Int? = null
     var U_orderDocEntry: Int? = null
-    var U_docNumPedido: Int? = null
+    var U_numDocPedido: Int? = null
     var U_cardCode: String? = null
     var U_cardName: String? = null
     var U_quantidade: Int? = null
