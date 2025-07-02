@@ -1,4 +1,4 @@
-SELECT
+SELECT DISTINCT
     c."DocEntry",
     c."DocNum",
     c."CardCode",
@@ -28,13 +28,12 @@ SELECT
     d."LineNum" AS "BaseLine"
 FROM
     "ORDR" c
-INNER JOIN "RDR12" r ON c."DocEntry" = r."DocEntry"
-INNER JOIN "RDR1" d ON c."DocEntry" = d."DocEntry"
-INNER JOIN "OITM" o ON d."ItemCode" = o."ItemCode"
-INNER JOIN "OITW" w ON o."ItemCode" = w."ItemCode"
-AND d."WhsCode" = w."WhsCode"
-INNER JOIN "OBPL" b ON c."BPLId" = b."BPLId"
-INNER JOIN "@RO_LOCAIS" l ON r."U_LocalidadeS" = l."Code"
+JOIN "RDR12" r ON c."DocEntry" = r."DocEntry"
+JOIN "RDR1" d ON c."DocEntry" = d."DocEntry"
+JOIN "OITM" o ON d."ItemCode" = o."ItemCode"
+JOIN "OITW" w ON o."ItemCode" = w."ItemCode" AND d."WhsCode" = w."WhsCode"
+JOIN "OBPL" b ON c."BPLId" = b."BPLId"
+JOIN "@RO_LOCAIS" l ON r."U_LocalidadeS" = l."Code"
 LEFT JOIN "UGP1" grupo ON grupo."UgpEntry" = 4 AND grupo."UomEntry" = d."UomEntry"
 LEFT JOIN "@ORD_CRG_LINHA" m ON d."DocEntry" = m."U_orderDocEntry"
 LEFT JOIN "@ORD_CARREGAMENTO" x ON m."DocEntry" = x."DocEntry"
@@ -44,4 +43,4 @@ WHERE
     AND r."U_LocalidadeS" = :localidade
     AND c."BPLId" = :filial
     AND c."DocStatus" = 'O'
-    AND (x."U_Status" <> 'Aberto' OR x."U_Status" IS NULL)
+    AND (x."U_Status" = 'Cancelado' OR x."U_Status" IS NULL)
