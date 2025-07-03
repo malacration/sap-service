@@ -45,7 +45,7 @@ class CarregamentoConfiguration(val userFieldsMDService: UserFieldsMDService,
                     )
                     it.defaultValue = "Aberto"
                 },
-            FieldMd("pesoTotal","Peso Total","@ORD_CARREGAMENTO", DbType.db_Numeric)
+            FieldMd("pesoTotal2","Peso Total","@ORD_CARREGAMENTO", null)
         ).forEach {
             userFieldsMDService.findOrCreate(it)
         }
@@ -65,7 +65,7 @@ class CarregamentoConfiguration(val userFieldsMDService: UserFieldsMDService,
             },
             FieldMd("cardName","Nome Cliente","@ORD_CRG_LINHA", DbType.db_Alpha),
             FieldMd("quantidade","Quantidade","@ORD_CRG_LINHA", DbType.db_Numeric),
-            FieldMd("pesoItem","Peso Item","@ORD_CRG_LINHA", DbType.db_Numeric),
+            FieldMd("pesoItem2","Peso Item","@ORD_CRG_LINHA", null),
             FieldMd("unMedida","Unidade de Medida","@ORD_CRG_LINHA", DbType.db_Alpha),
             FieldMd("qtdEstoque","Unidade de Medida","@ORD_CRG_LINHA", DbType.db_Numeric),
 
@@ -78,6 +78,8 @@ class CarregamentoConfiguration(val userFieldsMDService: UserFieldsMDService,
             FieldMd("baseType","BaseType","@ORD_CRG_LINHA", DbType.db_Numeric),
             FieldMd("baseEntry","BaseEntry","@ORD_CRG_LINHA", DbType.db_Numeric),
             FieldMd("baseLine","BaseLine","@ORD_CRG_LINHA", DbType.db_Numeric),
+            FieldMd("unMedida","Unidade de Medida","@ORD_CRG_LINHA", DbType.db_Alpha),
+            FieldMd("qtdEmEstoque","Qtd Em Estoque","@ORD_CRG_LINHA", null),
 
         ).forEach {
             userFieldsMDService.findOrCreate(it)

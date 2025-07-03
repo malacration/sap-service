@@ -14,7 +14,7 @@ data class Carregamento(
     val DocEntry: Int,
     val U_nameOrdem: String?,
     var U_Status: String?,
-    val U_pesoTotal : Int,
+    val U_pesoTotal2 : Int,
     val CreateDate : String?,
     val U_filial3 : Int?,
     @JsonProperty("ORD_CRG_LINHACollection")
@@ -32,7 +32,7 @@ class LinhaCarregamento {
     var U_cardCode: String? = null
     var U_cardName: String? = null
     var U_quantidade: Int? = null
-    var U_pesoItem: Int? = null
+    var U_pesoItem2: Int? = null
     var U_itemCode: String? = null
     var U_description: String? = null
     var U_precoUnitario: Int? = null
@@ -44,5 +44,7 @@ class LinhaCarregamento {
     var U_baseType: Int? = null
     var U_baseEntry: Int? = null
     var U_baseLine: Int? = null
+    var U_unMedida: String? = null
+    var U_qtdEmEstoque : Number? = null
 }
 
