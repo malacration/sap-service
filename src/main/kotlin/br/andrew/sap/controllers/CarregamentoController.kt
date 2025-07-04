@@ -11,7 +11,9 @@ import br.andrew.sap.model.forca.PedidoVenda
 import br.andrew.sap.model.sap.Carregamento
 import br.andrew.sap.model.self.vendafutura.Contrato
 import br.andrew.sap.services.*
+import br.andrew.sap.services.document.CreditNotesService
 import br.andrew.sap.services.document.DocumentForAngular
+import br.andrew.sap.services.document.InvoiceService
 import br.andrew.sap.services.document.QuotationsService
 import br.andrew.sap.services.pricing.ComissaoService
 import br.andrew.sap.services.stock.ItemsService
@@ -29,7 +31,8 @@ class CarregamentoController(val carregamentoServico: CarregamentoService,
                              val itemService : ItemsService,
                              val comissaoService: ComissaoService,
                              val telegramService : TelegramRequestService,
-                             val applicationEventPublisher: ApplicationEventPublisher) {
+                             val applicationEventPublisher: ApplicationEventPublisher,
+                             val invoiceService: InvoiceService, ) {
 
     val logger = LoggerFactory.getLogger(QuotationsController::class.java)
 
@@ -111,4 +114,17 @@ class CarregamentoController(val carregamentoServico: CarregamentoService,
         val result = carregamentoServico.getEstoqueEmCarregamento(ItemCode)
         return ResponseEntity.ok(result)
     }
+
+    @GetMapping("/notas/{idCarregamento}")
+    fun getNotasByCarregamentos(@PathVariable idCarregamento: Int): List<Document> {
+        val filter = Filter(Predicate("U_ordemCarregamento", idCarregamento, Condicao.EQUAL))
+        return listOf(invoiceService)
+            .map { it.getAll(Document::class.java,filter) }
+            .flatMap { it }
+            .sortedWith(compareBy(
+                { it.docDate },
+                { it.docObjectCode?.ordinal }
+            ))
+    }
 }
+
