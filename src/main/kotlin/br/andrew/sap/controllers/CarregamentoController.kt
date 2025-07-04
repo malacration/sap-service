@@ -1,0 +1,130 @@
+package br.andrew.sap.controllers.documents
+
+import br.andrew.sap.infrastructure.WarehouseDefaultConfig
+import br.andrew.sap.infrastructure.configurations.DistribuicaoCustoByBranchConfig
+import br.andrew.sap.infrastructure.odata.*
+import br.andrew.sap.model.authentication.User
+import br.andrew.sap.model.sap.documents.OrderSales
+import br.andrew.sap.model.sap.documents.Quotation
+import br.andrew.sap.model.sap.documents.base.Document
+import br.andrew.sap.model.forca.PedidoVenda
+import br.andrew.sap.model.sap.Carregamento
+import br.andrew.sap.model.self.vendafutura.Contrato
+import br.andrew.sap.services.*
+import br.andrew.sap.services.document.CreditNotesService
+import br.andrew.sap.services.document.DocumentForAngular
+import br.andrew.sap.services.document.InvoiceService
+import br.andrew.sap.services.document.QuotationsService
+import br.andrew.sap.services.pricing.ComissaoService
+import br.andrew.sap.services.stock.ItemsService
+import org.slf4j.LoggerFactory
+import org.springframework.context.ApplicationEventPublisher
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.Pageable
+import org.springframework.http.ResponseEntity
+import org.springframework.security.core.Authentication
+import org.springframework.web.bind.annotation.*
+
+@RestController
+@RequestMapping("carregamento")
+class CarregamentoController(val carregamentoServico: CarregamentoService,
+                             val itemService : ItemsService,
+                             val comissaoService: ComissaoService,
+                             val telegramService : TelegramRequestService,
+                             val applicationEventPublisher: ApplicationEventPublisher,
+                             val invoiceService: InvoiceService, ) {
+
+    val logger = LoggerFactory.getLogger(QuotationsController::class.java)
+
+    @GetMapping("todos")
+    fun getFazendas() : OData{
+        return carregamentoServico.get()
+    }
+
+    @GetMapping("todos2")
+    fun getFazendas2() : List<Carregamento>{
+        return carregamentoServico.get().tryGetValues<Carregamento>()
+    }
+
+    @GetMapping("")
+    fun get(auth : Authentication, page : Pageable): ResponseEntity<Page<Carregamento>> {
+        if(auth !is User)
+            return ResponseEntity.noContent().build()
+        val carregamento = carregamentoServico.get(Filter(),
+            OrderBy(mapOf("CreateDate" to Order.DESC, "DocEntry" to Order.DESC)),
+            page
+        ).tryGetPageValues<Carregamento>(page)
+        return ResponseEntity.ok(carregamento)
+    }
+
+    @GetMapping("/{id}")
+    fun get(@PathVariable id : String, auth : Authentication): ResponseEntity<Carregamento> {
+        if(auth !is User)
+            return ResponseEntity.noContent().build()
+        return ResponseEntity.ok(carregamentoServico.getById(id).tryGetValue<Carregamento>())
+    }
+
+
+    @GetMapping("all")
+    fun getAll(auth : Authentication, page : Pageable): ResponseEntity<Page<Carregamento>> {
+        val carregamento = carregamentoServico.get(Filter(),
+            OrderBy(mapOf("CreateDate" to Order.DESC, "DocEntry" to Order.DESC)),
+            page
+        ).tryGetPageValues<Carregamento>(page)
+        return ResponseEntity.ok(carregamento)
+    }
+
+    @PostMapping("/angular")
+    fun saveCarregamento(@RequestBody ordem: Carregamento): ResponseEntity<Any> {
+        return try {
+            val result = carregamentoServico.save(ordem)
+            ResponseEntity.ok(result)
+        } catch (e: Exception) {
+            logger.error("Erro ao salvar ordem de carregamento", e)
+            ResponseEntity.badRequest().body(mapOf("error" to e.message))
+        }
+    }
+
+    @PostMapping("/{id}/cancel")
+    fun cancel(@PathVariable id : String, auth : Authentication): ResponseEntity<Carregamento> {
+        if(auth !is User)
+            return ResponseEntity.noContent().build()
+
+        val carregamento = carregamentoServico.getById(id).tryGetValue<Carregamento>()
+        carregamento.U_Status = "Cancelado"
+
+        val result = carregamentoServico.update(carregamento, id)
+        return ResponseEntity.ok(result?.tryGetValue<Carregamento>())
+    }
+
+    @PostMapping("/{id}/finalizar")
+    fun finalizar(@PathVariable id : String, auth : Authentication): ResponseEntity<Carregamento> {
+        if(auth !is User)
+            return ResponseEntity.noContent().build()
+
+        val carregamento = carregamentoServico.getById(id).tryGetValue<Carregamento>()
+        carregamento.U_Status = "Fechado"
+
+        val result = carregamentoServico.update(carregamento, id)
+        return ResponseEntity.ok(result?.tryGetValue<Carregamento>())
+    }
+
+    @GetMapping("estoque-em-carregamento")
+    fun getEstoqueEmCarregamento(@RequestParam("ItemCode") ItemCode: String): ResponseEntity<Int> {
+        val result = carregamentoServico.getEstoqueEmCarregamento(ItemCode)
+        return ResponseEntity.ok(result)
+    }
+
+    @GetMapping("/notas/{idCarregamento}")
+    fun getNotasByCarregamentos(@PathVariable idCarregamento: Int): List<Document> {
+        val filter = Filter(Predicate("U_ordemCarregamento", idCarregamento, Condicao.EQUAL))
+        return listOf(invoiceService)
+            .map { it.getAll(Document::class.java,filter) }
+            .flatMap { it }
+            .sortedWith(compareBy(
+                { it.docDate },
+                { it.docObjectCode?.ordinal }
+            ))
+    }
+}
+

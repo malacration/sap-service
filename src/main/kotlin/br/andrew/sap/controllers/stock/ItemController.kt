@@ -1,4 +1,4 @@
-package br.andrew.sap.controllers
+package br.andrew.sap.controllers.stock
 
 import br.andrew.sap.infrastructure.odata.NextLink
 import br.andrew.sap.model.authentication.User
@@ -29,6 +29,11 @@ class ItemController(val service: ItemsService) {
             ResponseEntity.ok(service.fullSearchText(keyword,auth.getIdInt(), branchId))
         else
             ResponseEntity.noContent().build()
+    }
+
+    @PostMapping("search")
+    fun fullItemSearch(@RequestBody keyword : String ):ResponseEntity<NextLink<Product>>?{
+       return ResponseEntity.ok(service.fullItemSearch(keyword))
     }
 
 }
