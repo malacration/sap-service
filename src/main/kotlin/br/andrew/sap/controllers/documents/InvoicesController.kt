@@ -104,20 +104,19 @@ class InvoicesController(
     @PostMapping("criar")
     fun criarNotaFiscalEntrada(@RequestBody notaFiscal: Invoice): ResponseEntity<Any> {
         try {
-            // Transforma a ordem de carregamento em nota fiscal
+            val hasUsage16 = notaFiscal.DocumentLines.any { it.Usage == 16 }
+            notaFiscal.ReserveInvoice = if (hasUsage16) "tYES" else "tNO"
+
             val document = InvoiceOrdemCarregamento().prepareToSave(notaFiscal)
 
-            // Cria a nota fiscal diretamente (sem batch)
             val notaCriada = invoice.save(document).tryGetValue<Invoice>()
 
-            // Atualiza o status da ordem de carregamento
             val ordemUpdate = mapOf(
-                "DocEntry" to notaFiscal.U_ordemCarregamento ?.toInt(),
+                "DocEntry" to notaFiscal.U_ordemCarregamento?.toInt(),
                 "U_Status" to "Fechado"
             )
 
-            // Verifica se o DocEntry existe antes de atualizar
-            if (notaFiscal.U_ordemCarregamento  != null) {
+            if (notaFiscal.U_ordemCarregamento != null) {
                 carregamentoService.update(ordemUpdate, notaFiscal.U_ordemCarregamento.toString())
             }
 

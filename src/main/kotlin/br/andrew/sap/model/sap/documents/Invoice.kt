@@ -28,6 +28,9 @@ class Invoice(CardCode: String,
     @JsonProperty("U_ordemCarregamento")
     var U_ordemCarregamento: Int? = null
 
+    var ReserveInvoice: String? = null
+
+
     override fun toString(): String {
         return "OrderSales(CardCode='$CardCode', Branch='${getBPL_IDAssignedToInvoice()}', docEntry=$docEntry, docNum=$docNum, pedido_forca=$u_id_pedido_forca)"
     }
