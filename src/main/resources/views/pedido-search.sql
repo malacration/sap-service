@@ -28,7 +28,8 @@ SELECT DISTINCT
     d."LineNum" AS "BaseLine",
     d."U_preco_negociado" AS "PrecoNegociado",
     d."U_preco_base" AS "PrecoBase",
-    c."Comments" AS "Comentario"
+    c."Comments" AS "Comentario",
+    d."DistribSum" AS "FretePorLinha"
 FROM
     "ORDR" c
 JOIN "RDR12" r ON c."DocEntry" = r."DocEntry"

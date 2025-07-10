@@ -83,6 +83,8 @@ class CarregamentoConfiguration(val userFieldsMDService: UserFieldsMDService,
             FieldMd("precoNegociado","Preço Negociado","@ORD_CRG_LINHA", DbType.db_Float),
             FieldMd("precoBase","Preço Base","@ORD_CRG_LINHA", DbType.db_Float),
             FieldMd("comentario","Comentário","@ORD_CRG_LINHA", DbType.db_Alpha),
+            FieldMd("fretePorLinha","Frete Por Linha","@ORD_CRG_LINHA", DbType.db_Float),
+
         ).forEach {
             userFieldsMDService.findOrCreate(it)
         }

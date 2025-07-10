@@ -49,5 +49,6 @@ class LinhaCarregamento {
     var U_precoNegociado : Double? = null
     var U_precoBase : Double? = null
     var U_comentario : String? = null
+    var U_fretePorLinha : Double? = null
 }
 
