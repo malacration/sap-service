@@ -27,7 +27,8 @@ SELECT DISTINCT
     d."OcrCode2" AS "CostingCode2",
     d."LineNum" AS "BaseLine",
     d."U_preco_negociado" AS "PrecoNegociado",
-    d."U_preco_base" AS "PrecoBase"
+    d."U_preco_base" AS "PrecoBase",
+    c."Comments" AS "Comentario"
 FROM
     "ORDR" c
 JOIN "RDR12" r ON c."DocEntry" = r."DocEntry"
