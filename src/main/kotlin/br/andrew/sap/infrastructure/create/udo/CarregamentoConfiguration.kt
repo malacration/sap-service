@@ -80,7 +80,8 @@ class CarregamentoConfiguration(val userFieldsMDService: UserFieldsMDService,
             FieldMd("baseLine","BaseLine","@ORD_CRG_LINHA", DbType.db_Numeric),
             FieldMd("unMedida","Unidade de Medida","@ORD_CRG_LINHA", DbType.db_Alpha),
             FieldMd("qtdEmEstoque","Qtd Em Estoque","@ORD_CRG_LINHA", null),
-
+            FieldMd("precoNegociado","Preço Negociado","@ORD_CRG_LINHA", DbType.db_Float),
+            FieldMd("precoBase","Preço Base","@ORD_CRG_LINHA", DbType.db_Float),
         ).forEach {
             userFieldsMDService.findOrCreate(it)
         }

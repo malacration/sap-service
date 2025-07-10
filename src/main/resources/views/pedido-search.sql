@@ -19,13 +19,15 @@ SELECT DISTINCT
     w."OnOrder",
     b."DflWhs",
     x."U_Status",
-    d."Price" AS "UnitPrice",
+    d."PriceBefDi" AS "UnitPrice",
     d."WhsCode" AS "WarehouseCode",
     d."Usage",
     d."TaxCode",
     d."OcrCode" AS "CostingCode",
     d."OcrCode2" AS "CostingCode2",
-    d."LineNum" AS "BaseLine"
+    d."LineNum" AS "BaseLine",
+    d."U_preco_negociado" AS "PrecoNegociado",
+    d."U_preco_base" AS "PrecoBase"
 FROM
     "ORDR" c
 JOIN "RDR12" r ON c."DocEntry" = r."DocEntry"

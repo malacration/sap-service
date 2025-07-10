@@ -46,5 +46,7 @@ class LinhaCarregamento {
     var U_baseLine: Int? = null
     var U_unMedida: String? = null
     var U_qtdEmEstoque : Number? = null
+    var U_precoNegociado : Double? = null
+    var U_precoBase : Double? = null
 }
 
