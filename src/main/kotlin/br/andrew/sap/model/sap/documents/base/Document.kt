@@ -53,6 +53,7 @@ open class Document(val CardCode : String,
     var CreateDate : String? = null
     var SeriesString : String? = null
     var U_ChaveAcesso : String? = null
+    var AttachmentEntry : Int? = null
 
     @JsonProperty("U_id_pedido_forca")
     var u_id_pedido_forca: String? = null

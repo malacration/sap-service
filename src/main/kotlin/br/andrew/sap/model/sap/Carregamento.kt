@@ -18,7 +18,8 @@ data class Carregamento(
     val CreateDate : String?,
     val U_filial3 : Int?,
     @JsonProperty("ORD_CRG_LINHACollection")
-    var linhas: List<LinhaCarregamento>? = null
+    var linhas: List<LinhaCarregamento>? = null,
+    var U_numeroAnexo : Int? = null
 ){}
 
 @JsonNaming(PropertyNamingStrategies.UpperCamelCaseStrategy::class)

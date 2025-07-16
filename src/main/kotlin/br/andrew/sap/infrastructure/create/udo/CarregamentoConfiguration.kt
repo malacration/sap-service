@@ -45,7 +45,9 @@ class CarregamentoConfiguration(val userFieldsMDService: UserFieldsMDService,
                     )
                     it.defaultValue = "Aberto"
                 },
-            FieldMd("pesoTotal2","Peso Total","@ORD_CARREGAMENTO", null)
+            FieldMd("pesoTotal2","Peso Total","@ORD_CARREGAMENTO", null),
+            FieldMd("numeroAnexo","Cod. Anexo","@ORD_CARREGAMENTO", null)
+
         ).forEach {
             userFieldsMDService.findOrCreate(it)
         }

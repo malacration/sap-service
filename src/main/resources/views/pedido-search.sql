@@ -29,7 +29,8 @@ SELECT DISTINCT
     d."U_preco_negociado" AS "PrecoNegociado",
     d."U_preco_base" AS "PrecoBase",
     c."Comments" AS "Comentario",
-    d."DistribSum" AS "FretePorLinha"
+    d."DistribSum" AS "FretePorLinha",
+    c."AtcEntry" AS "AttachmentEntry"
 FROM
     "ORDR" c
 JOIN "RDR12" r ON c."DocEntry" = r."DocEntry"
