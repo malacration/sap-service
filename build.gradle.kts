@@ -54,7 +54,7 @@ dependencies {
 	implementation("io.micrometer:micrometer-tracing-bridge-brave")
 	implementation("com.github.ben-manes.caffeine:caffeine:3.2.0")
 
-	implementation("org.apache.httpcomponents.client5:httpclient5:5.4.2")
+	implementation("org.apache.httpcomponents.client5:httpclient5:5.4.3")
 
 	implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.16.1")
 	implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.18.2")
