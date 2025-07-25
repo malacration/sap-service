@@ -27,7 +27,6 @@ class OrderSales(CardCode: String,
     var Name : String? = null
     var OnHand : String? = null
     var Quantity : Number? = null
-    var DflWhs : String? = null
     var Weight1 : Number? = null
     var IsCommited : Number? = null
     var UnitPrice : Number? = null

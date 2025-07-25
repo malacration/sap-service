@@ -54,6 +54,7 @@ open class Document(val CardCode : String,
     var SeriesString : String? = null
     var U_ChaveAcesso : String? = null
     var AttachmentEntry : Int? = null
+    var DflWhs : String? = null
 
     @JsonProperty("U_id_pedido_forca")
     var u_id_pedido_forca: String? = null
@@ -67,6 +68,7 @@ open class Document(val CardCode : String,
     var model : Int? = null
     var docType: String? = null
     var docObjectCode : DocumentTypes? = null
+    var U_Ordem_Carregamento :  Int? = null
 
     @JsonProperty("DocumentStatus")
     val DocumentStatus : DocumentStatus? = null

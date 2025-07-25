@@ -74,8 +74,12 @@ class CarregamentoController(val carregamentoServico: CarregamentoService,
     @PostMapping("/angular")
     fun saveCarregamento(@RequestBody ordem: Carregamento): ResponseEntity<Any> {
         return try {
-            val result = carregamentoServico.save(ordem)
-            ResponseEntity.ok(result)
+            if(ordem.U_Status.isNullOrEmpty()) {
+                ordem.U_Status = "Aberto"
+            }
+
+            val ordemCriada = carregamentoServico.save(ordem).tryGetValue<Carregamento>()
+            ResponseEntity.ok(ordemCriada)
         } catch (e: Exception) {
             logger.error("Erro ao salvar ordem de carregamento", e)
             ResponseEntity.badRequest().body(mapOf("error" to e.message))
@@ -108,7 +112,7 @@ class CarregamentoController(val carregamentoServico: CarregamentoService,
 
     @GetMapping("estoque-em-carregamento")
     fun getEstoqueEmCarregamento(@RequestParam("ItemCode") ItemCode: String): ResponseEntity<Int> {
-        val result = carregamentoServico.getEstoqueEmCarregamento(ItemCode)
+        val result = carregamentoServico.getEstoqueEmCarregamento("'$ItemCode'")
         return ResponseEntity.ok(result)
     }
 }

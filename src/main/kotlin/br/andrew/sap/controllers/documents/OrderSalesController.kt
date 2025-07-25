@@ -9,6 +9,7 @@ import br.andrew.sap.model.sap.documents.OrderSales
 import br.andrew.sap.model.exceptions.CreditException
 import br.andrew.sap.model.forca.PedidoVenda
 import br.andrew.sap.model.sap.Localidade
+import br.andrew.sap.model.sap.documents.Invoice
 import br.andrew.sap.model.sap.documents.base.Document
 import br.andrew.sap.services.*
 import br.andrew.sap.services.document.DocumentForAngular
@@ -19,6 +20,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
+import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.Authentication
 import org.springframework.web.bind.annotation.*
@@ -107,6 +109,27 @@ class OrderSalesController(val ordersService: OrdersService,
     @PostMapping("/searchAll")
     fun search(@RequestBody nextLink : String): NextLink<OrderSales> {
         val result = ordersService.fullSearchTextFallBack2(nextLink)
+        return result ?: NextLink(emptyList(), "")
+    }
+
+    @GetMapping("/pedido/all/{docEntry}/{order2}/order-id")
+    fun devolver(@PathVariable docEntry : Int, @PathVariable order2 : Int) {
+        val order = ordersService.getById(docEntry).tryGetValue<OrderSales>()
+
+        val lines = order.DocumentLines.map {
+            "{ \"DocEntry\": ${it.DocEntry}, \"LineNum\": ${it.LineNum},  \"U_ORD_CARREGAMENTO2\" : \"${order2}\" }"
+        }
+        val json = "{\"DocumentLines\": [" +
+                lines.joinToString(",") +
+                "]}"
+
+        ordersService.update(json,docEntry.toString())
+    }
+
+
+    @GetMapping("/search2")
+    fun search2(@RequestParam("U_Ordem_Carregamento") U_Ordem_Carregamento: Int): NextLink<OrderSales> {
+        val result = ordersService.Procura(U_Ordem_Carregamento)
         return result ?: NextLink(emptyList(), "")
     }
 }

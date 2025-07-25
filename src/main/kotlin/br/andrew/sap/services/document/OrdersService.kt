@@ -55,4 +55,13 @@ class OrdersService(val sqlQueriesService : SqlQueriesService, env: SapEnvriomen
     fun fullSearchTextFallBack2(nextPage : String): NextLink<OrderSales>? {
         return sqlQueriesService.nextLink(nextPage)!!.tryGetNextValues()
     }
+
+    fun Procura(idOrdemCarregamento: Int): NextLink<OrderSales>? {
+        val parameters = listOf(
+            Parameter("U_ORD_CARREGAMENTO2", idOrdemCarregamento)
+        )
+        return sqlQueriesService
+            .execute("ord-carregamento.sql", parameters)
+            ?.tryGetNextValues()
+    }
 }

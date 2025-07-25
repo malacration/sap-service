@@ -12,5 +12,9 @@ import com.fasterxml.jackson.databind.annotation.JsonNaming
 class BatchNumbers(
     var BatchNumber: String? = null,
     var Quantity: Int? = null,
-    var ItemCode: String? = null
+    var ItemCode: String? = null,
+    var WhsCode: String? = null,
+    var ExpDate: String? = null,
+    var MnfDate: String? = null,
+    var InDate: String? = null
 )

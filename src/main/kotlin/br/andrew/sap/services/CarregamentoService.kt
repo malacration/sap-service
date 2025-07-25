@@ -29,4 +29,15 @@ class CarregamentoService(val sqlQueriesService : SqlQueriesService,env: SapEnvr
             ?.firstOrNull()
             ?.get("total_quantidade") as Int? ?: 0
     }
+
+    fun getValores(ItemCode: String): Int {
+        val parameters = listOf(
+            Parameter("ItemCode", ItemCode)
+        )
+        return sqlQueriesService
+            .execute("estoque-em-ordem.sql", parameters)
+            ?.tryGetValues<Map<String, Any>>()
+            ?.firstOrNull()
+            ?.get("total_quantidade") as Int? ?: 0
+    }
 }

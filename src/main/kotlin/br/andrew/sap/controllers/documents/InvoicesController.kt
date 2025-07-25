@@ -8,6 +8,10 @@ import br.andrew.sap.model.sap.documents.Fatura
 import br.andrew.sap.model.sap.documents.Invoice
 import br.andrew.sap.model.sap.documents.base.Document
 import br.andrew.sap.model.enums.Cancelled
+import br.andrew.sap.model.producao.BatchStock
+import br.andrew.sap.model.sap.documents.OrderSales
+import br.andrew.sap.model.sap.documents.base.DocumentLines
+import br.andrew.sap.model.sap.documents.base.Product
 import br.andrew.sap.model.sap.partner.BusinessPartner
 import br.andrew.sap.services.CarregamentoService
 import br.andrew.sap.services.batch.BatchList
@@ -15,6 +19,7 @@ import br.andrew.sap.services.batch.BatchMethod
 import br.andrew.sap.services.batch.BatchService
 import br.andrew.sap.services.document.InvoiceService
 import br.andrew.sap.services.document.InvoiceOrdemCarregamento
+import br.andrew.sap.services.document.OrdersService
 import br.andrew.sap.services.invent.BankPlusService
 import org.slf4j.LoggerFactory
 import org.springframework.data.domain.Page
@@ -29,6 +34,8 @@ class InvoicesController(
     val bankPlusService : BankPlusService,
     val service : BatchService,
     val carregamentoService : CarregamentoService,
+    val ordersService : OrdersService,
+    val invoiceService : InvoiceService
 ) {
 
     val logger = LoggerFactory.getLogger(InvoicesController::class.java)
@@ -105,28 +112,132 @@ class InvoicesController(
         return invoice.getAllPixs();
     }
 
-    @PostMapping("criar")
-    fun criarNotaFiscalEntrada(@RequestBody notaFiscal: Invoice): ResponseEntity<Any> {
-        try {
-            val hasUsage16 = notaFiscal.DocumentLines.any { it.Usage == 16 }
-            notaFiscal.ReserveInvoice = if (hasUsage16) "tYES" else "tNO"
+//    @PostMapping("criar")
+//    fun criarNotaFiscalEntrada(@RequestBody notaFiscal: Invoice): ResponseEntity<Any> {
+//        try {
+//            val hasUsage16 = notaFiscal.DocumentLines.any { it.Usage == 16 }
+//            notaFiscal.ReserveInvoice = if (hasUsage16) "tYES" else "tNO"
+//
+//            val document = InvoiceOrdemCarregamento().prepareToSave(notaFiscal)
+//            val notaCriada = invoice.save(document).tryGetValue<Invoice>()
+//
+//            notaFiscal.U_ordemCarregamento?.let { docEntry ->
+//                carregamentoService.update(mapOf("U_Status" to "Fechado"), docEntry.toString())
+//            }
+//
+//            return ResponseEntity.ok(notaCriada)
+//        } catch (e: Exception) {
+//            logger.error("Erro ao criar nota fiscal", e)
+//            return ResponseEntity.badRequest().body(
+//                mapOf(
+//                    "error" to "Erro ao criar nota fiscal",
+//                    "message" to e.message
+//                )
+//            )
+//        }
+//    }
+//
+//    @PostMapping("/generate-from-loading-order/{docEntry}")
+//    fun generateInvoicesFromLoadingOrder(
+//        @PathVariable docEntry: Int,
+//        @RequestBody loadingOrderBody: Map<String, Any>,
+//    ): ResponseEntity<Any> {
+//        try {
+//            val pedido = ordersService.getById(docEntry.toString()).tryGetValue<OrderSales>()
+//
+//            val modifiedLines = pedido.DocumentLines.map { originalLine ->
+//                val modifiedLine = originalLine.Duplicate().apply {
+//                    BaseEntry = originalLine.DocEntry
+//                    BaseType = 17
+//                    BaseLine = originalLine.BaseLine
+//                }
+//                modifiedLine
+//            }
+//
+//            val invoice = Invoice(
+//                CardCode = pedido.CardCode,
+//                DocDueDate = pedido.DocDueDate,
+//                DocumentLines = modifiedLines,
+//                BPL_IDAssignedToInvoice = pedido.getBPL_IDAssignedToInvoice()
+//            ).apply {
+//                comments = pedido.comments
+//                docDate = pedido.docDate
+//                salesPersonCode = pedido.salesPersonCode
+//                paymentGroupCode = pedido.paymentGroupCode
+//                U_Ordem_Carregamento = docEntry
+//            }
+//
+//            val savedInvoice = invoiceService.save(invoice).tryGetValue<Invoice>()
+//            return ResponseEntity.ok(savedInvoice)
+//        } catch (e: Exception) {
+//            logger.error("Erro ao gerar nota fiscal: ${e.message}", e)
+//            return ResponseEntity.internalServerError().body("Erro ao gerar nota fiscal: ${e.message}")
+//        }
+//    }
 
-            val document = InvoiceOrdemCarregamento().prepareToSave(notaFiscal)
-            val notaCriada = invoice.save(document).tryGetValue<Invoice>()
+        @PostMapping("criar")
+        fun criarNotaFiscalEntrada(@RequestBody notaFiscal: Invoice): ResponseEntity<Any> {
+            try {
+                val hasUsage16 = notaFiscal.DocumentLines.any { it.Usage == 16 }
+                notaFiscal.ReserveInvoice = if (hasUsage16) "tYES" else "tNO"
 
-            notaFiscal.U_ordemCarregamento?.let { docEntry ->
-                carregamentoService.update(mapOf("U_Status" to "Fechado"), docEntry.toString())
-            }
+                val document = InvoiceOrdemCarregamento().prepareToSave(notaFiscal)
+                val notaCriada = invoice.save(document).tryGetValue<Invoice>()
 
-            return ResponseEntity.ok(notaCriada)
-        } catch (e: Exception) {
-            logger.error("Erro ao criar nota fiscal", e)
-            return ResponseEntity.badRequest().body(
-                mapOf(
-                    "error" to "Erro ao criar nota fiscal",
-                    "message" to e.message
+                notaFiscal.U_ordemCarregamento?.let { docEntry ->
+                    carregamentoService.update(mapOf("U_Status" to "Fechado"), docEntry.toString())
+                }
+
+                return ResponseEntity.ok(notaCriada)
+            } catch (e: Exception) {
+                logger.error("Erro ao criar nota fiscal", e)
+                return ResponseEntity.badRequest().body(
+                    mapOf(
+                        "error" to "Erro ao criar nota fiscal",
+                        "message" to e.message
+                    )
                 )
-            )
+            }
         }
+
+//   fun andrew(idOrdemCarreagamento : Int, lotes : list<Lotes>){
+//        loadOrdem(idOrdemCarreagamento)
+//
+//        pedidos = loadPedidos(idordem)
+//
+//        invoicesNaoSalvas = faturamentoPedidos(pedidos,ordem)
+//        inoicesNaoSalvasComLote = distribuiLotes(invoicesNaoSalvas,lotes)
+//        inoviceService.save(inoicesNaoSalvasComLote)
+//    }
+
+    @PostMapping("/criar-nota/")
+    fun createInvoice(@RequestBody payload: InvoicePayload): ResponseEntity<List<Invoice>> {
+        val idOrdemCarregamento = payload.id
+        val lotes = payload.ListBatch
+
+        println("ID da Ordem: $idOrdemCarregamento")
+        println("Lotes: $lotes")
+
+        // lógica de criação da nota vai aqui
+
+        return ResponseEntity.ok(emptyList())
     }
 }
+
+data class InvoicePayload(
+    val id: Int,
+    val ListBatch: List<BatchStock>
+)
+
+data class BatchStock(
+    val DistNumber: String,
+    val Quantity: Number,
+    val ItemCode: String,
+    val WhsCode: String
+)
+
+data class Invoice(
+    // Defina as propriedades da classe Invoice conforme necessário
+    val id: Int,
+    val docEntry: Int
+)
