@@ -1,10 +1,8 @@
 package br.andrew.sap.controllers
 
-import br.andrew.sap.model.Item
-import br.andrew.sap.model.sap.documents.base.Product
+import br.andrew.sap.model.estoque.Item
 import br.andrew.sap.model.sap.price.ItemPrice
 import br.andrew.sap.services.stock.ItemsService
-import io.swagger.v3.oas.annotations.Parameter
 import org.springframework.web.bind.annotation.*
 
 

@@ -1,4 +1,4 @@
-package br.andrew.sap.controllers
+package br.andrew.sap.controllers.stock
 
 import br.andrew.sap.infrastructure.odata.NextLink
 import br.andrew.sap.model.authentication.User
@@ -30,5 +30,7 @@ class ItemController(val service: ItemsService) {
         else
             ResponseEntity.noContent().build()
     }
+
+
 
 }
