@@ -65,7 +65,6 @@ open class Document(val CardCode : String,
     var OpeningRemarks: String? = null
     var controlAccount: String? = null
     var model : Int? = null
-    var docType: String? = null
     var docObjectCode : DocumentTypes? = null
 
     @JsonProperty("DocumentStatus")
@@ -255,7 +254,7 @@ open class Document(val CardCode : String,
                 Service(it.UnitPrice,it.Quantity)
             pt.BaseLine = it.LineNum
             pt.BaseEntry = this.docEntry
-            pt.BaseType = this.docObjectCode?.value ?: throw Exception("Sem object type")
+            pt.BaseType = this.docObjectCode?.value?.toString() ?: throw Exception("Sem object type")
             pt
         }
 

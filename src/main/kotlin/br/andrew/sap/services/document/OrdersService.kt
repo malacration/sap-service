@@ -12,6 +12,7 @@ import br.andrew.sap.services.abstracts.EntitiesService
 import br.andrew.sap.services.abstracts.SqlQueriesService
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
+import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Service
 import org.springframework.web.client.RestTemplate
 
@@ -60,5 +61,12 @@ class OrdersService(val sqlQueriesService : SqlQueriesService, env: SapEnvriomen
         return sqlQueriesService
             .execute("ord-carregamento.sql", parameters)
             ?.tryGetNextValues()
+    }
+
+    fun getPedidosBy(idOrdemCarregamento: Int): List<OrderSales> {
+        val filter = Filter(mutableListOf(
+            Predicate("U_ORD_CARREGAMENTO2", idOrdemCarregamento, Condicao.EQUAL),
+        ))
+        return getAll(OrderSales::class.java,filter)
     }
 }

@@ -57,5 +57,12 @@ class OrderSales(CardCode: String,
             it.controlAccount = this.controlAccount
         }
     }
+
+    fun toDocument(type : DocumentTypes): OrderSales {
+        this.DocEntry = null
+        this.DocumentLines.map { it.toInvoice(this.docObjectCode?.toString()?: throw Exception("O docType nao pode ser null")) }
+        this.docObjectCode = type
+        return this
+    }
 }
 //data de entrega - ORDRdocduedate

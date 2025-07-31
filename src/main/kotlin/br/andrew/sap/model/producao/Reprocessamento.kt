@@ -84,5 +84,9 @@ class BatchStock(
     val itemName: String? = null,
     val mnfDate: String? = null
 ){
+    constructor(DistNumber : String,
+                quantidade: String,
+                ItemCode: String?,
+                WhsCode: String) : this(DistNumber,quantidade,WhsCode,ItemCode)
 
 }

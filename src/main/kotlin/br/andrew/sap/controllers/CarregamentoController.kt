@@ -2,8 +2,18 @@ package br.andrew.sap.controllers.documents
 
 import br.andrew.sap.infrastructure.odata.*
 import br.andrew.sap.model.authentication.User
+import br.andrew.sap.model.producao.BatchStock
 import br.andrew.sap.model.sap.Carregamento
+import br.andrew.sap.model.sap.documents.DocumentTypes
+import br.andrew.sap.model.sap.documents.Invoice
+import br.andrew.sap.model.sap.documents.OrderSales
 import br.andrew.sap.services.*
+import br.andrew.sap.services.batch.BatchList
+import br.andrew.sap.services.batch.BatchMethod
+import br.andrew.sap.services.batch.BatchResponse
+import br.andrew.sap.services.batch.BatchService
+import br.andrew.sap.services.document.InvoiceService
+import br.andrew.sap.services.document.OrdersService
 import br.andrew.sap.services.pricing.ComissaoService
 import br.andrew.sap.services.stock.ItemsService
 import org.slf4j.LoggerFactory
@@ -18,6 +28,9 @@ import org.springframework.web.bind.annotation.*
 @RequestMapping("carregamento")
 class CarregamentoController(val carregamentoServico: CarregamentoService,
                              val itemService : ItemsService,
+                             val invoiceService: InvoiceService,
+                             val pedidoVendaService : OrdersService,
+                             val batchService : BatchService,
                              val comissaoService: ComissaoService,
                              val telegramService : TelegramRequestService,
                              val applicationEventPublisher: ApplicationEventPublisher) {
@@ -97,4 +110,31 @@ class CarregamentoController(val carregamentoServico: CarregamentoService,
         val result = carregamentoServico.getEstoqueEmCarregamento("'$ItemCode'")
         return ResponseEntity.ok(result)
     }
+
+    //TODO move para controller do carregamento depois
+    @PostMapping("/generate-from-loading-order/{docEntry}")
+    fun saveForAngular(@PathVariable docEntry : Int, @RequestBody lotesAgrupados : BatchStock): List<BatchResponse> {
+        //faz um select para pegar todos os pedidos.
+        val docEntrys = carregamentoServico.docEntryPedido(docEntry).map { it.DocEntry }
+        val pedidos = pedidoVendaService.getAll(OrderSales::class.java,Filter("DocEntry",docEntrys,Condicao.IN))
+
+        //TODO faazer distribuicao dos lotes
+
+        // 1 - verificar se alinha do pedido realmente tem o id igual do carregamento, se nao tiver remover a linha (como a lista e imutable atribuir nova lita)
+        // 2 - apos remover as linhas, atribuir os lotes na proporcao que as linhas precisam, dessa forma ir decrementando os valors que vc tem na memoria para os lotes
+
+        pedidos.forEach { it.DocumentLines.forEach {
+            it.BatchNumbers = listOf(lotesAgrupados)
+        } }
+
+        //-- apagar o lixo que o andrew escreveu acima
+
+        //TODO fazer esse save funcionar
+        // faca o cast para invoice OU mude o diamante do service para Document em vez de invoice - invoiceService.save(pedidos.get(0).toDocument(DocumentTypes.oInvoices))
+
+        val batchList = BatchList()
+        pedidos.map { it.toDocument(DocumentTypes.oInvoices) }.forEach { batchList.add(BatchMethod.POST,it,invoiceService) }
+        return batchService.run(batchList)
+    }
+
 }

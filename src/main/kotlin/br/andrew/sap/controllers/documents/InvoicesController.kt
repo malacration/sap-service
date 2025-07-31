@@ -2,24 +2,35 @@ package br.andrew.sap.controllers.documents
 
 import br.andrew.sap.infrastructure.BoletoIdsConfig
 import br.andrew.sap.infrastructure.odata.*
-import br.andrew.sap.model.sap.DocEntry
+import br.andrew.sap.model.authentication.User
 import br.andrew.sap.model.bankplus.Boleto
+import br.andrew.sap.model.enums.Cancelled
+import br.andrew.sap.model.forca.PedidoVenda
+import br.andrew.sap.model.producao.BatchStock
+import br.andrew.sap.model.sap.DocEntry
 import br.andrew.sap.model.sap.documents.Fatura
 import br.andrew.sap.model.sap.documents.Invoice
+import br.andrew.sap.model.sap.documents.OrderSales
 import br.andrew.sap.model.sap.documents.base.Document
-import br.andrew.sap.model.enums.Cancelled
+import br.andrew.sap.services.batch.BatchList
+import br.andrew.sap.services.document.DocumentForAngular
 import br.andrew.sap.services.document.InvoiceService
+import br.andrew.sap.services.document.OrdersService
 import br.andrew.sap.services.invent.BankPlusService
 import org.slf4j.LoggerFactory
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
+import org.springframework.http.ResponseEntity
+import org.springframework.security.core.Authentication
 import org.springframework.web.bind.annotation.*
+
 
 @RestController
 @RequestMapping("invoice")
 class InvoicesController(
     val invoice: InvoiceService,
-    val bankPlusService : BankPlusService
+    val bankPlusService : BankPlusService,
+    val pedidoVenda: OrdersService
 ) {
 
     val logger = LoggerFactory.getLogger(InvoicesController::class.java)
@@ -91,4 +102,15 @@ class InvoicesController(
     fun teste() : Any{
         return invoice.getAllPixs();
     }
+
+    //   fun andrew(idOrdemCarreagamento : Int, lotes : list<Lotes>){
+//        loadOrdem(idOrdemCarreagamento)
+//
+//        pedidos = loadPedidos(idordem)
+//
+//        invoicesNaoSalvas = faturamentoPedidos(pedidos,ordem)
+//        inoicesNaoSalvasComLote = distribuiLotes(invoicesNaoSalvas,lotes)
+//        inoviceService.save(inoicesNaoSalvasComLote)
+//    }
+
 }
