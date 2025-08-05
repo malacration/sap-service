@@ -3,7 +3,7 @@ package br.andrew.sap.services
 import br.andrew.sap.infrastructure.odata.Condicao
 import br.andrew.sap.infrastructure.odata.Filter
 import br.andrew.sap.infrastructure.odata.Predicate
-import br.andrew.sap.model.Item
+import br.andrew.sap.model.estoque.Item
 import br.andrew.sap.model.ItemAlternate
 import br.andrew.sap.model.envrioments.SapEnvrioment
 import br.andrew.sap.services.abstracts.EntitiesService

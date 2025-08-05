@@ -3,10 +3,12 @@ package br.andrew.sap.infrastructure.odata
 import br.andrew.sap.model.enums.Cancelled
 
 
-class Filter(val propertie : MutableList<Predicate>, val defaultConector : String = "and") {
+class Filter(propertieImmutable : List<Predicate>, val defaultConector : String = "and") {
     constructor() : this(mutableListOf<Predicate>())
     constructor(vararg predicate: Predicate) : this(predicate.toMutableList())
     constructor(coluna: String, value: Any, condition : Condicao) : this(mutableListOf(Predicate(coluna,value,condition)))
+
+    val propertie : MutableList<Predicate> = propertieImmutable.toMutableList()
 
     override fun toString(): String {
         if(propertie.isEmpty())

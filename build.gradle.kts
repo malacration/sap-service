@@ -2,7 +2,7 @@ import org.jetbrains.kotlin.ir.backend.js.compile
 
 plugins {
 	id("jacoco")
-	id("org.springframework.boot") version "3.4.2"
+	id("org.springframework.boot") version "3.5.4"
 	id("io.spring.dependency-management") version "1.1.7"
 	kotlin("jvm") version "2.0.0"
 	kotlin("plugin.spring") version "2.0.0"
@@ -23,6 +23,7 @@ repositories {
 }
 
 dependencies {
+	implementation("com.aventrix.jnanoid:jnanoid:2.0.0")
 
 	implementation("org.springframework.boot:spring-boot-starter")
 	implementation("org.springframework.boot:spring-boot-starter-web"){
@@ -37,7 +38,7 @@ dependencies {
 	implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.1.0")
 	implementation("org.springdoc:springdoc-openapi-ui:1.7.0")
 
-	implementation("org.apache.tika:tika-core:2.8.0")
+
 
 	implementation("io.jsonwebtoken:jjwt-api:0.12.4")
 	implementation("io.jsonwebtoken:jjwt-impl:0.12.4")
@@ -54,7 +55,6 @@ dependencies {
 	implementation("io.micrometer:micrometer-tracing-bridge-brave")
 	implementation("com.github.ben-manes.caffeine:caffeine:3.2.0")
 
-	implementation("org.apache.httpcomponents.client5:httpclient5:5.4.2")
 
 	implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.16.1")
 	implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.18.2")
@@ -75,7 +75,10 @@ dependencies {
 		exclude("commons-logging")
 	}
 
-	implementation("org.apache.commons:commons-lang3:3.9")
+	implementation("org.apache.commons:commons-lang3:3.18.0")
+	implementation("org.apache.commons:commons-text:1.14.0")
+	implementation("org.apache.tika:tika-core:2.8.0")
+	implementation("org.apache.httpcomponents.client5:httpclient5:5.4.2")
 
 	implementation("org.jetbrains.kotlinx:kotlinx-serialization-json-jvm:1.7.0")
 	implementation("com.itextpdf:itext-core:8.0.2")

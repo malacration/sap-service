@@ -5,6 +5,42 @@ import java.lang.Exception
 
 class JournalEntriesServiceTest {
 
+
+    @Test
+    fun `teste unitario`() {
+        val journalEntry = JournalEntry(
+            listOf(
+                JournalEntryLines("4.1.1.001.00001", 0.0, 0.0, 1),
+            ),
+            "memo"
+        )
+        assertEquals(true, journalEntry.hasContaResultado())
+    }
+
+    @Test
+    fun `teste unitario receita`() {
+        val journalEntry = JournalEntry(
+            listOf(
+                JournalEntryLines("3.1.1.001.00001", 0.0, 0.0, 1),
+            ),
+            "memo"
+        )
+        assertEquals(true, journalEntry.hasContaResultado())
+    }
+
+    @Test
+    fun `teste unitario false`() {
+        val journalEntry = JournalEntry(
+            listOf(
+                JournalEntryLines("1.1.1.001.00001", 0.0, 0.0, 1),
+                JournalEntryLines("2.1.1.001.00001", 0.0, 0.0, 1),
+                JournalEntryLines("6.1.1.001.00001", 0.0, 0.0, 1),
+            ),
+            "memo"
+        )
+        assertEquals(false, journalEntry.hasContaResultado())
+    }
+
     @Test
     fun `Deve filtrar linhas válidas corretamente`() {
         val journalEntry = JournalEntry(

@@ -24,7 +24,9 @@ class JournalController(val journalEntry : JournalEntriesService,
 
     @PostMapping("save")
     fun create(@RequestBody csv: String): List<JournalEntry> {
-        return journalEntry.readCsv(csv.byteInputStream()).map{ journalEntry.save(it).tryGetValue<JournalEntry>()}
+        return journalEntry.readCsv(csv.byteInputStream()).map{
+            journalEntry.save(it).tryGetValue<JournalEntry>()
+        }
     }
 
     @GetMapping("default-memo/{docEntry}")
