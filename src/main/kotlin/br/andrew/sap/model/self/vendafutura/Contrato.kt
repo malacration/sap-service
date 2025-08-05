@@ -28,6 +28,9 @@ class Contrato(
     val U_valorFrete  : Double = 0.0,
     dataCriacao : Date = Date()
 ): BatchId {
+
+    @JsonProperty("U_status")
+    var U_status : Status = Status.aberto
     init {
         if(total().compareTo(BigDecimal.ZERO) <= 0)
             throw Exception("Nao e permitido contrato sem valor")
