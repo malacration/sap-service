@@ -67,7 +67,7 @@ class BatchService(val rest : RestTemplate,
     }
 
     fun run(bathList: BatchList): List<BatchResponse> {
-        val batchUUID = UUID.randomUUID().toString()
+         val batchUUID = UUID.randomUUID().toString()
         var body = body(batchUUID,bathList)
         val request = RequestEntity
             .post(env.host+this.path())
@@ -87,3 +87,4 @@ class BatchService(val rest : RestTemplate,
         return resposta
     }
 }
+

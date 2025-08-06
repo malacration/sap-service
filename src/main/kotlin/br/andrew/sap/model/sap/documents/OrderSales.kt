@@ -58,9 +58,13 @@ class OrderSales(CardCode: String,
         }
     }
 
-    fun toDocument(type : DocumentTypes): OrderSales {
+    fun toDocument(type : DocumentTypes, sequenceCode : Int): OrderSales {
         this.DocEntry = null
-        this.DocumentLines.map { it.toInvoice(this.docObjectCode?.toString()?: throw Exception("O docType nao pode ser null")) }
+        this.docNum = null
+        this.SequenceCode = sequenceCode
+        this.TransNum = null
+        this.Cancelled = null
+        this.DocumentLines.map { it.toInvoice(this.docObjectCode ?: throw Exception("O docType nao pode ser null")) }
         this.docObjectCode = type
         return this
     }

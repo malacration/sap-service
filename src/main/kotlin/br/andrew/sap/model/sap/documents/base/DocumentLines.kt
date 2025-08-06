@@ -1,6 +1,7 @@
 package br.andrew.sap.model.sap.documents.base
 import br.andrew.sap.model.Comissao
 import br.andrew.sap.model.producao.BatchStock
+import br.andrew.sap.model.sap.documents.DocumentTypes
 import br.andrew.sap.services.stock.ItemsService
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
@@ -45,8 +46,9 @@ abstract class DocumentLines(
     var LineTotal : Double? = null
     var PriceUnit : Int? = null
     var U_LBR_Destinacao : String? = null
+    var U_ORD_CARREGAMENTO2 : Int? = null
 
-    var BaseType : String? = null
+    var BaseType : Int? = null
     var BaseEntry : Int? = null
     var BaseLine : Int? = null
     var SalUnitMsr : String? = null
@@ -125,11 +127,11 @@ abstract class DocumentLines(
         return this
     }
 
-    fun toInvoice(baseType : String) {
-        this.BaseType = baseType
+    fun toInvoice(baseType: DocumentTypes) {
+        this.BaseType = baseType.value
         this.BaseLine = this.LineNum
         this.BaseEntry = this.DocEntry
-
         this.DocEntry = null
+        this.BatchNumbers.forEach { it.toInvoice() }
     }
 }

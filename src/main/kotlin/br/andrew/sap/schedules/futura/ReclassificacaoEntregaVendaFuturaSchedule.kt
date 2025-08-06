@@ -98,7 +98,7 @@ class ReclassificacaoEntregaVendaFuturaSchedule(
 
             val apropriacoes = creditnotesservice.getById(devolucao.docEntry.toString())
                 .tryGetValue<Invoice>().DocumentLines
-                .filter { it.BaseType == DocumentTypes.oInvoices.value.toString() && it.BaseEntry != null }
+                .filter { it.BaseType == DocumentTypes.oInvoices.value && it.BaseEntry != null }
                 .map { it.BaseEntry }
                 .flatMap{
                     val filter = Filter(

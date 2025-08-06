@@ -3,6 +3,7 @@ package br.andrew.sap.controllers.documents
 import br.andrew.sap.infrastructure.odata.*
 import br.andrew.sap.model.authentication.User
 import br.andrew.sap.model.producao.BatchStock
+import br.andrew.sap.model.sap.BatchesGroupByItemCode
 import br.andrew.sap.model.sap.Carregamento
 import br.andrew.sap.model.sap.documents.DocumentTypes
 import br.andrew.sap.model.sap.documents.Invoice
@@ -111,30 +112,90 @@ class CarregamentoController(val carregamentoServico: CarregamentoService,
         return ResponseEntity.ok(result)
     }
 
-    //TODO move para controller do carregamento depois
+
+//    @PostMapping("/generate-from-loading-order/{docEntry}")
+//    fun saveForAngular(@PathVariable docEntry: Int, @RequestBody lotesAgrupados: List<BatchesGroupByItemCode>): List<BatchResponse> {
+//        val docEntrys = carregamentoServico.docEntryPedido(docEntry).map { it.DocEntry }
+//        val pedidos = pedidoVendaService.getAll(OrderSales::class.java, Filter("DocEntry", docEntrys, Condicao.IN))
+//
+////         Assign the batch numbers directly (assuming BatchNumbers expects List<BatchStock>)
+//        pedidos.forEach { order ->
+//            order.DocumentLines.filter { it.U_ORD_CARREGAMENTO2 == docEntry }.forEach { currentItem ->
+//                currentItem.BatchNumbers = lotesAgrupados
+//                    .filter { it.ItemCode == currentItem.ItemCode }
+//                    .first().Batches ?: throw Exception("Erro ao fazer bind de lote")
+//            }
+//        }
+//
+//        //TODO Desaggrupar batch
+//        //TODO criar no clickup - criar um Bean que recebe a filial e retorna a sequenceCode de NFe (defaultWharehouse)
+//        val batchList = BatchList()
+//        pedidos.map { it.toDocument(DocumentTypes.oInvoices, 27) }.forEach {
+//
+////            invoiceService.save(it.also {
+////
+////                it.DocumentLines.forEach { item -> item.BatchNumbers.forEach {
+////                    batch ->
+////                    batch.ItemCode = item.ItemCode
+////                    batch.inDate = null
+////                    batch.itemName = null
+////                } }
+////            })
+//            batchList.add(BatchMethod.POST, it, invoiceService)
+//        }
+//        return batchService.run(batchList)
+//    }
+//
+////    invoiceService.save(it.also {
+////        it.docDate = null
+////        it.docNum = null
+////        it.sequenceModel = "39"
+////        it.SequenceCode = 27
+////    })
+//
+//}
+
+
     @PostMapping("/generate-from-loading-order/{docEntry}")
-    fun saveForAngular(@PathVariable docEntry : Int, @RequestBody lotesAgrupados : BatchStock): List<BatchResponse> {
-        //faz um select para pegar todos os pedidos.
+    fun saveForAngular(@PathVariable docEntry: Int, @RequestBody lotesAgrupados: List<BatchesGroupByItemCode>): List<BatchResponse> {
         val docEntrys = carregamentoServico.docEntryPedido(docEntry).map { it.DocEntry }
-        val pedidos = pedidoVendaService.getAll(OrderSales::class.java,Filter("DocEntry",docEntrys,Condicao.IN))
+        val pedidos = pedidoVendaService.getAll(OrderSales::class.java, Filter("DocEntry", docEntrys, Condicao.IN))
 
-        //TODO faazer distribuicao dos lotes
+//         Assign the batch numbers directly (assuming BatchNumbers expects List<BatchStock>)
+        pedidos.forEach { order ->
+            order.DocumentLines
+                .filter { it.U_ORD_CARREGAMENTO2 == docEntry }
+                .forEach { currentItem ->
+                    val lotes = lotesAgrupados
+                        .firstOrNull { it.ItemCode == currentItem.ItemCode }
+                        ?.Batches
+                        ?: throw Exception("Erro ao fazer bind de lote para item ${currentItem.ItemCode}")
 
-        // 1 - verificar se alinha do pedido realmente tem o id igual do carregamento, se nao tiver remover a linha (como a lista e imutable atribuir nova lita)
-        // 2 - apos remover as linhas, atribuir os lotes na proporcao que as linhas precisam, dessa forma ir decrementando os valors que vc tem na memoria para os lotes
+                    lotes.forEach { batch ->
+                        batch.ItemCode = currentItem.ItemCode
+                    }
+                    currentItem.BatchNumbers = lotes
+                }
+        }
 
-        pedidos.forEach { it.DocumentLines.forEach {
-            it.BatchNumbers = listOf(lotesAgrupados)
-        } }
-
-        //-- apagar o lixo que o andrew escreveu acima
-
-        //TODO fazer esse save funcionar
-        // faca o cast para invoice OU mude o diamante do service para Document em vez de invoice - invoiceService.save(pedidos.get(0).toDocument(DocumentTypes.oInvoices))
-
+        //TODO Desaggrupar batch
+        //TODO criar no clickup - criar um Bean que recebe a filial e retorna a sequenceCode de NFe (defaultWharehouse)
         val batchList = BatchList()
-        pedidos.map { it.toDocument(DocumentTypes.oInvoices) }.forEach { batchList.add(BatchMethod.POST,it,invoiceService) }
+        pedidos.map { it.toDocument(DocumentTypes.oInvoices, 27) }.forEach {
+            batchList.add(BatchMethod.POST, it, invoiceService)
+        }
         return batchService.run(batchList)
     }
 
+//    invoiceService.save(it.also {
+//        it.docDate = null
+//        it.docNum = null
+//        it.sequenceModel = "39"
+//        it.SequenceCode = 27
+//    })
+
 }
+
+// Todo 2 pedidos que tenha 3 itens ao total 1 dos itens está em ambos os pedidos.
+// Todo Faturar 2 pedidos com produtos distintos, colocar um breakpoint no inicio do projeto, desativa o item do 2 pedido enquanto ta no breakpoint.
+// Todo Objetivo é dar roolback em todos os pedidos tem que todos passar não apenas um.

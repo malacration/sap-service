@@ -76,14 +76,21 @@ class Reprocessamento(
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 class BatchStock(
     val BatchNumber: String,
-    val Quantity: String,
+    var Quantity: String,
     val whsCode: String? = null,
-    val ItemCode: String? = null,
-    val expDate: String? = null,
-    val inDate: String? = null,
-    val itemName: String? = null,
-    val mnfDate: String? = null
+    var ItemCode: String? = null,
+    var expDate: String? = null,
+    var inDate: String? = null,
+    var itemName: String? = null,
+    var mnfDate: String? = null
 ){
+    fun toInvoice() {
+        mnfDate = null
+        inDate = null
+        expDate = null
+        itemName = null
+    }
+
     constructor(DistNumber : String,
                 quantidade: String,
                 ItemCode: String?,
