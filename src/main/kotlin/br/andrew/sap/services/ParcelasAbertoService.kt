@@ -32,8 +32,10 @@ class ParcelasAbertoService(val env : SapEnvrioment,
                 .build()
             val odata = restTemplate.exchange(request, OData::class.java).body
             uri = (url + odata?.nextLink())
+
             resultado.addAll(odata?.tryGetValues() ?: listOf())
         } while (odata?.hasNext() ?: false)
+
 
         return resultado.sortedBy { "${it.CardCode}-${it.Serial}-${it.InstlmntID}" }
     }

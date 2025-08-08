@@ -15,7 +15,10 @@
                 <th scope="col">Nº Parcela</th>
                 <th scope="col">Total Parcela</th>
                 <th scope="col">Vencimento</th>
-                <th scope="col">Status Cobrança</th>
+                <th scope="col">Saldo</th>
+                <th scope="col">Agente cobrador</th>
+                <th scope="col">Status da Cobrança</th>
+
             </tr>
             <tr th:each="titulo, iStat : ${titulos}"
                 th:style="${iStat.odd}? 'font-weight: bold;'"
@@ -27,8 +30,10 @@
                 <td th:text="${titulo.SlpName}"></td>
                 <td th:text="${titulo.Serial}"></td>
                 <td th:text="${titulo.InstlmntID}"></td>
-                <td th:text="${#numbers.listFormatCurrency(titulo.InsTotal)}"></td>
+                <td th:text="${#numbers.formatCurrency(titulo.InsTotal)}"></td>
                 <td th:text="${titulo.getdueDateFormated()}"></td>
+                <td th:text="${#numbers.formatCurrency(titulo.saldo)}"></td>
+                <td th:text="${titulo.U_AgenteCobrador}"></td>
                 <td th:text="${titulo.U_StatusCobranca}"></td>
             </tr>
         </table>
