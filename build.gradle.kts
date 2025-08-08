@@ -78,7 +78,7 @@ dependencies {
 	implementation("org.apache.commons:commons-lang3:3.18.0")
 	implementation("org.apache.commons:commons-text:1.14.0")
 	implementation("org.apache.tika:tika-core:2.8.0")
-	implementation("org.apache.httpcomponents.client5:httpclient5:5.4.2")
+	implementation("org.apache.httpcomponents.client5:httpclient5:5.4.3")
 
 	implementation("org.jetbrains.kotlinx:kotlinx-serialization-json-jvm:1.7.0")
 	implementation("com.itextpdf:itext-core:8.0.2")
