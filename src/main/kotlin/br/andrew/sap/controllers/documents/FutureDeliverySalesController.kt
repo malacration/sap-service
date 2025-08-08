@@ -39,6 +39,7 @@ class FutureDeliverySalesController(
         return listOf(creditNotesService,invoiceService)
             .map { it.getAll(Document::class.java,filter) }
             .flatMap { it }
+            .filter{ it.DocumentLines.none { it.FatherType != "cPayments_sum"}}
             .sortedWith(compareBy(
                 { it.docDate },
                 { it.docObjectCode?.ordinal }

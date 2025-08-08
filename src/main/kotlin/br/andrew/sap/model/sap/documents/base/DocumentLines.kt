@@ -51,6 +51,7 @@ abstract class DocumentLines(
     var BaseEntry : Int? = null
     var BaseLine : Int? = null
     var SalUnitMsr : String? = null
+    var FatherType : String? = null
 
     @JsonProperty("BatchNumbers")
     var BatchNumbers: List<BatchNumbers>? = null

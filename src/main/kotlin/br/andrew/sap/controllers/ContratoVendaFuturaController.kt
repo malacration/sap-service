@@ -5,11 +5,10 @@ import br.andrew.sap.controllers.documents.QuotationsController
 import br.andrew.sap.infrastructure.odata.*
 import br.andrew.sap.model.authentication.User
 import br.andrew.sap.model.payment.PaymentDueDates
-import br.andrew.sap.model.sap.InternalReconciliationOpenTransRow
-import br.andrew.sap.model.sap.InternalReconciliations
-import br.andrew.sap.model.sap.ReconType
 import br.andrew.sap.model.sap.documents.CreditNotes
+import br.andrew.sap.model.sap.documents.DocumentStatus
 import br.andrew.sap.model.sap.documents.DownPaymentUnsetVendaFutura
+import br.andrew.sap.model.sap.documents.Invoice
 import br.andrew.sap.model.sap.documents.base.Document
 import br.andrew.sap.model.sap.documents.futura.PedidoRetirada
 import br.andrew.sap.model.self.vendafutura.Contrato
@@ -94,6 +93,30 @@ class ContratoVendaFuturaController(
             it.comments = it.journalMemo
         }
         return ResponseEntity.ok(cotacaoController.saveForAngular(cotacao,auth))
+    }
+
+    @GetMapping("/encerrar/{docEntryVendaFutura}")
+    fun encerrar(@PathVariable docEntryVendaFutura : Int) {
+        val docMarketing = Filter(
+            Predicate("U_venda_futura",docEntryVendaFutura,Condicao.EQUAL),
+            Predicate("DocumentStatus",DocumentStatus.bost_Open,Condicao.EQUAL)
+        )
+        val contrato = service.getById(docEntryVendaFutura).tryGetValue<Contrato>()
+
+        val notas = invoiceService.get(docMarketing).tryGetValues<Invoice>()
+        if(notas.size > 0)
+            throw Exception("Existe entregas que não foram conciliadas.")
+
+        val boletosEmAberto = adiantamentoService.getByContratoVendaFutura(docEntryVendaFutura)
+            .filter { it.DocumentStatus == DocumentStatus.bost_Open }
+        if(boletosEmAberto.size > 0)
+            throw Exception("Existe boletos em abertos")
+
+        val adiantamentosPagos = adiantamentoService.adiantamentosAbertos(contrato.U_cardCode,docEntryVendaFutura)
+        if(adiantamentosPagos.size > 0)
+            throw Exception("Existe adiantamento pagos e não utilizado")
+
+        service.update("{\"U_status\": \"cancelado\"}",docEntryVendaFutura.toString())
     }
 
 
