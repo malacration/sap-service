@@ -8,6 +8,7 @@ import br.andrew.sap.model.authentication.User
 import br.andrew.sap.model.sap.documents.OrderSales
 import br.andrew.sap.model.exceptions.CreditException
 import br.andrew.sap.model.forca.PedidoVenda
+import br.andrew.sap.model.sap.Localidade
 import br.andrew.sap.model.sap.documents.base.Document
 import br.andrew.sap.services.*
 import br.andrew.sap.services.document.DocumentForAngular
@@ -90,5 +91,22 @@ class OrderSalesController(val ordersService: OrdersService,
                 logger.error(e.message,e)
             }
         }
+    }
+
+    @GetMapping("/search")
+    fun search(@RequestParam("dataInicial", required = false) dataInicial: String?,
+               @RequestParam("dataFinal", required = false) dataFinal: String?,
+               @RequestParam("filial") filial: Int,
+               @RequestParam("localidade") localidade: String): NextLink<OrderSales> {
+        val startDate = dataInicial ?: "1900-01-01"
+        val endDate = dataFinal ?: "2100-12-31"
+        val result = ordersService.fullSearchTextFallBack(startDate, endDate, filial, localidade)
+        return result ?: NextLink(emptyList(), "")
+    }
+
+    @PostMapping("/searchAll")
+    fun search(@RequestBody nextLink : String): NextLink<OrderSales> {
+        val result = ordersService.fullSearchTextFallBack2(nextLink)
+        return result ?: NextLink(emptyList(), "")
     }
 }

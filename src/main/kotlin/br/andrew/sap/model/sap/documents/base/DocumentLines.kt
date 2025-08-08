@@ -7,11 +7,13 @@ import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.*
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
+import com.fasterxml.jackson.module.kotlin.KotlinModule
 import java.math.BigDecimal
 import java.math.RoundingMode
 import kotlin.reflect.KMutableProperty
 import kotlin.reflect.full.memberProperties
 import kotlin.reflect.jvm.javaField
+import kotlin.reflect.jvm.javaType
 
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -49,7 +51,10 @@ abstract class DocumentLines(
     var BaseEntry : Int? = null
     var BaseLine : Int? = null
     var SalUnitMsr : String? = null
+    var FatherType : String? = null
 
+    @JsonProperty("BatchNumbers")
+    var BatchNumbers: List<BatchNumbers>? = null
 
     @JsonIgnore
     var valorDesonerado : BigDecimal = BigDecimal(0)
@@ -93,18 +98,27 @@ abstract class DocumentLines(
         CostingCode2 = custoByBranch.centroCusto
     }
 
-    fun setJson(node: JsonNode){
-        //setAll Properties
+    fun setJson(node: JsonNode) {
+        val objectMapper = ObjectMapper().registerModule(KotlinModule.Builder().build())
         val fields = this::class.memberProperties
         fields.forEach {
-            if(node.get(it.name) != null && it is KMutableProperty<*> && node.get(it.name)?.asText() ?: "" != "null"){
-                if(it.returnType == Int::class || it.returnType == Integer::class.java || it.javaField!!.type == Integer::class.javaObjectType || it.javaField!!.type == Integer::class.javaPrimitiveType)
-                    it.setter.call(this, node.get(it.name).asInt())
-                else if(it.returnType == Double::class.javaPrimitiveType || it.javaField!!.type == Double::class.javaObjectType || it.javaField!!.type == Double::class.javaPrimitiveType)
-                    it.setter.call(this, node.get(it.name).asDouble())
-                else if(it.returnType == String::class || it.javaField!!.type == String::class.java)
-                    it.setter.call(this, node.get(it.name).asText())
-            }else if(node.get(it.name)?.asText() ?: "" == "null" && it is KMutableProperty<*>) {
+            val jsonValue = node.get(it.name)
+            if (jsonValue != null && it is KMutableProperty<*> && jsonValue.asText() != "null") {
+                try {
+                    when {
+                        it.returnType.classifier == Int::class -> it.setter.call(this, jsonValue.asInt())
+                        it.returnType.classifier == Double::class -> it.setter.call(this, jsonValue.asDouble())
+                        it.returnType.classifier == String::class -> it.setter.call(this, jsonValue.asText())
+                        else -> {
+                            // Genérico para tipos complexos
+                            val targetType = it.returnType.javaType
+                            it.setter.call(this, objectMapper.readValue(jsonValue.toString(), objectMapper.typeFactory.constructType(targetType)))
+                        }
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            } else if (jsonValue?.asText() == "null" && it is KMutableProperty<*>) {
                 try {
                     it.setter.call(this, null)
                 } catch (e: Exception) {

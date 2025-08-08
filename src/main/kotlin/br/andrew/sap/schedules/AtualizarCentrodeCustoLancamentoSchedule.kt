@@ -38,18 +38,21 @@ class AtualizarCentrodeCustoLancamentoSchedule(
                 OrderBy("ReferenceDate", Order.DESC)
             ).tryGetPageValues<JournalEntry>(Pageable.unpaged())
 
+            logger.info("Inicnando job de atualizar centro de custo")
 
-            lancamentos.filter{
-                it.hasContaResultado()
-            }.forEach { lancamento ->
-                lancamento.U_Atualizar_Centro_de_Custo = 1
+            lancamentos.forEach { lancamento ->
                 try {
-                    if(lancamento.JdtNum == null)
-                        throw Exception("Lançamento contábil com JdtNum nulo. Ignorando processamento.")
-                    logger.info("Atualizando centro de custo do lançamento contábil. JdtNum[${lancamento.JdtNum}]")
-                    val lcComCentro : JournalEntry = journalMemoHandle
-                        .atribuiCentroCustoEmContasRecebeOuPagar(lancamento)
-                    journalEntriesService.update(lcComCentro,lcComCentro.JdtNum.toString())
+                    lancamento.U_Atualizar_Centro_de_Custo = 1;
+                    if(!lancamento.hasContaResultado()){
+                        journalEntriesService.update(lancamento,lancamento.JdtNum.toString())
+                    }else{
+                        if(lancamento.JdtNum == null)
+                            throw Exception("Lançamento contábil com JdtNum nulo. Ignorando processamento.")
+                        logger.info("Atualizando centro de custo do lançamento contábil. JdtNum[${lancamento.JdtNum}]")
+                        val lcComCentro : JournalEntry = journalMemoHandle
+                            .atribuiCentroCustoEmContasRecebeOuPagar(lancamento)
+                        journalEntriesService.update(lcComCentro,lcComCentro.JdtNum.toString())
+                    }
                 } catch (ex: Exception) {
                     journalEntriesService.update(lancamento,lancamento.JdtNum.toString())
                     logger.error("Erro ao atualizar o lançamento contábil ${lancamento.JdtNum}", ex)
@@ -58,5 +61,6 @@ class AtualizarCentrodeCustoLancamentoSchedule(
         } catch (ex: Exception) {
             logger.error("Erro ao buscar e processar lançamentos contábeis", ex)
         }
+        logger.info("Finalizando job de atualizar centro de custo")
     }
 }

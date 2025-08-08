@@ -60,7 +60,7 @@ class VendaFuturaScheduled(
                     )
                     val contrato = contratoService.saveOnly(ContratoParse.parse(order))
                     hanndlePaymentTerms.calculaVencimentos(contrato,carenciaDias).map {
-                        val adiantamento = adiantamentoService.adiantamentosVendaFutura(contrato,it)
+                        val adiantamento = adiantamentoService.adiantamentosVendaFuturaSave(contrato,it)
                         try{
                             bankplus.geraBoletos(
                                 adiantamento.getBPL_IDAssignedToInvoice().toInt(),
