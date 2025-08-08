@@ -1,5 +1,6 @@
 package br.andrew.sap.infrastructure.create.fields
 
+import br.andrew.sap.model.entity.DbType
 import br.andrew.sap.model.entity.FieldMd
 import br.andrew.sap.model.entity.ValuesMd
 import br.andrew.sap.services.structs.UserFieldsMDService
@@ -46,6 +47,13 @@ class SustenutriFieldsConfiguration(
                 ValuesMd("suino","SUINOS"),
                 ValuesMd("aves","AVES"),
             ) },
-        ).forEach { userFieldsMDService.findOrCreate(it) }
-    }
+            FieldMd("SEMPedido", "Nao Precisa de Pedido", "OUSG").also {
+                it.ValidValuesMD = listOf(
+                    ValuesMd("NAO","NAO"),
+                    ValuesMd("SIM","SIM"),
+                )
+                it.defaultValue = "NAO"
+            },
+        ).forEach { userFieldsMDService.findOrCreate(it) }}
+
 }
