@@ -9,8 +9,12 @@ import com.fasterxml.jackson.databind.annotation.JsonNaming
 @JsonNaming(PropertyNamingStrategies.UpperCamelCaseStrategy::class)
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-class TaxExtension(
-    var VehicleState: String? = null,
-    var Incoterms: Int? = null,
-    var Vehicle: String? = null
+class BatchNumbers(
+    var BatchNumber: String? = null,
+    var Quantity: Int? = null,
+    var ItemCode: String? = null,
+    var WhsCode: String? = null,
+    var ExpDate: String? = null,
+    var MnfDate: String? = null,
+    var InDate: String? = null
 )
