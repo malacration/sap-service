@@ -66,6 +66,7 @@ open class Document(val CardCode : String,
     var controlAccount: String? = null
     var model : Int? = null
     var docObjectCode : DocumentTypes? = null
+    var AttachmentEntry : Int? = null
 
     @JsonProperty("DocumentStatus")
     val DocumentStatus : DocumentStatus? = null

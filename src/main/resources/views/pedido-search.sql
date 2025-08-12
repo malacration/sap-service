@@ -49,3 +49,4 @@ WHERE
     AND c."BPLId" = :filial
     AND c."DocStatus" = 'O'
     AND (x."U_Status" = 'Cancelado' OR x."U_Status" IS NULL)
+    AND d."U_ORD_CARREGAMENTO2" IS NULL

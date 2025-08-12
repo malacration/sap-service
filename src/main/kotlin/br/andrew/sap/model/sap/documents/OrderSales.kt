@@ -66,6 +66,7 @@ class OrderSales(CardCode: String,
         this.Cancelled = null
         this.DocumentLines.map { it.toInvoice(this.docObjectCode ?: throw Exception("O docType nao pode ser null")) }
         this.docObjectCode = type
+        this.AttachmentEntry = null
         return this
     }
 }
