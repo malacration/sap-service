@@ -1,6 +1,5 @@
 package br.andrew.sap.services
 
-import br.andrew.sap.services.MailService.Companion.copyDefault
 import jakarta.mail.internet.InternetAddress
 import jakarta.mail.internet.MimeMessage
 import org.springframework.beans.factory.annotation.Value
@@ -24,10 +23,6 @@ class MailService(val mailSender: JavaMailSender,
         else
             mailSender.send(mailMessage.simpleMailMessage())
     }
-
-    companion object{
-        var copyDefault : MutableList<String> = mutableListOf()
-    }
 }
 
 class MyMailMessage(val to : List<EmailAdrres>, val subject : String, val body : String, val from : From = From.DEFAULT){
@@ -49,7 +44,7 @@ class MyMailMessage(val to : List<EmailAdrres>, val subject : String, val body :
         return MimeMessageHelper(createMimeMessage, true).also {
             if(From.getFrom(from) != null)
                 it.setFrom(From.getFrom(from)!!.getInternetAddress())
-            it.setTo(mutableListOf<String>(*to.map { it.email }.toTypedArray()).also { it.addAll(copyDefault) }.toTypedArray())
+            it.setTo(mutableListOf<String>(*to.map { it.email }.toTypedArray()).toTypedArray())
             it.setSubject(subject)
             it.setText(body, true)
         }.mimeMessage

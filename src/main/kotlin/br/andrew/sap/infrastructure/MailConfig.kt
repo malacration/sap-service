@@ -21,7 +21,6 @@ class MailConfig(@Value("\${mail.list:[{ \"email\": \"windson@windson\", \"name\
         val lista = mapper.readValue(mail, jacksonTypeRef<List<EmailAdrres>>())
         lista.firstOrNull()?.let { SalePerson.emailDefault = it.email }
         lista.find { it.type == From.COMERCIAL }?.let { SalePerson.emailDefault = it.email }
-        MailService.copyDefault.also { it.clear() }.addAll(copyDefault)
         From.mailList.addAll(lista)
     }
 }

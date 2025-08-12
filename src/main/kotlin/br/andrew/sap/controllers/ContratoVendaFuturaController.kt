@@ -43,6 +43,7 @@ class ContratoVendaFuturaController(
     val pedidoService : OrdersService,
     val itemService: ItemsService,
     val invoiceService : InvoiceService,
+    val creditNotesService: CreditNotesService,
     val comissaoService: ComissaoService,
     val adiantamentoService : DownPaymentService,
     val creditNoteService: CreditNotesService,
@@ -78,6 +79,20 @@ class ContratoVendaFuturaController(
             page
         ).tryGetPageValues<Contrato>(page)
         return ResponseEntity.ok(contratos)
+    }
+
+    @GetMapping("/entregas/{idContrato}")
+    fun entregas(@PathVariable idContrato: Int): List<Document> {
+        val filter = Filter(Predicate("U_venda_futura", idContrato, Condicao.EQUAL),
+            Predicate("DownPaymentAmountSC", 0, Condicao.EQUAL))
+        return listOf(creditNotesService,invoiceService)
+            .map { it.getAll(Document::class.java,filter) }
+            .flatMap { it }
+            .filter{ it.DocumentLines.none { it.BaseType == 203}}
+            .sortedWith(compareBy(
+                { it.docDate },
+                { it.docObjectCode?.ordinal }
+            ))
     }
 
     @PostMapping("pedido-retirada")
