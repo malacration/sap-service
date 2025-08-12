@@ -1,26 +1,27 @@
 package br.andrew.sap.model.authentication
 
 import br.andrew.sap.infrastructure.security.roles.RolesEnum
+import com.fasterxml.jackson.annotation.JsonIgnore
 import org.springframework.security.core.Authentication
 import org.springframework.security.core.GrantedAuthority
 import org.springframework.security.core.userdetails.UserDetails
 
 class User(val id : String,
-           val roles : List<RolesEnum>) : UserDetails, Authentication {
+           val _name : String,
+           val origin : UserOriginEnum,
+           val userName : String,
+           val emailAddress : String? = null,
+           val _password : String? = null,
+           var roles : List<RolesEnum> = listOf()) : UserDetails, Authentication {
 
     private var authenticated = true
-    private var name : String? = null
     var otp : Int? = null
-
-    constructor(id : String, name : String, authorities : List<RolesEnum>) : this(id,authorities){
-        this.name = name
-    }
 
     fun getIdInt() : Int{
         return id.toIntOrNull() ?: throw Exception("O ID do seu login contem algum erro ${id}")
     }
     override fun getName(): String? {
-        return name
+        return _name
     }
 
     override fun getAuthorities(): List<out GrantedAuthority> {
@@ -54,12 +55,13 @@ class User(val id : String,
             -1
     }
 
-    override fun getPassword(): String {
-        TODO("Not yet implemented")
+    @JsonIgnore
+    override fun getPassword(): String? {
+        return _password
     }
 
     override fun getUsername(): String {
-        TODO("Not yet implemented")
+        return id
     }
 
     override fun isAccountNonExpired(): Boolean {
