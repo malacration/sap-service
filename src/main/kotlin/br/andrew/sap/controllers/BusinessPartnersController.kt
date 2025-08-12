@@ -168,4 +168,8 @@ class BusinessPartnersController(
         return service.getByCpfCnpj(cpfCnpj,tipo).getContactOpaque()
     }
 
+    @GetMapping("search-localidade")
+    fun search(): List<BusinessPartner> {
+        return service.searchLocalidade()
+    }
 }

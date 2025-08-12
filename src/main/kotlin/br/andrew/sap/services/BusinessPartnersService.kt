@@ -148,4 +148,8 @@ class BusinessPartnersService(
         val result = get(filter,page)
         return result.tryGetPageValues<BusinessPartner>(page)
     }
+
+    fun searchLocalidade(): List<BusinessPartner> {
+        return sqlQueriesService.execute("search-localidade.sql")!!.tryGetValues()
+    }
 }
