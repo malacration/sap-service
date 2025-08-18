@@ -2,6 +2,7 @@ package br.andrew.sap.services.document
 
 import br.andrew.sap.infrastructure.odata.*
 import br.andrew.sap.model.envrioments.SapEnvrioment
+import br.andrew.sap.model.sap.Localidade
 import br.andrew.sap.model.sap.documents.DocumentStatus
 import br.andrew.sap.model.sap.documents.OrderSales
 import br.andrew.sap.model.sap.documents.base.Document
@@ -60,6 +61,15 @@ class OrdersService(val sqlQueriesService : SqlQueriesService, env: SapEnvriomen
         )
         return sqlQueriesService
             .execute("ord-carregamento.sql", parameters)
+            ?.tryGetNextValues()
+    }
+
+    fun Procura2(Code: Int): NextLink<Localidade>? {
+        val parameters = listOf(
+            Parameter("Code", Code)
+        )
+        return sqlQueriesService
+            .execute("produto2.sql", parameters)
             ?.tryGetNextValues()
     }
 

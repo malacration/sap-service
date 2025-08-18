@@ -71,8 +71,10 @@ open class Document(val CardCode : String,
     @JsonProperty("DocumentStatus")
     val DocumentStatus : DocumentStatus? = null
     var documentAdditionalExpenses : MutableList<AdditionalExpenses> = mutableListOf()
+    var AddressExtension : AddressExtension? = null
     var shipToCode : String? = null
     var Address : String? = null
+    var Address2 : String? = null
     var U_assinatura : String = "0"
     var U_rd_station : String? = null
     var U_venda_futura: Int? = null

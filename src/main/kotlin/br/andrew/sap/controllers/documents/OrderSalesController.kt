@@ -8,6 +8,7 @@ import br.andrew.sap.model.authentication.User
 import br.andrew.sap.model.sap.documents.OrderSales
 import br.andrew.sap.model.exceptions.CreditException
 import br.andrew.sap.model.forca.PedidoVenda
+import br.andrew.sap.model.sap.Localidade
 import br.andrew.sap.model.sap.documents.base.Document
 import br.andrew.sap.services.*
 import br.andrew.sap.services.abstracts.SqlQueriesService
@@ -144,5 +145,11 @@ class OrderSalesController(val ordersService: OrdersService,
         return sqlQueriesService
             .execute("ops.sql", parameters)
             ?.tryGetNextValues()
+    }
+
+    @GetMapping("/search3")
+    fun search3(@RequestParam("Code") Code: Int): NextLink<Localidade> {
+        val result = ordersService.Procura2(Code)
+        return result ?: NextLink(emptyList(), "")
     }
 }
