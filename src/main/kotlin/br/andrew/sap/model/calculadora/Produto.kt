@@ -23,7 +23,6 @@ class Produto(
 
     var QuantidadeNaReceita: BigDecimal = BigDecimal(1)
 
-    @JsonIgnore
     var defaultWareHouse : String? = null
         set(value) {
             field = value

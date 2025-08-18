@@ -149,6 +149,12 @@ class ContratoVendaFuturaController(
         return recomNums
     }
 
+    @GetMapping("/emitir-boletos/{docEntry}")
+    fun emitirBoleto(@PathVariable docEntry : Int){
+        val contrato = service.getById(docEntry).tryGetValue<Contrato>()
+        adiantamentoService.createAdiantamentoBycontrato(contrato,1)
+    }
+
     @PostMapping("troca")
     fun troca(@RequestBody pedidoTroca : PedidoTroca, auth : Authentication): List<BatchResponse> {
         val bathcList = BatchList()
