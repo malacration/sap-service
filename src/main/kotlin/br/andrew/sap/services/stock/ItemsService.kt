@@ -4,6 +4,7 @@ import br.andrew.sap.infrastructure.odata.Condicao
 import br.andrew.sap.infrastructure.odata.Filter
 import br.andrew.sap.infrastructure.odata.NextLink
 import br.andrew.sap.infrastructure.odata.Parameter
+import br.andrew.sap.model.calculadora.LastPrice
 import br.andrew.sap.model.estoque.Item
 import br.andrew.sap.model.calculadora.Produto
 import br.andrew.sap.model.calculadora.ProdutoSelecao
@@ -17,6 +18,7 @@ import org.springframework.cache.annotation.Cacheable
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
 import org.springframework.web.client.RestTemplate
+import java.math.BigDecimal
 import java.util.concurrent.TimeUnit
 
 
@@ -77,6 +79,14 @@ open class ItemsService(
                 getAll(Produto::class.java,Filter("ItemCode", produtosParaProcurar, Condicao.IN))
         produtos.addAll(itensNovos)
         return itensNovos+itensCacheado.toList()
+    }
+
+
+    fun getLastPrice(itens : String): List<LastPrice> {
+        val parameters = listOf(
+            Parameter("item",itens),
+        )
+        return sqlQueriesService.execute("last-prices.sql", parameters)!!.tryGetValues<LastPrice>()
     }
 }
 

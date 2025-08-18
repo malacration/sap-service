@@ -55,22 +55,7 @@ class VendaFuturaScheduled(
         )?.tryGetValues<DocEntry>()?.forEach {
             orderService.get(Filter("DocEntry",it.DocEntry!!,Condicao.EQUAL))
                 .tryGetValues<Document>().forEach { order ->
-                    val hanndlePaymentTerms = HandlePaymentTermsLines(
-                        paymentService.getParcelas(order.paymentGroupCode?: throw Exception("Erro ao pegar da condicao de pagamento"))
-                    )
-                    val contrato = contratoService.saveOnly(ContratoParse.parse(order))
-                    hanndlePaymentTerms.calculaVencimentos(contrato,carenciaDias).map {
-                        val adiantamento = adiantamentoService.adiantamentosVendaFuturaSave(contrato,it)
-                        try{
-                            bankplus.geraBoletos(
-                                adiantamento.getBPL_IDAssignedToInvoice().toInt(),
-                                adiantamento.docEntry ?: throw Exception("Falha ao obter docentry do adiantamento"),
-                                0,
-                                OrigemBoletoEnum.adiantamento)
-                        }catch (e : Exception){
-                            logger.error("Erro ao gerar boleto",e)
-                        }
-                    }
+                    contratoService.saveOnly(ContratoParse.parse(order))
                     orderService.close(order.docEntry.toString())
                 }
             }}

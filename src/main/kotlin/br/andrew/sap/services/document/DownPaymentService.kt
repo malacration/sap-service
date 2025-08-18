@@ -2,19 +2,27 @@ package br.andrew.sap.services.document
 
 import br.andrew.sap.infrastructure.odata.*
 import br.andrew.sap.model.envrioments.SapEnvrioment
+import br.andrew.sap.model.payment.HandlePaymentTermsLines
 import br.andrew.sap.model.payment.PaymentDueDates
 import br.andrew.sap.model.sap.DocEntry
 import br.andrew.sap.model.sap.documents.DocumentStatus
 import br.andrew.sap.model.sap.documents.DownPayment
 import br.andrew.sap.model.sap.documents.Invoice
+import br.andrew.sap.model.sap.documents.OrderSales
 import br.andrew.sap.model.sap.documents.base.Document
 import br.andrew.sap.model.sap.documents.base.Product
 import br.andrew.sap.model.self.vendafutura.BoletoVf
 import br.andrew.sap.model.self.vendafutura.Contrato
 import br.andrew.sap.schedules.futura.Soma
+import br.andrew.sap.schedules.futura.VendaFuturaScheduled
 import br.andrew.sap.services.AuthService
 import br.andrew.sap.services.abstracts.EntitiesService
 import br.andrew.sap.services.abstracts.SqlQueriesService
+import br.andrew.sap.services.bank.PaymentTermsTypesService
+import br.andrew.sap.services.invent.BankPlusService
+import br.andrew.sap.services.invent.OrigemBoletoEnum
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import org.springframework.web.client.RestTemplate
@@ -23,6 +31,9 @@ import java.math.BigDecimal
 @Service
 class DownPaymentService(env: SapEnvrioment,
                          val sqlQueriesService: SqlQueriesService,
+                         private val orderService: OrdersService,
+                         private val paymentService : PaymentTermsTypesService,
+                         private val bankplus : BankPlusService,
                          @Value("\${venda-futura.adiantamento-item:none}") val vfItemAdiantamento : String,
                          @Value("\${adiantamento-vf.formaPagamento:none}") vfFormaPagamento : String,
                          restTemplate: RestTemplate,
@@ -30,6 +41,8 @@ class DownPaymentService(env: SapEnvrioment,
 ) : EntitiesService<Document>(env, restTemplate, authService) {
 
     val vfFormaPagamento: String? = if(vfFormaPagamento == "none")  null else vfFormaPagamento
+
+    val logger: Logger = LoggerFactory.getLogger(DownPaymentService::class.java)
 
     override fun path(): String {
         return "/b1s/v1/DownPayments"
@@ -103,6 +116,33 @@ class DownPaymentService(env: SapEnvrioment,
                     throw Exception("Nao pode ter mais de uma apropriacao para um adiantamento")
                 it.apropriado = apropriacoes.firstOrNull()?.soma ?: BigDecimal.ZERO
                 it
+        }
+    }
+
+    fun createAdiantamentoBycontrato(contrato : Contrato, carenciaDias : Int){
+        val boletos = this.getByContratoVendaFutura(contrato.DocEntry?.toInt() ?: throw Exception("Contrato sem DocEntry"))
+        if(boletos.size > 0)
+            throw Exception("Não é possivel emitir boletos para um contrato que ja tem boletos")
+
+        val order = try {
+            orderService.getById(contrato.U_orderDocEntry).tryGetValue<OrderSales>()
+        } catch (e: Exception) {
+            throw Exception("O pedido do contrato nao foi encontrado")
+        }
+        val hanndlePaymentTerms = HandlePaymentTermsLines(
+            paymentService.getParcelas(order.paymentGroupCode?: throw Exception("Erro ao pegar da condição de pagamento"))
+        )
+        hanndlePaymentTerms.calculaVencimentos(contrato,carenciaDias).map {
+            val adiantamento = this.adiantamentosVendaFuturaSave(contrato,it)
+            try{
+                bankplus.geraBoletos(
+                    adiantamento.getBPL_IDAssignedToInvoice().toInt(),
+                    adiantamento.docEntry ?: throw Exception("Falha ao obter docentry do adiantamento"),
+                    0,
+                    OrigemBoletoEnum.adiantamento)
+            }catch (e : Exception){
+                logger.error("Erro ao gerar boleto",e)
+            }
         }
     }
 }
