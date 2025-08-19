@@ -63,16 +63,13 @@ class CalculadoraPrecoController(
         return productTreesService.get(filter)
     }
 
-
-//    -- fazer consulta
-//    SELECT "ItemCode","ItemName","LastPurPrc","LastPurCur","LastPurDat"
-//    FROM "OITM" WHERE "ItemCode" = 'INS0000008';
-    @GetMapping("/last-price/{itemCode}")
+    @GetMapping("/last-price/{itemCode}/{deposito}")
     fun lastPrice(
         @PathVariable itemCode: String,
+        @PathVariable deposito: String,
         page : Pageable,
         auth : Authentication): List<LastPrice> {
-        return itemService.getLastPrice(itemCode)
+        return itemService.getLastPrice(itemCode, deposito)
     }
 
 }

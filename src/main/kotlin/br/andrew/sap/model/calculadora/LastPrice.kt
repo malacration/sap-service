@@ -13,4 +13,5 @@ class LastPrice(
     val ItemCode : String,
     val LastPurPrc : BigDecimal = BigDecimal.ZERO,
     val LstEvlPric : BigDecimal = BigDecimal.ZERO,
+    val AvgPrice : BigDecimal = BigDecimal.ZERO,
 )

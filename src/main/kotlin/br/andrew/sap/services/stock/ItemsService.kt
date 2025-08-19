@@ -82,11 +82,12 @@ open class ItemsService(
     }
 
 
-    fun getLastPrice(itens : String): List<LastPrice> {
+    fun getLastPrice(itens : String, deposito : String): List<LastPrice> {
         val parameters = listOf(
             Parameter("item",itens),
+            Parameter("deposito",deposito),
         )
-        return sqlQueriesService.execute("last-prices.sql", parameters)!!.tryGetValues<LastPrice>()
+        return sqlQueriesService.execute("item-last-prices.sql", parameters)!!.tryGetValues<LastPrice>()
     }
 }
 
