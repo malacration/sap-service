@@ -142,7 +142,7 @@ class OrderSalesController(val ordersService: OrdersService,
         val parameters = listOf(
             Parameter("DocEntry", DocEntry)
         )
-        return sqlQueriesService
+        return sqlQueriesService    
             .execute("ops.sql", parameters)
             ?.tryGetNextValues()
     }
