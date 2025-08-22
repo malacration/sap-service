@@ -48,5 +48,9 @@ roles:
       actions: [ "*" ]
     - url: "/forma-pagamento/filial/*/cardcode/*"
       actions: [ "get" ]
-
+  qualidade:
+    - url: "/batch-stock/item-code/*"
+      actions: ["get"]
+    - url: "/reprocessamento/*"
+      actions: [ "*" ]
 

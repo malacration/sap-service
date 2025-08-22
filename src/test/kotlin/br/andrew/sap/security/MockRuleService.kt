@@ -1,19 +1,18 @@
 package br.andrew.sap.security
 
-import br.andrew.sap.infrastructure.security.roles.RolesEnum
 import br.andrew.sap.services.security.Rule
 import br.andrew.sap.services.security.interfaces.RuleService
 
 class MockRuleService : RuleService {
 
-    override fun get(role : RolesEnum): List<Rule> {
-        return if(role == RolesEnum.admin)
+    override fun get(role : String): List<Rule> {
+        return if(role == "admin")
             listOf(Rule("/**","*"))
-        else if(role == RolesEnum.vendedor)
+        else if(role == "vendedor")
             listOf(
                 Rule("/clientes/*","get"),
             )
-        else if(role == RolesEnum.vendedor_admin)
+        else if(role == "vendedor_admin")
             listOf(
                 Rule("/clientes/*", listOf("get","post")),
                 Rule("/vendedor/**","*")
@@ -22,7 +21,7 @@ class MockRuleService : RuleService {
             listOf()
     }
 
-    fun get(roles: List<RolesEnum>) : List<Rule>{
+    fun get(roles: List<String>) : List<Rule>{
         return roles.flatMap { get(it) }
     }
 }
