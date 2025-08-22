@@ -1,9 +1,9 @@
 package br.andrew.sap.model.authentication
 
-import br.andrew.sap.infrastructure.security.roles.RolesEnum
 import com.fasterxml.jackson.annotation.JsonIgnore
 import org.springframework.security.core.Authentication
 import org.springframework.security.core.GrantedAuthority
+import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.core.userdetails.UserDetails
 
 class User(val id : String,
@@ -12,7 +12,7 @@ class User(val id : String,
            val userName : String,
            val emailAddress : String? = null,
            val _password : String? = null,
-           var roles : List<RolesEnum> = listOf()) : UserDetails, Authentication {
+           var roles : List<String> = listOf()) : UserDetails, Authentication {
 
     private var authenticated = true
     var otp : Int? = null
@@ -25,7 +25,7 @@ class User(val id : String,
     }
 
     override fun getAuthorities(): List<out GrantedAuthority> {
-        return roles.map { it.getGrantedAuthority() }
+        return roles.map { SimpleGrantedAuthority(it) }
     }
 
     override fun getCredentials(): Any {
@@ -49,7 +49,7 @@ class User(val id : String,
     }
 
     fun superVendedor(): Int {
-        return if(roles.contains(RolesEnum.super_vendedor) || roles.contains(RolesEnum.admin))
+        return if(roles.contains("super_vendedor") || roles.contains("admin"))
             Int.MAX_VALUE
         else
             -1

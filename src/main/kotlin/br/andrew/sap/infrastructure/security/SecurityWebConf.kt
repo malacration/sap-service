@@ -84,12 +84,13 @@ class SecurityWebConf(
                         "/installment/*/paid",
                         "/barter/**",
                         "/invoice/*/parcela/**",
-                        "/logar"
+                        "/logar",
                     ).permitAll()
                     .requestMatchers(HttpMethod.POST,
                         "/business-partners/key/**",
                         "/business-partners/key/*/attachment",
                         "/logar",
+                        "/change-password",
                         "/otp/login")
                     .permitAll()
                     .requestMatchers(HttpMethod.OPTIONS,"/**")
