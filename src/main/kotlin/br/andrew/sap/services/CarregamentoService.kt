@@ -1,7 +1,6 @@
 package br.andrew.sap.services
 
-import br.andrew.sap.infrastructure.odata.NextLink
-import br.andrew.sap.infrastructure.odata.Parameter
+import br.andrew.sap.infrastructure.odata.*
 import br.andrew.sap.model.envrioments.SapEnvrioment
 import br.andrew.sap.model.sap.Carregamento
 import br.andrew.sap.model.sap.DocEntry
@@ -30,22 +29,29 @@ class CarregamentoService(val sqlQueriesService : SqlQueriesService,env: SapEnvr
             ?.get("total_quantidade") as Int? ?: 0
     }
 
-    fun getValores(ItemCode: String): Int {
-        val parameters = listOf(
-            Parameter("ItemCode", ItemCode)
-        )
-        return sqlQueriesService
-            .execute("estoque-em-ordem.sql", parameters)
-            ?.tryGetValues<Map<String, Any>>()
-            ?.firstOrNull()
-            ?.get("total_quantidade") as Int? ?: 0
-    }
-
     fun docEntryPedido(idOrdemCarregamento: Int): List<DocEntry> {
         val parameters = listOf(
             Parameter("U_ORD_CARREGAMENTO2", idOrdemCarregamento)
         )
         return sqlQueriesService
             .getAll<DocEntry>("docentry-ordem-carregamento.sql", parameters)
+    }
+
+    fun cancelarPedidos(idOrdem: Int, docNums: List<Int>) {
+        docNums.forEach { docNum ->
+            val parameters = listOf(Parameter("DocNum", docNum.toString()))
+            sqlQueriesService.execute("cancelPedido.sql", parameters)
+        }
+    }
+
+
+    fun getTotaisPedidoseQuantidade(ordemCarregamento: Int): List<Carregamento> {
+        val parameters = listOf(
+            Parameter("ordCarregamento", ordemCarregamento) // igual ao do SQL
+        )
+        return sqlQueriesService
+            .execute("pedidoeestoque.sql", parameters)
+            ?.tryGetValues<Carregamento>()
+            ?: emptyList()
     }
 }

@@ -9,6 +9,7 @@ import br.andrew.sap.model.sap.documents.DocumentTypes
 import br.andrew.sap.model.sap.documents.Invoice
 import br.andrew.sap.model.sap.documents.OrderSales
 import br.andrew.sap.services.*
+import br.andrew.sap.services.abstracts.SqlQueriesService
 import br.andrew.sap.services.batch.BatchList
 import br.andrew.sap.services.batch.BatchMethod
 import br.andrew.sap.services.batch.BatchResponse
@@ -34,7 +35,8 @@ class CarregamentoController(val carregamentoServico: CarregamentoService,
                              val batchService : BatchService,
                              val comissaoService: ComissaoService,
                              val telegramService : TelegramRequestService,
-                             val applicationEventPublisher: ApplicationEventPublisher) {
+                             val applicationEventPublisher: ApplicationEventPublisher,
+                             val sqlQueriesService: SqlQueriesService) {
 
     val logger = LoggerFactory.getLogger(QuotationsController::class.java)
 
@@ -185,6 +187,28 @@ class CarregamentoController(val carregamentoServico: CarregamentoService,
             batchList.add(BatchMethod.POST, it, invoiceService)
         }
         return batchService.run(batchList)
+    }
+
+    @PostMapping("/{id}/cancelar-pedidos")
+    fun cancelarPedidos(@PathVariable id: String, @RequestBody request: Map<String, List<Int>>, auth: Authentication): ResponseEntity<Any> {
+        if (auth !is User) {
+            return ResponseEntity.noContent().build()
+        }
+
+        val docNums = request["pedidos"] ?: return ResponseEntity.badRequest().body(mapOf("error" to "Lista de DocNum não fornecida"))
+
+        return try {
+            carregamentoServico.cancelarPedidos(id.toInt(), docNums)
+            ResponseEntity.ok(mapOf("message" to "Pedidos cancelados com sucesso"))
+        } catch (e: Exception) {
+            logger.error("Erro ao cancelar pedidos", e)
+            ResponseEntity.badRequest().body(mapOf("error" to e.message))
+        }
+    }
+
+    @GetMapping("/{id}/detalhes")
+    fun getDetalhes(@PathVariable id: Int): List<Carregamento> {
+        return carregamentoServico.getTotaisPedidoseQuantidade(id)
     }
 
 //    invoiceService.save(it.also {

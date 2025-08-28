@@ -14,4 +14,8 @@ data class Carregamento(
         var U_Status: String?,
         val CreateDate : String?,
         val U_filial3 : Int?,
-){}
+){
+        var Quantity : Double? = null
+        var Weight1 : Double? = null
+        var docEntryQuantity : Int? = null
+}
