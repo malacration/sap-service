@@ -211,6 +211,26 @@ class CarregamentoController(val carregamentoServico: CarregamentoService,
         return carregamentoServico.getTotaisPedidoseQuantidade(id)
     }
 
+    @PostMapping("/{id}/logistica")
+    fun updateLogistica(@PathVariable id: String, @RequestBody payload: Map<String, String>, auth: Authentication): ResponseEntity<Any> {
+        if (auth !is User) {
+            return ResponseEntity.noContent().build()
+        }
+
+        try {
+            val dadosParaAtualizar = mapOf(
+                "U_placa" to payload["U_placa"],
+                "U_motorista" to payload["U_motorista"]
+            )
+
+            carregamentoServico.update(dadosParaAtualizar, id)
+            return ResponseEntity.ok(mapOf("message" to "Dados de logística atualizados com sucesso."))
+        } catch (e: Exception) {
+            logger.error("Erro ao atualizar dados de logística para o carregamento $id", e)
+            return ResponseEntity.badRequest().body(mapOf("error" to e.message))
+        }
+    }
+
 //    invoiceService.save(it.also {
 //        it.docDate = null
 //        it.docNum = null
