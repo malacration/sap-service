@@ -49,7 +49,7 @@ class User(val id : String,
     }
 
     fun superVendedor(): Int {
-        return if(roles.contains("super_vendedor") || roles.contains("admin"))
+        return if(roles.contains("vendedor_admin") || roles.contains("admin"))
             Int.MAX_VALUE
         else
             -1
