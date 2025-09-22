@@ -14,7 +14,7 @@ class RoleBasedAuthorizationFilterTest {
     val vendedor_admin = User("windson", "windson",UserOriginEnum.EmployeesInfo,"", "","",listOf("vendedor_admin"))
     val cliente = User("windson", "windson",UserOriginEnum.EmployeesInfo,"", "","", listOf("cliente"))
 
-    val autorization = RoleBasedAuthorizationFilter(MockRuleService())
+    val autorization = RoleBasedAuthorizationFilter(MockRuleService(),"")
 
     @Test
     fun semRole(){
