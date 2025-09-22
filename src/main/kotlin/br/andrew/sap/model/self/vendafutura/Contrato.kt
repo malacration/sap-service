@@ -31,10 +31,12 @@ class Contrato(
 
     @JsonProperty("U_status")
     var U_status : Status = Status.aberto
+
     init {
-        if(total().compareTo(BigDecimal.ZERO) <= 0)
-            throw Exception("Nao e permitido contrato sem valor")
+//        if(total().compareTo(BigDecimal.ZERO) <= 0)
+//            throw Exception("Nao e permitido contrato sem valor")
     }
+
     fun total(): BigDecimal {
         return totalProdutos()
             .plus(BigDecimal(U_valorFrete.toString()))
@@ -57,9 +59,12 @@ class Contrato(
 
         val tableaEx = Exception("IdTabela nao pode ser nulo")
         pedidoTroca.itemRecebido.forEach { item ->
+            //TODO pegar o desconto que o vendedor aplicou e aplicar aqui!
             itens.add(ContratoParse.parse(
                 item.aplicaBase(0.0,item.PriceList ?: throw tableaEx,comissaoService.getByIdTabela(item.PriceList!!))
-                    .atualizaPrecoBase(itemService)
+                    .atualizaPrecoBase(itemService).also {
+                        it.DiscountPercent = item.DiscountPercent ?: 0.0
+                    }
             ))
         }
         val valorFinal = total()
@@ -71,11 +76,35 @@ class Contrato(
     var Series : String? = null
     var U_dataCriacao : String = SimpleDateFormat("yyyy-MM-dd").format(dataCriacao)
 
+    var SalesEmployeeName: String? = null
+    var OrderDocNum: String? = null
+    var Bplname: String? = null
+    var TotalProdutosCalculado : Double? = null
+
     override fun getId(): String {
         return this.DocEntry.toString()
     }
 
     fun totalProdutos(): BigDecimal {
         return itens.map{ it.total() }.sumOf { it }
+    }
+
+    companion object{
+        @JsonIgnoreProperties
+        fun getAllProperties(): List<String> {
+            return listOf(
+                "U_orderDocEntry",
+                "U_cardCode",
+                "U_vendedor",
+                "U_cardName",
+                "U_filial",
+                "U_valorFrete",
+                "U_status",
+                "DocNum",
+                "DocEntry",
+                "Series",
+                "U_dataCriacao",
+            )
+        }
     }
 }

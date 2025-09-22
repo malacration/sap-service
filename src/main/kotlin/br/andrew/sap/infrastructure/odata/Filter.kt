@@ -27,18 +27,26 @@ class Filter(propertieImmutable : List<Predicate>, val defaultConector : String 
     fun add(predicate: Predicate): Boolean {
         return propertie.add(predicate)
     }
+
+    fun addAll(propertie: List<Predicate>): Filter {
+        this.propertie.addAll(propertie)
+        return this
+    }
 }
 
-class Predicate(val coluna: String, val value: Any, val condicao: Condicao){
-    constructor(cancelado: Cancelled, condicao: Condicao) : this(Cancelled.column,cancelado,condicao)
+class Predicate(val coluna: String, val value: Any, val condicao: Condicao, val literal : Boolean = false){
+    constructor(cancelado: Cancelled, condicao: Condicao, literal : Boolean = false)
+            : this(Cancelled.column,cancelado,condicao, literal)
 
     override fun toString(): String {
         return if(value is Int)
             condicao.get(coluna,value.toString())
         else if(value is List<*>)
             condicao.get(coluna,value)
-        else
+        else if(!literal)
             condicao.get(coluna,"'$value'")
+        else
+            condicao.get(coluna,"$value")
     }
 
     fun toSql(): String {

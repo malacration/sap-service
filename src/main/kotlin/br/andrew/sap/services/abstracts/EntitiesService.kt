@@ -129,6 +129,17 @@ open abstract class EntitiesService<T>(protected val env: SapEnvrioment,
         return get(filter, OrderBy(), page)
     }
 
+    fun <T> getAllNextBy(inicialOdata : OData, clazz: Class<T>) : List<T> {
+        var odata = inicialOdata
+        var content : MutableList<T> = mutableListOf()
+        content.addAll(odata.tryGetValues(clazz))
+        while (odata.hasNext()){
+            odata = next(odata)
+            content.addAll(odata.tryGetValues(clazz))
+        }
+        return content;
+    }
+
     open fun next(odata : OData) : OData {
         return next(odata.nextLink())
     }
@@ -177,6 +188,37 @@ open abstract class EntitiesService<T>(protected val env: SapEnvrioment,
             .body(payload)
         restT.exchange(request, Void::class.java)
     }
+
+    fun crossJoin(entidades : List<Entidade>, filter : Filter = Filter(),
+                  order : OrderBy = OrderBy(), page : Pageable = Pageable.ofSize(20)): OData {
+        var crossjoin = "/b1s/v1/\$crossjoin(${entidades.joinToString(",") { it.entidadeNome }})"
+        var expand = "\$expand=${entidades.joinToString(",") { it.getExpand() }}";
+
+        //TODO adicionar order by
+        val filter = listOf(filter).filter { it.toString().isNotEmpty() }.joinToString("&").replace("\$filter=","\$filter=(")+")"
+        val skip = (page.pageNumber*page.pageSize).toString()+"&\$inlinecount=allpages"
+        var path = "${crossjoin}?${expand}&$filter"
+
+        var groupBy = ""
+        var aggregation = ""
+
+        //TODO precisa terminar esse agreggation
+        if(entidades.any{ it.aggregation }){
+            aggregation = "aggregate(AR_CONTRATO_FUTURO/AR_CF_LINHACollection((U_quantity add 10) with sum as qtdSoma))"
+            groupBy = "groupby((${entidades.filter { !it.aggregation }.joinToString(",") { it.getExpandGroupBy() }}),$aggregation)"
+            val newFilter = filter.replace("\$filter=","filter(")+")"
+            path = "${crossjoin}?\$apply=$newFilter/$groupBy&"+order.toString()
+            throw Exception("agregação ainda nao é suportada")
+        }
+        val request = RequestEntity
+            .get(env.host+path+"&\$skip=${skip}")
+            .header("cookie","B1SESSION=${session().sessionId}")
+            .header("Prefer",  "odata.maxpagesize=${page.pageSize}")
+            .build()
+        return restT.exchange(request, OData::class.java).body ?: OData()
+    }
+
+
 }
 
 

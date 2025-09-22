@@ -5,8 +5,6 @@ roles:
   vendedor:
     - url: "/contrato-venda-futura"
       actions: ["*"]
-    - url: "/contrato-venda-futura/**"
-      actions: [ "*" ]
     - url: "branch"
       actions: ["get"]
     - url : "/business-partners/search"
@@ -27,12 +25,18 @@ roles:
       actions: [ "get" ]
     - url: "/pedido-venda/angular"
       actions: [ "post" ]
-    - url: "/future-sales/contrato-venda-futura/*"
+    - url: "/future-sales/pedidos/*"
       actions: [ "get" ]
     - url: "/down-payment/contrato-venda-futura/*"
       actions: [ "get" ]
     - url: "/contrato-venda-futura/pedido-retirada"
       actions: [ "*" ]
+    - url: "/contrato-venda-futura/**"
+      actions: [ "get", "post" ]
+    - url: "/contrato-venda-futura/troca"
+      actions: [ "post"]
+    - url: "/contrato-venda-futura/emitir-boletos/*"
+      actions: ["get"]
     - url: "/business-partners/cientes"
       actions: [ "get" ]
     - url: "/business-partners/*"
@@ -48,9 +52,20 @@ roles:
       actions: [ "*" ]
     - url: "/forma-pagamento/filial/*/cardcode/*"
       actions: [ "get" ]
-  qualidade:
-    - url: "/batch-stock/item-code/*"
-      actions: ["get"]
-    - url: "/reprocessamento/*"
+    - url: "/down-payment/contrato-venda-futura/*"
+      actions: [ "get" ]
+    - url: "/contrato-venda-futura/pedido-retirada"
       actions: [ "*" ]
-
+    - url: "/contrato-venda-futura/entregas/*"
+      actions: [ "get" ]
+    - url: "/contrato-venda-futura/*"
+      actions: [ "get", "post" ]
+    - url: "/contrato-venda-futura/troca"
+      actions: [ "post"]
+    - url: "/contrato-venda-futura/emitir-boletos/*"
+      actions: ["get"]
+  qualidade:
+    - url: "/batch-stock/item-code/**"
+      actions: ["get"]
+    - url: "/reprocessamento/**"
+      actions: [ "*" ]

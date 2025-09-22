@@ -34,4 +34,22 @@ class Item(
     val VisOrder get() = LineId
     var LineStatus : String? = null
 
+
+    companion object{
+        fun getAllProperties() : List<String>{
+            return listOf(
+                "DocEntry",
+                "U_itemCode",
+                "U_description",
+                "U_precoNegociado",
+                "U_quantity",
+                "U_precoBase",
+                "U_desconto",
+                "U_comissao",
+                "U_MeasureUnit",
+                "LineId",
+            )
+        }
+    }
+
 }

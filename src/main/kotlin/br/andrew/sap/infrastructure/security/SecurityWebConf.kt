@@ -32,6 +32,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @EnableWebSecurity
 class SecurityWebConf(
     @Value("\${spring.security.disable:false}") val disable: Boolean,
+    @Value("\${server.servlet.context-path:''}") val context: String,
     jwtSecretBean : JwtSecretBean,
     private val ruleService: RuleService,
     private val userPasswordService: UserPasswordService,
@@ -69,7 +70,7 @@ class SecurityWebConf(
                     UserPasswordAuthenticationFilter(authManager,jwtHandler,userPasswordService),
                     OneTimePasswordAuthenticationFilter::class.java)
                 .addFilterAfter(
-                    RoleBasedAuthorizationFilter(ruleService),
+                    RoleBasedAuthorizationFilter(ruleService,context),
                     OneTimePasswordAuthenticationFilter::class.java)
                 .authorizeHttpRequests { it
                     .requestMatchers(
