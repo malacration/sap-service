@@ -6,11 +6,13 @@ import br.andrew.sap.infrastructure.odata.OData
 import br.andrew.sap.infrastructure.odata.Order
 import br.andrew.sap.infrastructure.odata.OrderBy
 import br.andrew.sap.infrastructure.odata.Parameter
+import br.andrew.sap.model.authentication.User
 import br.andrew.sap.model.envrioments.SapEnvrioment
 import br.andrew.sap.model.payment.PaymentDueDates
 import br.andrew.sap.model.sap.documents.DocumentStatus
 import br.andrew.sap.model.sap.documents.base.Document
 import br.andrew.sap.model.self.vendafutura.Contrato
+import br.andrew.sap.model.self.vendafutura.Status
 import br.andrew.sap.services.abstracts.EntitiesService
 import br.andrew.sap.services.abstracts.SqlQueriesService
 import br.andrew.sap.services.document.DownPaymentService
@@ -29,9 +31,34 @@ class ContratoVendaFuturaService(restTemplate: RestTemplate,
         return "/b1s/v1/AR_CONTRATO_FUTURO"
     }
 
-    fun getContratos(parameters: List<Parameter>): OData? {
-        return sqlQueriesService.execute("contratos-vendafutura.sql", parameters)
+    fun getContratos(auth: User,
+                     status : Status,
+                     idContrato : Int = -1,
+                     filial : Int = -1): OData? {
 
+        val idContratoIsFilter = if(idContrato == -1)
+            Int.MAX_VALUE
+        else
+            -1
+
+        val filialIsFilter = if(filial == -1)
+            Int.MAX_VALUE
+        else
+            -1
+
+        val parameters = listOf(
+            Parameter("superVendedor",auth.superVendedor()),
+            Parameter("vendedor",auth.id),
+            Parameter("status",status.toString()),
+
+            Parameter("idContrato",idContrato),
+            Parameter("idContratoIsFilter",idContratoIsFilter),
+
+            Parameter("filial",filial),
+            Parameter("filialIsFilter",filialIsFilter),
+
+        )
+        return sqlQueriesService.execute("contratos-vendafutura.sql", parameters)
     }
 
     fun saveOnly(contrato: Contrato): Contrato {

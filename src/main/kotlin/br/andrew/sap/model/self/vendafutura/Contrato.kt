@@ -59,9 +59,12 @@ class Contrato(
 
         val tableaEx = Exception("IdTabela nao pode ser nulo")
         pedidoTroca.itemRecebido.forEach { item ->
+            //TODO pegar o desconto que o vendedor aplicou e aplicar aqui!
             itens.add(ContratoParse.parse(
                 item.aplicaBase(0.0,item.PriceList ?: throw tableaEx,comissaoService.getByIdTabela(item.PriceList!!))
-                    .atualizaPrecoBase(itemService)
+                    .atualizaPrecoBase(itemService).also {
+                        it.DiscountPercent = item.DiscountPercent ?: 0.0
+                    }
             ))
         }
         val valorFinal = total()

@@ -14,6 +14,7 @@ import br.andrew.sap.model.sap.documents.futura.PedidoRetirada
 import br.andrew.sap.model.self.vendafutura.Contrato
 import br.andrew.sap.model.self.vendafutura.Item
 import br.andrew.sap.model.self.vendafutura.PedidoTroca
+import br.andrew.sap.model.self.vendafutura.Status
 import br.andrew.sap.services.ContratoVendaFuturaService
 import br.andrew.sap.services.InternalReconciliationsService
 import br.andrew.sap.services.RecomNum
@@ -27,10 +28,9 @@ import br.andrew.sap.services.document.DownPaymentService
 import br.andrew.sap.services.document.InvoiceService
 import br.andrew.sap.services.document.OrdersService
 import br.andrew.sap.services.pricing.ComissaoService
+import io.swagger.v3.oas.annotations.Parameter
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
-import org.springframework.data.domain.Page
-import org.springframework.data.domain.Pageable
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.Authentication
 import org.springframework.web.bind.annotation.*
@@ -55,13 +55,16 @@ class ContratoVendaFuturaController(
     val logger = LoggerFactory.getLogger(ContratoVendaFuturaController::class.java)
 
     @GetMapping("")
-    fun get(auth : Authentication): ResponseEntity<NextLink<Contrato>> {
+    fun get(
+        auth : Authentication,
+        @RequestParam(value = "status", defaultValue = "aberto") status : Status,
+        @RequestParam(value = "idContrato", defaultValue = "-1") idContrato : Int,
+        @RequestParam(value = "filial", defaultValue = "-1") filial : Int,
+            ): ResponseEntity<NextLink<Contrato>> {
         if(auth !is User)
             return ResponseEntity.noContent().build()
-        val resultado = service.getContratos(listOf(
-            Parameter("superVendedor",auth.superVendedor()),
-            Parameter("vendedor",auth.id)
-        ))?.tryGetNextValues<Contrato>()
+
+        val resultado = service.getContratos(auth,status, idContrato, filial)?.tryGetNextValues<Contrato>()
         return ResponseEntity.ok(resultado)
     }
 
