@@ -13,7 +13,7 @@ SELECT
 	"OSLP"."SlpName" as "SalesEmployeeName",
 	"ORDR"."DocNum" as "OrderDocNum",
 	"OBPL"."BPLName" as "Bplname",
-    SUM("@AR_CF_LINHA"."U_quantity") AS "TotalProdutosCalculado"
+    SUM("@AR_CF_LINHA"."U_quantity" * "@AR_CF_LINHA"."U_precoNegociado" ) AS "TotalProdutosCalculado"
 FROM
 	"@AR_CONTRATO_FUTURO"
 	INNER JOIN "@AR_CF_LINHA" ON ("@AR_CF_LINHA"."DocEntry" = "@AR_CONTRATO_FUTURO"."DocEntry")
