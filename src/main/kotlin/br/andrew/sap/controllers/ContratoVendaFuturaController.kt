@@ -9,6 +9,7 @@ import br.andrew.sap.model.sap.documents.CreditNotes
 import br.andrew.sap.model.sap.documents.DocumentStatus
 import br.andrew.sap.model.sap.documents.DownPaymentUnsetVendaFutura
 import br.andrew.sap.model.sap.documents.Invoice
+import br.andrew.sap.model.sap.documents.OrderSales
 import br.andrew.sap.model.sap.documents.base.Document
 import br.andrew.sap.model.sap.documents.futura.PedidoRetirada
 import br.andrew.sap.model.self.vendafutura.Contrato
@@ -49,6 +50,7 @@ class ContratoVendaFuturaController(
     val adiantamentoService : DownPaymentService,
     val creditNoteService: CreditNotesService,
     val internalReconciliationsService: InternalReconciliationsService,
+    val orderService : OrdersService,
     val batchService: BatchService,
     @Value("\${venda-futura.entrega:9}") val utilizacaoEntregaVendaFutura : Int,
     val cotacaoController : QuotationsController){
@@ -115,7 +117,9 @@ class ContratoVendaFuturaController(
         val contrato = service.get(Filter(
             Predicate("DocEntry",pedidoRetirada.docEntryVendaFutura,Condicao.EQUAL)
         )).tryGetValues<Contrato>().firstOrNull() ?: throw  Exception("O contrato nao foi encontrado")
-        val cotacao = pedidoRetirada.parse(contrato,utilizacaoEntregaVendaFutura).also {
+        val orderSales = orderService.getById(contrato.U_orderDocEntry).tryGetValue<OrderSales>()
+
+        val cotacao = pedidoRetirada.parse(contrato,utilizacaoEntregaVendaFutura,null,orderSales).also {
             it.journalMemo = "Entrega de mercadoria ref a contrato Nº ${contrato.DocEntry}"
             it.comments = it.journalMemo
         }

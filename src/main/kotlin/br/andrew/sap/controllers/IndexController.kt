@@ -11,6 +11,7 @@ import br.andrew.sap.services.document.CreditNotesService
 import br.andrew.sap.services.document.DownPaymentService
 import br.andrew.sap.services.pricing.ComissaoService
 import br.andrew.sap.services.security.UserPasswordService
+import br.andrew.sap.services.structs.QuerysServices
 import org.slf4j.LoggerFactory
 import org.springframework.security.core.Authentication
 import org.springframework.web.bind.annotation.GetMapping
@@ -22,6 +23,7 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 class IndexController(
     val version : Version,
+    val teste : QuerysServices,
     val passowrdService: UserPasswordService,
     val service : BatchService,
 ){
