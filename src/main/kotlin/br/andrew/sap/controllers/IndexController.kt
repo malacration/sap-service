@@ -32,7 +32,6 @@ class IndexController(
 
     @GetMapping("/")
     fun index() : Version{
-        teste.teste()
         return version
     }
 

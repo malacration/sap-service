@@ -12,7 +12,6 @@ import br.andrew.sap.model.sap.partner.BusinessPartner
 import br.andrew.sap.model.sap.partner.BusinessPartnerSlin
 import br.andrew.sap.model.sap.partner.BusinessPartnerType
 import br.andrew.sap.model.sap.partner.ReferenciaComercial
-import br.andrew.sap.model.self.vendafutura.Contrato
 import br.andrew.sap.services.*
 import br.andrew.sap.services.document.OrdersService
 import br.andrew.sap.services.security.OneTimePasswordService
@@ -35,7 +34,7 @@ import org.springframework.web.multipart.MultipartFile
 @RequestMapping("business-partners")
 class BusinessPartnersController(
     val service : BusinessPartnersService,
-    val OrderService : OrdersService,
+    val orderService : OrdersService,
     val refService : ReferenciaComercialService,
     val atualizacao: AtualizacaoCadastralService,
     val anexoController : AttachmentController,
@@ -157,7 +156,7 @@ class BusinessPartnersController(
         val predicados = mutableListOf(
             Predicate("CardCode", "${CardCode}", Condicao.EQUAL),
         )
-        return ResponseEntity.ok(OrderService
+        return ResponseEntity.ok(orderService
             .get(Filter(predicados), OrderBy(mapOf("DocEntry" to Order.DESC)))
             .tryGetValues<OrderSales>()
         )
