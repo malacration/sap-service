@@ -147,6 +147,12 @@ class OrderSalesController(val ordersService: OrdersService,
             ?.tryGetNextValues()
     }
 
+    @PostMapping("/search2All")
+    fun search2All(@RequestBody nextLink: String): NextLink<OrderSales> {
+        val result = sqlQueriesService.nextLink(nextLink)!!.tryGetNextValues<OrderSales>()
+        return result ?: NextLink(emptyList(), "")
+    }
+
     @GetMapping("/search3")
     fun search3(@RequestParam("Code") Code: Int): NextLink<Localidade> {
         val result = ordersService.Procura2(Code)
