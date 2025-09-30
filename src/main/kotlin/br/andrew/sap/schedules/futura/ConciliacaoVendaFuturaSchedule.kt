@@ -44,6 +44,7 @@ class ConciliacaoVendaFuturaSchedule(
     @Value("\${venda-futura.adiantamento-item}") val itemConciliacaoVendaFutura : String,
     @Value("\${venda-futura.filiais:-2}") val filiais : List<Int>,
     @Value("\${venda-futura.sequencia_adiantamento}") val sequenceCode : Int,
+    @Value("\${venda-futura.utilizacao.baixa:9}") val usage : Int,
     @Value("\${venda-futura.conta-controle}") val contaControle : String) {
 
     val logger: Logger = LoggerFactory.getLogger(ConciliacaoVendaFuturaSchedule::class.java)
@@ -74,7 +75,7 @@ class ConciliacaoVendaFuturaSchedule(
                             invoice.CardCode, null,
                             listOf(Product(itemConciliacaoVendaFutura, "1",
                                 "0",
-                                9).also {
+                                usage).also {
                                 it.U_preco_base = 1.0
                             }),
                             invoice.getBPL_IDAssignedToInvoice()
