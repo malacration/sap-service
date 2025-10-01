@@ -6,6 +6,7 @@ import br.andrew.sap.infrastructure.odata.Predicate
 import br.andrew.sap.model.sap.Attachment
 import br.andrew.sap.model.ContactOpaque
 import br.andrew.sap.model.authentication.User
+import br.andrew.sap.model.dto.ContasReceberDto
 import br.andrew.sap.model.forca.Cliente
 import br.andrew.sap.model.sap.documents.OrderSales
 import br.andrew.sap.model.sap.partner.BusinessPartner
@@ -165,6 +166,11 @@ class BusinessPartnersController(
     @GetMapping("/cpf-cnpj/teste/{cpfCnpj}")
     fun teste(@PathVariable cpfCnpj : String, @RequestParam(name = "type", defaultValue = "C") tipo : BusinessPartnerType): List<ContactOpaque> {
         return service.getByCpfCnpj(cpfCnpj,tipo).getContactOpaque()
+    }
+
+    @GetMapping("contas-receber/{cardCode}")
+    fun getContasReceberByCliente(@PathVariable cardCode: String): List<ContasReceberDto> {
+        return service.getContasReceberByCardCode(cardCode)
     }
 
 }
