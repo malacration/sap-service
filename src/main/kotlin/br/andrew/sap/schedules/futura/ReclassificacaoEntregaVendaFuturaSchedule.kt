@@ -81,7 +81,7 @@ class ReclassificacaoEntregaVendaFuturaSchedule(
                         it.Reference = invoice.docNum
                     })
             internalReconciliationsService.save(
-                InternalReconciliationsBuilder(invoice,journalEntrie,docTotal).build()
+                InternalReconciliationsBuilder(invoice,journalEntrie).build()
             )
         }
     }
@@ -194,8 +194,7 @@ class ReclassificacaoEntregaVendaFuturaSchedule(
                     internalReconciliationsService.save(
                         InternalReconciliationsBuilder(
                             adiantamentoSalvo,
-                            devolucaoApropriacao,
-                            devolucao.DocTotal?.toDoubleOrNull() ?: throw Exception("Documento sem total adequado")
+                            devolucaoApropriacao
                         ).build()
                     )
                 }
