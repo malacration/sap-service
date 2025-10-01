@@ -12,7 +12,9 @@ import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.Pageable
 
-class OData : LinkedHashMap<String,Any>(){
+class OData(
+    private val backing: LinkedHashMap<String, Any?> = LinkedHashMap()
+) : MutableMap<String, Any?> by backing {
 
 
   val mapper = JsonMapper.builder()

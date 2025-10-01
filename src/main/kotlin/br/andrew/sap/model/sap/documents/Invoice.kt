@@ -37,4 +37,3 @@ class Invoice(CardCode: String,
         return getDefaultForJournal(this,"Nota fiscal de Saída")
     }
 }
-//data de entrega - ORDRdocduedate

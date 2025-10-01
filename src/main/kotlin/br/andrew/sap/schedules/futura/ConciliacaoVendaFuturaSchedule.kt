@@ -90,6 +90,8 @@ class ConciliacaoVendaFuturaSchedule(
                             //TODO coloocar a referencia da nf de forma estruturada.
                         }
 
+                        //TODO tentar usar o batch operation.
+                        //A duvida que fica e como referenciar o ID do documento que ainda nao existe
                         val apropriado = inoviceService
                             .save(invoiceApropiacao)
                             .tryGetValue<Document>()
@@ -99,8 +101,7 @@ class ConciliacaoVendaFuturaSchedule(
                                 InternalReconciliationsBuilder(
                                     journalReclassificado,
                                     apropriado,
-                                    invoice.DocTotal?.toDoubleOrNull() ?: throw Exception("Documento sem total adequado")
-                                ).setDebitTransRowId(1).build()
+                                ).build()
                             )
                             Thread.sleep(1000)
                             val json = "{ \"TransactionCode\" : \"${TransactionCodeTypes.VFEC.name}\"}"

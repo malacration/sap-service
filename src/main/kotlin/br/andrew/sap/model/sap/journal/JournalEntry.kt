@@ -1,3 +1,5 @@
+import br.andrew.sap.model.sap.DebOrCredt
+import br.andrew.sap.model.sap.ReconciliationListRows
 import br.andrew.sap.model.sap.ReconciliationRow
 import br.andrew.sap.model.sap.documents.base.Document
 import br.andrew.sap.model.sap.documents.base.DocumentLines
@@ -11,7 +13,7 @@ import com.fasterxml.jackson.databind.annotation.JsonNaming
 @JsonNaming(PropertyNamingStrategies.UpperCamelCaseStrategy::class)
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-class JournalEntry(val journalEntryLines : List<JournalEntryLines>, val memo : String) : ReconciliationRow {
+class JournalEntry(val journalEntryLines : List<JournalEntryLines>, val memo : String) : ReconciliationListRows {
 
     var taxDate : String? = null
     var ReferenceDate : String? = null
@@ -67,9 +69,18 @@ class JournalEntry(val journalEntryLines : List<JournalEntryLines>, val memo : S
         memo
     )
 
-    override fun transNumReconciliation(): Int {
-        return this.JdtNum ?:throw Exception("Numero do LC esta null")
+    @JsonIgnore
+    override fun getReconciliationRows(debOrCredt: DebOrCredt): List<ReconciliationRow> {
+        return if(debOrCredt == DebOrCredt.Credt)
+            this.journalEntryLines.filter { it.Credit > 0 }.map {
+                it.JdtNum = this.JdtNum;
+                it
+            }
+        else
+            this.journalEntryLines.filter { it.debit > 0 }.map {
+                it.JdtNum = this.JdtNum;
+                it
+            }
     }
-
 
 }
