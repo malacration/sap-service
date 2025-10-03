@@ -1,10 +1,12 @@
 package br.andrew.sap.model.dto
 
 import com.fasterxml.jackson.annotation.JsonFormat
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
 import java.math.BigDecimal
 import java.time.LocalDate
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 data class ContasReceberDto (
 
     @JsonProperty("Ref1")
@@ -25,7 +27,10 @@ data class ContasReceberDto (
     val nomeFilial: String?,
 
     @JsonProperty("Debit")
-    val valor: BigDecimal?,
+    val debito: BigDecimal?,
+
+    @JsonProperty("Credit")
+    val credito: BigDecimal?,
 
     @JsonProperty("LineMemo")
     val observacao: String?,
@@ -36,6 +41,7 @@ data class ContasReceberDto (
     val documento: String?
         get() = when (tipoTransacao) {
             13 -> "Nota Fiscal de Saída"
+            14-> "Devs.Nota Fiscal de Saída"
             203 -> "Adiantamento de Cliente"
             else -> "Outro Documento"
         }

@@ -1,21 +1,22 @@
-SELECT
+SELECT DISTINCT
+	LCM."TransId",
     LCM."Ref1",
     LCM."CreatedBy",
     LCM."RefDate",
     LCM."DueDate",
+    LCM."ShortName",
     LCM."BPLName",
     LCM."Debit",
+    LCM."Credit",
     LCM."LineMemo",
     LCM."TransType"
-
-FROM JDT1 LCM
+FROM
+	JDT1 LCM
+	INNER JOIN OACT C ON LCM."Account" = C."AcctCode"
+	LEFT JOIN ITR1 reconLinha ON reconLinha."TransId" = LCM."TransId"
+	LEFT JOIN OITR recon ON recon."ReconNum" = reconLinha."ReconNum" AND recon."Canceled" = 'N'
 WHERE
-    LCM."Account"   = '1.1.2.001.00001'
+    C."LocManTran" = 'Y'
     AND LCM."ShortName" = :cardCode
-    AND NOT EXISTS (
-        SELECT 1
-        FROM RCT2 T1
-        WHERE T1."DocEntry" = LCM."CreatedBy"
-          AND T1."InvType"  = LCM."TransType"
-    )
-    AND LCM."Debit" > 0
+    AND (LCM."TransCode" <>  'VFET' OR LCM."TransCode" IS NULL )
+    AND recon."ReconNum" IS NULL

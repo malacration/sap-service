@@ -168,9 +168,9 @@ class BusinessPartnersController(
         return service.getByCpfCnpj(cpfCnpj,tipo).getContactOpaque()
     }
 
-    @GetMapping("contas-receber/{cardCode}")
-    fun getContasReceberByCliente(@PathVariable cardCode: String): List<ContasReceberDto> {
-        return service.getContasReceberByCardCode(cardCode)
+    @GetMapping("contas-receber/")
+    fun getContasReceberByCliente( @RequestParam CardCode: String): List<ContasReceberDto> {
+        return service.getContasReceberByCardCode(CardCode)
     }
 
 }
