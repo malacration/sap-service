@@ -1,6 +1,7 @@
 package br.andrew.sap.model.sap.documents.base
 
 import br.andrew.sap.model.bankplus.Boleto
+import br.andrew.sap.model.sap.ReconciliationRow
 import br.andrew.sap.model.uzzipay.Transaction
 import com.fasterxml.jackson.annotation.JsonFormat
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
@@ -12,6 +13,8 @@ import java.text.SimpleDateFormat
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.*
+import kotlin.math.abs
+import kotlin.math.absoluteValue
 
 @JsonNaming(PropertyNamingStrategies.UpperCamelCaseStrategy::class)
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -30,7 +33,10 @@ class Installment(
 
     var DocEntry : Int? = null
 
+    fun getReconciliationRow(transId : Int, transRowId : Int): InstallmentRow {
+        return InstallmentRow(transId, transRowId, total)
 
+    }
 
     val dueDate : String?
         get() = if(_dueDate == null) null else _dueDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))
@@ -61,4 +67,21 @@ class Installment(
         }
     }
 
+}
+
+class InstallmentRow(val _transId : Int, val _transRowId : Int, val ammount : Double) : ReconciliationRow{
+    @JsonIgnoreProperties
+    override fun transNumReconciliation(): Int {
+        return _transId
+    }
+
+    @JsonIgnoreProperties
+    override fun transRowId(): Int {
+        return _transRowId
+    }
+
+    @JsonIgnoreProperties
+    override fun reconcileAmount(): Double {
+        return abs(ammount)
+    }
 }

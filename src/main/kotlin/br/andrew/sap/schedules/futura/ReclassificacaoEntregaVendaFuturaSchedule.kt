@@ -48,7 +48,7 @@ class ReclassificacaoEntregaVendaFuturaSchedule(
     @Value("\${venda-futura.adiantamento-item:none}") val vfItemAdiantamento : String,
     @Value("\${venda-futura.conta-controle}") val contaControleRedutoraPassivo : String) {
 
-    val logger: Logger = LoggerFactory.getLogger(ConciliacaoVendaFuturaSchedule::class.java)
+    val logger: Logger = LoggerFactory.getLogger(ReclassificacaoEntregaVendaFuturaSchedule::class.java)
 
 
     @Scheduled(fixedDelay = 1, timeUnit = TimeUnit.MINUTES)
@@ -81,7 +81,7 @@ class ReclassificacaoEntregaVendaFuturaSchedule(
                         it.Reference = invoice.docNum
                     })
             internalReconciliationsService.save(
-                InternalReconciliationsBuilder(invoice,journalEntrie,docTotal).build()
+                InternalReconciliationsBuilder(invoice,journalEntrie).build()
             )
         }
     }
@@ -194,8 +194,7 @@ class ReclassificacaoEntregaVendaFuturaSchedule(
                     internalReconciliationsService.save(
                         InternalReconciliationsBuilder(
                             adiantamentoSalvo,
-                            devolucaoApropriacao,
-                            devolucao.DocTotal?.toDoubleOrNull() ?: throw Exception("Documento sem total adequado")
+                            devolucaoApropriacao
                         ).build()
                     )
                 }

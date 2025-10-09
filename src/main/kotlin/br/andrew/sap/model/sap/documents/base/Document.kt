@@ -4,9 +4,12 @@ import br.andrew.sap.model.enums.Cancelled
 import br.andrew.sap.model.WarehouseDefault
 import br.andrew.sap.model.sap.documents.DocumentStatus
 import br.andrew.sap.model.forca.EnderecoId
+import br.andrew.sap.model.sap.DebOrCredt
+import br.andrew.sap.model.sap.ReconciliationListRows
 import br.andrew.sap.model.sap.ReconciliationRow
 import br.andrew.sap.model.sap.documents.DocumentTypes
 import br.andrew.sap.model.sap.documents.base.adiantamento.DownPaymentsToDraw
+import br.andrew.sap.model.self.vendafutura.ContratoParse.Companion.parse
 import br.andrew.sap.model.uzzipay.DataRetonroPixQrCode
 import br.andrew.sap.model.uzzipay.RequestPixDueDate
 import br.andrew.sap.model.uzzipay.Transaction
@@ -24,6 +27,7 @@ import java.math.RoundingMode
 import java.time.LocalDateTime
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
+import kotlin.collections.mapIndexed
 
 @JsonNaming(PropertyNamingStrategies.UpperCamelCaseStrategy::class)
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -32,7 +36,7 @@ open class Document(val CardCode : String,
                     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "YYY-MM-dd", timezone = "UTC")
                     val DocDueDate : String?,
                     val DocumentLines : List<DocumentLines>,
-                    private val BPL_IDAssignedToInvoice : String) : ReconciliationRow, BatchId{
+                    private val BPL_IDAssignedToInvoice : String) : ReconciliationListRows, BatchId{
 
     var comments: String? = null
     var docDate :String? = null
@@ -171,8 +175,10 @@ open class Document(val CardCode : String,
     }
 
     @JsonIgnore
-    override fun transNumReconciliation(): Int {
-        return this.TransNum ?: throw Exception("Nao existe numero de transaction")
+    override fun getReconciliationRows(debOrCredt: DebOrCredt): List<ReconciliationRow> {
+        return this.documentInstallments?.mapIndexed{index : Int, it : Installment ->
+            it.getReconciliationRow(this.TransNum ?: throw Exception("Nao existe numero de transaction"),index)
+        }?: throw throw Exception("Nao existe parcelas")
     }
 
     override fun getId(): String {
