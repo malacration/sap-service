@@ -169,8 +169,15 @@ class BusinessPartnersController(
     }
 
     @GetMapping("contas-receber/")
-    fun getContasReceberByCliente( @RequestParam CardCode: String): List<ContasReceberDto> {
-        return service.getContasReceberByCardCode(CardCode)
+    fun getContasReceberByCliente(@RequestParam("CardCode") cardCode: String): ResponseEntity<NextLink<ContasReceberDto>> {
+          val result = service.getContasReceberByCardCode(cardCode)
+          return ResponseEntity.ok(result)
+      }
+
+    @PostMapping("/contas-receber/nextlink")
+    fun nextLinkContasReceber(@RequestBody link: String, auth: Authentication): ResponseEntity<NextLink<ContasReceberDto>> {
+        val result = service.next(link).tryGetNextValues<ContasReceberDto>()
+        return ResponseEntity.ok(result)
     }
 
 }

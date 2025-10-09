@@ -158,7 +158,7 @@ class BusinessPartnersService(
         return result.tryGetPageValues<BusinessPartner>(page)
     }
 
-    fun getContasReceberByCardCode(cardCode: String): List<ContasReceberDto> {
+    fun getContasReceberByCardCode(cardCode: String): NextLink<ContasReceberDto> {
         if (cardCode.isBlank()) {
             throw IllegalArgumentException("O parâmetro 'cardCode' não pode estar vazio.")
         }
@@ -171,6 +171,6 @@ class BusinessPartnersService(
             .execute("contas-receber.sql", parametros)!!
             .tryGetNextValues()
 
-        return result.content
+        return result
     }
 }
