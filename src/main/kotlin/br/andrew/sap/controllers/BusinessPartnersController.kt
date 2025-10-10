@@ -6,6 +6,7 @@ import br.andrew.sap.infrastructure.odata.Predicate
 import br.andrew.sap.model.sap.Attachment
 import br.andrew.sap.model.ContactOpaque
 import br.andrew.sap.model.authentication.User
+import br.andrew.sap.model.dto.ContasReceberDto
 import br.andrew.sap.model.forca.Cliente
 import br.andrew.sap.model.sap.documents.OrderSales
 import br.andrew.sap.model.sap.partner.BusinessPartner
@@ -165,6 +166,18 @@ class BusinessPartnersController(
     @GetMapping("/cpf-cnpj/teste/{cpfCnpj}")
     fun teste(@PathVariable cpfCnpj : String, @RequestParam(name = "type", defaultValue = "C") tipo : BusinessPartnerType): List<ContactOpaque> {
         return service.getByCpfCnpj(cpfCnpj,tipo).getContactOpaque()
+    }
+
+    @GetMapping("contas-receber/")
+    fun getContasReceberByCliente(@RequestParam("CardCode") cardCode: String): ResponseEntity<NextLink<ContasReceberDto>> {
+          val result = service.getContasReceberByCardCode(cardCode)
+          return ResponseEntity.ok(result)
+      }
+
+    @PostMapping("/contas-receber/nextlink")
+    fun nextLinkContasReceber(@RequestBody link: String, auth: Authentication): ResponseEntity<NextLink<ContasReceberDto>> {
+        val result = service.next(link).tryGetNextValues<ContasReceberDto>()
+        return ResponseEntity.ok(result)
     }
 
 }
