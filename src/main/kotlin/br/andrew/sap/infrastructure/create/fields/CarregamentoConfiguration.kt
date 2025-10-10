@@ -40,7 +40,8 @@ class CarregamentoConfiguration(val userFieldsMDService: UserFieldsMDService,
                     it.ValidValuesMD = listOf(
                         ValuesMd("Aberto", "Aberto"),
                         ValuesMd("Fechado", "Fechado"),
-                        ValuesMd("Cancelado", "Cancelado")
+                        ValuesMd("Cancelado", "Cancelado"),
+                        ValuesMd("Falhou", "Falhou")
                     )
                     it.defaultValue = "Aberto"
                 },

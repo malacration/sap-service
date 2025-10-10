@@ -2,9 +2,8 @@ package br.andrew.sap.services
 
 import br.andrew.sap.infrastructure.odata.*
 import br.andrew.sap.model.envrioments.SapEnvrioment
-import br.andrew.sap.model.sap.Carregamento
+import br.andrew.sap.model.logistica.Carregamento
 import br.andrew.sap.model.sap.DocEntry
-import br.andrew.sap.model.sap.documents.OrderSales
 import br.andrew.sap.services.abstracts.EntitiesService
 import br.andrew.sap.services.abstracts.SqlQueriesService
 import org.springframework.stereotype.Service
