@@ -1,4 +1,5 @@
 SELECT
+    "T0"."DocEntry",
     "T0"."DocNum",
     "T0"."CardCode",
     "T0"."CardName",

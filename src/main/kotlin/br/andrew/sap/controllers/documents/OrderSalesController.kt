@@ -129,7 +129,7 @@ class OrderSalesController(val ordersService: OrdersService,
 
 
     @GetMapping("/search2")
-    fun search2(@RequestParam("U_Ordem_Carregamento") U_Ordem_Carregamento: Int): NextLink<OrderSales> {
+    fun search2(@RequestParam("U_Ordem_Carregamento") U_Ordem_Carregamento: String): NextLink<OrderSales> {
         val result = ordersService.Procura(U_Ordem_Carregamento)
         return result ?: NextLink(emptyList(), "")
     }

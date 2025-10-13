@@ -9,5 +9,14 @@ import com.fasterxml.jackson.databind.annotation.JsonNaming
 @JsonInclude(JsonInclude.Include.NON_NULL)
 data class CarregamentoDto(
         val ordemCarregamento: Carregamento,
-        val pedidos : List<Int>
+        val pedidos : List<Int>,
+        val pedidosRemover : List<Int> = listOf()
 )
+
+
+class PedidoLinha(val docEntry : Int, val lineNum : Int){
+
+        fun criaPedidoUpdate(orderId : Int): PedidoUpdateLine {
+                return PedidoUpdateLine(docEntry,lineNum,orderId)
+        }
+}

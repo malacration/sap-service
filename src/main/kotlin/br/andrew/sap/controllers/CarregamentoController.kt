@@ -10,7 +10,6 @@ import br.andrew.sap.model.logistica.PedidoUpdateLine
 import br.andrew.sap.model.sap.documents.DocumentTypes
 import br.andrew.sap.model.sap.documents.OrderSales
 import br.andrew.sap.services.*
-import br.andrew.sap.services.abstracts.EntitiesService
 import br.andrew.sap.services.abstracts.SqlQueriesService
 import br.andrew.sap.services.batch.BatchList
 import br.andrew.sap.services.batch.BatchMethod
@@ -73,32 +72,44 @@ class CarregamentoController(val carregamentoServico: CarregamentoService,
 
     @PostMapping()
     fun save(@RequestBody dto: CarregamentoDto){
-        if(dto.ordemCarregamento.DocEntry == null){
-            val ordemCriada = carregamentoServico.save(dto.ordemCarregamento).tryGetValue<Carregamento>()
-            try {
-                val listeTripleBatch = dto.pedidos.map{
-                    val order = pedidoVendaService.getById(it).tryGetValue<OrderSales>()
+        val isNewOrder = dto.ordemCarregamento.DocEntry == null
+        val ordemCriada = if(isNewOrder){
+            carregamentoServico.save(dto.ordemCarregamento).tryGetValue<Carregamento>()
+        }else{
+            dto.ordemCarregamento
+            //TODO arrumar esse updatge provavelmente se fizer o bind no front vai funcionar
+            //carregamentoServico.update(dto.ordemCarregamento,dto.ordemCarregamento.DocEntry.toString())!!.tryGetValue<Carregamento>()
+        }
 
-                    val pedidosUpdate = PedidoUpdate(
-                        order.DocEntry.toString(),
-                        order.DocumentLines.map { PedidoUpdateLine(it.DocEntry!!,it.LineNum!!,ordemCriada.DocEntry!!) }
-                    )
-                    Triple(BatchMethod.PATCH,pedidosUpdate,pedidoVendaService)
-                }
-                batchService.run(BatchList().addAll(listeTripleBatch))
-            }catch (e : Exception){
+        try {
+            val tripleAdicionar = dto.pedidos.map{
+                val order = pedidoVendaService.getById(it).tryGetValue<OrderSales>()
+
+                val pedidosUpdate = PedidoUpdate(
+                    order.DocEntry.toString(),
+                    order.DocumentLines.map { PedidoUpdateLine(it.DocEntry!!,it.LineNum!!,ordemCriada.DocEntry) }
+                )
+                Triple(BatchMethod.PATCH,pedidosUpdate,pedidoVendaService)
+            }
+
+            val tripleRemover = dto.pedidosRemover.map{
+                val order = pedidoVendaService.getById(it).tryGetValue<OrderSales>()
+
+                val pedidosUpdate = PedidoUpdate(
+                    order.DocEntry.toString(),
+                    order.DocumentLines.map { PedidoUpdateLine(it.DocEntry!!,it.LineNum!!,null) }
+                )
+                Triple(BatchMethod.PATCH,pedidosUpdate,pedidoVendaService)
+            }
+            batchService.run(BatchList().addAll(tripleAdicionar).addAll(tripleRemover))
+        }catch (e : Exception){
+            if(isNewOrder){
                 //TODO mudar para falhou e na lista nao listar nada que tenha o status Falhou
                 ordemCriada.also { it.U_Status = "Cancelado" }
                 carregamentoServico.update(ordemCriada,ordemCriada.DocEntry.toString())
-                throw e
             }
-            //estou salvando
-        }else{
-            //estou fazendo update
+            throw e
         }
-            //e
-        println("windson")
-
     }
 
     @PostMapping("/angular")

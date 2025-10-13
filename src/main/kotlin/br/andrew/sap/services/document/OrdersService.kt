@@ -55,10 +55,10 @@ class OrdersService(val sqlQueriesService : SqlQueriesService, env: SapEnvriomen
         return sqlQueriesService.nextLink(nextPage)!!.tryGetNextValues()
     }
 
-    fun Procura(idOrdemCarregamento: Int): NextLink<OrderSales>? {
+    fun Procura(idOrdemCarregamento: String): NextLink<OrderSales>? {
         val parameters = listOf(
-            Parameter("U_ORD_CARREGAMENTO2", idOrdemCarregamento)
-        )
+                Parameter("U_ORD_CARREGAMENTO2", idOrdemCarregamento)
+                )
         return sqlQueriesService
             .execute("ord-carregamento.sql", parameters)
             ?.tryGetNextValues()
