@@ -14,7 +14,6 @@ import br.andrew.sap.model.sap.documents.base.Product
 import br.andrew.sap.model.self.vendafutura.BoletoVf
 import br.andrew.sap.model.self.vendafutura.Contrato
 import br.andrew.sap.schedules.futura.Soma
-import br.andrew.sap.schedules.futura.VendaFuturaScheduled
 import br.andrew.sap.services.AuthService
 import br.andrew.sap.services.abstracts.EntitiesService
 import br.andrew.sap.services.abstracts.SqlQueriesService

@@ -50,7 +50,7 @@ class ConciliacaoVendaFuturaSchedule(
     val logger: Logger = LoggerFactory.getLogger(ConciliacaoVendaFuturaSchedule::class.java)
 
 
-    @Scheduled(fixedDelay = 1, timeUnit = TimeUnit.MINUTES)
+    @Scheduled(fixedDelay = 15, timeUnit = TimeUnit.MINUTES)
     fun execute() {
         val filterReclassificacaoEntrega = Filter(
             Predicate("TransactionCode", TransactionCodeTypes.VFET, Condicao.EQUAL),
@@ -114,8 +114,4 @@ class ConciliacaoVendaFuturaSchedule(
                 }
         }
     }
-}
-
-class Soma(var soma : BigDecimal?){
-
 }
