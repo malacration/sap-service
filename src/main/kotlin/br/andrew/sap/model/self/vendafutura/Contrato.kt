@@ -1,5 +1,8 @@
 package br.andrew.sap.model.self.vendafutura
 
+import br.andrew.sap.model.enums.Cancelled
+import br.andrew.sap.model.sap.documents.DocumentTypes
+import br.andrew.sap.model.sap.documents.base.Document
 import br.andrew.sap.services.stock.ItemsService
 import br.andrew.sap.services.batch.BatchId
 import br.andrew.sap.services.pricing.ComissaoService
@@ -87,6 +90,21 @@ class Contrato(
 
     fun totalProdutos(): BigDecimal {
         return itens.map{ it.total() }.sumOf { it }
+    }
+
+    fun tudoEntregue(entregas: List<Document>): Boolean {
+        val totais: Map<String, Double> = entregas.asSequence()
+            .filter { it.Cancelled == Cancelled.tNO }
+            .flatMap { e ->
+                val sign = if (e.docObjectCode == DocumentTypes.oCreditNotes) -1.0 else 1.0
+                e.DocumentLines.asSequence().map { it.ItemCode to ((it.Quantity ?: "0").replace(',', '.').toDoubleOrNull() ?: 0.0) * sign }
+            }
+            .groupBy { it.first ?: throw Exception("Nao e permitido item sem ItemCode") }
+            .mapValues { (_, xs) -> xs.sumOf { it.second } }
+
+        return !this.itens.any {
+            totais[it.U_itemCode] != it.U_quantity
+        }
     }
 
     companion object{

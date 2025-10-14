@@ -23,6 +23,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.context.annotation.Profile
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
+import java.util.concurrent.TimeUnit
 
 
 @Component
@@ -44,7 +45,7 @@ class VendaFuturaScheduled(
     val logger: Logger = LoggerFactory.getLogger(VendaFuturaScheduled::class.java)
 
 
-    @Scheduled(fixedDelay = 3000)
+    @Scheduled(fixedDelay = 30, timeUnit = TimeUnit.SECONDS)
     fun execute() {
         filiais.forEach { filial ->
         sqlQueriesService.execute(

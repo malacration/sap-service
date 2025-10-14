@@ -51,7 +51,7 @@ class ReclassificacaoEntregaVendaFuturaSchedule(
     val logger: Logger = LoggerFactory.getLogger(ReclassificacaoEntregaVendaFuturaSchedule::class.java)
 
 
-    @Scheduled(fixedDelay = 1, timeUnit = TimeUnit.MINUTES)
+    @Scheduled(fixedDelay = 10, timeUnit = TimeUnit.MINUTES)
     fun execute() {
         val entregasFilter = Filter(
             Predicate("U_venda_futura",0,Condicao.GREAT),
@@ -86,7 +86,7 @@ class ReclassificacaoEntregaVendaFuturaSchedule(
         }
     }
 
-    @Scheduled(fixedDelay = 1, timeUnit = TimeUnit.MINUTES)
+    @Scheduled(fixedDelay = 10, timeUnit = TimeUnit.MINUTES)
     fun estorno() {
         val filter = Filter(
             Predicate("U_venda_futura",0,Condicao.GREAT),
