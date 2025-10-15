@@ -201,12 +201,42 @@ class CarregamentoController(val carregamentoServico: CarregamentoService,
 //}
 
 
+//    @PostMapping("/generate-from-loading-order/{docEntry}")
+//    fun saveForAngular(@PathVariable docEntry: Int, @RequestBody lotesAgrupados: List<BatchesGroupByItemCode>): List<BatchResponse> {
+//        val docEntrys = carregamentoServico.docEntryPedido(docEntry).map { it.DocEntry }
+//        val pedidos = pedidoVendaService.getAll(OrderSales::class.java, Filter("DocEntry", docEntrys, Condicao.IN))
+//
+////         Assign the batch numbers directly (assuming BatchNumbers expects List<BatchStock>)
+//        pedidos.forEach { order ->
+//            order.DocumentLines
+//                .filter { it.U_ORD_CARREGAMENTO2 == docEntry }
+//                .forEach { currentItem ->
+//                    val lotes = lotesAgrupados
+//                        .firstOrNull { it.ItemCode == currentItem.ItemCode }
+//                        ?.Batches
+//                        ?: throw Exception("Erro ao fazer bind de lote para item ${currentItem.ItemCode}")
+//
+//                    lotes.forEach { batch ->
+//                        batch.ItemCode = currentItem.ItemCode
+//                    }
+//                    currentItem.BatchNumbers = lotes
+//                }
+//        }
+//
+//        //TODO Desaggrupar batch
+//        //TODO criar no clickup - criar um Bean que recebe a filial e retorna a sequenceCode de NFe (defaultWharehouse)
+//        val batchList = BatchList()
+//        pedidos.map { it.toDocument(DocumentTypes.oInvoices, 27) }.forEach {
+//            batchList.add(BatchMethod.POST, it, invoiceService)
+//        }
+//        return batchService.run(batchList)
+//    }
+
     @PostMapping("/generate-from-loading-order/{docEntry}")
     fun saveForAngular(@PathVariable docEntry: Int, @RequestBody lotesAgrupados: List<BatchesGroupByItemCode>): List<BatchResponse> {
         val docEntrys = carregamentoServico.docEntryPedido(docEntry).map { it.DocEntry }
         val pedidos = pedidoVendaService.getAll(OrderSales::class.java, Filter("DocEntry", docEntrys, Condicao.IN))
 
-//         Assign the batch numbers directly (assuming BatchNumbers expects List<BatchStock>)
         pedidos.forEach { order ->
             order.DocumentLines
                 .filter { it.U_ORD_CARREGAMENTO2 == docEntry }
@@ -223,14 +253,26 @@ class CarregamentoController(val carregamentoServico: CarregamentoService,
                 }
         }
 
-        //TODO Desaggrupar batch
-        //TODO criar no clickup - criar um Bean que recebe a filial e retorna a sequenceCode de NFe (defaultWharehouse)
         val batchList = BatchList()
-        pedidos.map { it.toDocument(DocumentTypes.oInvoices, 27) }.forEach {
-            batchList.add(BatchMethod.POST, it, invoiceService)
+
+        pedidos.forEach { pedido ->
+            val bplId = pedido.getBPL_IDAssignedToInvoice()
+
+            val sequenceCodes = carregamentoServico.procuraSequenceCode(bplId)
+            val sequenceCode = sequenceCodes.firstOrNull()
+                ?: throw Exception("Nenhum SequenceCode encontrado para a filial $bplId")
+
+            val seqCodeValue = sequenceCode.SeqCode
+                ?: throw Exception("SeqCode não encontrado para a filial $bplId")
+
+            val documento = pedido.toDocument(DocumentTypes.oInvoices, seqCodeValue)
+
+            batchList.add(BatchMethod.POST, documento, invoiceService)
         }
+
         return batchService.run(batchList)
     }
+
 
     @PostMapping("/{id}/cancelar-pedidos")
     fun cancelarPedidos(@PathVariable id: String, @RequestBody request: Map<String, List<Int>>, auth: Authentication): ResponseEntity<Any> {

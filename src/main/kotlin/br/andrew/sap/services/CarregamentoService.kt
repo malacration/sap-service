@@ -4,6 +4,8 @@ import br.andrew.sap.infrastructure.odata.*
 import br.andrew.sap.model.envrioments.SapEnvrioment
 import br.andrew.sap.model.logistica.Carregamento
 import br.andrew.sap.model.sap.DocEntry
+import br.andrew.sap.model.sap.SequenceCode
+import br.andrew.sap.model.sap.documents.OrderSales
 import br.andrew.sap.services.abstracts.EntitiesService
 import br.andrew.sap.services.abstracts.SqlQueriesService
 import org.springframework.stereotype.Service
@@ -51,6 +53,15 @@ class CarregamentoService(val sqlQueriesService : SqlQueriesService,env: SapEnvr
         return sqlQueriesService
             .execute("pedidoeestoque.sql", parameters)
             ?.tryGetValues<Carregamento>()
+            ?: emptyList()
+    }
+
+    fun procuraSequenceCode(BPLId: String): List<SequenceCode> {
+        val parameters = listOf(Parameter("BPLId", BPLId))
+
+        return sqlQueriesService
+            .execute("procura-sequence-code.sql", parameters)
+            ?.tryGetValues<SequenceCode>()
             ?: emptyList()
     }
 }
