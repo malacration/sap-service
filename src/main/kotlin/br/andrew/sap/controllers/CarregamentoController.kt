@@ -139,98 +139,11 @@ class CarregamentoController(val carregamentoServico: CarregamentoService,
         return ResponseEntity.ok(result?.tryGetValue<Carregamento>())
     }
 
-    @PostMapping("/{id}/finalizar")
-    fun finalizar(@PathVariable id : String, auth : Authentication): ResponseEntity<Carregamento> {
-        if(auth !is User)
-            return ResponseEntity.noContent().build()
-
-        val carregamento = carregamentoServico.getById(id).tryGetValue<Carregamento>()
-        carregamento.U_Status = "Fechado"
-
-        val result = carregamentoServico.update(carregamento, id)
-        return ResponseEntity.ok(result?.tryGetValue<Carregamento>())
-    }
-
     @GetMapping("estoque-em-carregamento")
     fun getEstoqueEmCarregamento(@RequestParam("ItemCode") ItemCode: String): ResponseEntity<Int> {
         val result = carregamentoServico.getEstoqueEmCarregamento("'$ItemCode'")
         return ResponseEntity.ok(result)
     }
-
-
-//    @PostMapping("/generate-from-loading-order/{docEntry}")
-//    fun saveForAngular(@PathVariable docEntry: Int, @RequestBody lotesAgrupados: List<BatchesGroupByItemCode>): List<BatchResponse> {
-//        val docEntrys = carregamentoServico.docEntryPedido(docEntry).map { it.DocEntry }
-//        val pedidos = pedidoVendaService.getAll(OrderSales::class.java, Filter("DocEntry", docEntrys, Condicao.IN))
-//
-////         Assign the batch numbers directly (assuming BatchNumbers expects List<BatchStock>)
-//        pedidos.forEach { order ->
-//            order.DocumentLines.filter { it.U_ORD_CARREGAMENTO2 == docEntry }.forEach { currentItem ->
-//                currentItem.BatchNumbers = lotesAgrupados
-//                    .filter { it.ItemCode == currentItem.ItemCode }
-//                    .first().Batches ?: throw Exception("Erro ao fazer bind de lote")
-//            }
-//        }
-//
-//        //TODO Desaggrupar batch
-//        //TODO criar no clickup - criar um Bean que recebe a filial e retorna a sequenceCode de NFe (defaultWharehouse)
-//        val batchList = BatchList()
-//        pedidos.map { it.toDocument(DocumentTypes.oInvoices, 27) }.forEach {
-//
-////            invoiceService.save(it.also {
-////
-////                it.DocumentLines.forEach { item -> item.BatchNumbers.forEach {
-////                    batch ->
-////                    batch.ItemCode = item.ItemCode
-////                    batch.inDate = null
-////                    batch.itemName = null
-////                } }
-////            })
-//            batchList.add(BatchMethod.POST, it, invoiceService)
-//        }
-//        return batchService.run(batchList)
-//    }
-//
-////    invoiceService.save(it.also {
-////        it.docDate = null
-////        it.docNum = null
-////        it.sequenceModel = "39"
-////        it.SequenceCode = 27
-////    })
-//
-//}
-
-
-//    @PostMapping("/generate-from-loading-order/{docEntry}")
-//    fun saveForAngular(@PathVariable docEntry: Int, @RequestBody lotesAgrupados: List<BatchesGroupByItemCode>): List<BatchResponse> {
-//        val docEntrys = carregamentoServico.docEntryPedido(docEntry).map { it.DocEntry }
-//        val pedidos = pedidoVendaService.getAll(OrderSales::class.java, Filter("DocEntry", docEntrys, Condicao.IN))
-//
-////         Assign the batch numbers directly (assuming BatchNumbers expects List<BatchStock>)
-//        pedidos.forEach { order ->
-//            order.DocumentLines
-//                .filter { it.U_ORD_CARREGAMENTO2 == docEntry }
-//                .forEach { currentItem ->
-//                    val lotes = lotesAgrupados
-//                        .firstOrNull { it.ItemCode == currentItem.ItemCode }
-//                        ?.Batches
-//                        ?: throw Exception("Erro ao fazer bind de lote para item ${currentItem.ItemCode}")
-//
-//                    lotes.forEach { batch ->
-//                        batch.ItemCode = currentItem.ItemCode
-//                    }
-//                    currentItem.BatchNumbers = lotes
-//                }
-//        }
-//
-//        //TODO Desaggrupar batch
-//        //TODO criar no clickup - criar um Bean que recebe a filial e retorna a sequenceCode de NFe (defaultWharehouse)
-//        val batchList = BatchList()
-//        pedidos.map { it.toDocument(DocumentTypes.oInvoices, 27) }.forEach {
-//            batchList.add(BatchMethod.POST, it, invoiceService)
-//        }
-//        return batchService.run(batchList)
-//    }
 
     @PostMapping("/generate-from-loading-order/{docEntry}")
     fun saveForAngular(@PathVariable docEntry: Int, @RequestBody lotesAgrupados: List<BatchesGroupByItemCode>): List<BatchResponse> {
@@ -330,14 +243,6 @@ class CarregamentoController(val carregamentoServico: CarregamentoService,
             return ResponseEntity.badRequest().body(mapOf("error" to e.message))
         }
     }
-
-//    invoiceService.save(it.also {
-//        it.docDate = null
-//        it.docNum = null
-//        it.sequenceModel = "39"
-//        it.SequenceCode = 27
-//    })
-
 }
 
 // Todo 2 pedidos que tenha 3 itens ao total 1 dos itens está em ambos os pedidos.
