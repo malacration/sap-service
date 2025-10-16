@@ -1,20 +1,20 @@
 package br.andrew.sap.security
 
 import br.andrew.sap.infrastructure.security.RoleBasedAuthorizationFilter
-import br.andrew.sap.infrastructure.security.roles.RolesEnum
 import br.andrew.sap.model.authentication.User
+import br.andrew.sap.model.authentication.UserOriginEnum
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 
 class RoleBasedAuthorizationFilterTest {
 
-    val semRole = User("windson", listOf())
-    val admin = User("windson", listOf(RolesEnum.admin))
-    val vendedor = User("windson", listOf(RolesEnum.vendedor))
-    val vendedor_admin = User("windson", listOf(RolesEnum.vendedor_admin))
-    val cliente = User("windson", listOf(RolesEnum.cliente))
+    val semRole = User("windson", "windson",UserOriginEnum.EmployeesInfo,"", "","", listOf())
+    val admin = User("windson", "windson",UserOriginEnum.EmployeesInfo,"", "","", listOf("admin"))
+    val vendedor = User("windson", "windson",UserOriginEnum.EmployeesInfo,"", "","",listOf("vendedor"))
+    val vendedor_admin = User("windson", "windson",UserOriginEnum.EmployeesInfo,"", "","",listOf("vendedor_admin"))
+    val cliente = User("windson", "windson",UserOriginEnum.EmployeesInfo,"", "","", listOf("cliente"))
 
-    val autorization = RoleBasedAuthorizationFilter(MockRuleService())
+    val autorization = RoleBasedAuthorizationFilter(MockRuleService(),"")
 
     @Test
     fun semRole(){

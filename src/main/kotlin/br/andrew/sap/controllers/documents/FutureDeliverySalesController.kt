@@ -32,19 +32,6 @@ class FutureDeliverySalesController(
         return invoiceService.findInvoiceById(id, page)
     }
 
-    @GetMapping("/contrato-venda-futura/{idContrato}")
-    fun get(@PathVariable idContrato: Int): List<Document> {
-        val filter = Filter(Predicate("U_venda_futura", idContrato, Condicao.EQUAL),
-            Predicate("DownPaymentAmountSC", 0, Condicao.EQUAL))
-        return listOf(creditNotesService,invoiceService)
-            .map { it.getAll(Document::class.java,filter) }
-            .flatMap { it }
-            .sortedWith(compareBy(
-                { it.docDate },
-                { it.docObjectCode?.ordinal }
-            ))
-    }
-
     @GetMapping("/pedidos/{idContrato}")
     fun pedidos(@PathVariable idContrato: Int): List<Document> {
         val filter = Filter(Predicate("U_venda_futura", idContrato, Condicao.EQUAL),

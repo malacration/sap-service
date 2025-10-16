@@ -1,6 +1,5 @@
 package br.andrew.sap.services.security
 
-import br.andrew.sap.infrastructure.security.roles.RolesEnum
 import com.fasterxml.jackson.annotation.JsonCreator
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper
@@ -24,9 +23,9 @@ class RuleService(val resourceLoader: ResourceLoader) : iRuleService {
 
     private val yamlMapper = YAMLMapper().registerKotlinModule()
 
-    override fun get(role: RolesEnum): List<Rule> {
+    override fun get(role: String): List<Rule> {
         val roleRules = yamlMapper.readValue(getRulesResource().inputStream, RoleRules::class.java)
-        return roleRules.roles[role.toString()] ?: emptyList()
+        return roleRules.roles[role] ?: emptyList()
     }
 
     private fun getRulesResource(): Resource {

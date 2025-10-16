@@ -13,6 +13,7 @@ import org.springframework.data.domain.Pageable
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
 import java.time.LocalDate
+import java.util.concurrent.TimeUnit
 
 @Component
 @ConditionalOnProperty(value = ["lc.memo.enable"], havingValue = "true", matchIfMissing = false)
@@ -25,7 +26,7 @@ class AtualizarObservacaoLancamento(
 
     val logger: Logger = LoggerFactory.getLogger(AtualizarObservacaoLancamento::class.java)
 
-    @Scheduled(fixedDelay = 60000)
+    @Scheduled(fixedDelay = 15,  timeUnit = TimeUnit.MINUTES)
     fun execute() {
         val dataLimite = LocalDate.now().minusDays(dias).toString()
         val filter = Filter(

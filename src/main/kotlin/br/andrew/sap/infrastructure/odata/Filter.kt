@@ -3,10 +3,12 @@ package br.andrew.sap.infrastructure.odata
 import br.andrew.sap.model.enums.Cancelled
 
 
-class Filter(val propertie : MutableList<Predicate>, val defaultConector : String = "and") {
+class Filter(propertieImmutable : List<Predicate>, val defaultConector : String = "and") {
     constructor() : this(mutableListOf<Predicate>())
     constructor(vararg predicate: Predicate) : this(predicate.toMutableList())
     constructor(coluna: String, value: Any, condition : Condicao) : this(mutableListOf(Predicate(coluna,value,condition)))
+
+    val propertie : MutableList<Predicate> = propertieImmutable.toMutableList()
 
     override fun toString(): String {
         if(propertie.isEmpty())
@@ -25,18 +27,26 @@ class Filter(val propertie : MutableList<Predicate>, val defaultConector : Strin
     fun add(predicate: Predicate): Boolean {
         return propertie.add(predicate)
     }
+
+    fun addAll(propertie: List<Predicate>): Filter {
+        this.propertie.addAll(propertie)
+        return this
+    }
 }
 
-class Predicate(val coluna: String, val value: Any, val condicao: Condicao){
-    constructor(cancelado: Cancelled, condicao: Condicao) : this(Cancelled.column,cancelado,condicao)
+class Predicate(val coluna: String, val value: Any, val condicao: Condicao, val literal : Boolean = false){
+    constructor(cancelado: Cancelled, condicao: Condicao, literal : Boolean = false)
+            : this(Cancelled.column,cancelado,condicao, literal)
 
     override fun toString(): String {
         return if(value is Int)
             condicao.get(coluna,value.toString())
         else if(value is List<*>)
             condicao.get(coluna,value)
-        else
+        else if(!literal)
             condicao.get(coluna,"'$value'")
+        else
+            condicao.get(coluna,"$value")
     }
 
     fun toSql(): String {

@@ -7,6 +7,7 @@ import br.andrew.sap.services.stock.ItemsService
 import br.andrew.sap.services.ProductTreesService
 import br.andrew.sap.services.calculadora.CalculadoraHanddleService
 import br.andrew.sap.services.stock.ResourceService
+import jakarta.websocket.server.PathParam
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.data.domain.Pageable
 import org.springframework.security.core.Authentication
@@ -60,6 +61,15 @@ class CalculadoraPrecoController(
             Predicate("TreeCode",itemCodePrefix, Condicao.STARTS_WITH)
         )
         return productTreesService.get(filter)
+    }
+
+    @GetMapping("/last-price/{itemCode}/{deposito}")
+    fun lastPrice(
+        @PathVariable itemCode: String,
+        @PathVariable deposito: String,
+        page : Pageable,
+        auth : Authentication): List<LastPrice> {
+        return itemService.getLastPrice(itemCode, deposito)
     }
 
 }

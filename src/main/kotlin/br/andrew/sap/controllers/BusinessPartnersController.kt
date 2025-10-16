@@ -6,13 +6,13 @@ import br.andrew.sap.infrastructure.odata.Predicate
 import br.andrew.sap.model.sap.Attachment
 import br.andrew.sap.model.ContactOpaque
 import br.andrew.sap.model.authentication.User
+import br.andrew.sap.model.dto.ContasReceberDto
 import br.andrew.sap.model.forca.Cliente
 import br.andrew.sap.model.sap.documents.OrderSales
 import br.andrew.sap.model.sap.partner.BusinessPartner
 import br.andrew.sap.model.sap.partner.BusinessPartnerSlin
 import br.andrew.sap.model.sap.partner.BusinessPartnerType
 import br.andrew.sap.model.sap.partner.ReferenciaComercial
-import br.andrew.sap.model.self.vendafutura.Contrato
 import br.andrew.sap.services.*
 import br.andrew.sap.services.document.OrdersService
 import br.andrew.sap.services.security.OneTimePasswordService
@@ -35,7 +35,7 @@ import org.springframework.web.multipart.MultipartFile
 @RequestMapping("business-partners")
 class BusinessPartnersController(
     val service : BusinessPartnersService,
-    val OrderService : OrdersService,
+    val orderService : OrdersService,
     val refService : ReferenciaComercialService,
     val atualizacao: AtualizacaoCadastralService,
     val anexoController : AttachmentController,
@@ -157,7 +157,7 @@ class BusinessPartnersController(
         val predicados = mutableListOf(
             Predicate("CardCode", "${CardCode}", Condicao.EQUAL),
         )
-        return ResponseEntity.ok(OrderService
+        return ResponseEntity.ok(orderService
             .get(Filter(predicados), OrderBy(mapOf("DocEntry" to Order.DESC)))
             .tryGetValues<OrderSales>()
         )
@@ -166,6 +166,18 @@ class BusinessPartnersController(
     @GetMapping("/cpf-cnpj/teste/{cpfCnpj}")
     fun teste(@PathVariable cpfCnpj : String, @RequestParam(name = "type", defaultValue = "C") tipo : BusinessPartnerType): List<ContactOpaque> {
         return service.getByCpfCnpj(cpfCnpj,tipo).getContactOpaque()
+    }
+
+    @GetMapping("contas-receber/")
+    fun getContasReceberByCliente(@RequestParam("CardCode") cardCode: String): ResponseEntity<NextLink<ContasReceberDto>> {
+          val result = service.getContasReceberByCardCode(cardCode)
+          return ResponseEntity.ok(result)
+      }
+
+    @PostMapping("/contas-receber/nextlink")
+    fun nextLinkContasReceber(@RequestBody link: String, auth: Authentication): ResponseEntity<NextLink<ContasReceberDto>> {
+        val result = service.next(link).tryGetNextValues<ContasReceberDto>()
+        return ResponseEntity.ok(result)
     }
 
 }

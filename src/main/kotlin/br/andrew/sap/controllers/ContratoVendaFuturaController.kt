@@ -5,15 +5,17 @@ import br.andrew.sap.controllers.documents.QuotationsController
 import br.andrew.sap.infrastructure.odata.*
 import br.andrew.sap.model.authentication.User
 import br.andrew.sap.model.payment.PaymentDueDates
-import br.andrew.sap.model.sap.InternalReconciliationOpenTransRow
-import br.andrew.sap.model.sap.InternalReconciliations
-import br.andrew.sap.model.sap.ReconType
 import br.andrew.sap.model.sap.documents.CreditNotes
+import br.andrew.sap.model.sap.documents.DocumentStatus
 import br.andrew.sap.model.sap.documents.DownPaymentUnsetVendaFutura
+import br.andrew.sap.model.sap.documents.Invoice
+import br.andrew.sap.model.sap.documents.OrderSales
 import br.andrew.sap.model.sap.documents.base.Document
 import br.andrew.sap.model.sap.documents.futura.PedidoRetirada
 import br.andrew.sap.model.self.vendafutura.Contrato
+import br.andrew.sap.model.self.vendafutura.Item
 import br.andrew.sap.model.self.vendafutura.PedidoTroca
+import br.andrew.sap.model.self.vendafutura.Status
 import br.andrew.sap.services.ContratoVendaFuturaService
 import br.andrew.sap.services.InternalReconciliationsService
 import br.andrew.sap.services.RecomNum
@@ -27,10 +29,9 @@ import br.andrew.sap.services.document.DownPaymentService
 import br.andrew.sap.services.document.InvoiceService
 import br.andrew.sap.services.document.OrdersService
 import br.andrew.sap.services.pricing.ComissaoService
+import io.swagger.v3.oas.annotations.Parameter
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
-import org.springframework.data.domain.Page
-import org.springframework.data.domain.Pageable
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.Authentication
 import org.springframework.web.bind.annotation.*
@@ -44,24 +45,38 @@ class ContratoVendaFuturaController(
     val pedidoService : OrdersService,
     val itemService: ItemsService,
     val invoiceService : InvoiceService,
+    val creditNotesService: CreditNotesService,
     val comissaoService: ComissaoService,
     val adiantamentoService : DownPaymentService,
     val creditNoteService: CreditNotesService,
     val internalReconciliationsService: InternalReconciliationsService,
+    val orderService : OrdersService,
     val batchService: BatchService,
     @Value("\${venda-futura.entrega:9}") val utilizacaoEntregaVendaFutura : Int,
     val cotacaoController : QuotationsController){
     val logger = LoggerFactory.getLogger(ContratoVendaFuturaController::class.java)
 
     @GetMapping("")
-    fun get(auth : Authentication, page : Pageable): ResponseEntity<Page<Contrato>> {
+    fun get(
+        auth : Authentication,
+        @RequestParam(value = "status", defaultValue = "aberto") status : Status,
+        @RequestParam(value = "idContrato", defaultValue = "-1") idContrato : Int,
+        @RequestParam(value = "filial", defaultValue = "-1") filial : Int,
+            ): ResponseEntity<NextLink<Contrato>> {
         if(auth !is User)
             return ResponseEntity.noContent().build()
-        val contratos = service.get(Filter("U_vendedor",auth.getIdInt(),Condicao.EQUAL),
-            OrderBy(mapOf("U_dataCriacao" to Order.DESC, "DocEntry" to Order.DESC)),
-            page
-        ).tryGetPageValues<Contrato>(page)
-        return ResponseEntity.ok(contratos)
+
+        val resultado = service.getContratos(auth,status, idContrato, filial)?.tryGetNextValues<Contrato>()
+        return ResponseEntity.ok(resultado)
+    }
+
+    @GetMapping("/{id}/produtos")
+    fun getProdutos(@PathVariable id : Int, auth : Authentication): ResponseEntity<List<Item>> {
+        if(auth !is User)
+            return ResponseEntity.noContent().build()
+        return ResponseEntity.ok(
+            service.getById(id).tryGetValue<Contrato>().itens
+        )
     }
 
     @GetMapping("/{id}")
@@ -72,13 +87,26 @@ class ContratoVendaFuturaController(
         return ResponseEntity.ok(service.getById(id).tryGetValue<Contrato>())
     }
 
-    @GetMapping("all")
-    fun getAll(auth : Authentication, page : Pageable): ResponseEntity<Page<Contrato>> {
-        val contratos = service.get(Filter(),
-            OrderBy(mapOf("U_dataCriacao" to Order.DESC, "DocEntry" to Order.DESC)),
-            page
-        ).tryGetPageValues<Contrato>(page)
-        return ResponseEntity.ok(contratos)
+    @PostMapping("/nextlink")
+    fun nextLink(@RequestBody link : String, auth : Authentication): ResponseEntity<NextLink<Contrato>> {
+        val nextLinkDto =
+        return ResponseEntity.ok(
+            service.next(link).tryGetNextValues<Contrato>()
+        )
+    }
+
+    @GetMapping("/entregas/{idContrato}")
+    fun entregas(@PathVariable idContrato: Int): List<Document> {
+        val filter = Filter(Predicate("U_venda_futura", idContrato, Condicao.EQUAL),
+            Predicate("DownPaymentAmountSC", 0, Condicao.EQUAL))
+        return listOf(creditNotesService,invoiceService)
+            .map { it.getAll(Document::class.java,filter) }
+            .flatMap { it }
+            .filter{ it.DocumentLines.none { it.BaseType == 203}}
+            .sortedWith(compareBy(
+                { it.docDate },
+                { it.docObjectCode?.ordinal }
+            ))
     }
 
     @PostMapping("pedido-retirada")
@@ -89,11 +117,37 @@ class ContratoVendaFuturaController(
         val contrato = service.get(Filter(
             Predicate("DocEntry",pedidoRetirada.docEntryVendaFutura,Condicao.EQUAL)
         )).tryGetValues<Contrato>().firstOrNull() ?: throw  Exception("O contrato nao foi encontrado")
-        val cotacao = pedidoRetirada.parse(contrato,utilizacaoEntregaVendaFutura).also {
+        val orderSales = orderService.getById(contrato.U_orderDocEntry).tryGetValue<OrderSales>()
+
+        val cotacao = pedidoRetirada.parse(contrato,utilizacaoEntregaVendaFutura,null,orderSales).also {
             it.journalMemo = "Entrega de mercadoria ref a contrato Nº ${contrato.DocEntry}"
             it.comments = it.journalMemo
         }
         return ResponseEntity.ok(cotacaoController.saveForAngular(cotacao,auth))
+    }
+
+    @GetMapping("/encerrar/{docEntryVendaFutura}")
+    fun encerrar(@PathVariable docEntryVendaFutura : Int) {
+        val docMarketing = Filter(
+            Predicate("U_venda_futura",docEntryVendaFutura,Condicao.EQUAL),
+            Predicate("DocumentStatus",DocumentStatus.bost_Open,Condicao.EQUAL)
+        )
+        val contrato = service.getById(docEntryVendaFutura).tryGetValue<Contrato>()
+
+        val notas = invoiceService.get(docMarketing).tryGetValues<Invoice>()
+        if(notas.size > 0)
+            throw Exception("Existe entregas que não foram conciliadas.")
+
+        val boletosEmAberto = adiantamentoService.getByContratoVendaFutura(docEntryVendaFutura)
+            .filter { it.DocumentStatus == DocumentStatus.bost_Open }
+        if(boletosEmAberto.size > 0)
+            throw Exception("Existe boletos em abertos")
+
+        val adiantamentosPagos = adiantamentoService.adiantamentosAbertos(contrato.U_cardCode,docEntryVendaFutura)
+        if(adiantamentosPagos.size > 0)
+            throw Exception("Existe adiantamento pagos e não utilizado")
+
+        service.update("{\"U_status\": \"cancelado\"}",docEntryVendaFutura.toString())
     }
 
 
@@ -109,6 +163,12 @@ class ContratoVendaFuturaController(
         internalReconciliationsService
             .serviceCancel("{ \"InternalReconciliationParams\": { \"ReconNum\": \"${recomNums.first().ReconNum}\"} }")
         return recomNums
+    }
+
+    @GetMapping("/emitir-boletos/{docEntry}")
+    fun emitirBoleto(@PathVariable docEntry : Int){
+        val contrato = service.getById(docEntry).tryGetValue<Contrato>()
+        adiantamentoService.createAdiantamentoBycontrato(contrato,1)
     }
 
     @PostMapping("troca")

@@ -1,6 +1,7 @@
 package br.andrew.sap.infrastructure.security.jwt
 
 import br.andrew.sap.model.authentication.User
+import br.andrew.sap.model.authentication.UserOriginEnum
 import jakarta.servlet.FilterChain
 import jakarta.servlet.ServletRequest
 import jakarta.servlet.ServletResponse
@@ -20,7 +21,8 @@ class JwtAuthenticationFilter(private val jwtHandler: JwtHandler, private val di
                                   response: HttpServletResponse,
                                   filterChain: FilterChain) {
         if(disable && request.getHeader("Authorization") == null){
-            SecurityContextHolder.getContext().authentication = User("-1","Nenhum vendedor", listOf())
+            SecurityContextHolder.getContext().authentication = User("-1","Nenhum vendedor",
+                UserOriginEnum.SalePerson,"","","")
         }
         else if(!request.requestURL.contains("/otp/login")
             && !request.requestURL.contains("/logar")

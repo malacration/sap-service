@@ -12,7 +12,10 @@ import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.web.filter.OncePerRequestFilter
 import java.io.IOException
 
-class RoleBasedAuthorizationFilter(val service : RuleService) : OncePerRequestFilter() {
+class RoleBasedAuthorizationFilter(
+    val service : RuleService,
+    val context : String
+) : OncePerRequestFilter() {
 
     @Throws(ServletException::class, IOException::class)
     override fun doFilterInternal(
@@ -25,7 +28,8 @@ class RoleBasedAuthorizationFilter(val service : RuleService) : OncePerRequestFi
         val authentication: Authentication? = SecurityContextHolder.getContext().authentication
         if(authentication != null && authentication.isAuthenticated && !isAuthorized(path, method, authentication))
             response.sendError(HttpServletResponse.SC_FORBIDDEN, "Você não tem permissão para acessar este recurso.")
-        filterChain.doFilter(request, response)
+        else
+            filterChain.doFilter(request, response)
     }
 
     fun isAuthorized(path: String, method : String, authentication: Authentication): Boolean {
@@ -40,8 +44,8 @@ class RoleBasedAuthorizationFilter(val service : RuleService) : OncePerRequestFi
     }
 
     private fun matchPath(pattern: String, path: String): Boolean {
-        val adjustedPattern = if (!pattern.startsWith("/")) "/$pattern" else pattern
-        val adjustedPath = if (!path.startsWith("/")) "/$path" else path
+        val adjustedPattern = normalizePath(pattern)
+        val adjustedPath = normalizePath(path)
 
         if (adjustedPattern.endsWith("/**")) {
             return adjustedPath.startsWith(adjustedPattern.removeSuffix("/**"))
@@ -53,5 +57,23 @@ class RoleBasedAuthorizationFilter(val service : RuleService) : OncePerRequestFi
             .replace("__DOUBLE_WILDCARD__", ".*")
             .replace("/$", "(/.*)?")
         return adjustedPath.matches(Regex(regexPattern))
+    }
+
+    private fun normalizePath(p: String): String {
+        if (p.isEmpty()) return "/"
+        val withLeading = if (p.startsWith("/")) p else "/$p"
+        return removeContext(withLeading.replace(Regex("/+"), "/"))
+    }
+
+    private fun removeContext(path: String): String {
+        val ctxRaw = context.trim()
+        if (ctxRaw.isEmpty()) return path
+        val ctx = "/" + ctxRaw.trim('/')
+        if (path == ctx) return "/"
+        return if (path.startsWith("$ctx/")) {
+            path.removePrefix(ctx).let { if (it.isEmpty()) "/" else it }
+        } else {
+            path
+        }
     }
 }

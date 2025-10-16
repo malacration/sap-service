@@ -49,9 +49,13 @@ class ContratoVendaFuturaConfiguration(val userFieldsMDService: UserFieldsMDServ
             FieldMd("dataCriacao","Data de Criação","@AR_CONTRATO_FUTURO", DbType.db_Date),
             FieldMd("valorFrete","Valor Frete","@AR_CONTRATO_FUTURO", DbType.db_Float),
             FieldMd("filial","Filial","@AR_CONTRATO_FUTURO", DbType.db_Numeric),
+            FieldMd("observacao","observacao","@AR_CONTRATO_FUTURO", DbType.db_Memo),
             FieldMd("vendedor","Vendedor","@AR_CONTRATO_FUTURO", DbType.db_Float).also {
                 //TODO um dia ver se existe vendedor nesse vinculo
                 it.LinkedSystemObject = LinkedSystemObject.ulInventoryGenExit
+            },
+            FieldMd("status","status","@AR_CONTRATO_FUTURO", DbType.db_Alpha).also {
+                it.defaultValue = "aberto"
             },
         ).forEach {
             userFieldsMDService.findOrCreate(it)

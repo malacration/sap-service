@@ -2,8 +2,8 @@ package br.andrew.sap.security
 
 import br.andrew.sap.infrastructure.security.jwt.JwtHandler
 import br.andrew.sap.infrastructure.security.jwt.JwtSecretBean
-import br.andrew.sap.infrastructure.security.roles.RolesEnum
 import br.andrew.sap.model.authentication.User
+import br.andrew.sap.model.authentication.UserOriginEnum
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import org.springframework.security.core.authority.SimpleGrantedAuthority
@@ -14,8 +14,9 @@ class JwtHandlerTests {
 
     @Test
     fun testaTokenInicial(){
-        val authorities = listOf(RolesEnum.admin)
-        val userInput = User("id-windson","windson",authorities)
+        val authorities = listOf("admin")
+        val userInput = User("id-windson","windson",UserOriginEnum.EmployeesInfo,
+            "windson","","",authorities)
         val tokenOutput = service.getToken(userInput)
         val userOutput = service.getUser(tokenOutput.token)
 

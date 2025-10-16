@@ -44,12 +44,13 @@ class ConciliacaoVendaFuturaSchedule(
     @Value("\${venda-futura.adiantamento-item}") val itemConciliacaoVendaFutura : String,
     @Value("\${venda-futura.filiais:-2}") val filiais : List<Int>,
     @Value("\${venda-futura.sequencia_adiantamento}") val sequenceCode : Int,
+    @Value("\${venda-futura.utilizacao.baixa:9}") val usage : Int,
     @Value("\${venda-futura.conta-controle}") val contaControle : String) {
 
     val logger: Logger = LoggerFactory.getLogger(ConciliacaoVendaFuturaSchedule::class.java)
 
 
-    @Scheduled(fixedDelay = 1, timeUnit = TimeUnit.MINUTES)
+    @Scheduled(fixedDelay = 15, timeUnit = TimeUnit.MINUTES)
     fun execute() {
         val filterReclassificacaoEntrega = Filter(
             Predicate("TransactionCode", TransactionCodeTypes.VFET, Condicao.EQUAL),
@@ -74,7 +75,7 @@ class ConciliacaoVendaFuturaSchedule(
                             invoice.CardCode, null,
                             listOf(Product(itemConciliacaoVendaFutura, "1",
                                 "0",
-                                9).also {
+                                usage).also {
                                 it.U_preco_base = 1.0
                             }),
                             invoice.getBPL_IDAssignedToInvoice()
@@ -89,6 +90,8 @@ class ConciliacaoVendaFuturaSchedule(
                             //TODO coloocar a referencia da nf de forma estruturada.
                         }
 
+                        //TODO tentar usar o batch operation.
+                        //A duvida que fica e como referenciar o ID do documento que ainda nao existe
                         val apropriado = inoviceService
                             .save(invoiceApropiacao)
                             .tryGetValue<Document>()
@@ -98,8 +101,7 @@ class ConciliacaoVendaFuturaSchedule(
                                 InternalReconciliationsBuilder(
                                     journalReclassificado,
                                     apropriado,
-                                    invoice.DocTotal?.toDoubleOrNull() ?: throw Exception("Documento sem total adequado")
-                                ).setDebitTransRowId(1).build()
+                                ).build()
                             )
                             Thread.sleep(1000)
                             val json = "{ \"TransactionCode\" : \"${TransactionCodeTypes.VFEC.name}\"}"
@@ -112,8 +114,4 @@ class ConciliacaoVendaFuturaSchedule(
                 }
         }
     }
-}
-
-class Soma(var soma : BigDecimal?){
-
 }

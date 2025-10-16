@@ -23,6 +23,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.context.annotation.Profile
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
+import java.util.concurrent.TimeUnit
 
 
 @Component
@@ -44,7 +45,7 @@ class VendaFuturaScheduled(
     val logger: Logger = LoggerFactory.getLogger(VendaFuturaScheduled::class.java)
 
 
-    @Scheduled(fixedDelay = 3000)
+    @Scheduled(fixedDelay = 30, timeUnit = TimeUnit.SECONDS)
     fun execute() {
         filiais.forEach { filial ->
         sqlQueriesService.execute(
@@ -55,22 +56,7 @@ class VendaFuturaScheduled(
         )?.tryGetValues<DocEntry>()?.forEach {
             orderService.get(Filter("DocEntry",it.DocEntry!!,Condicao.EQUAL))
                 .tryGetValues<Document>().forEach { order ->
-                    val hanndlePaymentTerms = HandlePaymentTermsLines(
-                        paymentService.getParcelas(order.paymentGroupCode?: throw Exception("Erro ao pegar da condicao de pagamento"))
-                    )
-                    val contrato = contratoService.saveOnly(ContratoParse.parse(order))
-                    hanndlePaymentTerms.calculaVencimentos(contrato,carenciaDias).map {
-                        val adiantamento = adiantamentoService.adiantamentosVendaFutura(contrato,it)
-                        try{
-                            bankplus.geraBoletos(
-                                adiantamento.getBPL_IDAssignedToInvoice().toInt(),
-                                adiantamento.docEntry ?: throw Exception("Falha ao obter docentry do adiantamento"),
-                                0,
-                                OrigemBoletoEnum.adiantamento)
-                        }catch (e : Exception){
-                            logger.error("Erro ao gerar boleto",e)
-                        }
-                    }
+                    contratoService.saveOnly(ContratoParse.parse(order))
                     orderService.close(order.docEntry.toString())
                 }
             }}
