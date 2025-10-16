@@ -273,6 +273,21 @@ class CarregamentoController(val carregamentoServico: CarregamentoService,
         return batchService.run(batchList)
     }
 
+    @PostMapping("/{id}/status")
+    fun atualizarStatus(@PathVariable id: String, @RequestBody payload: Map<String, String>, auth: Authentication): ResponseEntity<Any> {
+        if (auth !is User) {
+            return ResponseEntity.noContent().build()
+        }
+
+        try {
+            carregamentoServico.update(payload, id)
+            return ResponseEntity.ok(mapOf("message" to "Status atualizado com sucesso."))
+        } catch (e: Exception) {
+            logger.error("Erro ao atualizar status para o carregamento $id", e)
+            return ResponseEntity.badRequest().body(mapOf("error" to e.message))
+        }
+    }
+
 
     @PostMapping("/{id}/cancelar-pedidos")
     fun cancelarPedidos(@PathVariable id: String, @RequestBody request: Map<String, List<Int>>, auth: Authentication): ResponseEntity<Any> {
