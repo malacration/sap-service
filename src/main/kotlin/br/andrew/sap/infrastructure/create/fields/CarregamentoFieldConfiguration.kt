@@ -16,7 +16,7 @@ class CarregamentoFieldConfiguration(
 
     init {
         listOf(
-            FieldMd("ORD_CARREGAMENTO2", "Ordem Carregamento 2", "RDR1", DbType.db_Alpha)
+            FieldMd("ORD_CARREGAMENTO", "Ordem Carregamento", "RDR1", DbType.db_Alpha)
         ).forEach {
             userFieldsMDService.findOrCreate(it)
         }
