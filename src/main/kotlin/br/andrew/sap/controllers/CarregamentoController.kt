@@ -239,7 +239,7 @@ class CarregamentoController(val carregamentoServico: CarregamentoService,
 
         pedidos.forEach { order ->
             order.DocumentLines
-                .filter { it.U_ORD_CARREGAMENTO2 == docEntry }
+                .filter { it.U_ORD_CARREGAMENTO == docEntry }
                 .forEach { currentItem ->
                     val lotes = lotesAgrupados
                         .firstOrNull { it.ItemCode == currentItem.ItemCode }
