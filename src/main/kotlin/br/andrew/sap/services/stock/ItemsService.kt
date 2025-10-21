@@ -4,6 +4,7 @@ import br.andrew.sap.infrastructure.odata.Condicao
 import br.andrew.sap.infrastructure.odata.Filter
 import br.andrew.sap.infrastructure.odata.NextLink
 import br.andrew.sap.infrastructure.odata.Parameter
+import br.andrew.sap.model.calculadora.LastPrice
 import br.andrew.sap.model.estoque.Item
 import br.andrew.sap.model.calculadora.Produto
 import br.andrew.sap.model.calculadora.ProdutoSelecao
@@ -78,6 +79,15 @@ open class ItemsService(
                 getAll(Produto::class.java,Filter("ItemCode", produtosParaProcurar, Condicao.IN))
         produtos.addAll(itensNovos)
         return itensNovos+itensCacheado.toList()
+    }
+
+
+    fun getLastPrice(itens : String, deposito : String): List<LastPrice> {
+        val parameters = listOf(
+            Parameter("item",itens),
+            Parameter("deposito",deposito),
+        )
+        return sqlQueriesService.execute("item-last-prices.sql", parameters)!!.tryGetValues<LastPrice>()
     }
 }
 
