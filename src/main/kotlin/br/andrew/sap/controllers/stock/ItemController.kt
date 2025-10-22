@@ -31,6 +31,11 @@ class ItemController(val service: ItemsService) {
             ResponseEntity.noContent().build()
     }
 
+    @PostMapping("search")
+    fun fullItemSearch(@RequestBody keyword : String ):ResponseEntity<NextLink<Product>>?{
+        return ResponseEntity.ok(service.fullItemSearch(keyword))
+    }
+
 
 
 }
