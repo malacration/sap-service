@@ -1,11 +1,13 @@
 package br.andrew.sap.controllers
 
 
+import br.andrew.sap.infrastructure.odata.NextLink
 import br.andrew.sap.model.Version
 import br.andrew.sap.model.authentication.User
 import br.andrew.sap.services.ContratoVendaFuturaService
 import br.andrew.sap.services.MailService
 import br.andrew.sap.services.MyMailMessage
+import br.andrew.sap.services.abstracts.SqlQueriesService
 import br.andrew.sap.services.batch.BatchService
 import br.andrew.sap.services.document.CreditNotesService
 import br.andrew.sap.services.document.DownPaymentService
@@ -26,6 +28,7 @@ class IndexController(
     val teste : QuerysServices,
     val passowrdService: UserPasswordService,
     val service : BatchService,
+    val sqlQueriesService: SqlQueriesService
 ){
 
     val logger = LoggerFactory.getLogger(IndexController::class.java)
@@ -44,5 +47,10 @@ class IndexController(
     fun changePassword(@RequestBody password : String, auth : Authentication) {
         if(auth is User)
             passowrdService.changePassword(auth,password)
+    }
+
+    @PostMapping("/nextlink")
+    fun nextLink(@RequestBody query: String) : NextLink<Any> {
+        return sqlQueriesService.nextLink(query)?.tryGetNextValues<Any>() ?: throw Exception("Conteudo nao encontrado")
     }
 }

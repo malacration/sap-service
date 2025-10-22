@@ -13,6 +13,7 @@ import br.andrew.sap.model.sap.documents.base.Installment
 import br.andrew.sap.model.sap.documents.Invoice
 import br.andrew.sap.model.exceptions.PixPaymentException
 import br.andrew.sap.model.sap.SalePerson
+import br.andrew.sap.model.sap.documents.base.Document
 import br.andrew.sap.model.sap.journal.OriginalJournal
 import br.andrew.sap.model.sap.partner.BusinessPartner
 import br.andrew.sap.model.uzzipay.ContaUzziPayPix
@@ -45,7 +46,7 @@ class InvoiceService(env: SapEnvrioment, restTemplate: RestTemplate, authService
                      val transactionPixService : TransactionsPixService,
                      val bankPlusService: BankPlusService
 ) :
-        EntitiesService<Invoice>(env, restTemplate, authService), ServiceOriginalJournal {
+        EntitiesService<Document>(env, restTemplate, authService), ServiceOriginalJournal {
     override fun path(): String {
         return "/b1s/v1/Invoices"
     }

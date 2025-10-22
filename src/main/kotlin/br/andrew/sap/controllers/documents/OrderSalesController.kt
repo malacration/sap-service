@@ -8,8 +8,10 @@ import br.andrew.sap.model.authentication.User
 import br.andrew.sap.model.sap.documents.OrderSales
 import br.andrew.sap.model.exceptions.CreditException
 import br.andrew.sap.model.forca.PedidoVenda
+import br.andrew.sap.model.sap.Localidade
 import br.andrew.sap.model.sap.documents.base.Document
 import br.andrew.sap.services.*
+import br.andrew.sap.services.abstracts.SqlQueriesService
 import br.andrew.sap.services.document.DocumentForAngular
 import br.andrew.sap.services.document.OrdersService
 import br.andrew.sap.services.pricing.ComissaoService
@@ -28,7 +30,9 @@ class OrderSalesController(val ordersService: OrdersService,
                            val itemService : ItemsService,
                            val comissaoService: ComissaoService,
                            val telegramService : TelegramRequestService,
-                           val applicationEventPublisher: ApplicationEventPublisher) {
+                           val applicationEventPublisher: ApplicationEventPublisher,
+                           val sqlQueriesService : SqlQueriesService
+) {
 
     val logger = LoggerFactory.getLogger(OrderSalesController::class.java)
 
@@ -90,5 +94,68 @@ class OrderSalesController(val ordersService: OrdersService,
                 logger.error(e.message,e)
             }
         }
+    }
+
+    @GetMapping("/search")
+    fun search(@RequestParam("dataInicial", required = false) dataInicial: String?,
+               @RequestParam("dataFinal", required = false) dataFinal: String?,
+               @RequestParam("filial") filial: Int,
+               @RequestParam("localidade") localidade: String): NextLink<OrderSales> {
+        val startDate = dataInicial ?: "1900-01-01"
+        val endDate = dataFinal ?: "2100-12-31"
+        val result = ordersService.fullSearchTextFallBack(startDate, endDate, filial, localidade)
+        return result ?: NextLink(emptyList(), "")
+    }
+
+    @PostMapping("/searchAll")
+    fun search(@RequestBody nextLink : String): NextLink<OrderSales> {
+        val result = ordersService.fullSearchTextFallBack2(nextLink)
+        return result ?: NextLink(emptyList(), "")
+    }
+
+    @GetMapping("/pedido/all/{docEntry}/{order2}/order-id")
+    fun devolver(@PathVariable docEntry : Int, @PathVariable order2 : Int) {
+        val order = ordersService.getById(docEntry).tryGetValue<OrderSales>()
+
+        val lines = order.DocumentLines.map {
+            "{ \"DocEntry\": ${it.DocEntry}, \"LineNum\": ${it.LineNum},  \"U_ORD_CARREGAMENTO2\" : \"${order2}\" }"
+        }
+        val json = "{\"DocumentLines\": [" +
+                lines.joinToString(",") +
+                "]}"
+
+        ordersService.update(json,docEntry.toString())
+    }
+
+
+    @GetMapping("/search2")
+    fun search2(@RequestParam("U_Ordem_Carregamento") U_Ordem_Carregamento: String): NextLink<OrderSales> {
+        val result = ordersService.Procura(U_Ordem_Carregamento)
+        return result ?: NextLink(emptyList(), "")
+    }
+
+    @GetMapping("/regiao")
+    fun Procura(DocEntry: Int?): NextLink<OrderSales>? {
+        if (DocEntry == null) {
+            return null
+        }
+        val parameters = listOf(
+            Parameter("DocEntry", DocEntry)
+        )
+        return sqlQueriesService    
+            .execute("ops.sql", parameters)
+            ?.tryGetNextValues()
+    }
+
+    @PostMapping("/search2All")
+    fun search2All(@RequestBody nextLink: String): NextLink<OrderSales> {
+        val result = sqlQueriesService.nextLink(nextLink)!!.tryGetNextValues<OrderSales>()
+        return result ?: NextLink(emptyList(), "")
+    }
+
+    @GetMapping("/search3")
+    fun search3(@RequestParam("Code") Code: Int): NextLink<Localidade> {
+        val result = ordersService.Procura2(Code)
+        return result ?: NextLink(emptyList(), "")
     }
 }

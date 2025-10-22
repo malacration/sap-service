@@ -15,10 +15,32 @@ class OrderSales(CardCode: String,
                  @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "YYY-MM-dd", timezone = "UTC")
                  DocDueDate: String?,
                  DocumentLines: List<DocumentLines>,
-                 BPL_IDAssignedToInvoice: String)
+                 BPL_IDAssignedToInvoice: String = "")
     : Document(CardCode, DocDueDate, DocumentLines, BPL_IDAssignedToInvoice) {
 
     var header : String? = null
+    var DocEntry : String? = null
+    var ItemCode : String? = null
+    var Dscription : String? = null
+    var BuyUnitMsr : String? = null
+    var U_LocalidadeS : Number? = null
+    var Name : String? = null
+    var OnHand : String? = null
+    var Quantity : Number? = null
+    var Weight1 : Number? = null
+    var IsCommited : Number? = null
+    var UnitPrice : Number? = null
+    var WarehouseCode : String? = null
+    var Usage : Number? = null
+    var TaxCode : String? = null
+    var CostingCode : String? = null
+    var CostingCode2 : String? = null
+    var BaseLine : Number? = null
+    var UomCode : String? = null
+    var PrecoNegociado : Double? = null
+    var PrecoBase : Double? = null
+    var Comentario: String? = null
+    var FretePorLinha: Double? = null
 
     override fun toString(): String {
         return "OrderSales(CardCode='$CardCode', Branch='${getBPL_IDAssignedToInvoice()}', docEntry=$docEntry, docNum=$docNum, pedido_forca=$u_id_pedido_forca)"
@@ -34,6 +56,17 @@ class OrderSales(CardCode: String,
             it.docDate = this.docDate
             it.controlAccount = this.controlAccount
         }
+    }
+
+    fun toDocument(type : DocumentTypes, sequenceCode : Int): OrderSales {
+        this.DocEntry = null
+        this.docNum = null
+        this.SequenceCode = sequenceCode
+        this.TransNum = null
+        this.Cancelled = null
+        this.DocumentLines.map { it.toInvoice(this.docObjectCode ?: throw Exception("O docType nao pode ser null")) }
+        this.docObjectCode = type
+        return this
     }
 }
 //data de entrega - ORDRdocduedate
