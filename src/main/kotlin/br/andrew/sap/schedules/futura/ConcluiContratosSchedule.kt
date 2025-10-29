@@ -17,47 +17,47 @@ import org.springframework.stereotype.Component
 import java.math.BigDecimal
 import java.util.concurrent.TimeUnit
 
-
-@Component
-@Profile("!test")
-@ConditionalOnProperty(value = [
-    "venda-futura.adiantamento-item",
-    "venda-futura.conta-controle"], matchIfMissing = false)
-class ConcluiContratosSchedule(
-    val sqlQueriesService : SqlQueriesService,
-    val contratoService : ContratoVendaFuturaService,
-    val controller : ContratoVendaFuturaController,
-    @Value("\${venda-futura.adiantamento-item}") val itemConciliacaoVendaFutura : String,
-    @Value("\${venda-futura.filiais:-2}") val filiais : List<Int>,
-    @Value("\${venda-futura.sequencia_adiantamento}") val sequenceCode : Int,
-    @Value("\${venda-futura.utilizacao.baixa:9}") val usage : Int,
-    @Value("\${venda-futura.conta-controle}") val contaControle : String) {
-
-    val logger: Logger = LoggerFactory.getLogger(ConcluiContratosSchedule::class.java)
-
-
-    @Scheduled(fixedDelay = 30, timeUnit = TimeUnit.MINUTES)
-    fun execute() {
-        var contratosIds : NextLink<DocEntry>? = null
-        do {
-            contratosIds = if(contratosIds == null)
-                sqlQueriesService.execute("para-finalizar.sql")?.tryGetNextValues<DocEntry>()
-            else
-                sqlQueriesService.nextLink(contratosIds.nextLink)?.tryGetNextValues<DocEntry>()
-
-            contratosIds?.content?.forEach {
-                val contrato : Contrato = contratoService.getById(it.DocEntry!!).tryGetValue<Contrato>()
-                val entregas = controller.entregas(contrato.DocEntry!!)
-                if(contrato.tudoEntregue(entregas)){
-                    contrato.U_status = Status.concluido
-                    contratoService.update(contrato,contrato.DocEntry.toString())
-                }
-            }
-        }while (contratosIds?.hasNext() ?: false)
-
-    }
-}
-
+//
+//@Component
+//@Profile("!test")
+//@ConditionalOnProperty(value = [
+//    "venda-futura.adiantamento-item",
+//    "venda-futura.conta-controle"], matchIfMissing = false)
+//class ConcluiContratosSchedule(
+//    val sqlQueriesService : SqlQueriesService,
+//    val contratoService : ContratoVendaFuturaService,
+//    val controller : ContratoVendaFuturaController,
+//    @Value("\${venda-futura.adiantamento-item}") val itemConciliacaoVendaFutura : String,
+//    @Value("\${venda-futura.filiais:-2}") val filiais : List<Int>,
+//    @Value("\${venda-futura.sequencia_adiantamento}") val sequenceCode : Int,
+//    @Value("\${venda-futura.utilizacao.baixa:9}") val usage : Int,
+//    @Value("\${venda-futura.conta-controle}") val contaControle : String) {
+//
+//    val logger: Logger = LoggerFactory.getLogger(ConcluiContratosSchedule::class.java)
+//
+//
+//    @Scheduled(fixedDelay = 30, timeUnit = TimeUnit.MINUTES)
+//    fun execute() {
+//        var contratosIds : NextLink<DocEntry>? = null
+//        do {
+//            contratosIds = if(contratosIds == null)
+//                sqlQueriesService.execute("para-finalizar.sql")?.tryGetNextValues<DocEntry>()
+//            else
+//                sqlQueriesService.nextLink(contratosIds.nextLink)?.tryGetNextValues<DocEntry>()
+//
+//            contratosIds?.content?.forEach {
+//                val contrato : Contrato = contratoService.getById(it.DocEntry!!).tryGetValue<Contrato>()
+//                val entregas = controller.entregas(contrato.DocEntry!!)
+//                if(contrato.tudoEntregue(entregas)){
+//                    contrato.U_status = Status.concluido
+//                    contratoService.update(contrato,contrato.DocEntry.toString())
+//                }
+//            }
+//        }while (contratosIds?.hasNext() ?: false)
+//
+//    }
+//}
+//
 class Soma(var soma : BigDecimal?){
 
 }

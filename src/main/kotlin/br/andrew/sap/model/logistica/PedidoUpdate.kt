@@ -22,7 +22,6 @@ class PedidoUpdate(
 }
 
 
-//TODO mudar U_ORD_CARREGAMENTO2 para U_ORD_CARREGAMENTO
 @JsonNaming(PropertyNamingStrategies.UpperCamelCaseStrategy::class)
 @JsonIgnoreProperties(ignoreUnknown = true)
 class PedidoUpdateLine(val DocEntry : Int,
