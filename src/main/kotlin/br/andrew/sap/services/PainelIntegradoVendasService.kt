@@ -21,11 +21,13 @@ class PainelIntegradoVendasService(
         cliente: String?,
         item: String?,
         vendedor: String?,
-        agrupador: String?      // novo parâmetro
+        agrupador: String?,
+        localidade:String?
     ): NextLink<PainelIntegradoVendas>? {
         val clienteSearch  = cliente?.let  { "%$it%" } ?: "%"
         val itemSearch     = item?.let     { "%$it%" } ?: "%"
         val vendedorSearch = vendedor?.let { "%$it%" } ?: "%"
+        val localidaSearch  = localidade?.let  { "%$it%" } ?: "%"
 
         val params = listOf(
             Parameter("startDate",   dataInicial),
@@ -33,7 +35,8 @@ class PainelIntegradoVendasService(
             Parameter("branch",       filial),
             Parameter("partner",      clienteSearch),
             Parameter("search",       itemSearch),
-            Parameter("salesPerson",  vendedorSearch)
+            Parameter("salesPerson",  vendedorSearch),
+            Parameter("localidade",  localidaSearch)
         )
 
         val sqlFile = when (agrupador) {
