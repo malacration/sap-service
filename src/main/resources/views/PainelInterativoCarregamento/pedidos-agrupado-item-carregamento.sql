@@ -3,6 +3,7 @@ L."ItemCode",
 L."Dscription" AS "Description",
 sum(L."Quantity") AS "Quantity",
 sum(D."OnHand") AS "OnHand",
+D."MinStrock" as "EstoqueMinimo"
 ocl."U_orderDocEntry" AS "EmOrdemDeCarregamento"
 FROM ORDR P
 INNER JOIN RDR1 L ON P."DocEntry" = L."DocEntry"
