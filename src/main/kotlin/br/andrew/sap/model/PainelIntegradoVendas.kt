@@ -20,5 +20,6 @@ class PainelIntegradoVendas(
     val DistribSum: BigDecimal?,
     val Quantity: BigDecimal?,
     val OnHand :BigDecimal,
+    val Localidade : String?,
     val EmOrdemDeCarregamento: String?
 )
