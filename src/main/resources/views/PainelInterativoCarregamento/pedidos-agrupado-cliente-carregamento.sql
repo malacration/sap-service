@@ -19,6 +19,7 @@ AND P."DocDate" >= :startDate
 AND P."DocDate" <= :finalDate
 AND P."BPLId" = :branch
 AND EE."U_LocalidadeS" LIKE :localidade
+AND EE."Incoterms" LIKE :incoterms
 AND  (
         L."ItemCode" like :search
     )

@@ -3,7 +3,7 @@ L."ItemCode",
 L."Dscription" AS "Description",
 sum(L."Quantity") AS "Quantity",
 sum(D."OnHand") AS "OnHand",
-D."MinStrock" as "EstoqueMinimo"
+D."MinStock" as "EstoqueMinimo",
 ocl."U_orderDocEntry" AS "EmOrdemDeCarregamento"
 FROM ORDR P
 INNER JOIN RDR1 L ON P."DocEntry" = L."DocEntry"
@@ -18,6 +18,7 @@ AND P."DocDate" >= :startDate
 AND P."DocDate" <= :finalDate
 AND P."BPLId" = :branch
 AND EE."U_LocalidadeS" LIKE :localidade
+AND EE."Incoterms" LIKE :incoterms
 AND  (
         L."ItemCode" like :search
     )
@@ -30,6 +31,7 @@ AND (
 GROUP BY
 L."ItemCode",
 L."Dscription",
-ocl."U_orderDocEntry"
+ocl."U_orderDocEntry",
+D."MinStock"
 ORDER BY L."ItemCode"
 

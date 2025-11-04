@@ -22,12 +22,14 @@ class PainelIntegradoVendasService(
         item: String?,
         vendedor: String?,
         agrupador: String?,
-        localidade:String?
+        localidade:String?,
+        incoterms:String?,
     ): NextLink<PainelIntegradoVendas>? {
         val clienteSearch  = cliente?.let  { "%$it%" } ?: "%"
         val itemSearch     = item?.let     { "%$it%" } ?: "%"
         val vendedorSearch = vendedor?.let { "%$it%" } ?: "%"
         val localidaSearch  = localidade?.let  { "%$it%" } ?: "%"
+        val incotermsSearch   = incoterms?.let  { "%$it%" } ?: "%"
 
         val params = listOf(
             Parameter("startDate",   dataInicial),
@@ -36,7 +38,8 @@ class PainelIntegradoVendasService(
             Parameter("partner",      clienteSearch),
             Parameter("search",       itemSearch),
             Parameter("salesPerson",  vendedorSearch),
-            Parameter("localidade",  localidaSearch)
+            Parameter("localidade",  localidaSearch),
+            Parameter("incoterms",  incotermsSearch)
         )
 
         val sqlFile = when (agrupador) {

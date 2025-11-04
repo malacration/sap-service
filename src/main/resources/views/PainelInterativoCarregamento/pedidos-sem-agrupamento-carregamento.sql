@@ -11,6 +11,7 @@ L."Usage",
 L."DistribSum",
 L."Quantity",
 D."OnHand",
+EE."Incoterms",
 LOCAIS."Name" AS  "Localidade",
 ocl."U_orderDocEntry" AS "EmOrdemDeCarregamento"
 FROM ORDR P
@@ -27,6 +28,7 @@ AND P."DocDate" >= :startDate
 AND P."DocDate" <= :finalDate
 AND P."BPLId" = :branch
 AND EE."U_LocalidadeS" LIKE :localidade
+AND EE."Incoterms" LIKE :incoterms
 AND  (
         L."ItemCode" like :search
 
