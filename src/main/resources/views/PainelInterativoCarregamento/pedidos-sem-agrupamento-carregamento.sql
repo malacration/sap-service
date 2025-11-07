@@ -13,7 +13,7 @@ SELECT
     D."OnHand",
     EE."Incoterms",
     LOCAIS."Name" ,
-    ocl."U_orderDocEntry" AS "EmOrdemDeCarregamento"
+    L."U_ORD_CARREGAMENTO" AS "EmOrdemDeCarregamento"
 FROM ORDR P
 INNER JOIN RDR1 L
     ON P."DocEntry" = L."DocEntry"
@@ -24,11 +24,8 @@ LEFT JOIN RDR12 EE
 LEFT JOIN OITW D
     ON D."WhsCode" = L."WhsCode"
    AND D."ItemCode" = L."ItemCode"
-LEFT JOIN "@ORD_CRG_LINHA" ocl
-    ON L."DocEntry" = ocl."U_orderDocEntry"
-   AND L."ItemCode" = ocl."U_itemCode"
 LEFT JOIN "@ORD_CARREGAMENTO" oc
-    ON ocl."DocEntry" = oc."DocEntry"
+    ON L."U_ORD_CARREGAMENTO"  = oc."DocEntry"
    AND oc."U_Status" = 'Aberto'
 LEFT JOIN "@RO_LOCAIS" LOCAIS
     ON LOCAIS."Code" = EE."U_LocalidadeS"
