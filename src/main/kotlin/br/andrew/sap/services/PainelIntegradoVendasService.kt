@@ -1,20 +1,16 @@
 package br.andrew.sap.services
 
 import br.andrew.sap.infrastructure.odata.NextLink
-import br.andrew.sap.infrastructure.odata.OData
 import br.andrew.sap.infrastructure.odata.Parameter
 import br.andrew.sap.model.PainelIntegradoVendas
-import br.andrew.sap.model.sap.documents.base.Product
 import br.andrew.sap.services.abstracts.SqlQueriesService
 import org.springframework.stereotype.Service
-import java.time.LocalDate
-import java.time.format.DateTimeFormatter
 
 @Service
 class PainelIntegradoVendasService(
     private val sqlQueriesService: SqlQueriesService
 ) {
-    fun fullSearchPedidos(
+    fun searchExpeditionOrders(
         dataInicial: String,
         dataFinal: String,
         filial: String,
@@ -24,22 +20,23 @@ class PainelIntegradoVendasService(
         agrupador: String?,
         localidade:String?,
         incoterms:String?,
-    ): NextLink<PainelIntegradoVendas>? {
-        val clienteSearch  = cliente?.let  { "%$it%" } ?: "%"
-        val itemSearch     = item?.let     { "%$it%" } ?: "%"
-        val vendedorSearch = vendedor?.let { "%$it%" } ?: "%"
-        val localidaSearch  = localidade?.let  { "%$it%" } ?: "%"
-        val incotermsSearch   = incoterms?.let  { "%$it%" } ?: "%"
+    ): NextLink<PainelIntegradoVendas> {
+
+        val clienteSearch   = cliente?.let   { "%$it%" } ?: "%"
+        val itemSearch      = item?.let      { "%$it%" } ?: "%"
+        val vendedorSearch  = vendedor?.let  { "%$it%" } ?: "%"
+        val localidaSearch  = localidade?.let{ "%$it%" } ?: "%"
+        val incotermsSearch = incoterms?.let { "%$it%" } ?: "%"
 
         val params = listOf(
             Parameter("startDate",   dataInicial),
-            Parameter("finalDate",    dataFinal),
-            Parameter("branch",       filial),
-            Parameter("partner",      clienteSearch),
-            Parameter("search",       itemSearch),
-            Parameter("salesPerson",  vendedorSearch),
+            Parameter("finalDate",   dataFinal),
+            Parameter("branch",      filial),
+            Parameter("partner",     clienteSearch),
+            Parameter("search",      itemSearch),
+            Parameter("salesPerson", vendedorSearch),
             Parameter("localidade",  localidaSearch),
-            Parameter("incoterms",  incotermsSearch)
+            Parameter("incoterms",   incotermsSearch)
         )
 
         val sqlFile = when (agrupador) {
@@ -49,10 +46,7 @@ class PainelIntegradoVendasService(
             else       -> "pedidos-sem-agrupamento-carregamento.sql"
         }
 
-        return sqlQueriesService
-            .execute(sqlFile, params)
-            ?.tryGetNextValues<PainelIntegradoVendas>()
-
+        val all = sqlQueriesService.getAll<PainelIntegradoVendas>(sqlFile, params)
+        return NextLink(content = all, nextLink = "")
     }
-
 }

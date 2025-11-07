@@ -24,6 +24,6 @@ class PainelIntegradoVendasController(
         @RequestParam("localidade", required = false) localidade: String?,
         @RequestParam("incoterms", required = false) incoterms: String?
     ): NextLink<PainelIntegradoVendas>? {
-        return painelIntegradoVendasServices.fullSearchPedidos(dataInicial,dataFinal,filial,cliente,item,vendedor,agrupador,localidade,incoterms)
+        return painelIntegradoVendasServices.searchExpeditionOrders(dataInicial,dataFinal,filial,cliente,item,vendedor,agrupador,localidade,incoterms)
     }
 }
