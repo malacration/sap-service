@@ -46,6 +46,8 @@ class ReclassificacaoEntregaVendaFuturaSchedule(
     @Value("\${venda-futura.sequencia_adiantamento}") val sequenceCode : Int,
     @Value("\${venda-futura.conta-adiantamento}") val contaAdiantamento : String,
     @Value("\${venda-futura.adiantamento-item:none}") val vfItemAdiantamento : String,
+    @Value("\${venda-futura.adiantamento-item}") val itemConciliacaoVendaFutura : String,
+    @Value("\${venda-futura.utilizacao.baixa:79}") val utilizacaoBaixa : Int,
     @Value("\${venda-futura.conta-controle}") val contaControleRedutoraPassivo : String) {
 
     val logger: Logger = LoggerFactory.getLogger(ReclassificacaoEntregaVendaFuturaSchedule::class.java)
@@ -95,7 +97,11 @@ class ReclassificacaoEntregaVendaFuturaSchedule(
         )
 
         creditnotesservice.get(filter).tryGetValues<Invoice>().forEach { devolucao ->
-            if(!devolucao.DocumentLines.any { it.BaseType != 13 }) {
+            if(!devolucao.DocumentLines.any {
+                it.BaseType != 13 ||
+                it.Usage == utilizacaoBaixa ||
+                it.ItemCode == this.itemConciliacaoVendaFutura}
+            ) {
                 val apropriacoes = creditnotesservice.getById(devolucao.docEntry.toString())
                     .tryGetValue<Invoice>().DocumentLines
                     .filter { it.BaseType == DocumentTypes.oInvoices.value && it.BaseEntry != null }
