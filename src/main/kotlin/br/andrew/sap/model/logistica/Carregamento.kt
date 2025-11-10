@@ -13,7 +13,7 @@ class Carregamento(
         val U_nameOrdem: String?,
         var U_Status: String?,
         val CreateDate : String?,
-        val U_filial3 : Int?,
+        val U_filial : Int?,
         val U_placa : String?,
         val U_motorista : String?
 ){
