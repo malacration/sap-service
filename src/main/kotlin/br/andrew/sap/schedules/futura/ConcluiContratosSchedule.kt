@@ -30,7 +30,7 @@ class ConcluiContratosSchedule(
     @Value("\${venda-futura.adiantamento-item}") val itemConciliacaoVendaFutura : String,
     @Value("\${venda-futura.filiais:-2}") val filiais : List<Int>,
     @Value("\${venda-futura.sequencia_adiantamento}") val sequenceCode : Int,
-    @Value("\${venda-futura.utilizacao.baixa:9}") val usage : Int,
+    @Value("\${venda-futura.utilizacao.baixa:79}") val usage : Int,
     @Value("\${venda-futura.conta-controle}") val contaControle : String) {
 
     val logger: Logger = LoggerFactory.getLogger(ConcluiContratosSchedule::class.java)
