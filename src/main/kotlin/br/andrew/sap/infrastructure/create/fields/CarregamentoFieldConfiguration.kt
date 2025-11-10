@@ -9,7 +9,7 @@ import org.springframework.context.annotation.Profile
 
 @Configuration
 @Profile("!test")
-@ConditionalOnProperty(value = ["fields.field2"], havingValue = "true", matchIfMissing = false)
+@ConditionalOnProperty(value = ["fields"], havingValue = "true", matchIfMissing = false)
 class CarregamentoFieldConfiguration(
     val userFieldsMDService: UserFieldsMDService
 ) {
