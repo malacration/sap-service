@@ -112,7 +112,7 @@ class CarregamentoController(val carregamentoServico: CarregamentoService,
         }
     }
 
-    @PostMapping("/angular")
+    @PostMapping("/save-carregamento")
     fun saveCarregamento(@RequestBody ordem: Carregamento): ResponseEntity<Any> {
         return try {
             if(ordem.U_status.isNullOrEmpty()) {
