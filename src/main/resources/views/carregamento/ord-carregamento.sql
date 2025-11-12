@@ -8,11 +8,11 @@ SELECT
     "T1"."Quantity",
     "T1"."UomCode",
     b."DflWhs",
-    "T1"."U_ORD_CARREGAMENTO2",
+    "T1"."U_ORD_CARREGAMENTO",
     "T0"."Address2",
     "T0"."Comments",
     "T1"."Weight1"
 FROM RDR1 "T1"
     JOIN ORDR "T0" ON "T0"."DocEntry" = "T1"."DocEntry"
     JOIN "OBPL" b ON "T0"."BPLId" = b."BPLId"
-    WHERE "T1"."U_ORD_CARREGAMENTO2" = :U_ORD_CARREGAMENTO2
+    WHERE "T1"."U_ORD_CARREGAMENTO" = :U_ORD_CARREGAMENTO

@@ -102,15 +102,4 @@ class InvoicesController(
     fun teste() : Any{
         return invoice.getAllPixs();
     }
-
-    //   fun andrew(idOrdemCarreagamento : Int, lotes : list<Lotes>){
-//        loadOrdem(idOrdemCarreagamento)
-//
-//        pedidos = loadPedidos(idordem)
-//
-//        invoicesNaoSalvas = faturamentoPedidos(pedidos,ordem)
-//        inoicesNaoSalvasComLote = distribuiLotes(invoicesNaoSalvas,lotes)
-//        inoviceService.save(inoicesNaoSalvasComLote)
-//    }
-
 }

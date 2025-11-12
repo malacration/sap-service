@@ -42,6 +42,12 @@ roles:
     - url: "/business-partners/*"
       actions: [ "get" ]
   vendedor_admin:
+    - url: "/nextlink"
+      actions: [ "post" ]
+    - url: "/item/search"
+      actions: [ "post" ]
+    - url: "/painel/**"
+      actions: [ "*" ]
     - url: "/sales-person/search"
       actions: [ "*" ]
     - url: "/sales-person/search"

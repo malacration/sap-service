@@ -105,18 +105,18 @@ class CarregamentoController(val carregamentoServico: CarregamentoService,
         }catch (e : Exception){
             if(isNewOrder){
                 //TODO mudar para falhou e na lista nao listar nada que tenha o status Falhou
-                ordemCriada.also { it.U_Status = "Falhou" }
+                ordemCriada.also { it.U_status = "Falhou" }
                 carregamentoServico.update(ordemCriada,ordemCriada.DocEntry.toString())
             }
             throw e
         }
     }
 
-    @PostMapping("/angular")
+    @PostMapping("/save-carregamento")
     fun saveCarregamento(@RequestBody ordem: Carregamento): ResponseEntity<Any> {
         return try {
-            if(ordem.U_Status.isNullOrEmpty()) {
-                ordem.U_Status = "Aberto"
+            if(ordem.U_status.isNullOrEmpty()) {
+                ordem.U_status = "Aberto"
             }
 
             val ordemCriada = carregamentoServico.save(ordem).tryGetValue<Carregamento>()
@@ -133,7 +133,7 @@ class CarregamentoController(val carregamentoServico: CarregamentoService,
             return ResponseEntity.noContent().build()
 
         val carregamento = carregamentoServico.getById(id).tryGetValue<Carregamento>()
-        carregamento.U_Status = "Cancelado"
+        carregamento.U_status = "Cancelado"
 
         val result = carregamentoServico.update(carregamento, id)
         return ResponseEntity.ok(result?.tryGetValue<Carregamento>())

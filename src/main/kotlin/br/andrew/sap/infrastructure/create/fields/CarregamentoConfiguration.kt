@@ -14,7 +14,7 @@ import org.springframework.context.annotation.Profile
 
 @Configuration
 @Profile("!test")
-@ConditionalOnProperty(value = ["fields.ord2"], havingValue = "true", matchIfMissing = false)
+@ConditionalOnProperty(value = ["fields.carregamento"], havingValue = "true", matchIfMissing = false)
 class CarregamentoConfiguration(val userFieldsMDService: UserFieldsMDService,
                                 val udoService: UserObjectsMDService,
                                 val userKeyService: UserKeyMDService,
@@ -34,7 +34,7 @@ class CarregamentoConfiguration(val userFieldsMDService: UserFieldsMDService,
         listOf(
             FieldMd("nameOrdem","Nome da Ordem","@ORD_CARREGAMENTO", DbType.db_Alpha),
             FieldMd("dataCancela","Data Cancela","@ORD_CARREGAMENTO", DbType.db_Alpha),
-            FieldMd("filial3","Filial","@ORD_CARREGAMENTO", DbType.db_Alpha),
+            FieldMd("filial","Filial","@ORD_CARREGAMENTO", DbType.db_Alpha),
             FieldMd("Status", "Status", "@ORD_CARREGAMENTO")
                 .also {
                     it.ValidValuesMD = listOf(
@@ -92,6 +92,13 @@ class CarregamentoConfiguration(val userFieldsMDService: UserFieldsMDService,
 
         val udoProperties = getUserDefined()
         udoService.findOrCreate(udoProperties)
+
+
+        listOf(
+            FieldMd("ORD_CARREGAMENTO", "Ordem Carregamento", "RDR1", DbType.db_Alpha)
+        ).forEach {
+            userFieldsMDService.findOrCreate(it)
+        }
     }
 
     private fun getUserDefined(): UserDefinedObject {

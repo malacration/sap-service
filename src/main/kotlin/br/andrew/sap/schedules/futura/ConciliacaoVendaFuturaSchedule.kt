@@ -11,7 +11,9 @@ import br.andrew.sap.model.sap.documents.base.Document
 import br.andrew.sap.model.sap.documents.base.Product
 import br.andrew.sap.model.sap.documents.base.adiantamento.ApropriacaoAdiantamento
 import br.andrew.sap.model.transaction.TransactionCodeTypes
+import br.andrew.sap.model.transaction.UpdateTransactionCode
 import br.andrew.sap.services.InternalReconciliationsService
+import br.andrew.sap.services.batch.BatchId
 import br.andrew.sap.services.batch.BatchList
 import br.andrew.sap.services.batch.BatchMethod
 import br.andrew.sap.services.batch.BatchService
@@ -54,6 +56,7 @@ class ConciliacaoVendaFuturaSchedule(
     fun execute() {
         val filterReclassificacaoEntrega = Filter(
             Predicate("TransactionCode", TransactionCodeTypes.VFET, Condicao.EQUAL),
+            Predicate("TransactionCode", TransactionCodeTypes.VFET, Condicao.EQUAL),
             Predicate("TaxDate", "2024-12-04", Condicao.GREAT),
         )
 
@@ -90,22 +93,27 @@ class ConciliacaoVendaFuturaSchedule(
                             //TODO coloocar a referencia da nf de forma estruturada.
                         }
 
-                        //TODO tentar usar o batch operation.
-                        //A duvida que fica e como referenciar o ID do documento que ainda nao existe
                         val apropriado = inoviceService
                             .save(invoiceApropiacao)
                             .tryGetValue<Document>()
 
                         try {
-                            internalReconciliationsService.save(
-                                InternalReconciliationsBuilder(
-                                    journalReclassificado,
-                                    apropriado,
-                                ).build()
+                            val internalRecon = InternalReconciliationsBuilder(
+                                journalReclassificado,
+                                apropriado,
+                            ).build()
+
+                            val updateTransCode = UpdateTransactionCode(
+                                journalReclassificado.JdtNum.toString(),
+                                TransactionCodeTypes.VFEC
                             )
-                            Thread.sleep(1000)
-                            val json = "{ \"TransactionCode\" : \"${TransactionCodeTypes.VFEC.name}\"}"
-                            journalEntriesService.update(json,journalReclassificado.JdtNum.toString())
+
+                            val batchList = BatchList().add(
+                                Triple(BatchMethod.POST,internalRecon,internalReconciliationsService)
+                            ).add(
+                                Triple(BatchMethod.PATCH,updateTransCode,journalEntriesService)
+                            )
+                            batchService.run(batchList)
                         }catch (e : Exception){
                             inoviceService.cancel(apropriado.docEntry.toString())
                             throw Exception("Não foi possivel realizar a reconciliação, fazendo o cancelamento da apropriação do adiantamento",e)

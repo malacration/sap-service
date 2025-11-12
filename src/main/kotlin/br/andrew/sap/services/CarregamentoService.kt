@@ -32,7 +32,7 @@ class CarregamentoService(val sqlQueriesService : SqlQueriesService,env: SapEnvr
 
     fun docEntryPedido(idOrdemCarregamento: Int): List<DocEntry> {
         val parameters = listOf(
-            Parameter("U_ORD_CARREGAMENTO2", idOrdemCarregamento)
+            Parameter("U_ORD_CARREGAMENTO", idOrdemCarregamento)
         )
         return sqlQueriesService
             .getAll<DocEntry>("docentry-ordem-carregamento.sql", parameters)

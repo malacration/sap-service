@@ -11,9 +11,9 @@ import com.fasterxml.jackson.databind.annotation.JsonNaming
 class Carregamento(
         val DocEntry: Int?,
         val U_nameOrdem: String?,
-        var U_Status: String?,
+        var U_status: String?,
         val CreateDate : String?,
-        val U_filial3 : Int?,
+        val U_filial : Int?,
         val U_placa : String?,
         val U_motorista : String?
 ){
