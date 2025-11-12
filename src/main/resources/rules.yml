@@ -3,6 +3,12 @@ roles:
     - url: "/**"
       actions: ["*"]
   vendedor:
+    - url: "/nextlink"
+      actions: [ "post" ]
+    - url: "/item/search"
+      actions: [ "post" ]
+    - url: "/business-partners/pedido-venda-parceiro/*"
+      actions: ["get"]
     - url: "/contrato-venda-futura"
       actions: ["*"]
     - url: "branch"
@@ -32,7 +38,7 @@ roles:
     - url: "/contrato-venda-futura/pedido-retirada"
       actions: [ "*" ]
     - url: "/contrato-venda-futura/**"
-      actions: [ "get", "post" ]
+      actions: [ "get" ]
     - url: "/contrato-venda-futura/troca"
       actions: [ "post"]
     - url: "/contrato-venda-futura/emitir-boletos/*"
@@ -41,7 +47,17 @@ roles:
       actions: [ "get" ]
     - url: "/business-partners/*"
       actions: [ "get" ]
+    - url: "/business-partners/contas-receber/**"
+      actions: [ "get" ]
   vendedor_admin:
+    - url: "/nextlink"
+      actions: [ "post" ]
+    - url: "/item/search"
+      actions: [ "post" ]
+    - url: "/painel/**"
+      actions: [ "*" ]
+    - url: "/branch"
+      actions: ["get"]
     - url: "/sales-person/search"
       actions: [ "*" ]
     - url: "/sales-person/search"
@@ -58,14 +74,30 @@ roles:
       actions: [ "*" ]
     - url: "/contrato-venda-futura/entregas/*"
       actions: [ "get" ]
-    - url: "/contrato-venda-futura/*"
-      actions: [ "get", "post" ]
+    - url: "/contrato-venda-futura/**"
+      actions: [ "get" ]
     - url: "/contrato-venda-futura/troca"
       actions: [ "post"]
     - url: "/contrato-venda-futura/emitir-boletos/*"
       actions: ["get"]
+    - url: "/future-sales/pedidos/*"
+      actions: [ "get" ]
+    - url: "/business-partners/**"
+      actions: ["*"]
   qualidade:
     - url: "/batch-stock/item-code/**"
       actions: ["get"]
     - url: "/reprocessamento/**"
       actions: [ "*" ]
+    - url: "/item/search"
+      actions: ["post"]
+    - url: "/painel/**"
+      actions: ["*"]
+    - url: "/branch"
+      actions: ["get"]
+    - url: "/business-partners/search"
+      actions: ["*"]
+    - url: "/sales-person/search"
+      actions: ["*"]
+    - url: "/locais/search"
+      actions: ["*"]
