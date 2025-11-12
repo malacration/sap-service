@@ -118,7 +118,7 @@ class OrderSalesController(val ordersService: OrdersService,
         val order = ordersService.getById(docEntry).tryGetValue<OrderSales>()
 
         val lines = order.DocumentLines.map {
-            "{ \"DocEntry\": ${it.DocEntry}, \"LineNum\": ${it.LineNum},  \"U_ORD_CARREGAMENTO2\" : \"${order2}\" }"
+            "{ \"DocEntry\": ${it.DocEntry}, \"LineNum\": ${it.LineNum},  \"U_ORD_CARREGAMENTO\" : \"${order2}\" }"
         }
         val json = "{\"DocumentLines\": [" +
                 lines.joinToString(",") +

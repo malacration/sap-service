@@ -57,7 +57,7 @@ class OrdersService(val sqlQueriesService : SqlQueriesService, env: SapEnvriomen
 
     fun FindLoadOrders(idOrdemCarregamento: String): NextLink<OrderSales>? {
         val parameters = listOf(
-                Parameter("U_ORD_CARREGAMENTO2", idOrdemCarregamento)
+                Parameter("U_ORD_CARREGAMENTO", idOrdemCarregamento)
                 )
         return sqlQueriesService
             .execute("ord-carregamento.sql", parameters)
@@ -75,7 +75,7 @@ class OrdersService(val sqlQueriesService : SqlQueriesService, env: SapEnvriomen
 
     fun getPedidosBy(idOrdemCarregamento: Int): List<OrderSales> {
         val filter = Filter(mutableListOf(
-            Predicate("U_ORD_CARREGAMENTO2", idOrdemCarregamento, Condicao.EQUAL),
+            Predicate("U_ORD_CARREGAMENTO", idOrdemCarregamento, Condicao.EQUAL),
         ))
         return getAll(OrderSales::class.java,filter)
     }
