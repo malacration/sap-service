@@ -48,7 +48,7 @@ class User(val id : String,
         authenticated = isAuthenticated
     }
 
-    fun accessLevel(): Int {
+    fun superVendedor(): Int {
         return when {
             roles.contains("vendedor_admin") || roles.contains("admin") -> 1   // super
             roles.contains("vendedor") -> 0                                    // vendedor
