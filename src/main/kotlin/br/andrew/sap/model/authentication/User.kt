@@ -48,12 +48,18 @@ class User(val id : String,
         authenticated = isAuthenticated
     }
 
-    fun superVendedor(): Int {
+    fun accessLevel(): Int {
         return when {
-            roles.contains("vendedor_admin") || roles.contains("admin") -> 1   // super
-            roles.contains("vendedor") -> 0                                    // vendedor
-            else -> -1                                                         // funcionário
+            roles.contains("vendedor_admin") || roles.contains("admin") -> 1
+            roles.contains("vendedor") -> 0
+            else -> -1
         }
+    }
+    fun superVendedor(): Int {
+        return if(roles.contains("vendedor_admin") || roles.contains("admin"))
+            Int.MAX_VALUE
+        else
+            -1
     }
 
     @JsonIgnore

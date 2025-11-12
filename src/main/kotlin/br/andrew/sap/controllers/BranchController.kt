@@ -25,7 +25,7 @@ class BranchController(
         if(auth !is User)
             return ResponseEntity.noContent().build()
         logger.info("Buscando filiais para ${auth.getIdInt()}")
-        val nivel = auth.superVendedor()
+        val nivel = auth.accessLevel()
         return when {
             nivel > 0  -> ResponseEntity.ok(service.getAll(Branch::class.java))
             nivel == 0 -> ResponseEntity.ok(service.getFilialBy(auth.getIdInt()))
