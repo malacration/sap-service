@@ -4,5 +4,4 @@ enum class UserOriginEnum {
     EmployeesInfo,
     SalePerson,
     BusinessPartner
-
 }
