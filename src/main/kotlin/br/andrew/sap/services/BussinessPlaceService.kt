@@ -19,7 +19,7 @@ class BussinessPlaceService(
         return "/b1s/v1/BusinessPlaces"
     }
 
-    fun getFilialBy(idVendedor : Int): List<Branch> {
+    fun getFilialBySalesPerson(idVendedor : Int): List<Branch> {
         return sqlQuerysServices.execute("filiais-vendedor.sql",Parameter("vendedor",idVendedor))!!.tryGetValues<Branch>()
     }
 

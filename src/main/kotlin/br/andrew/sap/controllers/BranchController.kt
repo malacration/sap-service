@@ -2,6 +2,7 @@ package br.andrew.sap.controllers
 
 import br.andrew.sap.model.sap.Branch
 import br.andrew.sap.model.authentication.User
+import br.andrew.sap.model.authentication.UserOriginEnum
 import br.andrew.sap.services.BusinessPartnersService
 import br.andrew.sap.services.BussinessPlaceService
 import org.slf4j.LoggerFactory
@@ -25,12 +26,13 @@ class BranchController(
         if(auth !is User)
             return ResponseEntity.noContent().build()
         logger.info("Buscando filiais para ${auth.getIdInt()}")
-        val nivel = auth.accessLevel()
-        return when {
-            nivel > 0  -> ResponseEntity.ok(service.getAll(Branch::class.java))
-            nivel == 0 -> ResponseEntity.ok(service.getFilialBy(auth.getIdInt()))
-            else       -> ResponseEntity.ok(service.getFilialByEmployee(auth.getIdInt()))
-        }
+        if(auth.superVendedor() > -1)
+            return ResponseEntity.ok(service.getAll(Branch::class.java))
+        if(auth.origin == UserOriginEnum.SalePerson)
+            return ResponseEntity.ok(service.getFilialBySalesPerson(auth.getIdInt()))
+        if(auth.origin == UserOriginEnum.EmployeesInfo)
+            return ResponseEntity.ok(service.getFilialByEmployee(auth.getIdInt()))
+          return ResponseEntity.ok(listOf())
     }
 }
 
