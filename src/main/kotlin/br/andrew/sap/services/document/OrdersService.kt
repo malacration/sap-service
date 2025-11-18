@@ -55,7 +55,7 @@ class OrdersService(val sqlQueriesService : SqlQueriesService, env: SapEnvriomen
         return sqlQueriesService.nextLink(nextPage)!!.tryGetNextValues()
     }
 
-    fun Procura(idOrdemCarregamento: String): NextLink<OrderSales>? {
+    fun FindLoadOrders(idOrdemCarregamento: String): NextLink<OrderSales>? {
         val parameters = listOf(
                 Parameter("U_ORD_CARREGAMENTO", idOrdemCarregamento)
                 )
@@ -64,12 +64,12 @@ class OrdersService(val sqlQueriesService : SqlQueriesService, env: SapEnvriomen
             ?.tryGetNextValues()
     }
 
-    fun Procura2(Code: Int): NextLink<Localidade>? {
+    fun SearchLocality(Code: Int): NextLink<Localidade>? {
         val parameters = listOf(
             Parameter("Code", Code)
         )
         return sqlQueriesService
-            .execute("produto2.sql", parameters)
+            .execute("search-locality.sql", parameters)
             ?.tryGetNextValues()
     }
 
