@@ -13,7 +13,7 @@ SELECT
 	"OSLP"."SlpName" as "SalesEmployeeName",
 	"ORDR"."DocNum" as "OrderDocNum",
 	"OBPL"."BPLName" as "Bplname",
-    SUM("@AR_CF_LINHA"."U_quantity") AS "TotalProdutosCalculado"
+    "@AR_CONTRATO_FUTURO"."U_valorProdutos"
 FROM
 	"@AR_CONTRATO_FUTURO"
 	INNER JOIN "@AR_CF_LINHA" ON ("@AR_CF_LINHA"."DocEntry" = "@AR_CONTRATO_FUTURO"."DocEntry")
@@ -39,5 +39,6 @@ group by
 	"@AR_CONTRATO_FUTURO"."U_dataCriacao",
 	"OSLP"."SlpName",
 	"ORDR"."DocNum",
-	"OBPL"."BPLName"
+	"OBPL"."BPLName",
+    "@AR_CONTRATO_FUTURO"."U_valorProdutos"
 ORDER BY "@AR_CONTRATO_FUTURO"."U_dataCriacao" DESC

@@ -118,7 +118,7 @@ class OrderSalesController(val ordersService: OrdersService,
         val order = ordersService.getById(docEntry).tryGetValue<OrderSales>()
 
         val lines = order.DocumentLines.map {
-            "{ \"DocEntry\": ${it.DocEntry}, \"LineNum\": ${it.LineNum},  \"U_ORD_CARREGAMENTO2\" : \"${order2}\" }"
+            "{ \"DocEntry\": ${it.DocEntry}, \"LineNum\": ${it.LineNum},  \"U_ORD_CARREGAMENTO\" : \"${order2}\" }"
         }
         val json = "{\"DocumentLines\": [" +
                 lines.joinToString(",") +
@@ -128,34 +128,21 @@ class OrderSalesController(val ordersService: OrdersService,
     }
 
 
-    @GetMapping("/search2")
-    fun search2(@RequestParam("U_Ordem_Carregamento") U_Ordem_Carregamento: String): NextLink<OrderSales> {
-        val result = ordersService.Procura(U_Ordem_Carregamento)
+    @GetMapping("/findLoadOrders")
+    fun findLoadOrders(@RequestParam("U_Ordem_Carregamento") U_Ordem_Carregamento: String): NextLink<OrderSales> {
+        val result = ordersService.FindLoadOrders(U_Ordem_Carregamento)
         return result ?: NextLink(emptyList(), "")
     }
 
-    @GetMapping("/regiao")
-    fun Procura(DocEntry: Int?): NextLink<OrderSales>? {
-        if (DocEntry == null) {
-            return null
-        }
-        val parameters = listOf(
-            Parameter("DocEntry", DocEntry)
-        )
-        return sqlQueriesService    
-            .execute("ops.sql", parameters)
-            ?.tryGetNextValues()
-    }
-
-    @PostMapping("/search2All")
-    fun search2All(@RequestBody nextLink: String): NextLink<OrderSales> {
+    @PostMapping("/findAllLoadOrders")
+    fun findAllLoadOrders(@RequestBody nextLink: String): NextLink<OrderSales> {
         val result = sqlQueriesService.nextLink(nextLink)!!.tryGetNextValues<OrderSales>()
         return result ?: NextLink(emptyList(), "")
     }
 
-    @GetMapping("/search3")
-    fun search3(@RequestParam("Code") Code: Int): NextLink<Localidade> {
-        val result = ordersService.Procura2(Code)
+    @GetMapping("/searchLocality")
+    fun searchLocalidade(@RequestParam("Code") Code: Int): NextLink<Localidade> {
+        val result = ordersService.SearchLocality(Code)
         return result ?: NextLink(emptyList(), "")
     }
 }

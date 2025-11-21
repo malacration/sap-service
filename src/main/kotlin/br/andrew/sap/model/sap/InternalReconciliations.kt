@@ -1,6 +1,7 @@
 package br.andrew.sap.model.sap
 
 import br.andrew.sap.model.enums.YesNo
+import br.andrew.sap.services.batch.BatchId
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.databind.PropertyNamingStrategies
@@ -11,7 +12,7 @@ import java.util.*
 @JsonNaming(PropertyNamingStrategies.UpperCamelCaseStrategy::class)
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-class InternalReconciliations {
+class InternalReconciliations : BatchId {
     var reconNum: Int? = null
     var reconDate: String? = SimpleDateFormat("yyyy-MM-dd").format(Date())
     var cardOrAccount: String? = null
@@ -21,6 +22,10 @@ class InternalReconciliations {
     var internalReconciliationRows: List<InternalReconciliationOpenTransRow>? = null
     var electronicProtocols: Int? = null
     var internalReconciliationOpenTransRows: List<InternalReconciliationOpenTransRow>? = null
+
+    override fun getId(): String {
+        return reconNum.toString()
+    }
 }
 
 @JsonNaming(PropertyNamingStrategies.UpperCamelCaseStrategy::class)
