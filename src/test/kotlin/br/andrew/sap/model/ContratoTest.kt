@@ -133,4 +133,26 @@ class ContratoTest {
         }
         Assertions.assertEquals("Nao e possivel trocar uma quantidade superior ao contrato", exception.message)
     }
+
+    @Test
+    fun valorProdutosAtualizaQuandoItensMudam() {
+        val contrato = Contrato(
+            1,
+            "",
+            mutableListOf(
+                Item("c", "", 10.0, 100.0, 10.0, 0.0, 10.0, "")
+            ),
+            666,
+            "",
+            2,
+            0.0
+        )
+
+        Assertions.assertEquals(1000.0, contrato.U_valorProdutos)
+
+        contrato.itens.first().U_quantity = 10.0
+        contrato.itens.add(Item("d", "", 20.0, 5.0, 20.0, 0.0, 5.0, ""))
+
+        Assertions.assertEquals(contrato.totalProdutos().toDouble(), contrato.U_valorProdutos)
+    }
 }
