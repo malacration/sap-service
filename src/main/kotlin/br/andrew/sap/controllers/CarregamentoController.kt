@@ -72,6 +72,9 @@ class CarregamentoController(val carregamentoServico: CarregamentoService,
 
     @PostMapping()
     fun save(@RequestBody dto: CarregamentoDto){
+        if (dto.pedidos.isEmpty()) {
+            dto.ordemCarregamento.U_Status = "Cancelado"
+        }
         val isNewOrder = dto.ordemCarregamento.DocEntry == null
         val ordemCriada = if(isNewOrder){
             carregamentoServico.save(dto.ordemCarregamento).tryGetValue<Carregamento>()
@@ -79,8 +82,12 @@ class CarregamentoController(val carregamentoServico: CarregamentoService,
             dto.ordemCarregamento
             //TODO arrumar esse updatge provavelmente se fizer o bind no front vai funcionar
             //carregamentoServico.update(dto.ordemCarregamento,dto.ordemCarregamento.DocEntry.toString())!!.tryGetValue<Carregamento>()
-        }
 
+            if (dto.pedidos.isEmpty()) {
+                carregamentoServico.update(dto.ordemCarregamento, dto.ordemCarregamento.DocEntry.toString())
+            }
+            dto.ordemCarregamento
+        }
         try {
             val tripleAdicionar = dto.pedidos.map{
                 val order = pedidoVendaService.getById(it).tryGetValue<OrderSales>()
