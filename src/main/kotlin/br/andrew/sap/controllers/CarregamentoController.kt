@@ -10,6 +10,7 @@ import br.andrew.sap.model.logistica.PedidoUpdate
 import br.andrew.sap.model.logistica.PedidoUpdateLine
 import br.andrew.sap.model.sap.documents.DocumentTypes
 import br.andrew.sap.model.sap.documents.OrderSales
+import br.andrew.sap.model.sap.documents.base.Document
 import br.andrew.sap.services.*
 import br.andrew.sap.services.abstracts.SqlQueriesService
 import br.andrew.sap.services.batch.BatchList
@@ -247,6 +248,18 @@ class CarregamentoController(val carregamentoServico: CarregamentoService,
             logger.error("Erro ao atualizar dados de logística para o carregamento $id", e)
             return ResponseEntity.badRequest().body(mapOf("error" to e.message))
         }
+    }
+
+    @GetMapping("/notas/{idCarregamento}")
+    fun getNotasByCarregamentos(@PathVariable idCarregamento: Int): List<Document> {
+        val filter = Filter(Predicate("U_ordemCarregamento", idCarregamento, Condicao.EQUAL))
+        return listOf(invoiceService)
+            .map { it.getAll(Document::class.java,filter) }
+            .flatMap { it }
+            .sortedWith(compareBy(
+                { it.docDate },
+                { it.docObjectCode?.ordinal }
+            ))
     }
 }
 
