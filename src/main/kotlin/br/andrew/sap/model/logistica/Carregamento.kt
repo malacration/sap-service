@@ -15,7 +15,8 @@ class Carregamento(
         val CreateDate : String?,
         val U_filial : Int?,
         val U_placa : String?,
-        val U_motorista : String?
+        val U_motorista : String?,
+        val U_pesoCaminhao : Double?
 ){
         var Quantity : Double? = null
         var Weight1 : Double? = null

@@ -1,5 +1,6 @@
 package br.andrew.sap.controllers.documents
 
+import LogisticaPayload
 import br.andrew.sap.infrastructure.odata.*
 import br.andrew.sap.model.authentication.User
 import br.andrew.sap.model.sap.BatchesGroupByItemCode
@@ -228,15 +229,16 @@ class CarregamentoController(val carregamentoServico: CarregamentoService,
     }
 
     @PostMapping("/{id}/logistica")
-    fun updateLogistica(@PathVariable id: String, @RequestBody payload: Map<String, String>, auth: Authentication): ResponseEntity<Any> {
+    fun updateLogistica(@PathVariable id: String, @RequestBody payload: LogisticaPayload, auth: Authentication): ResponseEntity<Any> {
         if (auth !is User) {
             return ResponseEntity.noContent().build()
         }
 
         try {
             val dadosParaAtualizar = mapOf(
-                "U_placa" to payload["U_placa"],
-                "U_motorista" to payload["U_motorista"]
+                "U_placa" to payload.U_placa,
+                "U_motorista" to payload.U_motorista,
+                "U_pesoCaminhao" to payload.U_pesoCaminhao
             )
 
             carregamentoServico.update(dadosParaAtualizar, id)
