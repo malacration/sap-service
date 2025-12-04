@@ -18,7 +18,7 @@ class CarregamentoInvoiceCreateConfiguration(
 
     init {
         listOf(
-            FieldMd("ordemCarregamento","Ord. de Carregamento","OINV",DbType.db_Numeric),
+            FieldMd("faturadoOrdemCarregamento","Ord. de Carregamento","OINV",DbType.db_Numeric),
         )
             .forEach { userFieldsMDService.findOrCreate(it) }
     }

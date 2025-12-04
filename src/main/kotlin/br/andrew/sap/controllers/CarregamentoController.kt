@@ -249,7 +249,7 @@ class CarregamentoController(val carregamentoServico: CarregamentoService,
 
     @GetMapping("/notas/{idCarregamento}")
     fun getNotasByCarregamentos(@PathVariable idCarregamento: Int): List<Document> {
-        val filter = Filter(Predicate("U_ordemCarregamento", idCarregamento, Condicao.EQUAL))
+        val filter = Filter(Predicate("U_faturadoOrdemCarregamento", idCarregamento, Condicao.EQUAL))
         return listOf(invoiceService)
             .map { it.getAll(Document::class.java,filter) }
             .flatMap { it }
