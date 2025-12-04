@@ -73,22 +73,20 @@ class CarregamentoController(val carregamentoServico: CarregamentoService,
     }
 
     @PostMapping()
-    fun save(@RequestBody dto: CarregamentoDto): ResponseEntity<Carregamento> {
-        if (dto.pedidos.isEmpty()) {
-            dto.ordemCarregamento.U_Status = "Cancelado"
-        }
+    fun save(@RequestBody dto: CarregamentoDto){
         val isNewOrder = dto.ordemCarregamento.DocEntry == null
         val ordemCriada = if(isNewOrder){
             carregamentoServico.save(dto.ordemCarregamento).tryGetValue<Carregamento>()
         }else{
-            if (dto.pedidos.isEmpty()) {
-                carregamentoServico.update(dto.ordemCarregamento, dto.ordemCarregamento.DocEntry.toString())
-            }
             dto.ordemCarregamento
+            //TODO arrumar esse updatge provavelmente se fizer o bind no front vai funcionar
+            //carregamentoServico.update(dto.ordemCarregamento,dto.ordemCarregamento.DocEntry.toString())!!.tryGetValue<Carregamento>()
         }
+
         try {
             val tripleAdicionar = dto.pedidos.map{
                 val order = pedidoVendaService.getById(it).tryGetValue<OrderSales>()
+
                 val pedidosUpdate = PedidoUpdate(
                     order.DocEntry.toString(),
                     order.DocumentLines.map { PedidoUpdateLine(it.DocEntry!!,it.LineNum!!,ordemCriada.DocEntry) }
@@ -98,6 +96,7 @@ class CarregamentoController(val carregamentoServico: CarregamentoService,
 
             val tripleRemover = dto.pedidosRemover.map{
                 val order = pedidoVendaService.getById(it).tryGetValue<OrderSales>()
+
                 val pedidosUpdate = PedidoUpdate(
                     order.DocEntry.toString(),
                     order.DocumentLines.map { PedidoUpdateLine(it.DocEntry!!,it.LineNum!!,null) }
@@ -105,11 +104,9 @@ class CarregamentoController(val carregamentoServico: CarregamentoService,
                 Triple(BatchMethod.PATCH,pedidosUpdate,pedidoVendaService)
             }
             batchService.run(BatchList().addAll(tripleAdicionar).addAll(tripleRemover))
-
-            return ResponseEntity.ok(ordemCriada)
-
         }catch (e : Exception){
             if(isNewOrder){
+                //TODO mudar para falhou e na lista nao listar nada que tenha o status Falhou
                 ordemCriada.also { it.U_Status = "Falhou" }
                 carregamentoServico.update(ordemCriada,ordemCriada.DocEntry.toString())
             }
