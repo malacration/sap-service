@@ -114,6 +114,16 @@ class CarregamentoController(val carregamentoServico: CarregamentoService,
         }
     }
 
+    @PostMapping("/{id}/cancel")
+    fun cancel(@PathVariable id : String, auth : Authentication): ResponseEntity<Carregamento> {
+        if(auth !is User)
+            return ResponseEntity.noContent().build()
+
+        val result = carregamentoServico.cancelar(id)
+
+        return ResponseEntity.ok(result)
+    }
+
     @PostMapping("/save-carregamento")
     fun saveCarregamento(@RequestBody ordem: Carregamento): ResponseEntity<Any> {
         return try {
@@ -127,18 +137,6 @@ class CarregamentoController(val carregamentoServico: CarregamentoService,
             logger.error("Erro ao salvar ordem de carregamento", e)
             ResponseEntity.badRequest().body(mapOf("error" to e.message))
         }
-    }
-
-    @PostMapping("/{id}/cancel")
-    fun cancel(@PathVariable id : String, auth : Authentication): ResponseEntity<Carregamento> {
-        if(auth !is User)
-            return ResponseEntity.noContent().build()
-
-        val carregamento = carregamentoServico.getById(id).tryGetValue<Carregamento>()
-        carregamento.U_Status = "Cancelado"
-
-        val result = carregamentoServico.update(carregamento, id)
-        return ResponseEntity.ok(result?.tryGetValue<Carregamento>())
     }
 
     @GetMapping("estoque-em-carregamento")
