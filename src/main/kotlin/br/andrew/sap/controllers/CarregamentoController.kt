@@ -184,6 +184,8 @@ class CarregamentoController(val carregamentoServico: CarregamentoService,
 
             val documento = pedido.toDocument(DocumentTypes.oInvoices, seqCodeValue)
 
+            documento.U_faturadoOrdemCarregamento = docEntry
+
             batchList.add(BatchMethod.POST, documento, invoiceService)
         }
 
