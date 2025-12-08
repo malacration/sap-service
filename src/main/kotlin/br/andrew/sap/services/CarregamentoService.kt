@@ -14,6 +14,7 @@ import br.andrew.sap.services.batch.BatchList
 import br.andrew.sap.services.batch.BatchMethod
 import br.andrew.sap.services.batch.BatchService
 import br.andrew.sap.services.document.OrdersService
+import org.springframework.data.domain.Page
 import org.springframework.stereotype.Service
 import org.springframework.web.client.RestTemplate
 
@@ -96,5 +97,43 @@ class CarregamentoService(val batchService: BatchService, val pedidoVendaService
         update(carregamento, id)
 
         return carregamento
+    }
+
+
+    fun preencherTotais(page: Page<Carregamento>): Page<Carregamento> {
+        val ordens = page.content
+
+        val ids = ordens.mapNotNull { it.DocEntry }
+        if (ids.isEmpty()) {
+            return page
+        }
+
+        val parameters = mutableListOf<Parameter>()
+        val totalParams = 20
+        val lastId = ids.last()
+
+        for (i in 0 until totalParams) {
+            val idParaBusca = if (i < ids.size) ids[i] else lastId
+            parameters.add(Parameter("p${i + 1}", idParaBusca))
+        }
+
+        val resultados = sqlQueriesService
+            .execute("peso-ordem-carregamento.sql", parameters)
+            ?.tryGetValues<Map<String, Any>>()
+
+        val mapResultados = resultados?.associateBy { it["DocEntry"].toString().toIntOrNull() }
+
+        ordens.forEach { ordem ->
+            val dadosExtras = mapResultados?.get(ordem.DocEntry)
+            if (dadosExtras != null) {
+                ordem.Weight1 = (dadosExtras["Weight1"] as? Number)?.toDouble() ?: 0.0
+                ordem.docEntryQuantity = (dadosExtras["docEntryQuantity"] as? Number)?.toInt() ?: 0
+            } else {
+                ordem.Weight1 = 0.0
+                ordem.docEntryQuantity = 0
+            }
+        }
+
+        return page
     }
 }

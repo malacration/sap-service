@@ -48,11 +48,15 @@ class CarregamentoController(val carregamentoServico: CarregamentoService,
     fun get(auth : Authentication, page : Pageable): ResponseEntity<Page<Carregamento>> {
         if(auth !is User)
             return ResponseEntity.noContent().build()
-        val carregamento = carregamentoServico.get(Filter(),
+
+        val pageResult = carregamentoServico.get(Filter(),
             OrderBy(mapOf("CreateDate" to Order.DESC, "DocEntry" to Order.DESC)),
             page
         ).tryGetPageValues<Carregamento>(page)
-        return ResponseEntity.ok(carregamento)
+
+        val pageEnriched = carregamentoServico.preencherTotais(pageResult)
+
+        return ResponseEntity.ok(pageEnriched)
     }
 
     @GetMapping("/{id}")
