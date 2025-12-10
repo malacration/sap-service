@@ -240,7 +240,7 @@ class CarregamentoController(val carregamentoServico: CarregamentoService,
             val dadosParaAtualizar = mapOf(
                 "U_placa" to payload.U_placa,
                 "U_motorista" to payload.U_motorista,
-                "U_pesoCaminhao" to payload.U_pesoCaminhao
+                "U_capacidadeCaminhao" to payload.U_capacidadeCaminhao
             )
 
             carregamentoServico.update(dadosParaAtualizar, id)
