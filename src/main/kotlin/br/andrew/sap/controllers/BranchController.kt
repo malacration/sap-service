@@ -2,6 +2,7 @@ package br.andrew.sap.controllers
 
 import br.andrew.sap.model.sap.Branch
 import br.andrew.sap.model.authentication.User
+import br.andrew.sap.model.authentication.UserOriginEnum
 import br.andrew.sap.services.BusinessPartnersService
 import br.andrew.sap.services.BussinessPlaceService
 import org.slf4j.LoggerFactory
@@ -27,7 +28,11 @@ class BranchController(
         logger.info("Buscando filiais para ${auth.getIdInt()}")
         if(auth.superVendedor() > -1)
             return ResponseEntity.ok(service.getAll(Branch::class.java))
-        return ResponseEntity.ok(service.getFilialBy(auth.getIdInt()))
+        if(auth.origin == UserOriginEnum.SalePerson)
+            return ResponseEntity.ok(service.getFilialBySalesPerson(auth.getIdInt()))
+        if(auth.origin == UserOriginEnum.EmployeesInfo)
+            return ResponseEntity.ok(service.getFilialByEmployee(auth.getIdInt()))
+          return ResponseEntity.ok(listOf())
     }
 }
 

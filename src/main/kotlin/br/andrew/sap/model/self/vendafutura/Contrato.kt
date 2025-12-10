@@ -35,10 +35,17 @@ class Contrato(
     @JsonProperty("U_status")
     var U_status : Status = Status.aberto
 
-    init {
-//        if(total().compareTo(BigDecimal.ZERO) <= 0)
-//            throw Exception("Nao e permitido contrato sem valor")
-    }
+    @JsonProperty("U_valorProdutos")
+    var U_valorProdutos : Double = 0.0
+        get() {
+            return if(itens.size == 0)
+                field
+            else
+                totalProdutos().toDouble()
+        }
+        set(value) {
+            field = value
+        }
 
     fun total(): BigDecimal {
         return totalProdutos()
