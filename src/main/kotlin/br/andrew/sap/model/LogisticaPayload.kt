@@ -4,5 +4,5 @@ import kotlinx.serialization.Serializable
 data class LogisticaPayload(
     val U_placa: String?,
     val U_motorista: String?,
-    val U_pesoCaminhao: Double?
+    val U_capacidadeCaminhao: Double?
 )
