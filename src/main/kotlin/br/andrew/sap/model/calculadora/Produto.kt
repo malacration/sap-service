@@ -3,6 +3,7 @@ package br.andrew.sap.model.calculadora
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonInclude
+import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.PropertyNamingStrategies
 import com.fasterxml.jackson.databind.annotation.JsonNaming
 import java.math.BigDecimal
@@ -36,6 +37,12 @@ class Produto(
     var kgsPorUnidade : BigDecimal? = null
     var custoGgf : BigDecimal? = null
     var custoMateriaPrimaCurrency : BigDecimal? = null
+
+    @JsonProperty("U_linha_sustennutri")
+    val U_linha_sustennutri : String? = null
+
+    @JsonProperty("U_grupo_sustennutri")
+    val U_grupo_sustennutri : String? = null
 
     val descricao : String = ItemName
     val unidadeMedida : String = InventoryUOM
