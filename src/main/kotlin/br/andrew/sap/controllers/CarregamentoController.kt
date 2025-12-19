@@ -1,5 +1,6 @@
 package br.andrew.sap.controllers.documents
 
+import LogisticaPayload
 import br.andrew.sap.infrastructure.odata.*
 import br.andrew.sap.model.authentication.User
 import br.andrew.sap.model.sap.BatchesGroupByItemCode
@@ -9,6 +10,7 @@ import br.andrew.sap.model.logistica.PedidoUpdate
 import br.andrew.sap.model.logistica.PedidoUpdateLine
 import br.andrew.sap.model.sap.documents.DocumentTypes
 import br.andrew.sap.model.sap.documents.OrderSales
+import br.andrew.sap.model.sap.documents.base.Document
 import br.andrew.sap.services.*
 import br.andrew.sap.services.abstracts.SqlQueriesService
 import br.andrew.sap.services.batch.BatchList
@@ -46,11 +48,15 @@ class CarregamentoController(val carregamentoServico: CarregamentoService,
     fun get(auth : Authentication, page : Pageable): ResponseEntity<Page<Carregamento>> {
         if(auth !is User)
             return ResponseEntity.noContent().build()
-        val carregamento = carregamentoServico.get(Filter(),
+
+        val pageResult = carregamentoServico.get(Filter(),
             OrderBy(mapOf("CreateDate" to Order.DESC, "DocEntry" to Order.DESC)),
             page
         ).tryGetPageValues<Carregamento>(page)
-        return ResponseEntity.ok(carregamento)
+
+        val pageEnriched = carregamentoServico.preencherTotais(pageResult)
+
+        return ResponseEntity.ok(pageEnriched)
     }
 
     @GetMapping("/{id}")
@@ -105,25 +111,10 @@ class CarregamentoController(val carregamentoServico: CarregamentoService,
         }catch (e : Exception){
             if(isNewOrder){
                 //TODO mudar para falhou e na lista nao listar nada que tenha o status Falhou
-                ordemCriada.also { it.U_status = "Falhou" }
+                ordemCriada.also { it.U_Status = "Falhou" }
                 carregamentoServico.update(ordemCriada,ordemCriada.DocEntry.toString())
             }
             throw e
-        }
-    }
-
-    @PostMapping("/save-carregamento")
-    fun saveCarregamento(@RequestBody ordem: Carregamento): ResponseEntity<Any> {
-        return try {
-            if(ordem.U_status.isNullOrEmpty()) {
-                ordem.U_status = "Aberto"
-            }
-
-            val ordemCriada = carregamentoServico.save(ordem).tryGetValue<Carregamento>()
-            ResponseEntity.ok(ordemCriada)
-        } catch (e: Exception) {
-            logger.error("Erro ao salvar ordem de carregamento", e)
-            ResponseEntity.badRequest().body(mapOf("error" to e.message))
         }
     }
 
@@ -132,11 +123,24 @@ class CarregamentoController(val carregamentoServico: CarregamentoService,
         if(auth !is User)
             return ResponseEntity.noContent().build()
 
-        val carregamento = carregamentoServico.getById(id).tryGetValue<Carregamento>()
-        carregamento.U_status = "Cancelado"
+        val result = carregamentoServico.cancelar(id)
 
-        val result = carregamentoServico.update(carregamento, id)
-        return ResponseEntity.ok(result?.tryGetValue<Carregamento>())
+        return ResponseEntity.ok(result)
+    }
+
+    @PostMapping("/save-carregamento")
+    fun saveCarregamento(@RequestBody ordem: Carregamento): ResponseEntity<Any> {
+        return try {
+            if(ordem.U_Status.isNullOrEmpty()) {
+                ordem.U_Status = "Aberto"
+            }
+
+            val ordemCriada = carregamentoServico.save(ordem).tryGetValue<Carregamento>()
+            ResponseEntity.ok(ordemCriada)
+        } catch (e: Exception) {
+            logger.error("Erro ao salvar ordem de carregamento", e)
+            ResponseEntity.badRequest().body(mapOf("error" to e.message))
+        }
     }
 
     @GetMapping("estoque-em-carregamento")
@@ -179,6 +183,8 @@ class CarregamentoController(val carregamentoServico: CarregamentoService,
                 ?: throw Exception("SeqCode não encontrado para a filial $bplId")
 
             val documento = pedido.toDocument(DocumentTypes.oInvoices, seqCodeValue)
+
+            documento.U_faturadoOrdemCarregamento = docEntry
 
             batchList.add(BatchMethod.POST, documento, invoiceService)
         }
@@ -225,15 +231,16 @@ class CarregamentoController(val carregamentoServico: CarregamentoService,
     }
 
     @PostMapping("/{id}/logistica")
-    fun updateLogistica(@PathVariable id: String, @RequestBody payload: Map<String, String>, auth: Authentication): ResponseEntity<Any> {
+    fun updateLogistica(@PathVariable id: String, @RequestBody payload: LogisticaPayload, auth: Authentication): ResponseEntity<Any> {
         if (auth !is User) {
             return ResponseEntity.noContent().build()
         }
 
         try {
             val dadosParaAtualizar = mapOf(
-                "U_placa" to payload["U_placa"],
-                "U_motorista" to payload["U_motorista"]
+                "U_placa" to payload.U_placa,
+                "U_motorista" to payload.U_motorista,
+                "U_capacidadeCaminhao" to payload.U_capacidadeCaminhao
             )
 
             carregamentoServico.update(dadosParaAtualizar, id)
@@ -242,6 +249,18 @@ class CarregamentoController(val carregamentoServico: CarregamentoService,
             logger.error("Erro ao atualizar dados de logística para o carregamento $id", e)
             return ResponseEntity.badRequest().body(mapOf("error" to e.message))
         }
+    }
+
+    @GetMapping("/notas/{idCarregamento}")
+    fun getNotasByCarregamentos(@PathVariable idCarregamento: Int): List<Document> {
+        val filter = Filter(Predicate("U_faturadoOrdemCarregamento", idCarregamento, Condicao.EQUAL))
+        return listOf(invoiceService)
+            .map { it.getAll(Document::class.java,filter) }
+            .flatMap { it }
+            .sortedWith(compareBy(
+                { it.docDate },
+                { it.docObjectCode?.ordinal }
+            ))
     }
 }
 
