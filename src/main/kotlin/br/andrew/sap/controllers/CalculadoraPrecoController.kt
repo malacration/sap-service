@@ -72,4 +72,14 @@ class CalculadoraPrecoController(
         return itemService.getLastPrice(itemCode, deposito)
     }
 
+//    @GetMapping("/teste")
+//    fun save(
+//        @PathVariable itemCode: String,
+//        @PathVariable deposito: String,
+//        page : Pageable,
+//        auth : Authentication): List<LastPrice> {
+//        return itemService.getLastPrice(itemCode, deposito)
+//    }
+
+
 }

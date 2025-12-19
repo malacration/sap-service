@@ -47,6 +47,7 @@ class CarregamentoConfiguration(val userFieldsMDService: UserFieldsMDService,
                 },
             FieldMd("placa","Placa","@ORD_CARREGAMENTO", DbType.db_Alpha),
             FieldMd("motorista","Motorista","@ORD_CARREGAMENTO", DbType.db_Alpha),
+            FieldMd("capacidadeCaminhao","Peso Caminhão","@ORD_CARREGAMENTO", DbType.db_Float),
         ).forEach {
             userFieldsMDService.findOrCreate(it)
         }
@@ -54,7 +55,6 @@ class CarregamentoConfiguration(val userFieldsMDService: UserFieldsMDService,
         listOf(
             FieldMd("orderDocEntry","Pedido","@ORD_CRG_LINHA", null).also {
                 it.LinkedSystemObject = LinkedSystemObject.ulOrders
-                it.subType = "st_None"
             },
             FieldMd("itemCode","Produto","@ORD_CRG_LINHA").also {
                 it.LinkedSystemObject = LinkedSystemObject.ulItems

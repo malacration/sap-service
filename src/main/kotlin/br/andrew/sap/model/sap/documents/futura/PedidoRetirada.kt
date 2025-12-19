@@ -32,6 +32,8 @@ class PedidoRetirada(
             it.U_venda_futura = contrato.DocEntry
             it.Incoterms = order.Incoterms
             it.U_entrega_vf = 1
+            it.journalMemo = "Entrega de mercadoria ref a contrato Nº ${contrato.DocEntry}"
+            it.comments = it.journalMemo
             if(contrato.U_valorFrete > 0){
                 val proporcao = it.totalProdutos().divide(contrato.totalProdutos(), RoundingMode.HALF_DOWN)
                 it.frete = BigDecimal(contrato.U_valorFrete.toString()).multiply(proporcao).setScale(2, RoundingMode.HALF_DOWN).toDouble()
