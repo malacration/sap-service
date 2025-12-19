@@ -54,7 +54,6 @@ class CarregamentoConfiguration(val userFieldsMDService: UserFieldsMDService,
         listOf(
             FieldMd("orderDocEntry","Pedido","@ORD_CRG_LINHA", null).also {
                 it.LinkedSystemObject = LinkedSystemObject.ulOrders
-                it.subType = "st_None"
             },
             FieldMd("itemCode","Produto","@ORD_CRG_LINHA").also {
                 it.LinkedSystemObject = LinkedSystemObject.ulItems

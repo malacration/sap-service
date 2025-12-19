@@ -13,6 +13,10 @@ class TableMd(tableName : String,
               val tableDescription: String,
               val tableType : TbType
 ) {
+    init {
+        if(tableName.length > 19)
+            throw Exception("Nome da tabela é muito grande")
+    }
 
     val archivable : YesNo = YesNo.tNO
     val tableName = tableName.uppercase()

@@ -119,10 +119,7 @@ class ContratoVendaFuturaController(
         )).tryGetValues<Contrato>().firstOrNull() ?: throw  Exception("O contrato nao foi encontrado")
         val orderSales = orderService.getById(contrato.U_orderDocEntry).tryGetValue<OrderSales>()
 
-        val cotacao = pedidoRetirada.parse(contrato,utilizacaoEntregaVendaFutura,null,orderSales).also {
-            it.journalMemo = "Entrega de mercadoria ref a contrato Nº ${contrato.DocEntry}"
-            it.comments = it.journalMemo
-        }
+        val cotacao = pedidoRetirada.parse(contrato,utilizacaoEntregaVendaFutura,null,orderSales)
         return ResponseEntity.ok(cotacaoController.saveForAngular(cotacao,auth))
     }
 

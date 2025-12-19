@@ -40,7 +40,6 @@ class ContratoVendaFuturaConfiguration(val userFieldsMDService: UserFieldsMDServ
         listOf(
             FieldMd("orderDocEntry","Pedido","@AR_CONTRATO_FUTURO", null).also {
                 it.LinkedSystemObject = LinkedSystemObject.ulOrders
-                it.subType = "st_None"
             },
             FieldMd("cardCode","Cliente","@AR_CONTRATO_FUTURO", DbType.db_Alpha).also {
                 it.LinkedSystemObject = LinkedSystemObject.ulBusinessPartners
