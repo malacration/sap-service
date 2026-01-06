@@ -6,6 +6,7 @@ import br.andrew.sap.model.enums.YesNo
 import br.andrew.sap.services.stock.ItemsService
 import br.andrew.sap.services.ProductTreesService
 import br.andrew.sap.services.calculadora.CalculadoraHanddleService
+import br.andrew.sap.services.calculadora.CalculadoraService
 import br.andrew.sap.services.stock.ResourceService
 import jakarta.websocket.server.PathParam
 import org.springframework.beans.factory.annotation.Value
@@ -17,6 +18,7 @@ import java.math.BigDecimal
 @RestController
 @RequestMapping("calculadora-preco")
 class CalculadoraPrecoController(
+    val service : CalculadoraService,
     val itemService: ItemsService,
     val calculadoraHandle : CalculadoraHanddleService,
     val productTreesService: ProductTreesService,
@@ -72,14 +74,15 @@ class CalculadoraPrecoController(
         return itemService.getLastPrice(itemCode, deposito)
     }
 
-//    @GetMapping("/teste")
-//    fun save(
-//        @PathVariable itemCode: String,
-//        @PathVariable deposito: String,
-//        page : Pageable,
-//        auth : Authentication): List<LastPrice> {
-//        return itemService.getLastPrice(itemCode, deposito)
-//    }
+    @GetMapping()
+    fun get(): OData {
+        return service.get()
+    }
+
+    @PostMapping
+    fun save(@RequestBody entity : CalculadoraPreco): OData {
+        return service.save(entity)
+    }
 
 
 }
