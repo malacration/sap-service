@@ -46,7 +46,7 @@ class PedidoRetirada(
         return Product(
             itemCode = itemContrato.U_itemCode,
             quantity = (itensRetirada
-                .filter { it.itemCode == itemContrato.U_itemCode }
+                .filter { it.itemCode == itemContrato.U_itemCode && it.LineId == itemContrato.LineId }
                 .firstOrNull()?: throw Exception("Parse de item nao encontrado")
             ).quantidade.toString() ,
             unitPrice = itemContrato.U_precoNegociado.toString(),
