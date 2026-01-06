@@ -23,9 +23,10 @@ class PedidoRetirada(
             CardCode = contrato.U_cardCode,
             DocDueDate = docDueDate,
             DocumentLines = contrato.itens.filter { base ->
-                itensRetirada.map { it.itemCode }
-                    .contains(base.U_itemCode) }
-                .map { parse(it,usage,itemOriginal) },
+                itensRetirada.any{
+                    it.itemCode == base.U_itemCode && it.LineId == base.LineId
+                }
+            }.map { parse(it,usage,itemOriginal) },
             BPL_IDAssignedToInvoice = contrato.U_filial.toString()
         ).also {
             it.salesPersonCode = contrato.U_vendedor
@@ -45,7 +46,7 @@ class PedidoRetirada(
         return Product(
             itemCode = itemContrato.U_itemCode,
             quantity = (itensRetirada
-                .filter { it.itemCode == itemContrato.U_itemCode }
+                .filter { it.itemCode == itemContrato.U_itemCode && it.LineId == itemContrato.LineId }
                 .firstOrNull()?: throw Exception("Parse de item nao encontrado")
             ).quantidade.toString() ,
             unitPrice = itemContrato.U_precoNegociado.toString(),
@@ -69,6 +70,6 @@ class PedidoRetirada(
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 class ItemRetirada(
     val itemCode: String,
-    val quantidade: Double){
-
+    val quantidade: Double,
+    val LineId : Int){
 }

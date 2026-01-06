@@ -19,6 +19,4 @@ class RegistroInsumo(
     var U_CodigoItem : String? = null
     var U_CodItem : String? = null
     var U_NomeItem : String? = null
-
-
 }

@@ -36,7 +36,8 @@ class CalculadoraPrecoConfiguration(
 
         listOf(
             FieldMd("relatorioJson","Relatorio","@AR_CALC_PRECO", DbType.db_Memo),
-            FieldMd("lastUserId","Relatorio","@AR_CALC_PRECO", DbType.db_Alpha),
+            FieldMd("descricao","Descrição","@AR_CALC_PRECO", DbType.db_Alpha),
+            FieldMd("lastUserId","Last User Id","@AR_CALC_PRECO", DbType.db_Alpha),
             FieldMd("lastUserOrigin","Origem do Login","@AR_CALC_PRECO", DbType.db_Alpha),
             FieldMd("lastUserName","Origem do Login","@AR_CALC_PRECO", DbType.db_Alpha)
         ).forEach {
