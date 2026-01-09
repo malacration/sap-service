@@ -12,11 +12,14 @@ SELECT
     "T0"."Address2",
     "T0"."Comments",
     "T1"."Weight1",
-    d."Name"
+    d."Name",
+    e."SlpName",
+   "T1"."DistribSum"
 FROM RDR1 "T1"
     JOIN ORDR "T0" ON "T0"."DocEntry" = "T1"."DocEntry"
     JOIN "OBPL" b ON "T0"."BPLId" = b."BPLId"
     LEFT JOIN "CRD1" c ON c."CardCode" = "T0"."CardCode"
     LEFT JOIN "@RO_LOCAIS" d ON d."Code" = c."U_Localidade"
+    LEFT JOIN "OSLP" e ON e."SlpCode" = "T0"."SlpCode"
     WHERE "T1"."U_ORD_CARREGAMENTO" = :U_ORD_CARREGAMENTO
     AND c."Address" = 'ENTREGA'
