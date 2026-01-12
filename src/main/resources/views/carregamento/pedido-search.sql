@@ -32,7 +32,9 @@ SELECT DISTINCT
     d."DistribSum" AS "FretePorLinha",
     c."AtcEntry" AS "AttachmentEntry",
     d."DistribSum",
-    e."SlpName"
+    e."SlpName",
+    e."Telephone",
+    e."Mobil"
 FROM
     "ORDR" c
 JOIN "RDR12" r ON c."DocEntry" = r."DocEntry"

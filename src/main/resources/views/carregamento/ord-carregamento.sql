@@ -14,7 +14,9 @@ SELECT
     "T1"."Weight1",
     d."Name",
     e."SlpName",
-   "T1"."DistribSum"
+   "T1"."DistribSum",
+    e."Telephone",
+    e."Mobil"
 FROM RDR1 "T1"
     JOIN ORDR "T0" ON "T0"."DocEntry" = "T1"."DocEntry"
     JOIN "OBPL" b ON "T0"."BPLId" = b."BPLId"
