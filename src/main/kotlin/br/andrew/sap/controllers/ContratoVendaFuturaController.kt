@@ -4,6 +4,7 @@ package br.andrew.sap.controllers
 import br.andrew.sap.controllers.documents.QuotationsController
 import br.andrew.sap.infrastructure.odata.*
 import br.andrew.sap.model.authentication.User
+import br.andrew.sap.model.enums.Cancelled
 import br.andrew.sap.model.payment.PaymentDueDates
 import br.andrew.sap.model.sap.documents.CreditNotes
 import br.andrew.sap.model.sap.documents.DocumentStatus
@@ -97,7 +98,9 @@ class ContratoVendaFuturaController(
 
     @GetMapping("/entregas/{idContrato}")
     fun entregas(@PathVariable idContrato: Int): List<Document> {
-        val filter = Filter(Predicate("U_venda_futura", idContrato, Condicao.EQUAL),
+        val filter = Filter(
+            Predicate("Cancelled", Cancelled.tNO, Condicao.EQUAL),
+            Predicate("U_venda_futura", idContrato, Condicao.EQUAL),
             Predicate("DownPaymentAmountSC", 0, Condicao.EQUAL))
         return listOf(creditNotesService,invoiceService)
             .map { it.getAll(Document::class.java,filter) }
