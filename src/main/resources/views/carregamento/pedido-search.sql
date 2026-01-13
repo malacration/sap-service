@@ -55,3 +55,4 @@ WHERE
     AND c."DocStatus" = 'O'
     AND (x."U_Status" = 'Cancelado' OR x."U_Status" IS NULL)
     AND d."U_ORD_CARREGAMENTO" IS NULL
+    AND d."Usage" = 9

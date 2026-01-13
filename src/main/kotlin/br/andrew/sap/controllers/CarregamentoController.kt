@@ -176,21 +176,16 @@ class CarregamentoController(val carregamentoServico: CarregamentoService,
 
         pedidos.forEach { pedido ->
             val bplId = pedido.getBPL_IDAssignedToInvoice()
-
             val sequenceCodes = carregamentoServico.procuraSequenceCode(bplId)
             val sequenceCode = sequenceCodes.firstOrNull()
                 ?: throw Exception("Nenhum SequenceCode encontrado para a filial $bplId")
-
             val seqCodeValue = sequenceCode.SeqCode
                 ?: throw Exception("SeqCode não encontrado para a filial $bplId")
-
             val documento = pedido.toDocument(DocumentTypes.oInvoices, seqCodeValue)
-
             documento.U_faturadoOrdemCarregamento = docEntry
-
+            documento.docDate = null
             batchList.add(BatchMethod.POST, documento, invoiceService)
         }
-
         return batchService.run(batchList)
     }
 
@@ -263,6 +258,17 @@ class CarregamentoController(val carregamentoServico: CarregamentoService,
                 { it.docDate },
                 { it.docObjectCode?.ordinal }
             ))
+    }
+
+    @GetMapping("/search")
+    fun search(@RequestParam("dataInicial", required = false) dataInicial: String?,
+               @RequestParam("dataFinal", required = false) dataFinal: String?,
+               @RequestParam("filial") filial: Int,
+               @RequestParam("localidade") localidade: String): NextLink<OrderSales> {
+        val startDate = dataInicial ?: "1900-01-01"
+        val endDate = dataFinal ?: "2100-12-31"
+        val result = pedidoVendaService.fullSearchTextFallBack(startDate, endDate, filial, localidade)
+        return result ?: NextLink(emptyList(), "")
     }
 }
 
