@@ -2,6 +2,7 @@ package br.andrew.sap.model.producao
 
 import br.andrew.sap.model.estoque.EntradaSaidaEstoque
 import br.andrew.sap.model.estoque.Produto
+import br.andrew.sap.model.sap.documents.base.DocumentLines
 import com.aventrix.jnanoid.jnanoid.NanoIdUtils
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonInclude
@@ -10,6 +11,7 @@ import com.fasterxml.jackson.databind.annotation.JsonNaming
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.util.*
+import kotlin.math.exp
 
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -89,6 +91,20 @@ class BatchStock(
         inDate = null
         expDate = null
         itemName = null
+    }
+
+    fun getAmount(line: DocumentLines, desire : BigDecimal) : BatchStock {
+        if(line.WarehouseCode != this.whsCode)
+            throw Exception("Depositos nao podem ser diferentes")
+        if(desire > BigDecimal(Quantity)){
+            return BatchStock(BatchNumber,Quantity,whsCode,ItemCode, expDate,inDate,itemName,mnfDate).also {
+                Quantity = "0"
+            }
+        }
+        else{
+            Quantity = BigDecimal(Quantity).minus(desire).toString()
+            return BatchStock(BatchNumber,desire.toString(),whsCode,ItemCode, expDate,inDate,itemName,mnfDate)
+        }
     }
 
     constructor(DistNumber : String,

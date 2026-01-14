@@ -96,17 +96,6 @@ class OrderSalesController(val ordersService: OrdersService,
         }
     }
 
-    @GetMapping("/search")
-    fun search(@RequestParam("dataInicial", required = false) dataInicial: String?,
-               @RequestParam("dataFinal", required = false) dataFinal: String?,
-               @RequestParam("filial") filial: Int,
-               @RequestParam("localidade") localidade: String): NextLink<OrderSales> {
-        val startDate = dataInicial ?: "1900-01-01"
-        val endDate = dataFinal ?: "2100-12-31"
-        val result = ordersService.fullSearchTextFallBack(startDate, endDate, filial, localidade)
-        return result ?: NextLink(emptyList(), "")
-    }
-
     @PostMapping("/searchAll")
     fun search(@RequestBody nextLink : String): NextLink<OrderSales> {
         val result = ordersService.fullSearchTextFallBack2(nextLink)

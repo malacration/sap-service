@@ -30,7 +30,6 @@ import br.andrew.sap.services.document.DownPaymentService
 import br.andrew.sap.services.document.InvoiceService
 import br.andrew.sap.services.document.OrdersService
 import br.andrew.sap.services.pricing.ComissaoService
-import io.swagger.v3.oas.annotations.Parameter
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.ResponseEntity
@@ -116,13 +115,12 @@ class ContratoVendaFuturaController(
     fun pedidoRetirada(@RequestBody pedidoRetirada : PedidoRetirada, auth : Authentication) : ResponseEntity<Document?> {
         if(auth !is User)
             return ResponseEntity.noContent().build()
-
         val contrato = service.get(Filter(
             Predicate("DocEntry",pedidoRetirada.docEntryVendaFutura,Condicao.EQUAL)
         )).tryGetValues<Contrato>().firstOrNull() ?: throw  Exception("O contrato nao foi encontrado")
+        val boleto = adiantamentoService.getByContratoVendaFutura(contrato.DocEntry!!).last()
         val orderSales = orderService.getById(contrato.U_orderDocEntry).tryGetValue<OrderSales>()
-
-        val cotacao = pedidoRetirada.parse(contrato,utilizacaoEntregaVendaFutura,null,orderSales)
+        val cotacao = pedidoRetirada.parse(contrato,utilizacaoEntregaVendaFutura,boleto.DocDueDate,orderSales)
         return ResponseEntity.ok(cotacaoController.saveForAngular(cotacao,auth))
     }
 

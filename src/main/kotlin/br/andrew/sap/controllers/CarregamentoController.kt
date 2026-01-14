@@ -28,6 +28,7 @@ import org.springframework.data.domain.Pageable
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.Authentication
 import org.springframework.web.bind.annotation.*
+import java.util.Date
 
 @RestController
 @RequestMapping("carregamento")
@@ -82,6 +83,12 @@ class CarregamentoController(val carregamentoServico: CarregamentoService,
         val ordemCriada = if(isNewOrder){
             carregamentoServico.save(dto.ordemCarregamento).tryGetValue<Carregamento>()
         }else{
+            val id = dto.ordemCarregamento.DocEntry.toString()
+
+            dto.ordemCarregamento.docEntryQuantity = null
+            dto.ordemCarregamento.Weight1 = null
+
+            carregamentoServico.update(dto.ordemCarregamento, id)
             dto.ordemCarregamento
             //TODO arrumar esse updatge provavelmente se fizer o bind no front vai funcionar
             //carregamentoServico.update(dto.ordemCarregamento,dto.ordemCarregamento.DocEntry.toString())!!.tryGetValue<Carregamento>()
@@ -110,7 +117,6 @@ class CarregamentoController(val carregamentoServico: CarregamentoService,
             batchService.run(BatchList().addAll(tripleAdicionar).addAll(tripleRemover))
         }catch (e : Exception){
             if(isNewOrder){
-                //TODO mudar para falhou e na lista nao listar nada que tenha o status Falhou
                 ordemCriada.also { it.U_Status = "Falhou" }
                 carregamentoServico.update(ordemCriada,ordemCriada.DocEntry.toString())
             }
@@ -153,20 +159,15 @@ class CarregamentoController(val carregamentoServico: CarregamentoService,
     fun saveForAngular(@PathVariable docEntry: Int, @RequestBody lotesAgrupados: List<BatchesGroupByItemCode>): List<BatchResponse> {
         val docEntrys = carregamentoServico.docEntryPedido(docEntry).map { it.DocEntry }
         val pedidos = pedidoVendaService.getAll(OrderSales::class.java, Filter("DocEntry", docEntrys, Condicao.IN))
+        val carregamento = carregamentoServico.getById(docEntry.toString()).tryGetValue<Carregamento>()
 
         pedidos.forEach { order ->
             order.DocumentLines
                 .filter { it.U_ORD_CARREGAMENTO == docEntry }
                 .forEach { currentItem ->
-                    val lotes = lotesAgrupados
-                        .firstOrNull { it.ItemCode == currentItem.ItemCode }
-                        ?.Batches
-                        ?: throw Exception("Erro ao fazer bind de lote para item ${currentItem.ItemCode}")
-
-                    lotes.forEach { batch ->
-                        batch.ItemCode = currentItem.ItemCode
+                    currentItem.BatchNumbers = lotesAgrupados.filter { it.ItemCode == currentItem.ItemCode }.flatMap {
+                        it.getBachesBy(currentItem)
                     }
-                    currentItem.BatchNumbers = lotes
                 }
         }
 
@@ -174,21 +175,21 @@ class CarregamentoController(val carregamentoServico: CarregamentoService,
 
         pedidos.forEach { pedido ->
             val bplId = pedido.getBPL_IDAssignedToInvoice()
-
             val sequenceCodes = carregamentoServico.procuraSequenceCode(bplId)
             val sequenceCode = sequenceCodes.firstOrNull()
                 ?: throw Exception("Nenhum SequenceCode encontrado para a filial $bplId")
-
             val seqCodeValue = sequenceCode.SeqCode
                 ?: throw Exception("SeqCode não encontrado para a filial $bplId")
-
             val documento = pedido.toDocument(DocumentTypes.oInvoices, seqCodeValue)
 
-            documento.U_faturadoOrdemCarregamento = docEntry
+            documento.getOrCreateTaxExtension().Vehicle = carregamento.U_placa
+            documento.getOrCreateTaxExtension().Carrier = carregamento.U_transportadora
+            documento.ClosingRemarks = "Motorista: ${carregamento.U_motorista}"
 
+            documento.U_faturadoOrdemCarregamento = docEntry
+            documento.docDate = null
             batchList.add(BatchMethod.POST, documento, invoiceService)
         }
-
         return batchService.run(batchList)
     }
 
@@ -240,7 +241,8 @@ class CarregamentoController(val carregamentoServico: CarregamentoService,
             val dadosParaAtualizar = mapOf(
                 "U_placa" to payload.U_placa,
                 "U_motorista" to payload.U_motorista,
-                "U_capacidadeCaminhao" to payload.U_capacidadeCaminhao
+                "U_capacidadeCaminhao" to payload.U_capacidadeCaminhao,
+                "U_transportadora" to payload.U_transportadora
             )
 
             carregamentoServico.update(dadosParaAtualizar, id)
@@ -261,6 +263,18 @@ class CarregamentoController(val carregamentoServico: CarregamentoService,
                 { it.docDate },
                 { it.docObjectCode?.ordinal }
             ))
+    }
+
+    @GetMapping("/search")
+    fun search(@RequestParam("dataInicial", required = false) dataInicial: String?,
+               @RequestParam("dataFinal", required = false) dataFinal: String?,
+               @RequestParam("filial") filial: Int,
+               @RequestParam("localidade") localidade: String,
+               @RequestParam("vendedor") vendedor: Int?): NextLink<OrderSales> {
+        val startDate = dataInicial ?: "1900-01-01"
+        val endDate = dataFinal ?: "2100-12-31"
+        val result = pedidoVendaService.fullSearchTextFallBack(startDate, endDate, filial, localidade,vendedor)
+        return result ?: NextLink(emptyList(), "")
     }
 }
 
