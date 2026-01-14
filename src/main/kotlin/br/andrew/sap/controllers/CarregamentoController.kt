@@ -28,6 +28,7 @@ import org.springframework.data.domain.Pageable
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.Authentication
 import org.springframework.web.bind.annotation.*
+import java.util.Date
 
 @RestController
 @RequestMapping("carregamento")
@@ -112,7 +113,6 @@ class CarregamentoController(val carregamentoServico: CarregamentoService,
             batchService.run(BatchList().addAll(tripleAdicionar).addAll(tripleRemover))
         }catch (e : Exception){
             if(isNewOrder){
-                //TODO mudar para falhou e na lista nao listar nada que tenha o status Falhou
                 ordemCriada.also { it.U_Status = "Falhou" }
                 carregamentoServico.update(ordemCriada,ordemCriada.DocEntry.toString())
             }
