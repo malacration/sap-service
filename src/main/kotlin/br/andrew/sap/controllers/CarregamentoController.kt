@@ -155,6 +155,7 @@ class CarregamentoController(val carregamentoServico: CarregamentoService,
     fun saveForAngular(@PathVariable docEntry: Int, @RequestBody lotesAgrupados: List<BatchesGroupByItemCode>): List<BatchResponse> {
         val docEntrys = carregamentoServico.docEntryPedido(docEntry).map { it.DocEntry }
         val pedidos = pedidoVendaService.getAll(OrderSales::class.java, Filter("DocEntry", docEntrys, Condicao.IN))
+        val carregamento = carregamentoServico.getById(docEntry.toString()).tryGetValue<Carregamento>()
 
         pedidos.forEach { order ->
             order.DocumentLines
@@ -182,6 +183,11 @@ class CarregamentoController(val carregamentoServico: CarregamentoService,
             val seqCodeValue = sequenceCode.SeqCode
                 ?: throw Exception("SeqCode não encontrado para a filial $bplId")
             val documento = pedido.toDocument(DocumentTypes.oInvoices, seqCodeValue)
+
+            documento.getOrCreateTaxExtension().Vehicle = carregamento.U_placa
+            documento.getOrCreateTaxExtension().Carrier = carregamento.U_transportadora
+            documento.ClosingRemarks = "Motorista: ${carregamento.U_motorista}"
+
             documento.U_faturadoOrdemCarregamento = docEntry
             documento.docDate = null
             batchList.add(BatchMethod.POST, documento, invoiceService)
@@ -237,7 +243,8 @@ class CarregamentoController(val carregamentoServico: CarregamentoService,
             val dadosParaAtualizar = mapOf(
                 "U_placa" to payload.U_placa,
                 "U_motorista" to payload.U_motorista,
-                "U_capacidadeCaminhao" to payload.U_capacidadeCaminhao
+                "U_capacidadeCaminhao" to payload.U_capacidadeCaminhao,
+                "U_transportadora" to payload.U_transportadora
             )
 
             carregamentoServico.update(dadosParaAtualizar, id)

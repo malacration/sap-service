@@ -88,6 +88,14 @@ open class Document(val CardCode : String,
     var TransNum : Int? = null
     var SequenceCode : Int? = null
     var U_TX_DocEntryRef : Int? = null
+    var ClosingRemarks: String? = null
+
+    fun getOrCreateTaxExtension(): TaxExtension {
+        if (this.TaxExtension == null) {
+            this.TaxExtension = TaxExtension()
+        }
+        return this.TaxExtension!!
+    }
 
     @JsonProperty("TaxExtension")
     var TaxExtension: TaxExtension? = null

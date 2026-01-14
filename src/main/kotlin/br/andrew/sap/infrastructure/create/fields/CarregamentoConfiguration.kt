@@ -48,6 +48,7 @@ class CarregamentoConfiguration(val userFieldsMDService: UserFieldsMDService,
             FieldMd("placa","Placa","@ORD_CARREGAMENTO", DbType.db_Alpha),
             FieldMd("motorista","Motorista","@ORD_CARREGAMENTO", DbType.db_Alpha),
             FieldMd("capacidadeCaminhao","Peso Caminhão","@ORD_CARREGAMENTO", DbType.db_Float),
+            FieldMd("transportadora","Transportadora","@ORD_CARREGAMENTO", DbType.db_Alpha),
         ).forEach {
             userFieldsMDService.findOrCreate(it)
         }

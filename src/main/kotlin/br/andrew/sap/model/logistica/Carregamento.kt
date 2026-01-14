@@ -16,7 +16,8 @@ class Carregamento(
         val U_filial : Int?,
         val U_placa : String?,
         val U_motorista : String?,
-        val U_capacidadeCaminhao : Double?
+        val U_capacidadeCaminhao : Double?,
+        val U_transportadora : String?
 ){
         var Quantity : Double? = null
         var Weight1 : Double? = null
