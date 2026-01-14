@@ -165,15 +165,9 @@ class CarregamentoController(val carregamentoServico: CarregamentoService,
             order.DocumentLines
                 .filter { it.U_ORD_CARREGAMENTO == docEntry }
                 .forEach { currentItem ->
-                    val lotes = lotesAgrupados
-                        .firstOrNull { it.ItemCode == currentItem.ItemCode }
-                        ?.Batches
-                        ?: throw Exception("Erro ao fazer bind de lote para item ${currentItem.ItemCode}")
-
-                    lotes.forEach { batch ->
-                        batch.ItemCode = currentItem.ItemCode
+                    currentItem.BatchNumbers = lotesAgrupados.filter { it.ItemCode == currentItem.ItemCode }.flatMap {
+                        it.getBachesBy(currentItem)
                     }
-                    currentItem.BatchNumbers = lotes
                 }
         }
 
