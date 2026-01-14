@@ -83,6 +83,10 @@ class CarregamentoController(val carregamentoServico: CarregamentoService,
             carregamentoServico.save(dto.ordemCarregamento).tryGetValue<Carregamento>()
         }else{
             val id = dto.ordemCarregamento.DocEntry.toString()
+
+            dto.ordemCarregamento.docEntryQuantity = null
+            dto.ordemCarregamento.Weight1 = null
+
             carregamentoServico.update(dto.ordemCarregamento, id)
             dto.ordemCarregamento
             //TODO arrumar esse updatge provavelmente se fizer o bind no front vai funcionar
