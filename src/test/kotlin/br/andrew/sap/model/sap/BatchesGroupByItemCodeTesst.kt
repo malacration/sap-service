@@ -1,8 +1,6 @@
 package br.andrew.sap.model.sap
 
-import JournalEntryLines
 import br.andrew.sap.model.producao.BatchStock
-import br.andrew.sap.model.sap.documents.base.DocumentLines
 import br.andrew.sap.model.sap.documents.base.Product
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test

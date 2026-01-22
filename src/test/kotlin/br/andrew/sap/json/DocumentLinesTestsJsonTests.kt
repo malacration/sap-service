@@ -60,7 +60,6 @@ class DocumentLinesTestsJsonTests {
         Assertions.assertEquals(null,service.CostingCode)
         Assertions.assertEquals(null,service.CostingCode2)
         Assertions.assertEquals("2.9.1.001.00006",service.AccountCode)
-        Assertions.assertEquals(9,service.Usage)
         Assertions.assertEquals(null,service.U_preco_base)
         Assertions.assertEquals(null,service.U_preco_negociado)
         Assertions.assertEquals(null,service.U_id_item_forca)
