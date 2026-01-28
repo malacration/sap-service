@@ -53,6 +53,10 @@ class InvoiceService(env: SapEnvrioment, restTemplate: RestTemplate, authService
 
     fun createPix(docEntry: Int){
         val invoice = this.getById(docEntry).tryGetValue<Invoice>()
+        createPix(invoice)
+    }
+
+    fun createPix(invoice: Invoice){
         val bussinessPlace = bussinessPlaceService
             .getById(invoice.getBPL_IDAssignedToInvoice())
             .tryGetValue<BussinessPlace>()

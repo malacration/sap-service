@@ -136,18 +136,21 @@ class BusinessPartnersController(
     }
 
     @GetMapping("/cientes")
-    fun get(auth: Authentication, page: Pageable): ResponseEntity<Page<BusinessPartner>> {
+    fun get(auth: Authentication,
+            page: Pageable): ResponseEntity<Page<BusinessPartner>> {
         if (auth !is User)
             return ResponseEntity.noContent().build()
-        val parceiroNegocio = service.get(
-            Filter(mutableListOf(
-                Predicate("CardType", "C", Condicao.EQUAL),
-                Predicate("SalesPersonCode", auth.getIdInt(), Condicao.EQUAL)
-            )),
-            OrderBy(mapOf("CardName" to Order.ASC)),
-            page
-        ).tryGetPageValues<BusinessPartner>(page)
-        return ResponseEntity.ok(parceiroNegocio)
+        val predicates = mutableListOf(
+            Predicate("CardType", "C", Condicao.EQUAL)
+        )
+        if(!auth.isListAllBusinessPartner()){
+            predicates.add(Predicate("SalesPersonCode", auth.getIdInt(), Condicao.EQUAL))
+        }
+        return ResponseEntity.ok(service.get(
+                Filter(predicates),
+                OrderBy(mapOf("CardName" to Order.ASC)),
+                page
+            ).tryGetPageValues<BusinessPartner>(page))
     }
 
     @GetMapping("pedido-venda-parceiro/")
