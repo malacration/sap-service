@@ -7,6 +7,7 @@ import br.andrew.sap.model.sap.BussinessPlace
 import br.andrew.sap.model.sap.documents.DocumentTypes
 import br.andrew.sap.model.sap.documents.Invoice
 import br.andrew.sap.model.sap.documents.PixDocType
+import br.andrew.sap.model.sap.documents.base.Installment
 import br.andrew.sap.model.sap.documents.matches
 import br.andrew.sap.model.sap.partner.BusinessPartner
 import br.andrew.sap.model.uzzipay.ContaUzziPayPix
@@ -16,6 +17,7 @@ import br.andrew.sap.model.uzzipay.builder.RequestPixDueDateSemContaBuilder
 import br.andrew.sap.services.BusinessPartnersService
 import br.andrew.sap.services.BussinessPlaceService
 import br.andrew.sap.services.document.InvoiceService
+import br.andrew.sap.services.uzzipay.DynamicPixQrCodeService
 import br.andrew.sap.services.uzzipay.TransactionsPixService
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
@@ -28,6 +30,7 @@ import org.springframework.web.bind.annotation.RestController
 @RequestMapping("pix")
 class PixController(
     val transactionsPixService: TransactionsPixService,
+    val pixService : DynamicPixQrCodeService,
     val uzziPayEnvrioment: UzziPayEnvrioment,
     val bussinessPlaceService : BussinessPlaceService,
     val bussinesPartnersService : BusinessPartnersService,
@@ -38,21 +41,20 @@ class PixController(
         return "ok"
     }
 
-    @GetMapping("gerar-chave/{pixDocType}/{docNum}")
-    fun gerarChave(@PathVariable pixDocType : PixDocType, @PathVariable docNum : Int): List<RequestPixDueDate> {
+    @GetMapping("gerar-chave/docType/{pixDocType}/docEntry/{docEntry}/parcela/{parcela}")
+    fun gerarChave(
+        @PathVariable pixDocType : PixDocType,
+        @PathVariable docEntry : Int,
+        @PathVariable parcela : Int): List<Installment?> {
 
         if (pixDocType.matches(DocumentTypes.oInvoices)) {
-            val invoice = invoiceService
-                .get(Filter("DocNum",docNum, Condicao.EQUAL))
-                .tryGetValues<Invoice>()
+            val invoice = invoiceService.getById(docEntry).tryGetValue<Invoice>()
             val bussinessPlace = bussinessPlaceService
-                .getById(invoice.first().getBPL_IDAssignedToInvoice())
+                .getById(invoice.getBPL_IDAssignedToInvoice())
                 .tryGetValue<BussinessPlace>()
-            val partner = bussinesPartnersService.getById("'${invoice.first().CardCode}'").tryGetValue<BusinessPartner>()
+            val partner = bussinesPartnersService.getById("'${invoice.CardCode}'").tryGetValue<BusinessPartner>()
 
-            invoiceService.createPix(invoice.firstOrNull() ?: throw Exception("Documento não foi encontrado"))
-            pixService.genereateFor(it)
-            return RequestPixDueDateSemContaBuilder(partner,bussinessPlace,invoice.first()).build()
+            return invoiceService.createPix(invoice,parcela)
         } else {
             throw Exception("Tipo de documento não permitido para gerar chave pix")
         }

@@ -201,7 +201,7 @@ open class Document(val CardCode : String,
         return "Document(CardCode='$CardCode', Branch='$BPL_IDAssignedToInvoice', docEntry=$docEntry, docNum=$docNum, pedido_forca=$u_id_pedido_forca)"
     }
 
-    fun setPix(request: RequestPixDueDate, chave: DataRetonroPixQrCode) {
+    fun setPix(request: RequestPixDueDate, chave: DataRetonroPixQrCode): Installment? {
         if(request.docEntry() != docEntry)
             throw Exception("O qrCode nao pertence a esse documento")
         this.documentInstallments!!.find { it.InstallmentId == request.getInstallmentId() }?.also {
@@ -210,6 +210,7 @@ open class Document(val CardCode : String,
             it.U_pix_link = chave.data.link
             it.U_pix_reference = chave.data.reference
         }
+        return this.documentInstallments!!.find { it.InstallmentId == request.getInstallmentId() }
     }
 
     fun getInstallmentBy(transaction: Transaction): Installment? {

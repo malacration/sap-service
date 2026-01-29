@@ -9,7 +9,8 @@ import br.andrew.sap.model.uzzipay.RequestPixDueDate
 
 class RequestPixDueDateSemContaBuilder(val bussinesPartner: BusinessPartner,
                                        val bussinessPlace: BussinessPlace,
-                                       val document : Document
+                                       val document : Document,
+                                       val parcela : List<Int> = listOf()
 ){
     companion object{
         private var contas : List<ContaUzziPayPix> = listOf()
@@ -19,11 +20,12 @@ class RequestPixDueDateSemContaBuilder(val bussinesPartner: BusinessPartner,
         }
     }
     fun comContas(contas : List<ContaUzziPayPix>): RequestPixDueDateBuilder {
-        return comConta(contas?.first { it.cnpj==bussinessPlace.cnpjSemMascara() } ?: throw Exception("Conta não encontrada"))
+        return comConta(contas?.firstOrNull { it.cnpj==bussinessPlace.cnpjSemMascara() }
+            ?: throw Exception("Conta não encontrada para o CNPJ ${bussinessPlace.cnpjSemMascara()}"))
     }
 
     fun comConta(conta : ContaUzziPayPix): RequestPixDueDateBuilder {
-        return RequestPixDueDateBuilder(bussinesPartner, bussinessPlace, document, conta)
+        return RequestPixDueDateBuilder(bussinesPartner, bussinessPlace, document, conta, parcela)
     }
 
     fun build(): List<RequestPixDueDate> {

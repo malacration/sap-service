@@ -9,7 +9,8 @@ SELECT
     LCM."Debit",
     LCM."Credit",
     LCM."LineMemo",
-    LCM."TransType"
+    LCM."TransType",
+    LCM."SourceLine"
 FROM JDT1 LCM
 INNER JOIN OACT C ON LCM."Account" = C."AcctCode"
 WHERE

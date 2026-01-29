@@ -17,6 +17,7 @@ import br.andrew.sap.model.sap.documents.base.Document
 import br.andrew.sap.model.sap.journal.OriginalJournal
 import br.andrew.sap.model.sap.partner.BusinessPartner
 import br.andrew.sap.model.uzzipay.ContaUzziPayPix
+import br.andrew.sap.model.uzzipay.RequestPixDueDate
 import br.andrew.sap.model.uzzipay.Transaction
 import br.andrew.sap.model.uzzipay.builder.RequestPixDueDateSemContaBuilder
 import br.andrew.sap.services.AuthService
@@ -51,21 +52,28 @@ class InvoiceService(env: SapEnvrioment, restTemplate: RestTemplate, authService
         return "/b1s/v1/Invoices"
     }
 
-    fun createPix(docEntry: Int){
-        val invoice = this.getById(docEntry).tryGetValue<Invoice>()
-        createPix(invoice)
+    fun createPix(docEntry : Int, parcelas : Int): List<Installment?> {
+        return createPix(docEntry,listOf(parcelas))
     }
 
-    fun createPix(invoice: Invoice){
+    fun createPix(invoice: Invoice, parcelas : Int): List<Installment?> {
+        return createPix(invoice,listOf(parcelas))
+    }
+
+    fun createPix(docEntry: Int, parcelas : List<Int> = listOf()): List<Installment?> {
+        val invoice = this.getById(docEntry).tryGetValue<Invoice>()
+        return createPix(invoice,parcelas)
+    }
+
+    fun createPix(invoice: Invoice, parcela : List<Int> = listOf()): List<Installment?> {
         val bussinessPlace = bussinessPlaceService
             .getById(invoice.getBPL_IDAssignedToInvoice())
             .tryGetValue<BussinessPlace>()
         val partner = bussinesPartnersService.getById("'${invoice.CardCode}'").tryGetValue<BusinessPartner>()
         val requestes = RequestPixDueDateSemContaBuilder(partner,bussinessPlace,invoice).build()
-        requestes.forEach {
-            invoice.setPix(it,pixService.genereateFor(it))
-        }
+        val retorno = requestes.map { invoice.setPix(it,pixService.genereateFor(it)) }
         this.update(invoice,invoice.docEntry.toString())
+        return retorno
     }
 
     fun getInvoiceByIdPix(reference: String): Invoice {

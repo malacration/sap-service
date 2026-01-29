@@ -7,16 +7,24 @@ import br.andrew.sap.model.sap.partner.BusinessPartner
 import br.andrew.sap.model.uzzipay.ContaUzziPayPix
 import br.andrew.sap.model.uzzipay.Payer
 import br.andrew.sap.model.uzzipay.RequestPixDueDate
+import okhttp3.internal.parseCookie
 import java.math.BigDecimal
 import java.math.RoundingMode
 
-class RequestPixDueDateBuilder(private val bp: BusinessPartner,
-                               private val bussinessPlace: BussinessPlace,
-                               private val document : Document,
-                               private val conta : ContaUzziPayPix
+class RequestPixDueDateBuilder(
+    private val bp: BusinessPartner,
+    private val bussinessPlace: BussinessPlace,
+    private val document: Document,
+    private val conta: ContaUzziPayPix,
+    private var parcelas: List<Int> = listOf()
 ) {
     fun build(): List<RequestPixDueDate> {
-        return document.documentInstallments?.map {
+        if(parcelas.isEmpty() && document.documentInstallments != null) {
+            parcelas = document.documentInstallments
+                ?.filter { it.InstallmentId != null }
+                ?.map { it.InstallmentId!! } ?: listOf()
+        }
+        return document.documentInstallments?.filter { parcelas.contains(it.InstallmentId) }?.map {
             RequestPixDueDate(
                 it.createExternalIdentifier(document),
                 conta,

@@ -7,13 +7,17 @@ import br.andrew.sap.model.sap.Attachment
 import br.andrew.sap.model.ContactOpaque
 import br.andrew.sap.model.authentication.User
 import br.andrew.sap.model.dto.ContasReceberDto
+import br.andrew.sap.model.enums.YesNo
 import br.andrew.sap.model.forca.Cliente
 import br.andrew.sap.model.sap.documents.OrderSales
 import br.andrew.sap.model.sap.partner.BusinessPartner
+import br.andrew.sap.model.sap.partner.BusinessPartnerCrossJoin
 import br.andrew.sap.model.sap.partner.BusinessPartnerSlin
 import br.andrew.sap.model.sap.partner.BusinessPartnerType
+import br.andrew.sap.model.sap.partner.CpfCnpj
 import br.andrew.sap.model.sap.partner.ReferenciaComercial
 import br.andrew.sap.services.*
+import br.andrew.sap.services.abstracts.Entidade
 import br.andrew.sap.services.document.OrdersService
 import br.andrew.sap.services.security.OneTimePasswordService
 import org.springframework.data.domain.Page
@@ -137,23 +141,57 @@ class BusinessPartnersController(
 
     @GetMapping("/cientes")
     fun get(auth: Authentication,
+            @RequestParam(required = false) cardCode: String?,
+            @RequestParam(required = false) cardName: String?,
+            @RequestParam(required = false) cpfCnpj: String?,
             page: Pageable): ResponseEntity<Page<BusinessPartner>> {
         if (auth !is User)
             return ResponseEntity.noContent().build()
-        val predicates = mutableListOf(
-            Predicate("CardType", "C", Condicao.EQUAL)
+
+        val entidades = mutableListOf(
+            Entidade("BusinessPartners",listOf("CardCode","CardName","SalesPersonCode","Phone1","Phone2","CardType","Valid")),
         )
+        val filter = Filter(listOf(
+            Predicate("BusinessPartners/CardType", "C", Condicao.EQUAL),
+            Predicate("BusinessPartners/Valid", YesNo.tYES, Condicao.EQUAL)
+        ))
+
         if(!auth.isListAllBusinessPartner()){
-            predicates.add(Predicate("SalesPersonCode", auth.getIdInt(), Condicao.EQUAL))
+            filter.add(Predicate("BusinessPartners/SalesPersonCode", auth.getIdInt(), Condicao.EQUAL))
         }
-        return ResponseEntity.ok(service.get(
-                Filter(predicates),
+        if (!cardName?.trim().isNullOrEmpty()) {
+            filter.add(Predicate("BusinessPartners/CardName", cardName.trim(), Condicao.CONTAINS))
+        }
+        if (!cardCode?.trim().isNullOrEmpty()) {
+            filter.add(Predicate("BusinessPartners/CardCode", cardCode.trim(), Condicao.EQUAL))
+        }
+        return if (!cpfCnpj?.trim().isNullOrEmpty()) {
+            entidades.add(Entidade("BusinessPartners/BPFiscalTaxIDCollection",listOf("TaxId4","TaxId0","BPCode")))
+
+            filter.add(Predicate("BusinessPartners/CardCode", "BusinessPartners/BPFiscalTaxIDCollection/BPCode", Condicao.EQUAL,true))
+            val cpfCnpjObj = CpfCnpj(cpfCnpj)
+            if(cpfCnpjObj.isCnpj())
+                filter.add(Predicate("BusinessPartners/BPFiscalTaxIDCollection/TaxId0", cpfCnpjObj.toString(), Condicao.EQUAL))
+            else
+                filter.add(Predicate("BusinessPartners/BPFiscalTaxIDCollection/TaxId4", cpfCnpjObj.toString(), Condicao.EQUAL))
+            ResponseEntity.ok(
+                service.crossJoin(entidades, filter, OrderBy(),page)
+                    .tryGetPageValues<BusinessPartnerCrossJoin>(page).map {
+                        if(it.BPFiscalTaxIDCollection != null)
+                            it.BusinessPartners.setBPFiscalTaxIDCollection(listOf(it.BPFiscalTaxIDCollection!!))
+                        it.BusinessPartners
+                    }
+            )
+        }else{
+            return ResponseEntity.ok(service.get(
+                filter.withStripPrefix("BusinessPartners/"),
                 OrderBy(mapOf("CardName" to Order.ASC)),
                 page
             ).tryGetPageValues<BusinessPartner>(page))
+        }
     }
 
-    @GetMapping("pedido-venda-parceiro/")
+    @GetMapping("pedido-venda-parceiro")
     fun get(auth : Authentication, @RequestParam CardCode: String): ResponseEntity<List<OrderSales>> {
         if(!(auth is User))
             return ResponseEntity.noContent().build()
@@ -171,7 +209,7 @@ class BusinessPartnersController(
         return service.getByCpfCnpj(cpfCnpj,tipo).getContactOpaque()
     }
 
-    @GetMapping("contas-receber/")
+    @GetMapping("contas-receber")
     fun getContasReceberByCliente(@RequestParam("CardCode") cardCode: String): ResponseEntity<NextLink<ContasReceberDto>> {
           val result = service.getContasReceberByCardCode(cardCode)
           return ResponseEntity.ok(result)

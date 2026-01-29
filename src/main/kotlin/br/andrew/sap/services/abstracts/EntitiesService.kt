@@ -192,7 +192,7 @@ open abstract class EntitiesService<T>(protected val env: SapEnvrioment,
     fun crossJoin(entidades : List<Entidade>, filter : Filter = Filter(),
                   order : OrderBy = OrderBy(), page : Pageable = Pageable.ofSize(20)): OData {
         var crossjoin = "/b1s/v1/\$crossjoin(${entidades.joinToString(",") { it.entidadeNome }})"
-        var expand = "\$expand=${entidades.joinToString(",") { it.getExpand() }}";
+        var expand = "\$expand=${entidades.filter { it.selectPropriedades }.joinToString(",") { it.getExpand() }}";
 
         //TODO adicionar order by
         val filter = listOf(filter).filter { it.toString().isNotEmpty() }.joinToString("&").replace("\$filter=","\$filter=(")+")"
