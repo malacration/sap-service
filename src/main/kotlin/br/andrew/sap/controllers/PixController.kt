@@ -46,14 +46,8 @@ class PixController(
         @PathVariable pixDocType : PixDocType,
         @PathVariable docEntry : Int,
         @PathVariable parcela : Int): List<Installment?> {
-
         if (pixDocType.matches(DocumentTypes.oInvoices)) {
             val invoice = invoiceService.getById(docEntry).tryGetValue<Invoice>()
-            val bussinessPlace = bussinessPlaceService
-                .getById(invoice.getBPL_IDAssignedToInvoice())
-                .tryGetValue<BussinessPlace>()
-            val partner = bussinesPartnersService.getById("'${invoice.CardCode}'").tryGetValue<BusinessPartner>()
-
             return invoiceService.createPix(invoice,parcela)
         } else {
             throw Exception("Tipo de documento não permitido para gerar chave pix")

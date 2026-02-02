@@ -70,7 +70,7 @@ class InvoiceService(env: SapEnvrioment, restTemplate: RestTemplate, authService
             .getById(invoice.getBPL_IDAssignedToInvoice())
             .tryGetValue<BussinessPlace>()
         val partner = bussinesPartnersService.getById("'${invoice.CardCode}'").tryGetValue<BusinessPartner>()
-        val requestes = RequestPixDueDateSemContaBuilder(partner,bussinessPlace,invoice).build()
+        val requestes = RequestPixDueDateSemContaBuilder(partner,bussinessPlace,invoice,parcela).build()
         val retorno = requestes.map { invoice.setPix(it,pixService.genereateFor(it)) }
         this.update(invoice,invoice.docEntry.toString())
         return retorno

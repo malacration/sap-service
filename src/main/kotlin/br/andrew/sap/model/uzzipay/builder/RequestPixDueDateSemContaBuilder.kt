@@ -19,6 +19,7 @@ class RequestPixDueDateSemContaBuilder(val bussinesPartner: BusinessPartner,
                 contas = uzziPayEnvrioment.contas
         }
     }
+
     fun comContas(contas : List<ContaUzziPayPix>): RequestPixDueDateBuilder {
         return comConta(contas?.firstOrNull { it.cnpj==bussinessPlace.cnpjSemMascara() }
             ?: throw Exception("Conta não encontrada para o CNPJ ${bussinessPlace.cnpjSemMascara()}"))

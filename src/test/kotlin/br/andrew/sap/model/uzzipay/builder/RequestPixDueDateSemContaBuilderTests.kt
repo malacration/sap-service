@@ -1,0 +1,139 @@
+package br.andrew.sap.model.uzzipay.builder
+
+import br.andrew.sap.infrastructure.configurations.uzzipay.UzziPayEnvrioment
+import br.andrew.sap.model.sap.BussinessPlace
+import br.andrew.sap.model.sap.documents.DocumentTypes
+import br.andrew.sap.model.sap.documents.base.Document
+import br.andrew.sap.model.sap.documents.base.Installment
+import br.andrew.sap.model.sap.partner.Address
+import br.andrew.sap.model.sap.partner.BusinessPartner
+import br.andrew.sap.model.sap.partner.CpfCnpj
+import br.andrew.sap.model.uzzipay.ContaUzziPayPix
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
+import java.time.LocalDate
+
+class RequestPixDueDateSemContaBuilderTests {
+
+    @BeforeEach
+    fun resetStaticContas() {
+        val companion = RequestPixDueDateSemContaBuilder.Companion
+        val field = companion::class.java.getDeclaredField("contas")
+        field.isAccessible = true
+        field.set(companion, listOf<ContaUzziPayPix>())
+    }
+
+    @Test
+    fun buildSemContasConfiguradasLancaErro() {
+        val builder = RequestPixDueDateSemContaBuilder(
+            newBusinessPartner(),
+            newBussinessPlace("12.345.678/0001-90"),
+            newDocument(listOf(newInstallment(1)))
+        )
+
+        val erro = assertThrows<Exception> { builder.build() }
+        assertTrue((erro.message ?: "").contains("Nenhuma conta configurada"))
+    }
+
+    @Test
+    fun comContasSemCnpjCorrespondenteLancaErro() {
+        val builder = RequestPixDueDateSemContaBuilder(
+            newBusinessPartner(),
+            newBussinessPlace("12.345.678/0001-90"),
+            newDocument(listOf(newInstallment(1)))
+        )
+        val contas = listOf(newConta("00999999000199", "PIX-1"))
+
+        val erro = assertThrows<Exception> { builder.comContas(contas) }
+        assertTrue((erro.message ?: "").contains("Conta não encontrada para o CNPJ 12345678000190"))
+    }
+
+    @Test
+    fun buildSelecionaContaPorCnpjEConstruiParcelas() {
+        val contaSelecionada = newConta("12345678000190", "PIX-OK")
+        val outras = newConta("00999999000199", "PIX-OUTRA")
+        val env = UzziPayEnvrioment().also { it.contas = listOf(outras, contaSelecionada) }
+        RequestPixDueDateSemContaBuilder.setUzziPayEnvrioment(env)
+
+        val builder = RequestPixDueDateSemContaBuilder(
+            newBusinessPartner(),
+            newBussinessPlace("12.345.678/0001-90"),
+            newDocument(listOf(newInstallment(1), newInstallment(2)))
+        )
+
+        val requests = builder.build()
+        assertEquals(2, requests.size)
+        requests.forEach { request ->
+            assertEquals("PIX-OK", request.key)
+            assertEquals("12345678000190", request.getCnpj())
+            assertTrue(request.externalIdentifier.contains("Num456-Entry123-ins:"))
+        }
+    }
+
+    @Test
+    fun buildComParcelasFiltraSomenteInformadas() {
+        val contaSelecionada = newConta("12345678000190", "PIX-OK")
+        val env = UzziPayEnvrioment().also { it.contas = listOf(contaSelecionada) }
+        RequestPixDueDateSemContaBuilder.setUzziPayEnvrioment(env)
+
+        val builder = RequestPixDueDateSemContaBuilder(
+            newBusinessPartner(),
+            newBussinessPlace("12.345.678/0001-90"),
+            newDocument(listOf(newInstallment(1), newInstallment(2))),
+            parcela = listOf(2)
+        )
+
+        val requests = builder.build()
+        assertEquals(1, requests.size)
+        assertEquals(2, requests.first().getInstallmentId())
+    }
+
+    private fun newBusinessPartner(): BusinessPartner {
+        return BusinessPartner().also { bp ->
+            bp.cardName = "Cliente Teste"
+            bp.emailAddress = "cliente@teste.com"
+            bp.setCpfCnpj(CpfCnpj("12345678901"))
+            bp.setAddresses(
+                listOf(
+                    Address().also {
+                        it.addressName = "Rua A"
+                        it.County = "Cuiaba"
+                        it.State = "MT"
+                        it.ZipCode = "78000000"
+                    }
+                )
+            )
+        }
+    }
+
+    private fun newBussinessPlace(cnpj: String): BussinessPlace {
+        return BussinessPlace().also { it.FederalTaxID = cnpj }
+    }
+
+    private fun newDocument(installments: List<Installment>): Document {
+        return Document("C1", "2026-01-30", listOf(), "1").also {
+            it.documentInstallments = installments
+            it.docEntry = 123
+            it.docNum = "456"
+            it.docObjectCode = DocumentTypes.oInvoices
+        }
+    }
+
+    private fun newInstallment(id: Int): Installment {
+        return Installment(LocalDate.now().plusDays(5), 100.0).also { it.InstallmentId = id }
+    }
+
+    private fun newConta(cnpj: String, chavePix: String): ContaUzziPayPix {
+        return ContaUzziPayPix().also {
+            it.cnpj = cnpj
+            it.chavePix = chavePix
+            it.tokenJwt = "token"
+            it.privateKey = "key"
+            it.consulta = "consulta"
+            it.contabil = "contabil"
+        }
+    }
+}

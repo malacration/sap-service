@@ -2,6 +2,7 @@ package br.andrew.sap.model.sap.documents.base
 
 import br.andrew.sap.model.bankplus.Boleto
 import br.andrew.sap.model.sap.ReconciliationRow
+import br.andrew.sap.model.sap.documents.DocumentStatus
 import br.andrew.sap.model.uzzipay.Transaction
 import com.fasterxml.jackson.annotation.JsonFormat
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
@@ -22,6 +23,7 @@ import kotlin.math.absoluteValue
 class Installment(
     @JsonProperty("DueDate") private val _dueDate : LocalDate?, val total : Double) {
 
+    var Status : DocumentStatus? = null
     var InstallmentId : Int? = null
     var PaymentOrdered : String? = null
     var Percentage : String? = null
