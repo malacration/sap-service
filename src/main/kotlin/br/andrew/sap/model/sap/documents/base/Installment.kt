@@ -5,6 +5,7 @@ import br.andrew.sap.model.sap.ReconciliationRow
 import br.andrew.sap.model.sap.documents.DocumentStatus
 import br.andrew.sap.model.uzzipay.Transaction
 import com.fasterxml.jackson.annotation.JsonFormat
+import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonProperty
@@ -32,6 +33,7 @@ class Installment(
     var U_pix_textContent : String? = null
     var U_pix_link : String? = null
     var U_pix_reference : String? = null
+    var U_pix_due_date : String? = null
 
     var DocEntry : Int? = null
 
@@ -55,6 +57,28 @@ class Installment(
         if(this.U_pix_reference == null)
             return false
         return (this.U_pix_reference == transaction.txId)
+    }
+
+    @JsonIgnoreProperties
+    fun isPixValido(): Boolean {
+        if(U_pix_reference.isNullOrEmpty() || U_pix_due_date.isNullOrEmpty()) {
+            return false
+        }
+        return try {
+            val data = parsePixDueDate(U_pix_due_date!!)
+            !data.isBefore(LocalDate.now())
+        } catch (ex: Exception) {
+            false
+        }
+    }
+
+    private fun parsePixDueDate(value: String): LocalDate {
+        return try {
+            LocalDate.parse(value, DateTimeFormatter.ISO_LOCAL_DATE)
+        } catch (ex: Exception) {
+            val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'")
+            LocalDate.parse(value, formatter)
+        }
     }
 
     fun getBy(boleto: Boleto): Boolean {

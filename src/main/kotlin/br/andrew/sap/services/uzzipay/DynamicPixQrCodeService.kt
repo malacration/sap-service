@@ -11,7 +11,8 @@ import javax.crypto.spec.SecretKeySpec
 
 @Service
 class DynamicPixQrCodeService(val restTemplate: RestTemplate,
-                              val envrioment: UzziPayEnvrioment) {
+                              val envrioment: UzziPayEnvrioment,
+                              val authService: UzziPayAuthService) {
 
     fun url() : String {
         return envrioment.host+"/gateway"+path()
@@ -26,7 +27,7 @@ class DynamicPixQrCodeService(val restTemplate: RestTemplate,
         val hash = getHash(conta.privateKey,toSign)
         val request = RequestEntity
             .post(url())
-            .header("Authorization","Bearer ${conta.tokenJwt}")
+            .header("Authorization","Bearer ${authService.getToken()}")
             .header("Transaction-hash",hash)
             .body(requestQrCode)
         return restTemplate.exchange(request, DataRetonroPixQrCode::class.java).body ?:

@@ -10,9 +10,16 @@ SELECT
     LCM."Credit",
     LCM."LineMemo",
     LCM."TransType",
-    LCM."SourceLine"
+    LCM."SourceLine",
+    PARCELAS."U_QrCodePix",
+    PARCELAS."U_pix_textContent",
+    PARCELAS."U_pix_link",
+    PARCELAS."U_pix_reference",
+    PARCELAS."U_pix_due_date"
 FROM JDT1 LCM
 INNER JOIN OACT C ON LCM."Account" = C."AcctCode"
+LEFT JOIN OINV NOTA ON NOTA."DocEntry" = LCM."CreatedBy" AND LCM."TransType" = 13
+LEFT JOIN INV6 PARCELAS ON NOTA."DocEntry" = PARCELAS."DocEntry" AND LCM."SourceLine" = PARCELAS."InstlmntID"
 WHERE
     C."LocManTran" = 'Y'
     AND LCM."ShortName" = :cardCode

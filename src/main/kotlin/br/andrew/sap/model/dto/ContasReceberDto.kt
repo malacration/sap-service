@@ -6,10 +6,15 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import br.andrew.sap.model.sap.documents.DocumentTypes
 import br.andrew.sap.model.sap.documents.PixDocType
 import br.andrew.sap.model.sap.documents.toPixDocTypeOrNull
+import com.fasterxml.jackson.annotation.JsonInclude
+import com.fasterxml.jackson.databind.PropertyNamingStrategies
+import com.fasterxml.jackson.databind.annotation.JsonNaming
 import java.math.BigDecimal
 import java.time.LocalDate
 
+@JsonNaming(PropertyNamingStrategies.UpperCamelCaseStrategy::class)
 @JsonIgnoreProperties(ignoreUnknown = true)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 data class ContasReceberDto (
     @JsonProperty("Ref1")
     val numeroPrimario: String?,
@@ -34,6 +39,12 @@ data class ContasReceberDto (
     @JsonProperty("SourceLine")
     val SourceLine : Int = 1
 ) {
+    var U_QrCodePix : String? = null
+    var U_pix_textContent : String? = null
+    var U_pix_link : String? = null
+    var U_pix_reference : String? = null
+    var U_pix_due_date : String? = null
+
     val documentType: DocumentTypes?
         get() = tipoTransacao?.let { DocumentTypes.fromValue(it) }
 

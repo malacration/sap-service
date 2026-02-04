@@ -52,28 +52,33 @@ class InvoiceService(env: SapEnvrioment, restTemplate: RestTemplate, authService
         return "/b1s/v1/Invoices"
     }
 
-    fun createPix(docEntry : Int, parcelas : Int): List<Installment?> {
+    fun createPix(docEntry : Int, parcelas : Int): List<Installment> {
         return createPix(docEntry,listOf(parcelas))
     }
 
-    fun createPix(invoice: Invoice, parcelas : Int): List<Installment?> {
+    fun createPix(invoice: Invoice, parcelas : Int): List<Installment> {
         return createPix(invoice,listOf(parcelas))
     }
 
-    fun createPix(docEntry: Int, parcelas : List<Int> = listOf()): List<Installment?> {
+    fun createPix(docEntry: Int, parcelas : List<Int> = listOf()): List<Installment> {
         val invoice = this.getById(docEntry).tryGetValue<Invoice>()
         return createPix(invoice,parcelas)
     }
 
-    fun createPix(invoice: Invoice, parcela : List<Int> = listOf()): List<Installment?> {
+    fun createPix(invoice: Invoice, parcela : List<Int> = listOf()): List<Installment> {
         val bussinessPlace = bussinessPlaceService
             .getById(invoice.getBPL_IDAssignedToInvoice())
             .tryGetValue<BussinessPlace>()
         val partner = bussinesPartnersService.getById("'${invoice.CardCode}'").tryGetValue<BusinessPartner>()
-        val requestes = RequestPixDueDateSemContaBuilder(partner,bussinessPlace,invoice,parcela).build()
-        val retorno = requestes.map { invoice.setPix(it,pixService.genereateFor(it)) }
+        val builder = RequestPixDueDateSemContaBuilder(partner,bussinessPlace,invoice,parcela)
+        val requestes = builder.build()
+        val parcelasSolicitadas = builder.parcelasSolicitadas()
+        if (requestes.isEmpty()) {
+            return parcelasSolicitadas
+        }
+        requestes.forEach { invoice.setPix(it,pixService.genereateFor(it)) }
         this.update(invoice,invoice.docEntry.toString())
-        return retorno
+        return parcelasSolicitadas
     }
 
     fun getInvoiceByIdPix(reference: String): Invoice {

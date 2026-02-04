@@ -45,15 +45,13 @@ class PixController(
     fun gerarChave(
         @PathVariable pixDocType : PixDocType,
         @PathVariable docEntry : Int,
-        @PathVariable parcela : Int): List<Installment?> {
+        @PathVariable parcela : Int): List<Installment> {
         if (pixDocType.matches(DocumentTypes.oInvoices)) {
             val invoice = invoiceService.getById(docEntry).tryGetValue<Invoice>()
             return invoiceService.createPix(invoice,parcela)
         } else {
             throw Exception("Tipo de documento não permitido para gerar chave pix")
         }
-        return listOf()
-//        return transactionsPixService.getBy(id)
     }
 
     @GetMapping("transaction/{id}")

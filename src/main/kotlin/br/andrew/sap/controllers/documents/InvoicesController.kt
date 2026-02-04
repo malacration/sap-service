@@ -12,6 +12,7 @@ import br.andrew.sap.model.sap.documents.Fatura
 import br.andrew.sap.model.sap.documents.Invoice
 import br.andrew.sap.model.sap.documents.OrderSales
 import br.andrew.sap.model.sap.documents.base.Document
+import br.andrew.sap.model.sap.documents.base.Installment
 import br.andrew.sap.services.batch.BatchList
 import br.andrew.sap.services.document.DocumentForAngular
 import br.andrew.sap.services.document.InvoiceService
@@ -74,7 +75,7 @@ class InvoicesController(
     }
 
     @GetMapping("{id}/create-pix")
-    fun createPix(@PathVariable id : Int) : Any{
+    fun createPix(@PathVariable id : Int) : List<Installment>{
         return invoice.createPix(id)
     }
 
