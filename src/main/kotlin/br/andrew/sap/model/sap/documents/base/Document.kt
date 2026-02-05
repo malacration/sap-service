@@ -34,7 +34,7 @@ import kotlin.collections.mapIndexed
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 open class Document(val CardCode : String,
                     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "YYY-MM-dd", timezone = "UTC")
-                    val DocDueDate : String?,
+                    var DocDueDate : String?,
                     val DocumentLines : List<DocumentLines>,
                     private val BPL_IDAssignedToInvoice : String) : ReconciliationListRows, BatchId{
 

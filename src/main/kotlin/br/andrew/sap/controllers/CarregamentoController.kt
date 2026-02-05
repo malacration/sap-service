@@ -188,6 +188,7 @@ class CarregamentoController(val carregamentoServico: CarregamentoService,
 
             documento.U_faturadoOrdemCarregamento = docEntry
             documento.docDate = null
+            documento.DocDueDate = null
             batchList.add(BatchMethod.POST, documento, invoiceService)
         }
         return batchService.run(batchList)
