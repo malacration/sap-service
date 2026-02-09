@@ -8,6 +8,12 @@ class ContaUzziPayPix {
     lateinit var privateKey : String
     lateinit var chavePix : String
     lateinit var consulta : String
-    lateinit var contabil : String
+    lateinit var contaBanco : String
+    var transitoria : String? = null
+    var idFilialTransitoria : String? = null
+
+    fun getAccountForPayment() : String{
+        return transitoria ?: contaBanco
+    }
 }
 

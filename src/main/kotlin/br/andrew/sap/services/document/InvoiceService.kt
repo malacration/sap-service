@@ -20,6 +20,7 @@ import br.andrew.sap.model.uzzipay.ContaUzziPayPix
 import br.andrew.sap.model.uzzipay.RequestPixDueDate
 import br.andrew.sap.model.uzzipay.Transaction
 import br.andrew.sap.model.uzzipay.builder.RequestPixDueDateSemContaBuilder
+import br.andrew.sap.schedules.AutoApprovalPaymentCondition
 import br.andrew.sap.services.AuthService
 import br.andrew.sap.services.invent.BankPlusService
 import br.andrew.sap.services.BusinessPartnersService
@@ -30,6 +31,8 @@ import br.andrew.sap.services.journal.EntryOriginalJournal
 import br.andrew.sap.services.journal.ServiceOriginalJournal
 import br.andrew.sap.services.uzzipay.DynamicPixQrCodeService
 import br.andrew.sap.services.uzzipay.TransactionsPixService
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.http.RequestEntity
@@ -48,29 +51,32 @@ class InvoiceService(env: SapEnvrioment, restTemplate: RestTemplate, authService
                      val bankPlusService: BankPlusService
 ) :
         EntitiesService<Document>(env, restTemplate, authService), ServiceOriginalJournal {
+
     override fun path(): String {
         return "/b1s/v1/Invoices"
     }
+    val logger: Logger = LoggerFactory.getLogger(AutoApprovalPaymentCondition::class.java)
 
-    fun createPix(docEntry : Int, parcelas : Int): List<Installment> {
-        return createPix(docEntry,listOf(parcelas))
+
+    fun createPix(docEntry : Int, parcelas : Int, jurosMoraPercent: Double = 0.0): List<Installment> {
+        return createPix(docEntry,listOf(parcelas), jurosMoraPercent)
     }
 
-    fun createPix(invoice: Invoice, parcelas : Int): List<Installment> {
-        return createPix(invoice,listOf(parcelas))
+    fun createPix(invoice: Invoice, parcelas : Int, jurosMoraPercent: Double = 0.0): List<Installment> {
+        return createPix(invoice,listOf(parcelas), jurosMoraPercent)
     }
 
-    fun createPix(docEntry: Int, parcelas : List<Int> = listOf()): List<Installment> {
+    fun createPix(docEntry: Int, parcelas : List<Int> = listOf(), jurosMoraPercent: Double = 0.0): List<Installment> {
         val invoice = this.getById(docEntry).tryGetValue<Invoice>()
-        return createPix(invoice,parcelas)
+        return createPix(invoice,parcelas,jurosMoraPercent)
     }
 
-    fun createPix(invoice: Invoice, parcela : List<Int> = listOf()): List<Installment> {
+    fun createPix(invoice: Invoice, parcela : List<Int> = listOf(), jurosMoraPercent: Double = 0.0): List<Installment> {
         val bussinessPlace = bussinessPlaceService
             .getById(invoice.getBPL_IDAssignedToInvoice())
             .tryGetValue<BussinessPlace>()
         val partner = bussinesPartnersService.getById("'${invoice.CardCode}'").tryGetValue<BusinessPartner>()
-        val builder = RequestPixDueDateSemContaBuilder(partner,bussinessPlace,invoice,parcela)
+        val builder = RequestPixDueDateSemContaBuilder(partner,bussinessPlace,invoice,parcela,jurosMoraPercent)
         val requestes = builder.build()
         val parcelasSolicitadas = builder.parcelasSolicitadas()
         if (requestes.isEmpty()) {
@@ -131,13 +137,24 @@ class InvoiceService(env: SapEnvrioment, restTemplate: RestTemplate, authService
         }
     }
 
-    fun baixaPixBy(transaction: Transaction, conta : ContaUzziPayPix)  : String {
+    fun baixaPixBy(transaction1: Transaction, conta : ContaUzziPayPix)  : String {
+        val transaction = Transaction("QRS1TXLM0HYRVTWYXTQ3Y6JFYBFCCJLYRVM").also {
+            it.paid = true
+            it.receivedAmount = 5.0
+            it.originalAmount = 5.0
+            it.paymentDate = Date().toString()
+            it.paymentType = "windson"
+        }
         if(!transaction.paid)
             throw Exception("Transacao nao paga")
         val invoice = getInvoiceByIdPix(transaction.txId)
         val parcelaBaixar : Installment = invoice.getInstallmentBy(transaction) ?: throw Exception("Nao foi encontrato uma parcela para conciliar")
-        val boletos = bankPlusService.getBoletosBy(invoice)
-
+        val boletos = try {
+            bankPlusService.getBoletosBy(invoice)
+        } catch (e : Exception){
+            logger.warn(e.message,e)
+            null
+        }
         val payment = Payment(transaction,conta).also {
             it.cardCode = invoice.CardCode
             it.setBPID(invoice.getBPL_IDAssignedToInvoice())
@@ -145,9 +162,9 @@ class InvoiceService(env: SapEnvrioment, restTemplate: RestTemplate, authService
                 PaymentInvoice(invoice,transaction,parcelaBaixar)
             )
         }
-        incomingPaymentService.save(payment)
-        boletos.filter { parcelaBaixar.getBy(it) }
-            .forEach { bankPlusService.cancelarBoleto(it) }
+//        incomingPaymentService.save(payment)
+//        boletos.filter { parcelaBaixar.getBy(it) }
+//            .forEach { bankPlusService.cancelarBoleto(it) }
         return "ok"
     }
 

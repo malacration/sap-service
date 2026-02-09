@@ -11,7 +11,8 @@ import br.andrew.sap.model.uzzipay.RequestPixDueDate
 class RequestPixDueDateSemContaBuilder(val bussinesPartner: BusinessPartner,
                                        val bussinessPlace: BussinessPlace,
                                        val document : Document,
-                                       val parcela : List<Int> = listOf()
+                                       val parcela : List<Int> = listOf(),
+                                       val jurosMoraPercent: Double = 0.0
 ){
     companion object{
         private var contas : List<ContaUzziPayPix> = listOf()
@@ -27,7 +28,7 @@ class RequestPixDueDateSemContaBuilder(val bussinesPartner: BusinessPartner,
     }
 
     fun comConta(conta : ContaUzziPayPix): RequestPixDueDateBuilder {
-        return RequestPixDueDateBuilder(bussinesPartner, bussinessPlace, document, conta, parcela)
+        return RequestPixDueDateBuilder(bussinesPartner, bussinessPlace, document, conta, parcela, jurosMoraPercent)
     }
 
     fun parcelasSolicitadas(): List<Installment> {
@@ -52,7 +53,8 @@ class RequestPixDueDateSemContaBuilder(val bussinesPartner: BusinessPartner,
             bussinessPlace,
             document,
             conta,
-            parcelasParaGerar
+            parcelasParaGerar,
+            jurosMoraPercent
         ).build()
     }
 

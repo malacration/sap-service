@@ -34,7 +34,7 @@ class RequestQrCodeTests {
     fun defragmentacaoDocEntryAndInstallId(){
         val request = RequestPixDueDate(
             installment.createExternalIdentifier(document),
-            ContaUzziPayPix().also { it.chavePix = "" },
+            ContaUzziPayPixTest().also { it.chavePix = "" },
             100.00.toBigDecimal(),
             "2924-12-31",
             player,
@@ -53,7 +53,7 @@ class RequestQrCodeTests {
     fun dataHojeRetornaUmDiaMais(){
         val request = RequestPixDueDate(
             installment.createExternalIdentifier(document),
-            ContaUzziPayPix().also { it.chavePix = "" },
+            ContaUzziPayPixTest().also { it.chavePix = "" },
             100.00.toBigDecimal(),
             LocalDate.now(),
             player,
@@ -68,7 +68,7 @@ class RequestQrCodeTests {
         val erro = assertThrows<Exception> {
             RequestPixDueDate(
                 installment.createExternalIdentifier(document),
-                ContaUzziPayPix().also { it.chavePix = "" },
+                ContaUzziPayPixTest().also { it.chavePix = "" },
                 100.00.toBigDecimal(),
                 LocalDate.now().plusDays(-10),
                 player,

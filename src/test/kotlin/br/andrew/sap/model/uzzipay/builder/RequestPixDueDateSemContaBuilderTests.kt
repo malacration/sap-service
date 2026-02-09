@@ -8,7 +8,7 @@ import br.andrew.sap.model.sap.documents.base.Installment
 import br.andrew.sap.model.sap.partner.Address
 import br.andrew.sap.model.sap.partner.BusinessPartner
 import br.andrew.sap.model.sap.partner.CpfCnpj
-import br.andrew.sap.model.uzzipay.ContaUzziPayPix
+import br.andrew.sap.model.uzzipay.ContaUzziPayPixTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
@@ -23,7 +23,7 @@ class RequestPixDueDateSemContaBuilderTests {
         val companion = RequestPixDueDateSemContaBuilder.Companion
         val field = companion::class.java.getDeclaredField("contas")
         field.isAccessible = true
-        field.set(companion, listOf<ContaUzziPayPix>())
+        field.set(companion, listOf<ContaUzziPayPixTest>())
     }
 
     @Test
@@ -126,8 +126,8 @@ class RequestPixDueDateSemContaBuilderTests {
         return Installment(LocalDate.now().plusDays(5), 100.0).also { it.InstallmentId = id }
     }
 
-    private fun newConta(cnpj: String, chavePix: String): ContaUzziPayPix {
-        return ContaUzziPayPix().also {
+    private fun newConta(cnpj: String, chavePix: String): ContaUzziPayPixTest {
+        return ContaUzziPayPixTest().also {
             it.cnpj = cnpj
             it.chavePix = chavePix
             it.tokenJwt = "token"

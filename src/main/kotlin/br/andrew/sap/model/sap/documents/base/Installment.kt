@@ -12,7 +12,10 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.PropertyNamingStrategies
 import com.fasterxml.jackson.databind.annotation.JsonNaming
 import java.text.SimpleDateFormat
+import java.math.BigDecimal
+import java.math.RoundingMode
 import java.time.LocalDate
+import java.time.temporal.ChronoUnit
 import java.time.format.DateTimeFormatter
 import java.util.*
 import kotlin.math.abs
@@ -59,7 +62,7 @@ class Installment(
         return (this.U_pix_reference == transaction.txId)
     }
 
-    @JsonIgnoreProperties
+    @JsonIgnore
     fun isPixValido(): Boolean {
         if(U_pix_reference.isNullOrEmpty() || U_pix_due_date.isNullOrEmpty()) {
             return false
@@ -72,6 +75,23 @@ class Installment(
         }
     }
 
+    fun calcularJurosSimplesPorDia(taxaDiariaPercent: Double, dataReferencia: LocalDate = LocalDate.now(),
+                                   valorBase: Double = total): Double {
+        if(_dueDate == null) {
+            return 0.0
+        }
+        val diasAtraso = diasAtraso(dataReferencia)
+        if(diasAtraso <= 0) {
+            return 0.0
+        }
+        val taxaDiaria = BigDecimal(taxaDiariaPercent)
+            .divide(BigDecimal(100), 10, RoundingMode.HALF_UP)
+        val juros = BigDecimal(valorBase)
+            .multiply(taxaDiaria)
+            .multiply(BigDecimal(diasAtraso))
+        return juros.setScale(2, RoundingMode.DOWN).toDouble()
+    }
+
     private fun parsePixDueDate(value: String): LocalDate {
         return try {
             LocalDate.parse(value, DateTimeFormatter.ISO_LOCAL_DATE)
@@ -79,6 +99,13 @@ class Installment(
             val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'")
             LocalDate.parse(value, formatter)
         }
+    }
+
+    fun diasAtraso(dataReferencia: LocalDate = LocalDate.now()): Long {
+        if(_dueDate == null) {
+            return 0
+        }
+        return ChronoUnit.DAYS.between(_dueDate, dataReferencia)
     }
 
     fun getBy(boleto: Boleto): Boolean {

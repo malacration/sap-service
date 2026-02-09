@@ -23,6 +23,7 @@ import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.Authentication
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.web.bind.annotation.*
 
 
@@ -31,7 +32,8 @@ import org.springframework.web.bind.annotation.*
 class InvoicesController(
     val invoice: InvoiceService,
     val bankPlusService : BankPlusService,
-    val pedidoVenda: OrdersService
+    val pedidoVenda: OrdersService,
+    @Value("\${pix.juros.mora.percent:0}") val jurosMoraPercent: Double
 ) {
 
     val logger = LoggerFactory.getLogger(InvoicesController::class.java)
@@ -76,7 +78,7 @@ class InvoicesController(
 
     @GetMapping("{id}/create-pix")
     fun createPix(@PathVariable id : Int) : List<Installment>{
-        return invoice.createPix(id)
+        return invoice.createPix(id, listOf(), jurosMoraPercent)
     }
 
     @GetMapping("{id}/baixa-pix")

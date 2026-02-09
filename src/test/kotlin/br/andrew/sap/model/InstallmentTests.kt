@@ -73,4 +73,28 @@ class InstallmentTests {
         }
         assertTrue(installment.isPixValido())
     }
+
+    @Test
+    fun pixValido_deveSerVerdadeiro_quandoDataComHoraZ() {
+        val installment = Installment(LocalDate.now().plusDays(20), 0.0).also {
+            it.U_pix_reference = "ref-123"
+            it.U_pix_due_date = "2026-02-20T00:00:00Z"
+        }
+        assertTrue(installment.isPixValido())
+    }
+
+    @Test
+    fun jurosSimples_deveSerZero_quandoNaoEstaEmAtraso() {
+        val installment = Installment(LocalDate.of(2026, 2, 20), 1000.0)
+        val juros = installment.calcularJurosSimplesPorDia(0.17, LocalDate.of(2026, 2, 20))
+        assertEquals(0.0, juros)
+    }
+
+    @Test
+    fun jurosSimples_deveCalcularPorDiasReais_comArredondamentoParaBaixo() {
+        val installment = Installment(LocalDate.of(2026, 1, 27), 2149.80)
+        assertEquals(8, installment.diasAtraso(LocalDate.of(2026, 2, 4)))
+        val juros = installment.calcularJurosSimplesPorDia(0.166666, LocalDate.of(2026, 2, 4))
+        assertEquals(28.66, juros)
+    }
 }
