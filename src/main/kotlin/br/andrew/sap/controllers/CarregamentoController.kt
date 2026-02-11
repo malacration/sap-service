@@ -269,10 +269,11 @@ class CarregamentoController(val carregamentoServico: CarregamentoService,
     fun search(@RequestParam("dataInicial", required = false) dataInicial: String?,
                @RequestParam("dataFinal", required = false) dataFinal: String?,
                @RequestParam("filial") filial: Int,
-               @RequestParam("localidade") localidade: String): NextLink<OrderSales> {
+               @RequestParam("localidade") localidade: String,
+               @RequestParam("vendedor") vendedor: Int?): NextLink<OrderSales> {
         val startDate = dataInicial ?: "1900-01-01"
         val endDate = dataFinal ?: "2100-12-31"
-        val result = pedidoVendaService.fullSearchTextFallBack(startDate, endDate, filial, localidade)
+        val result = pedidoVendaService.fullSearchTextFallBack(startDate, endDate, filial, localidade,vendedor)
         return result ?: NextLink(emptyList(), "")
     }
 }
