@@ -15,6 +15,8 @@ import br.andrew.sap.model.exceptions.PixPaymentException
 import br.andrew.sap.model.sap.SalePerson
 import br.andrew.sap.model.sap.documents.base.Document
 import br.andrew.sap.model.sap.journal.OriginalJournal
+import JournalEntry
+import JournalEntryLines
 import br.andrew.sap.model.sap.partner.BusinessPartner
 import br.andrew.sap.model.uzzipay.ContaUzziPayPix
 import br.andrew.sap.model.uzzipay.RequestPixDueDate
@@ -27,7 +29,11 @@ import br.andrew.sap.services.BusinessPartnersService
 import br.andrew.sap.services.BussinessPlaceService
 import br.andrew.sap.services.abstracts.EntitiesService
 import br.andrew.sap.services.bank.IncomingPaymentService
+import br.andrew.sap.services.batch.BatchList
+import br.andrew.sap.services.batch.BatchMethod
+import br.andrew.sap.services.batch.BatchService
 import br.andrew.sap.services.journal.EntryOriginalJournal
+import br.andrew.sap.services.journal.JournalEntriesService
 import br.andrew.sap.services.journal.ServiceOriginalJournal
 import br.andrew.sap.services.uzzipay.DynamicPixQrCodeService
 import br.andrew.sap.services.uzzipay.TransactionsPixService
@@ -48,7 +54,9 @@ class InvoiceService(env: SapEnvrioment, restTemplate: RestTemplate, authService
                      val bussinesPartnersService: BusinessPartnersService,
                      val incomingPaymentService: IncomingPaymentService,
                      val transactionPixService : TransactionsPixService,
-                     val bankPlusService: BankPlusService
+                     val bankPlusService: BankPlusService,
+                     val batchService: BatchService,
+                     val journalEntriesService: JournalEntriesService
 ) :
         EntitiesService<Document>(env, restTemplate, authService), ServiceOriginalJournal {
 
@@ -137,16 +145,9 @@ class InvoiceService(env: SapEnvrioment, restTemplate: RestTemplate, authService
         }
     }
 
-    fun baixaPixBy(transaction1: Transaction, conta : ContaUzziPayPix)  : String {
-        val transaction = Transaction("QRS1TXLM0HYRVTWYXTQ3Y6JFYBFCCJLYRVM").also {
-            it.paid = true
-            it.receivedAmount = 5.0
-            it.originalAmount = 5.0
-            it.paymentDate = Date().toString()
-            it.paymentType = "windson"
-        }
+    fun baixaPixBy(transaction: Transaction, conta : ContaUzziPayPix)  : String {
         if(!transaction.paid)
-            throw Exception("Transacao nao paga")
+            throw Exception("O Pagamento não foi realizado ainda")
         val invoice = getInvoiceByIdPix(transaction.txId)
         val parcelaBaixar : Installment = invoice.getInstallmentBy(transaction) ?: throw Exception("Nao foi encontrato uma parcela para conciliar")
         val boletos = try {
@@ -162,9 +163,25 @@ class InvoiceService(env: SapEnvrioment, restTemplate: RestTemplate, authService
                 PaymentInvoice(invoice,transaction,parcelaBaixar)
             )
         }
-//        incomingPaymentService.save(payment)
-//        boletos.filter { parcelaBaixar.getBy(it) }
-//            .forEach { bankPlusService.cancelarBoleto(it) }
+        val batchList = BatchList()
+        batchList.add(BatchMethod.POST, payment, incomingPaymentService)
+
+        if (conta.hasTransitoryAccount()) {
+            val filialTransitoria = conta.idFilialTransitoria
+                ?.toIntOrNull() ?: throw Exception("Lancamento sem filial transitoria")
+            val valor = transaction.receivedAmount ?: throw Exception("Transacao sem valor recebido")
+            val deb = JournalEntryLines(conta.contaContabilBanco, valor, 0.0, filialTransitoria)
+            val cred = JournalEntryLines(conta.transitoria!!, 0.0, valor, filialTransitoria)
+            val entry = JournalEntry(listOf(deb, cred), "Transferencia Pix transitoria ${transaction.txId} - INV ${invoice.docNum}").also {
+                it.Reference = transaction.txId
+            }
+            batchList.add(BatchMethod.POST, entry, journalEntriesService)
+        }
+        batchService.run(batchList)
+        if(boletos != null){
+            boletos.filter { parcelaBaixar.getBy(it) }
+            .forEach { bankPlusService.cancelarBoleto(it) }
+        }
         return "ok"
     }
 

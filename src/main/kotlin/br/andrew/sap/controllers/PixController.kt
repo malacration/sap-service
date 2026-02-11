@@ -1,6 +1,7 @@
 package br.andrew.sap.controllers
 
 import br.andrew.sap.infrastructure.configurations.uzzipay.UzziPayEnvrioment
+import br.andrew.sap.model.authentication.User
 import br.andrew.sap.model.dto.PixGeradoResponse
 import br.andrew.sap.model.sap.BussinessPlace
 import br.andrew.sap.model.sap.documents.DocumentTypes
@@ -14,9 +15,12 @@ import br.andrew.sap.services.document.InvoiceService
 import br.andrew.sap.services.uzzipay.TransactionsPixService
 import org.springframework.aot.hint.TypeReference.listOf
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.http.ResponseEntity
+import org.springframework.security.core.Authentication
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 
 
@@ -38,12 +42,19 @@ class PixController(
     fun gerarChave(
         @PathVariable pixDocType : PixDocType,
         @PathVariable docEntry : Int,
-        @PathVariable parcela : Int
+        @PathVariable parcela : Int,
+        @RequestParam("juros", defaultValue = "true") juros: Boolean = true,
+        auth : Authentication
     ): List<PixGeradoResponse> {
+        if(auth !is User)
+            throw Exception("Não foi possivel fazer a covnersao de auth para User")
+        if(!auth.isAllCreatePix(juros))
+            throw Exception("Não é permitido criar pix!")
+        val jurosPercent = if(juros) jurosMoraPercent else 0.0
         if (pixDocType.matches(DocumentTypes.oInvoices)) {
             val invoice = invoiceService.getById(docEntry).tryGetValue<Invoice>()
-            return invoiceService.createPix(invoice,parcela,jurosMoraPercent).map { installment ->
-                PixGeradoResponse(installment, jurosMoraPercent)
+            return invoiceService.createPix(invoice,parcela,jurosPercent).map { installment ->
+                PixGeradoResponse(installment, jurosPercent)
             }
         } else {
             throw Exception("Tipo de documento não permitido para gerar chave pix")
@@ -54,7 +65,7 @@ class PixController(
     fun checkChave(
         @PathVariable pixDocType : PixDocType,
         @PathVariable docEntry : Int,
-        @PathVariable parcela : Int
+        @PathVariable parcela : Int,
     ): Transaction {
         if (pixDocType.matches(DocumentTypes.oInvoices)) {
             val invoice = invoiceService.getById(docEntry)

@@ -10,12 +10,18 @@ import org.springframework.context.annotation.Configuration
 @Configuration
 @ConfigurationProperties(prefix = "uzzipay", ignoreInvalidFields = true, ignoreUnknownFields = true)
 class UzziPayEnvrioment {
+
     fun getContaByCnpj(cnpj: String): ContaUzziPayPix {
         return contas.firstOrNull() { it.cnpj == cnpj } ?: throw Exception("Conta não da uzzipay encontrada")
     }
 
     fun getContaByCnpj(bp : BussinessPlace): ContaUzziPayPix {
-        return contas.firstOrNull() { it.cnpj == bp.cnpjSemMascara() } ?: throw Exception("Conta não da uzzipay encontrada")
+        return (
+                contas.firstOrNull() { it.cnpj == bp.cnpjSemMascara() || it.cnpj == bp.FederalTaxID }
+                ?: throw Exception("Conta não da uzzipay encontrada"))
+            .also {
+                it.bussinessPlace = bp
+            }
     }
 
     lateinit var host : String

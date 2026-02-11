@@ -59,6 +59,13 @@ class User(val id : String,
             -1
     }
 
+    fun isAllCreatePix(juros : Boolean) : Boolean{
+        return if((roles.contains("pix") && juros) || roles.contains("pix_admin"))
+            true
+        else
+            false
+    }
+
     fun isListAllBusinessPartner(): Boolean {
         return isAdmin() || roles.contains("vendedor_admin")
     }
