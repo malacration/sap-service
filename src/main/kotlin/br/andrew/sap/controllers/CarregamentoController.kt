@@ -165,8 +165,9 @@ class CarregamentoController(val carregamentoServico: CarregamentoService,
             order.DocumentLines
                 .filter { it.U_ORD_CARREGAMENTO == docEntry }
                 .forEach { currentItem ->
-                    currentItem.BatchNumbers = lotesAgrupados.filter { it.ItemCode == currentItem.ItemCode }.flatMap {
-                        it.getBachesBy(currentItem)
+                    val lotesDoItem = lotesAgrupados.find { it.ItemCode == currentItem.ItemCode }
+                    if (lotesDoItem != null) {
+                        currentItem.BatchNumbers = lotesDoItem.getBachesBy(currentItem)
                     }
                 }
         }
@@ -176,21 +177,22 @@ class CarregamentoController(val carregamentoServico: CarregamentoService,
         pedidos.forEach { pedido ->
             val bplId = pedido.getBPL_IDAssignedToInvoice()
             val sequenceCodes = carregamentoServico.procuraSequenceCode(bplId)
-            val sequenceCode = sequenceCodes.firstOrNull()
-                ?: throw Exception("Nenhum SequenceCode encontrado para a filial $bplId")
-            val seqCodeValue = sequenceCode.SeqCode
+            val seqCodeValue = sequenceCodes.firstOrNull()?.SeqCode
                 ?: throw Exception("SeqCode não encontrado para a filial $bplId")
+
             val documento = pedido.toDocument(DocumentTypes.oInvoices, seqCodeValue)
 
             documento.getOrCreateTaxExtension().Vehicle = carregamento.U_placa
             documento.getOrCreateTaxExtension().Carrier = carregamento.U_transportadora
-            documento.ClosingRemarks = "Motorista: ${carregamento.U_motorista}"
-
+            documento.ClosingRemarks = "Motorista: ${carregamento.U_motorista}. Ordem: ${carregamento.DocEntry}"
             documento.U_faturadoOrdemCarregamento = docEntry
+
             documento.docDate = null
             documento.DocDueDate = null
+
             batchList.add(BatchMethod.POST, documento, invoiceService)
         }
+
         return batchService.run(batchList)
     }
 
