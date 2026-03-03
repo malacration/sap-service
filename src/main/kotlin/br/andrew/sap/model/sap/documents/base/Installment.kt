@@ -2,15 +2,20 @@ package br.andrew.sap.model.sap.documents.base
 
 import br.andrew.sap.model.bankplus.Boleto
 import br.andrew.sap.model.sap.ReconciliationRow
+import br.andrew.sap.model.sap.documents.DocumentStatus
 import br.andrew.sap.model.uzzipay.Transaction
 import com.fasterxml.jackson.annotation.JsonFormat
+import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.PropertyNamingStrategies
 import com.fasterxml.jackson.databind.annotation.JsonNaming
 import java.text.SimpleDateFormat
+import java.math.BigDecimal
+import java.math.RoundingMode
 import java.time.LocalDate
+import java.time.temporal.ChronoUnit
 import java.time.format.DateTimeFormatter
 import java.util.*
 import kotlin.math.abs
@@ -22,6 +27,7 @@ import kotlin.math.absoluteValue
 class Installment(
     @JsonProperty("DueDate") private val _dueDate : LocalDate?, val total : Double) {
 
+    var Status : DocumentStatus? = null
     var InstallmentId : Int? = null
     var PaymentOrdered : String? = null
     var Percentage : String? = null
@@ -30,6 +36,7 @@ class Installment(
     var U_pix_textContent : String? = null
     var U_pix_link : String? = null
     var U_pix_reference : String? = null
+    var U_pix_due_date : String? = null
 
     var DocEntry : Int? = null
 
@@ -53,6 +60,53 @@ class Installment(
         if(this.U_pix_reference == null)
             return false
         return (this.U_pix_reference == transaction.txId)
+    }
+
+    @JsonIgnore
+    fun isPixValido(): Boolean {
+        if(U_pix_reference.isNullOrEmpty() || U_pix_due_date.isNullOrEmpty()) {
+            return false
+        }
+        return try {
+            val data = parsePixDueDate(U_pix_due_date!!)
+            !data.isBefore(LocalDate.now())
+        } catch (ex: Exception) {
+            ex.printStackTrace()
+            false
+        }
+    }
+
+    fun calcularJurosSimplesPorDia(taxaDiariaPercent: Double, dataReferencia: LocalDate = LocalDate.now(),
+                                   valorBase: Double = total): Double {
+        if(_dueDate == null) {
+            return 0.0
+        }
+        val diasAtraso = diasAtraso(dataReferencia)
+        if(diasAtraso <= 0) {
+            return 0.0
+        }
+        val taxaDiaria = BigDecimal(taxaDiariaPercent)
+            .divide(BigDecimal(100), 10, RoundingMode.HALF_UP)
+        val juros = BigDecimal(valorBase)
+            .multiply(taxaDiaria)
+            .multiply(BigDecimal(diasAtraso))
+        return juros.setScale(2, RoundingMode.DOWN).toDouble()
+    }
+
+    private fun parsePixDueDate(value: String): LocalDate {
+        return try {
+            LocalDate.parse(value, DateTimeFormatter.ISO_LOCAL_DATE)
+        } catch (ex: Exception) {
+            val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'")
+            LocalDate.parse(value, formatter)
+        }
+    }
+
+    fun diasAtraso(dataReferencia: LocalDate = LocalDate.now()): Long {
+        if(_dueDate == null) {
+            return 0
+        }
+        return ChronoUnit.DAYS.between(_dueDate, dataReferencia)
     }
 
     fun getBy(boleto: Boleto): Boolean {

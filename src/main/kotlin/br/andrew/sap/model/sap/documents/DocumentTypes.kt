@@ -135,4 +135,11 @@ enum class DocumentTypes(val value: Int, val label: String) {
     oPurchaseQuotations(540000006, "Cotações de Compra"),
     oInventoryTransferRequest(1250000001, "Solicitação de Transferência de Estoque"),
     oPurchaseRequest(1470000113, "Solicitação de Compra")
+    ;
+
+    companion object {
+        private val byValue = values().associateBy { it.value }
+
+        fun fromValue(value: Int): DocumentTypes? = byValue[value]
+    }
 }

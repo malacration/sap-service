@@ -23,7 +23,7 @@ class Payment() {
             throw Exception("U_pix_reference não pode ser nulo")
         docDate = transaction.paymentDate
         cashSum = transaction.receivedAmount
-        this.cashAccount = conta.contabil
+        this.cashAccount = conta.getAccountForPayment()
         this.journalRemarks = "Pag. via Pix ${transaction.txId} $extraRemarks"
     }
     fun duplicateFor(newNota: Document): Payment {
@@ -68,7 +68,6 @@ class Payment() {
         this.BPLID = BPLID
     }
 }
-
 
 
 

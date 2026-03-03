@@ -34,7 +34,7 @@ import kotlin.collections.mapIndexed
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 open class Document(val CardCode : String,
                     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "YYY-MM-dd", timezone = "UTC")
-                    val DocDueDate : String?,
+                    var DocDueDate : String?,
                     val DocumentLines : List<DocumentLines>,
                     private val BPL_IDAssignedToInvoice : String) : ReconciliationListRows, BatchId{
 
@@ -201,7 +201,7 @@ open class Document(val CardCode : String,
         return "Document(CardCode='$CardCode', Branch='$BPL_IDAssignedToInvoice', docEntry=$docEntry, docNum=$docNum, pedido_forca=$u_id_pedido_forca)"
     }
 
-    fun setPix(request: RequestPixDueDate, chave: DataRetonroPixQrCode) {
+    fun setPix(request: RequestPixDueDate, chave: DataRetonroPixQrCode): Installment? {
         if(request.docEntry() != docEntry)
             throw Exception("O qrCode nao pertence a esse documento")
         this.documentInstallments!!.find { it.InstallmentId == request.getInstallmentId() }?.also {
@@ -209,7 +209,9 @@ open class Document(val CardCode : String,
             it.U_pix_textContent = chave.data.textContent
             it.U_pix_link = chave.data.link
             it.U_pix_reference = chave.data.reference
+            it.U_pix_due_date = request.getDueDate()
         }
+        return this.documentInstallments!!.find { it.InstallmentId == request.getInstallmentId() }
     }
 
     fun getInstallmentBy(transaction: Transaction): Installment? {
@@ -279,4 +281,3 @@ open class Document(val CardCode : String,
     }
 
 }
-

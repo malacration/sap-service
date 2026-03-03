@@ -22,7 +22,7 @@ class JwtAuthenticationFilter(private val jwtHandler: JwtHandler, private val di
                                   filterChain: FilterChain) {
         if(disable && request.getHeader("Authorization") == null){
             SecurityContextHolder.getContext().authentication = User("-1","Nenhum vendedor",
-                UserOriginEnum.SalePerson,"","","")
+            UserOriginEnum.SalePerson,"","","",listOf("admin","pix_admin"))
         }
         else if(!request.requestURL.contains("/otp/login")
             && !request.requestURL.contains("/logar")

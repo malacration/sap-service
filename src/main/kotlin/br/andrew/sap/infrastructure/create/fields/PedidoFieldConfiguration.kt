@@ -54,6 +54,7 @@ class PedidoFieldConfiguration(val userFieldsMDService: UserFieldsMDService) {
             FieldMd("pix_textContent","Text Content - PIX","INV6", DbType.db_Memo),
             FieldMd("pix_link","Link - PIX","INV6", DbType.db_Memo),
             FieldMd("pix_reference","Reference - PIX","INV6", DbType.db_Alpha),
+            FieldMd("pix_due_date","Due Date - PIX","INV6", DbType.db_Date),
         ).forEach { userFieldsMDService.findOrCreate(it) }
 
         userFieldsMDService.findOrCreate(

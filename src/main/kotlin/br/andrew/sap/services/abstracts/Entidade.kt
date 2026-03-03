@@ -2,6 +2,7 @@ package br.andrew.sap.services.abstracts
 
 class Entidade(val entidadeNome : String,
                val propriedades : List<String>,
+               val selectPropriedades : Boolean = true,
     val aggregation : Boolean = false){
 
     fun getExpand() : String{

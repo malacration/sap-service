@@ -7,21 +7,39 @@ import br.andrew.sap.model.sap.partner.BusinessPartner
 import br.andrew.sap.model.uzzipay.ContaUzziPayPix
 import br.andrew.sap.model.uzzipay.Payer
 import br.andrew.sap.model.uzzipay.RequestPixDueDate
+import okhttp3.internal.parseCookie
 import java.math.BigDecimal
 import java.math.RoundingMode
+import java.time.LocalDate
 
-class RequestPixDueDateBuilder(private val bp: BusinessPartner,
-                               private val bussinessPlace: BussinessPlace,
-                               private val document : Document,
-                               private val conta : ContaUzziPayPix
+class RequestPixDueDateBuilder(
+    private val bp: BusinessPartner,
+    private val bussinessPlace: BussinessPlace,
+    private val document: Document,
+    private val conta: ContaUzziPayPix,
+    private var parcelas: List<Int> = listOf(),
+    private val jurosMoraPercent: Double = 0.0
 ) {
     fun build(): List<RequestPixDueDate> {
-        return document.documentInstallments?.map {
+        if(parcelas.isEmpty() && document.documentInstallments != null) {
+            parcelas = document.documentInstallments
+                ?.filter { it.InstallmentId != null }
+                ?.map { it.InstallmentId!! } ?: listOf()
+        }
+        return document.documentInstallments?.filter { parcelas.contains(it.InstallmentId) }?.map {
+            val dueDate = it.dueDate ?: throw Exception("Data de vencimento não informada")
+            val dueDateLocal = LocalDate.parse(dueDate)
+            val now = LocalDate.now()
+            val effectiveDueDate = if (dueDateLocal.isBefore(now)) now.plusDays(1) else dueDateLocal
+            val dataReferencia = if (dueDateLocal.isBefore(now)) effectiveDueDate else now
+            val juros = if(jurosMoraPercent > 0.0)
+                it.calcularJurosSimplesPorDia(jurosMoraPercent, dataReferencia)
+            else 0.0
             RequestPixDueDate(
                 it.createExternalIdentifier(document),
                 conta,
-                BigDecimal(it.total).setScale(2, RoundingMode.HALF_EVEN),
-                it.dueDate ?: throw Exception("Data de vencimento não informada"),
+                BigDecimal(it.total + juros).setScale(2, RoundingMode.HALF_EVEN),
+                effectiveDueDate.toString(),
                 getPayer(),
                 bussinessPlace.cnpjSemMascara())
         } ?: listOf()

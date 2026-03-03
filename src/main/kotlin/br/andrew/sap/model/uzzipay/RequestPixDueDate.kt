@@ -12,12 +12,18 @@ class RequestPixDueDate(
     val externalIdentifier: String,
     private val conta : ContaUzziPayPix,
     private val amount : BigDecimal,
-    private val dueDate : LocalDate,
+    dueDate: LocalDate,
     val Payer : Payer,
     private val cnpj: String,
     val keyType : Type = Type.EVP,
     val qrCodePurposeType : String = "BILLET",
 ) {
+    private val dueDate: LocalDate = if (LocalDate.now().isAfter(dueDate)) {
+        LocalDate.now().plusDays(1)
+    } else {
+        dueDate
+    }
+
     constructor(externalIdentifier: String,
                 conta: ContaUzziPayPix,
                 amount: BigDecimal,
@@ -28,11 +34,7 @@ class RequestPixDueDate(
                 Payer,
                 cnpj,keyType)
 
-    init{
-        if (LocalDate.now() > dueDate)
-            throw Exception("Data de vencimento não pode ser menor que a data atual")
-
-    }
+    init { }
     val key = conta.chavePix
 
     @JsonIgnoreProperties

@@ -48,11 +48,26 @@ class User(val id : String,
         authenticated = isAuthenticated
     }
 
+    fun isAdmin(): Boolean {
+        return roles.contains("admin")
+    }
+
     fun superVendedor(): Int {
-        return if(roles.contains("vendedor_admin") || roles.contains("admin"))
+        return if(roles.contains("vendedor_admin") || isAdmin())
             Int.MAX_VALUE
         else
             -1
+    }
+
+    fun isAllCreatePix(juros : Boolean) : Boolean{
+        return if((roles.contains("pix") && juros) || roles.contains("pix_admin"))
+            true
+        else
+            false
+    }
+
+    fun isListAllBusinessPartner(): Boolean {
+        return isAdmin() || roles.contains("vendedor_admin")
     }
 
     @JsonIgnore

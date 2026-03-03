@@ -38,7 +38,8 @@ class DocumentConfiguration(
 
             FieldMd("rd_station","rdStation","OINV").also {
                 it.size = 30
-            }
+            },
+            FieldMd("pix_due_date","Pix Due Date","OINV"),
         ).forEach { userFieldsMDService.findOrCreate(it) }
     }
 }

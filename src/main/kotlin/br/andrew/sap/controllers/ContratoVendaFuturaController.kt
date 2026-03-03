@@ -113,8 +113,6 @@ class ContratoVendaFuturaController(
 
     @PostMapping("pedido-retirada")
     fun pedidoRetirada(@RequestBody pedidoRetirada : PedidoRetirada, auth : Authentication) : ResponseEntity<Document?> {
-        if(auth !is User)
-            return ResponseEntity.noContent().build()
         val contrato = service.get(Filter(
             Predicate("DocEntry",pedidoRetirada.docEntryVendaFutura,Condicao.EQUAL)
         )).tryGetValues<Contrato>().firstOrNull() ?: throw  Exception("O contrato nao foi encontrado")
