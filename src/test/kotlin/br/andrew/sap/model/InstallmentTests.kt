@@ -78,7 +78,7 @@ class InstallmentTests {
     fun pixValido_deveSerVerdadeiro_quandoDataComHoraZ() {
         val installment = Installment(LocalDate.now().plusDays(20), 0.0).also {
             it.U_pix_reference = "ref-123"
-            it.U_pix_due_date = "2026-02-20T00:00:00Z"
+            it.U_pix_due_date = "3026-02-20T00:00:00Z"
         }
         assertTrue(installment.isPixValido())
     }

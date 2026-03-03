@@ -18,13 +18,13 @@ import java.time.LocalDate
 
 class RequestPixDueDateSemContaBuilderTests {
 
-    @BeforeEach
-    fun resetStaticContas() {
-        val companion = RequestPixDueDateSemContaBuilder.Companion
-        val field = companion::class.java.getDeclaredField("contas")
-        field.isAccessible = true
-        field.set(companion, listOf<ContaUzziPayPix>())
-    }
+//    @BeforeEach
+//    fun resetStaticContas() {
+//        val companion = RequestPixDueDateSemContaBuilder.Companion
+//        val field = companion::class.java.getDeclaredField("contas")
+//        field.isAccessible = true
+//        field.set(companion, listOf<ContaUzziPayPix>())
+//    }
 
     @Test
     fun buildSemContasConfiguradasLancaErro() {

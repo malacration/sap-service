@@ -71,6 +71,7 @@ class Installment(
             val data = parsePixDueDate(U_pix_due_date!!)
             !data.isBefore(LocalDate.now())
         } catch (ex: Exception) {
+            ex.printStackTrace()
             false
         }
     }

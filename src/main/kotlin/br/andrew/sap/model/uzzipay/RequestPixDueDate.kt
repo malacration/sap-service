@@ -23,6 +23,7 @@ class RequestPixDueDate(
     } else {
         dueDate
     }
+
     constructor(externalIdentifier: String,
                 conta: ContaUzziPayPix,
                 amount: BigDecimal,

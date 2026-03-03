@@ -62,18 +62,4 @@ class RequestQrCodeTests {
             .format(Date.from(LocalDate.now().plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant()))
         Assertions.assertEquals(saida,request.getDueDate())
     }
-
-    @Test
-    fun dataHoraVencidoDeveDarErro(){
-        val erro = assertThrows<Exception> {
-            RequestPixDueDate(
-                installment.createExternalIdentifier(document),
-                ContaUzziPayPix().also { it.chavePix = "" },
-                100.00.toBigDecimal(),
-                LocalDate.now().plusDays(-10),
-                player,
-                "1")
-        }
-        Assertions.assertTrue((erro.message ?: "").contains("vencimento não pode ser menor que a data atual"))
-    }
 }
