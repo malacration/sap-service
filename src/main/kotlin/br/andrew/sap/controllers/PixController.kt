@@ -47,7 +47,7 @@ class PixController(
         auth : Authentication
     ): List<PixGeradoResponse> {
         if(auth !is User)
-            throw Exception("Não foi possivel fazer a covnersao de auth para User")
+            throw Exception("Não foi possivel fazer a conversão de auth para User")
         if(!auth.isAllCreatePix(juros))
             throw Exception("Não é permitido criar pix!")
         val jurosPercent = if(juros) jurosMoraPercent else 0.0

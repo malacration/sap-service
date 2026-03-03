@@ -5,6 +5,8 @@ import br.andrew.sap.model.uzzipay.DataRetonroPixQrCode
 import br.andrew.sap.model.uzzipay.RequestPixDueDate
 import org.springframework.http.RequestEntity
 import org.springframework.stereotype.Service
+import org.springframework.web.client.HttpServerErrorException
+import org.springframework.web.client.RestClientException
 import org.springframework.web.client.RestTemplate
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
@@ -30,8 +32,12 @@ class DynamicPixQrCodeService(val restTemplate: RestTemplate,
             .header("Authorization","Bearer ${authService.getToken()}")
             .header("Transaction-hash",hash)
             .body(requestQrCode)
-        return restTemplate.exchange(request, DataRetonroPixQrCode::class.java).body ?:
-            throw Exception("Nao retornou qr code")
+        try {
+            return restTemplate.exchange(request, DataRetonroPixQrCode::class.java).body
+                ?: throw Exception("Nao retornou qr code")
+        } catch (ex: RestClientException) {
+            throw Exception("Falha de comunicação com a uzzipay", ex)
+        }
     }
 
     private fun getHash(privateKey : String, toSign  : String): String {
