@@ -20,6 +20,10 @@ class RequestPixDueDateSemContaBuilder(val bussinesPartner: BusinessPartner,
             if(uzziPayEnvrioment.contas.isNotEmpty())
                 contas = uzziPayEnvrioment.contas
         }
+
+        fun clearContasConfiguradas() {
+            contas = listOf()
+        }
     }
 
     fun comContas(contas : List<ContaUzziPayPix>): RequestPixDueDateBuilder {

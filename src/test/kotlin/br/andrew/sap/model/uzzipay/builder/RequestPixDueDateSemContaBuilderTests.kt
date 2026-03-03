@@ -12,20 +12,19 @@ import br.andrew.sap.model.uzzipay.ContaUzziPayPix
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Order
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import java.time.LocalDate
 
 class RequestPixDueDateSemContaBuilderTests {
 
-//    @BeforeEach
-//    fun resetStaticContas() {
-//        val companion = RequestPixDueDateSemContaBuilder.Companion
-//        val field = companion::class.java.getDeclaredField("contas")
-//        field.isAccessible = true
-//        field.set(companion, listOf<ContaUzziPayPix>())
-//    }
+    @BeforeEach
+    fun resetStaticContas() {
+        RequestPixDueDateSemContaBuilder.clearContasConfiguradas()
+    }
 
+    @Order(1)
     @Test
     fun buildSemContasConfiguradasLancaErro() {
         val builder = RequestPixDueDateSemContaBuilder(
@@ -38,6 +37,7 @@ class RequestPixDueDateSemContaBuilderTests {
         assertTrue((erro.message ?: "").contains("Nenhuma conta configurada"))
     }
 
+    @Order(2)
     @Test
     fun comContasSemCnpjCorrespondenteLancaErro() {
         val builder = RequestPixDueDateSemContaBuilder(
@@ -51,6 +51,7 @@ class RequestPixDueDateSemContaBuilderTests {
         assertTrue((erro.message ?: "").contains("Conta não encontrada para o CNPJ 12345678000190"))
     }
 
+    @Order(3)
     @Test
     fun buildSelecionaContaPorCnpjEConstruiParcelas() {
         val contaSelecionada = newConta("12345678000190", "PIX-OK")
@@ -73,6 +74,7 @@ class RequestPixDueDateSemContaBuilderTests {
         }
     }
 
+    @Order(4)
     @Test
     fun buildComParcelasFiltraSomenteInformadas() {
         val contaSelecionada = newConta("12345678000190", "PIX-OK")
