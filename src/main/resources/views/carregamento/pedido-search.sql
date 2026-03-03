@@ -52,6 +52,7 @@ WHERE
     AND c."DocDate" <= :finalDate
     AND r."U_LocalidadeS" = :localidade
     AND c."BPLId" = :filial
+    AND (c."SlpCode" = :vendedor OR c."SlpCode" > :vendedorDisable)
     AND c."DocStatus" = 'O'
     AND (x."U_Status" = 'Cancelado' OR x."U_Status" IS NULL)
     AND d."U_ORD_CARREGAMENTO" IS NULL
