@@ -5,7 +5,7 @@ import br.andrew.sap.model.sap.BussinessPlace
 
 class ContaUzziPayPix {
     lateinit var cnpj : String
-    lateinit var tokenJwt : String
+    var tokenJwt : String? = null
     lateinit var privateKey : String
     lateinit var chavePix : String
     lateinit var consulta : String

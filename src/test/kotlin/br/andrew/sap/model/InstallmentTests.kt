@@ -8,6 +8,7 @@ import java.time.ZoneId
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
+import java.time.LocalDateTime
 import java.util.*
 
 class InstallmentTests {
@@ -81,6 +82,34 @@ class InstallmentTests {
             it.U_pix_due_date = "3026-02-20T00:00:00Z"
         }
         assertTrue(installment.isPixValido())
+    }
+
+    @Test
+    fun sanitizarControleConsultaPix_deveLimparUltimaConsultaERegistrarLimite() {
+        val installment = Installment(LocalDate.of(2026, 3, 20), 0.0).also {
+            it.U_pix_reference = "ref-123"
+            it.U_pix_due_date = "2026-03-20"
+            it.U_pix_proxima_consulta_em = "2026-03-19T10:00:00"
+        }
+
+        installment.sanitizarControleConsultaPix(LocalDateTime.of(2026, 3, 19, 8, 0))
+
+        assertEquals("2026-03-19T08:00", installment.U_pix_proxima_consulta_em)
+        assertEquals("2026-03-20T23:59:59.999999999", installment.U_pix_consultar_ate)
+    }
+
+    @Test
+    fun podeConsultarPixPagamento_deveRespeitarIntervaloEDataLimite() {
+        val installment = Installment(LocalDate.of(2026, 3, 20), 0.0).also {
+            it.U_pix_reference = "ref-123"
+            it.U_pix_due_date = "2026-03-20"
+            it.sanitizarControleConsultaPix(LocalDateTime.of(2026, 3, 19, 8, 0))
+            it.U_pix_proxima_consulta_em = "2026-03-19T10:15:00"
+        }
+
+        assertFalse(installment.podeConsultarPixPagamento(LocalDateTime.of(2026, 3, 19, 10, 10)))
+        assertTrue(installment.podeConsultarPixPagamento(LocalDateTime.of(2026, 3, 19, 10, 15)))
+        assertFalse(installment.podeConsultarPixPagamento(LocalDateTime.of(2026, 3, 21, 0, 0)))
     }
 
     @Test

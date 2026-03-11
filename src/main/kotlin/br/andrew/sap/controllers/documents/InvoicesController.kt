@@ -4,6 +4,7 @@ import br.andrew.sap.infrastructure.BoletoIdsConfig
 import br.andrew.sap.infrastructure.odata.*
 import br.andrew.sap.model.authentication.User
 import br.andrew.sap.model.bankplus.Boleto
+import br.andrew.sap.model.dto.InstallmentPixResumo
 import br.andrew.sap.model.enums.Cancelled
 import br.andrew.sap.model.forca.PedidoVenda
 import br.andrew.sap.model.producao.BatchStock
@@ -102,7 +103,7 @@ class InvoicesController(
     }
 
     @GetMapping("pix")
-    fun teste() : Any{
-        return invoice.getAllPixs();
+    fun teste() : List<InstallmentPixResumo> {
+        return invoice.getAllPixs()
     }
 }

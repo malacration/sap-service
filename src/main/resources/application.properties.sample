@@ -11,3 +11,6 @@ uzzipay.contas[0].privateKey=private
 uzzipay.contas[0].chavePix=chavePix
 uzzipay.contas[0].chave-pix=chavePix
 uzzipay.contas[0].tokenJwt=jwt
+pix.schedule.enable=false
+pix.schedule.delay-minutes=5
+pix.schedule.consulta-interval-minutes=5

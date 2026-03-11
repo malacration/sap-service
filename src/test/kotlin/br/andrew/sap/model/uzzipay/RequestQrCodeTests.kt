@@ -5,8 +5,6 @@ import br.andrew.sap.model.sap.documents.base.Document
 import br.andrew.sap.model.sap.documents.base.Installment
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertThrows
-import java.lang.Exception
 import java.text.SimpleDateFormat
 import java.time.LocalDate
 import java.time.ZoneId
@@ -61,5 +59,26 @@ class RequestQrCodeTests {
         val saida = SimpleDateFormat("yyyy-MM-dd")
             .format(Date.from(LocalDate.now().plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant()))
         Assertions.assertEquals(saida,request.getDueDate())
+    }
+
+    @Test
+    fun gerarNovaChavePix_deveSanitizarControleDeConsulta() {
+        installment.U_pix_proxima_consulta_em = "2026-03-19T10:00:00"
+        installment.U_pix_consultar_ate = "2026-03-19T12:00:00"
+
+        document.setPix(
+            RequestPixDueDate(
+                installment.createExternalIdentifier(document),
+                ContaUzziPayPix().also { it.chavePix = "" },
+                100.00.toBigDecimal(),
+                LocalDate.of(2026, 3, 20),
+                player,
+                "1"
+            ),
+            DataRetonroPixQrCode(RetonroPixQrCode("pix", "https://pix", "ref-456", null))
+        )
+
+        Assertions.assertTrue(!installment.U_pix_proxima_consulta_em.isNullOrBlank())
+        Assertions.assertEquals("2026-03-20T23:59:59.999999999", installment.U_pix_consultar_ate)
     }
 }

@@ -14,6 +14,7 @@ import org.springframework.web.client.RestTemplate
 @Service
 class TransactionsPixService(val restTemplate: RestTemplate,
                              val bussinessPlaceService : BussinessPlaceService,
+                             val authService: UzziPayAuthService,
                              val envrioment: UzziPayEnvrioment) {
 
     fun url() : String {
