@@ -13,4 +13,8 @@ class Payer(
         if(document.isBlank())
             throw Exception("Documento do cliente nao pode ser vazio")
     }
+
+    fun getCepNumber(): String {
+        return zipCode
+    }
 }

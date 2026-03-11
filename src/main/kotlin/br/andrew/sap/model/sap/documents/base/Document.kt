@@ -210,6 +210,7 @@ open class Document(val CardCode : String,
             it.U_pix_link = chave.data.link
             it.U_pix_reference = chave.data.reference
             it.U_pix_due_date = request.getDueDate()
+            it.sanitizarControleConsultaPix()
         }
         return this.documentInstallments!!.find { it.InstallmentId == request.getInstallmentId() }
     }

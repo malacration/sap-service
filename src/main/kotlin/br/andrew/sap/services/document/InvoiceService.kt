@@ -3,6 +3,7 @@ package br.andrew.sap.services.document
 import br.andrew.sap.infrastructure.odata.Condicao
 import br.andrew.sap.infrastructure.odata.Filter
 import br.andrew.sap.infrastructure.odata.OData
+import br.andrew.sap.infrastructure.odata.Parameter
 import br.andrew.sap.infrastructure.odata.Predicate
 import br.andrew.sap.model.sap.BussinessPlace
 import br.andrew.sap.model.sap.DocEntry
@@ -18,6 +19,8 @@ import br.andrew.sap.model.sap.journal.OriginalJournal
 import JournalEntry
 import JournalEntryLines
 import br.andrew.sap.model.sap.partner.BusinessPartner
+import br.andrew.sap.model.dto.InstallmentPixConsulta
+import br.andrew.sap.model.dto.InstallmentPixResumo
 import br.andrew.sap.model.uzzipay.ContaUzziPayPix
 import br.andrew.sap.model.uzzipay.RequestPixDueDate
 import br.andrew.sap.model.uzzipay.Transaction
@@ -28,6 +31,7 @@ import br.andrew.sap.services.invent.BankPlusService
 import br.andrew.sap.services.BusinessPartnersService
 import br.andrew.sap.services.BussinessPlaceService
 import br.andrew.sap.services.abstracts.EntitiesService
+import br.andrew.sap.services.abstracts.SqlQueriesService
 import br.andrew.sap.services.bank.IncomingPaymentService
 import br.andrew.sap.services.batch.BatchList
 import br.andrew.sap.services.batch.BatchMethod
@@ -45,6 +49,8 @@ import org.springframework.http.RequestEntity
 import org.springframework.stereotype.Service
 import org.springframework.web.client.RestTemplate
 import java.text.SimpleDateFormat
+import java.time.LocalDateTime
+import java.time.temporal.ChronoUnit.MINUTES
 import java.util.*
 
 @Service
@@ -56,7 +62,8 @@ class InvoiceService(env: SapEnvrioment, restTemplate: RestTemplate, authService
                      val transactionPixService : TransactionsPixService,
                      val bankPlusService: BankPlusService,
                      val batchService: BatchService,
-                     val journalEntriesService: JournalEntriesService
+                     val journalEntriesService: JournalEntriesService,
+                     val sqlQueriesService: SqlQueriesService
 ) :
         EntitiesService<Document>(env, restTemplate, authService), ServiceOriginalJournal {
 
@@ -107,45 +114,41 @@ class InvoiceService(env: SapEnvrioment, restTemplate: RestTemplate, authService
         return list.firstOrNull() ?: throw Exception("Nenhuma fatura encontrada para o pix ${reference}")
     }
 
-    fun getAllPixs(): Any {
-        val url = env.host+"/b1s/v1/SQLQueries"
-        return restT.exchange(RequestEntity
-            .get("$url('installment-pix.sql')/List")
-            .header("cookie","B1SESSION=${session().sessionId}")
-            .build(), Any::class.java).body!!
+    fun getAllPixs(): List<InstallmentPixResumo> {
+        return sqlQueriesService.getAll("installment-pix.sql")
+    }
+
+    fun getPixsGeradosParaConsulta(
+        dataReferencia: LocalDateTime
+    ): List<InstallmentPixConsulta> {
+        val agora = dataReferencia.truncatedTo(MINUTES).toString()
+        return sqlQueriesService.getAll(
+            "installment-pix-consulta.sql",
+            listOf(Parameter("now", agora))
+        )
     }
 
     fun pendenteGerarPix(): List<Int> {
         val now = SimpleDateFormat("yyyy-MM-dd").format(Date())
-        val url = env.host+"/b1s/v1/SQLQueries"
-        return restT.exchange(RequestEntity
-            .get("$url('installment-gerar-pix.sql')/List?now='${now}'")
-            .header("cookie","B1SESSION=${session().sessionId}")
-            .build(), OData::class.java).body
-            ?.tryGetPageValues<Installment>(Pageable.unpaged())
-            ?.mapNotNull { it.DocEntry }?.toList() ?: listOf()
+        return sqlQueriesService.getAll<Installment>(
+            "installment-gerar-pix.sql",
+            listOf(Parameter("now", now))
+        ).mapNotNull { it.DocEntry }
     }
 
 
-    fun baixaPixBy(docentry : DocEntry): List<String> {
+    fun baixaPixBy(docentry : DocEntry): List<Transaction> {
         return baixaPixBy(getBy(docentry).tryGetValue<Invoice>())
     }
 
 
-    fun baixaPixBy(invoice : Invoice): List<String> {
+    fun baixaPixBy(invoice : Invoice): List<Transaction> {
         val conta = transactionPixService.getContaBy(invoice)
         val transactions = transactionPixService.getBy(invoice,conta)
-        return transactions.filter { it.paid }.map {
-            try {
-                baixaPixBy(it,conta)
-            }catch (t : PixPaymentException){
-                t.printStackTrace()
-                "erro"
-            }
-        }
+        return transactions.filter { it.paid }.map { baixaPixBy(it,conta) }
     }
 
-    fun baixaPixBy(transaction: Transaction, conta : ContaUzziPayPix)  : String {
+    fun baixaPixBy(transaction: Transaction, conta : ContaUzziPayPix)  : Transaction {
         if(!transaction.paid)
             throw Exception("O Pagamento não foi realizado ainda")
         val invoice = getInvoiceByIdPix(transaction.txId)
@@ -182,7 +185,7 @@ class InvoiceService(env: SapEnvrioment, restTemplate: RestTemplate, authService
             boletos.filter { parcelaBaixar.getBy(it) }
             .forEach { bankPlusService.cancelarBoleto(it) }
         }
-        return "ok"
+        return transaction
     }
 
     override fun getEntryOriginalJournal(jdtNum: Int): EntryOriginalJournal {

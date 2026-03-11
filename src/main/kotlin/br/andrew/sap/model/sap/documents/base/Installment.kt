@@ -11,15 +11,17 @@ import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.PropertyNamingStrategies
 import com.fasterxml.jackson.databind.annotation.JsonNaming
-import java.text.SimpleDateFormat
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.LocalTime
+import java.time.OffsetDateTime
+import java.time.ZoneOffset
 import java.time.temporal.ChronoUnit
 import java.time.format.DateTimeFormatter
-import java.util.*
+import java.time.temporal.ChronoUnit.MINUTES
 import kotlin.math.abs
-import kotlin.math.absoluteValue
 
 @JsonNaming(PropertyNamingStrategies.UpperCamelCaseStrategy::class)
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -37,6 +39,8 @@ class Installment(
     var U_pix_link : String? = null
     var U_pix_reference : String? = null
     var U_pix_due_date : String? = null
+    var U_pix_proxima_consulta_em : String? = null
+    var U_pix_consultar_ate : String? = null
 
     var DocEntry : Int? = null
 
@@ -76,6 +80,37 @@ class Installment(
         }
     }
 
+    fun sanitizarControleConsultaPix(dataReferencia: LocalDateTime = LocalDateTime.now()) {
+        U_pix_proxima_consulta_em = dataReferencia.truncatedTo(MINUTES).toString()
+        U_pix_consultar_ate = getPixDueDateTime()
+            ?.toString()
+            ?: dataReferencia.plusDays(1).toString()
+    }
+
+    fun podeConsultarPixPagamento(dataReferencia: LocalDateTime = LocalDateTime.now()): Boolean {
+        if(U_pix_reference.isNullOrBlank()) {
+            return false
+        }
+        val limiteConsulta = getPixConsultarAte()
+        if(limiteConsulta != null && dataReferencia.isAfter(limiteConsulta)) {
+            return false
+        }
+        val proximaConsulta = getPixProximaConsultaEm() ?: return true
+        return proximaConsulta.truncatedTo(MINUTES) <= dataReferencia.truncatedTo(MINUTES)
+    }
+
+    fun registrarConsultaPix(intervaloMinutos: Long, dataReferencia: LocalDateTime = LocalDateTime.now()) {
+        U_pix_proxima_consulta_em = dataReferencia.plusMinutes(intervaloMinutos).truncatedTo(MINUTES).toString()
+    }
+
+    fun getPixProximaConsultaEm(): LocalDateTime? {
+        return parseIsoDateTime(U_pix_proxima_consulta_em)
+    }
+
+    fun getPixConsultarAte(): LocalDateTime? {
+        return parseIsoDateTime(U_pix_consultar_ate)
+    }
+
     fun calcularJurosSimplesPorDia(taxaDiariaPercent: Double, dataReferencia: LocalDate = LocalDate.now(),
                                    valorBase: Double = total): Double {
         if(_dueDate == null) {
@@ -97,8 +132,35 @@ class Installment(
         return try {
             LocalDate.parse(value, DateTimeFormatter.ISO_LOCAL_DATE)
         } catch (ex: Exception) {
-            val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'")
-            LocalDate.parse(value, formatter)
+            getPixDueDateTime(value)?.toLocalDate() ?: throw ex
+        }
+    }
+
+    private fun getPixDueDateTime(value: String? = U_pix_due_date): LocalDateTime? {
+        if(value.isNullOrBlank()) {
+            return null
+        }
+        return try {
+            LocalDate.parse(value, DateTimeFormatter.ISO_LOCAL_DATE).atTime(LocalTime.MAX)
+        } catch (_: Exception) {
+            try {
+                OffsetDateTime.parse(value, DateTimeFormatter.ISO_DATE_TIME).toLocalDateTime()
+            } catch (_: Exception) {
+                LocalDateTime.parse(value, DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+            }
+        }
+    }
+
+    private fun parseIsoDateTime(value: String?): LocalDateTime? {
+        if(value.isNullOrBlank()) {
+            return null
+        }
+        return try {
+            LocalDateTime.parse(value, DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+        } catch (_: Exception) {
+            OffsetDateTime.parse(value, DateTimeFormatter.ISO_DATE_TIME)
+                .withOffsetSameInstant(ZoneOffset.UTC)
+                .toLocalDateTime()
         }
     }
 

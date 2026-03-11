@@ -13,7 +13,7 @@ class RequestPixDueDate(
     private val conta : ContaUzziPayPix,
     private val amount : BigDecimal,
     dueDate: LocalDate,
-    val Payer : Payer,
+    val payer : Payer,
     private val cnpj: String,
     val keyType : Type = Type.EVP,
     val qrCodePurposeType : String = "BILLET",
@@ -27,11 +27,11 @@ class RequestPixDueDate(
     constructor(externalIdentifier: String,
                 conta: ContaUzziPayPix,
                 amount: BigDecimal,
-                dueDate: String, Payer: Payer, cnpj: String,
+                dueDate: String, payer: Payer, cnpj: String,
                 keyType: Type = Type.EVP) :
             this(externalIdentifier,conta,amount,
                 LocalDate.parse(dueDate,DateTimeFormatter.ofPattern("yyy-MM-dd")),
-                Payer,
+                payer,
                 cnpj,keyType)
 
     init { }
