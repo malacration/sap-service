@@ -17,7 +17,7 @@ import java.util.concurrent.TimeUnit
 class PixPaymentSchedule(
     private val invoiceService: InvoiceService,
     private val pixPaymentVerificationService: PixPaymentVerificationService,
-    @Value("\${pix.schedule.consulta-interval-minutes:5}") private val consultaIntervaloMinutos: Long
+    @Value("\${pix.schedule.consulta-interval-minutes:60}") private val consultaIntervaloMinutos: Long
 ) {
 
     private val logger: Logger = LoggerFactory.getLogger(PixPaymentSchedule::class.java)
