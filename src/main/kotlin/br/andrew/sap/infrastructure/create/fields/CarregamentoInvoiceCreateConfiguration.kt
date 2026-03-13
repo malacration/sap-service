@@ -11,7 +11,7 @@ import org.springframework.context.annotation.Profile
 
 @Configuration
 @Profile("!test")
-@ConditionalOnProperty(value = ["fields.invoice"], havingValue = "true", matchIfMissing = true)
+@ConditionalOnProperty(value = ["fields.invoice"], havingValue = "true", matchIfMissing = false)
 class CarregamentoInvoiceCreateConfiguration(
     val userFieldsMDService: UserFieldsMDService
 ) {

@@ -2,6 +2,7 @@ package br.andrew.sap.model.sap.documents.base
 
 import br.andrew.sap.model.enums.Cancelled
 import br.andrew.sap.model.WarehouseDefault
+import br.andrew.sap.model.enums.YesNo
 import br.andrew.sap.model.sap.documents.DocumentStatus
 import br.andrew.sap.model.forca.EnderecoId
 import br.andrew.sap.model.sap.DebOrCredt
@@ -52,6 +53,7 @@ open class Document(val CardCode : String,
     var DocTotal : String? = null
     var discountPercent : Double? = null
     var totalDiscount : String? = null
+    var ReserveInvoice : YesNo? = null
     var SequenceSerial : String? = null
     var sequenceModel : String? = null //->
     var CreateDate : String? = null
@@ -74,7 +76,7 @@ open class Document(val CardCode : String,
     var AttachmentEntry : Int? = null
 
     @JsonProperty("DocumentStatus")
-    val DocumentStatus : DocumentStatus? = null
+    var DocumentStatus : DocumentStatus? = null
     var documentAdditionalExpenses : MutableList<AdditionalExpenses> = mutableListOf()
     var AddressExtension : AddressExtension? = null
     var shipToCode : String? = null
