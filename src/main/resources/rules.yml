@@ -2,6 +2,28 @@ roles:
   admin:
     - url: "/**"
       actions: ["*"]
+  pix:
+    - url: "/pix"
+      actions: ["get"]
+    - url: "/pix/**"
+      actions: ["get"]
+    - url: "/invoice/*/create-pix"
+      actions: ["get"]
+    - url: "/invoice/*/baixa-pix"
+      actions: ["get"]
+    - url: "/invoice/pix"
+      actions: ["get"]
+  pix_admin:
+    - url: "/pix"
+      actions: ["get"]
+    - url: "/pix/**"
+      actions: ["get"]
+    - url: "/invoice/*/create-pix"
+      actions: ["get"]
+    - url: "/invoice/*/baixa-pix"
+      actions: ["get"]
+    - url: "/invoice/pix"
+      actions: ["get"]
   vendedor:
     - url: "/nextlink"
       actions: [ "post" ]

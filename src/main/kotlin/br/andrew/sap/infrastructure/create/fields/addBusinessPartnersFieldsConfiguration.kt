@@ -11,7 +11,7 @@ import org.springframework.context.annotation.Profile
 
 @Configuration
 @Profile("!test")
-@ConditionalOnProperty(value = ["producao.field"], havingValue = "true", matchIfMissing = true)
+@ConditionalOnProperty(value = ["producao.field"], havingValue = "true", matchIfMissing = false)
 class addBusinessPartnersFieldsConfiguration(
     val userFieldsMDService: UserFieldsMDService
 ) {

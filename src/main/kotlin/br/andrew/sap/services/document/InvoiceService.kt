@@ -19,6 +19,7 @@ import br.andrew.sap.model.sap.journal.OriginalJournal
 import JournalEntry
 import JournalEntryLines
 import br.andrew.sap.model.sap.partner.BusinessPartner
+import br.andrew.sap.model.dto.InvoicePixUpdatePayload
 import br.andrew.sap.model.dto.InstallmentPixConsulta
 import br.andrew.sap.model.dto.InstallmentPixResumo
 import br.andrew.sap.model.uzzipay.ContaUzziPayPix
@@ -97,9 +98,17 @@ class InvoiceService(env: SapEnvrioment, restTemplate: RestTemplate, authService
         if (requestes.isEmpty()) {
             return parcelasSolicitadas
         }
-        requestes.forEach { invoice.setPix(it,pixService.genereateFor(it)) }
-        this.update(invoice,invoice.docEntry.toString())
+        val installmentsAtualizadas = requestes.mapNotNull { invoice.setPix(it, pixService.genereateFor(it)) }
+        updatePixInstallments(invoice.docEntry ?: throw Exception("DocEntry da invoice nao pode ser nulo"), installmentsAtualizadas)
         return parcelasSolicitadas
+    }
+
+    fun updatePixInstallments(docEntry: Int, installments: List<Installment>) {
+        if(installments.isEmpty()) {
+            return
+        }
+        val payload = InvoicePixUpdatePayload.from(installments)
+        this.update(payload, docEntry.toString())
     }
 
     fun getInvoiceByIdPix(reference: String): Invoice {

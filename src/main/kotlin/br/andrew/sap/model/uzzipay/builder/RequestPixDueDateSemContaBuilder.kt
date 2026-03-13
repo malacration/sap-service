@@ -78,7 +78,9 @@ class RequestPixDueDateSemContaBuilder(val bussinesPartner: BusinessPartner,
     }
 
     private fun contaSelecionada(): ContaUzziPayPix {
-        return contas.firstOrNull { it.cnpj==bussinessPlace.cnpjSemMascara() }
-            ?: throw Exception("Conta não encontrada para o CNPJ ${bussinessPlace.cnpjSemMascara()}")
+        return contas.firstOrNull {
+            it.transitoria == bussinessPlace.BPLID.toString() ||
+            it.cnpj==bussinessPlace.cnpjSemMascara()
+        } ?: throw Exception("Conta não encontrada para o CNPJ ${bussinessPlace.cnpjSemMascara()}")
     }
 }

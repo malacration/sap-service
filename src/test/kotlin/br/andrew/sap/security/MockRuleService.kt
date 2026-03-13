@@ -8,6 +8,14 @@ class MockRuleService : RuleService {
     override fun get(role : String): List<Rule> {
         return if(role == "admin")
             listOf(Rule("/**","*"))
+        else if(role == "pix" || role == "pix_admin")
+            listOf(
+                Rule("/pix", "get"),
+                Rule("/pix/**", "get"),
+                Rule("/invoice/*/create-pix", "get"),
+                Rule("/invoice/*/baixa-pix", "get"),
+                Rule("/invoice/pix", "get"),
+            )
         else if(role == "vendedor")
             listOf(
                 Rule("/clientes/*","get"),

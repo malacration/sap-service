@@ -13,6 +13,8 @@ class RoleBasedAuthorizationFilterTest {
     val vendedor = User("windson", "windson",UserOriginEnum.EmployeesInfo,"", "","",listOf("vendedor"))
     val vendedor_admin = User("windson", "windson",UserOriginEnum.EmployeesInfo,"", "","",listOf("vendedor_admin"))
     val cliente = User("windson", "windson",UserOriginEnum.EmployeesInfo,"", "","", listOf("cliente"))
+    val pix = User("windson", "windson",UserOriginEnum.EmployeesInfo,"", "","", listOf("pix"))
+    val pix_admin = User("windson", "windson",UserOriginEnum.EmployeesInfo,"", "","", listOf("pix_admin"))
 
     val autorization = RoleBasedAuthorizationFilter(MockRuleService(),"")
 
@@ -76,6 +78,23 @@ class RoleBasedAuthorizationFilterTest {
         Assertions.assertEquals(true,autorization.isAuthorized("/vendedor","get",vendedor_admin))
         Assertions.assertEquals(true,autorization.isAuthorized(urlAcessada,"get",vendedor_admin))
         Assertions.assertEquals(true,autorization.isAuthorized(urlAcessada,"post",vendedor_admin))
+    }
+
+    @Test
+    fun pixEPixAdminDevemTerMesmasRotas() {
+        Assertions.assertEquals(true, autorization.isAuthorized("/pix", "get", pix))
+        Assertions.assertEquals(true, autorization.isAuthorized("/pix/transaction/abc", "get", pix))
+        Assertions.assertEquals(true, autorization.isAuthorized("/invoice/10/create-pix", "get", pix))
+        Assertions.assertEquals(true, autorization.isAuthorized("/invoice/10/baixa-pix", "get", pix))
+        Assertions.assertEquals(true, autorization.isAuthorized("/invoice/pix", "get", pix))
+
+        Assertions.assertEquals(true, autorization.isAuthorized("/pix", "get", pix_admin))
+        Assertions.assertEquals(true, autorization.isAuthorized("/pix/transaction/abc", "get", pix_admin))
+        Assertions.assertEquals(true, autorization.isAuthorized("/invoice/10/create-pix", "get", pix_admin))
+        Assertions.assertEquals(true, autorization.isAuthorized("/invoice/10/baixa-pix", "get", pix_admin))
+        Assertions.assertEquals(true, autorization.isAuthorized("/invoice/pix", "get", pix_admin))
+        Assertions.assertEquals(false, autorization.isAuthorized("/pix", "post", pix))
+        Assertions.assertEquals(false, autorization.isAuthorized("/pix", "post", pix_admin))
     }
 
 }
