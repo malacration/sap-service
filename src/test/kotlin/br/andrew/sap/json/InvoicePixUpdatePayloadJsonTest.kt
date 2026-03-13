@@ -5,6 +5,7 @@ import br.andrew.sap.model.sap.documents.DocumentStatus
 import br.andrew.sap.model.sap.documents.base.Installment
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -32,11 +33,12 @@ class InvoicePixUpdatePayloadJsonTest {
             .registerModule(KotlinModule.Builder().build())
             .writeValueAsString(payload)
 
-        assertTrue(json.contains("U_pix_reference"))
-        assertTrue(json.contains("\"DocEntry\":123"))
+        assertEquals(1, payload.DocumentInstallments.size)
+        assertTrue(json.contains("\"DocumentInstallments\""))
+        assertTrue(json.contains("\"U_QrCodePix\":\"qr-code\""))
         assertTrue(json.contains("U_pix_reference"))
         assertTrue(json.contains("\"InstallmentId\":2"))
-        assertFalse(json.contains("DocumentStatus"))
-        assertFalse(json.contains("DocumentInstallments"))
+        assertFalse(json.contains("\"DocEntry\":123"))
+        assertFalse(json.contains("\"Status\""))
     }
 }

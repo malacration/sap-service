@@ -51,7 +51,10 @@ class PixPaymentSchedule(
         }
 
         parcelasElegiveis.forEach { it.registrarConsultaPix(consultaIntervaloMinutos, agora) }
-        invoiceService.update(invoice, invoice.docEntry.toString())
+        invoiceService.updatePixInstallments(
+            invoice.docEntry ?: throw Exception("DocEntry da invoice nao pode ser nulo"),
+            parcelasElegiveis
+        )
         parcelasElegiveis.forEach { installment ->
             try {
                 pixPaymentVerificationService.verificaPixEhBaixa(invoice, installment)

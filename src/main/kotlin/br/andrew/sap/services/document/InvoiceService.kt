@@ -99,9 +99,16 @@ class InvoiceService(env: SapEnvrioment, restTemplate: RestTemplate, authService
             return parcelasSolicitadas
         }
         val installmentsAtualizadas = requestes.mapNotNull { invoice.setPix(it, pixService.genereateFor(it)) }
-        val payload = InvoicePixUpdatePayload.from(installmentsAtualizadas)
-        this.update(payload,invoice.docEntry.toString())
+        updatePixInstallments(invoice.docEntry ?: throw Exception("DocEntry da invoice nao pode ser nulo"), installmentsAtualizadas)
         return parcelasSolicitadas
+    }
+
+    fun updatePixInstallments(docEntry: Int, installments: List<Installment>) {
+        if(installments.isEmpty()) {
+            return
+        }
+        val payload = InvoicePixUpdatePayload.from(installments)
+        this.update(payload, docEntry.toString())
     }
 
     fun getInvoiceByIdPix(reference: String): Invoice {
