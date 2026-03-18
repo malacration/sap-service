@@ -56,69 +56,72 @@ class ConciliacaoVendaFuturaSchedule(
     fun execute() {
         val filterReclassificacaoEntrega = Filter(
             Predicate("TransactionCode", TransactionCodeTypes.VFET, Condicao.EQUAL),
-            Predicate("TransactionCode", TransactionCodeTypes.VFET, Condicao.EQUAL),
             Predicate("TaxDate", "2024-12-04", Condicao.GREAT),
         )
 
         journalEntriesService.getAll(JournalEntry::class.java,filterReclassificacaoEntrega)
             .filter { filiais.contains(it.getFilial())}
             .forEach { journalReclassificado ->
-                val ref = journalReclassificado.Reference
-                    ?.toIntOrNull()
-                    ?: throw Exception("Nao tem numero de referencia. ${journalReclassificado.JdtNum}")
-                val invoiceFilter = Filter(
-                    Predicate("U_venda_futura", 0, Condicao.GREAT),
-                    Predicate("DocNum", ref, Condicao.EQUAL)
-                )
-                inoviceService.get(invoiceFilter).tryGetValues<Invoice>().forEach { invoice ->
-                    val adiantamentos = adiantamentoService.adiantamentosAbertos(invoice)
-                    val adiantamentosDisponiveis = ApropriacaoAdiantamento(invoice, adiantamentos).get()
-                    if (adiantamentosDisponiveis.isNotEmpty()) {
-                        val invoiceApropiacao = Invoice(
-                            invoice.CardCode, null,
-                            listOf(Product(itemConciliacaoVendaFutura, "1",
-                                "0",
-                                usage).also {
-                                it.U_preco_base = 1.0
-                            }),
-                            invoice.getBPL_IDAssignedToInvoice()
-                        ).also {
-                            it.downPaymentsToDraw = adiantamentosDisponiveis
-                            it.U_venda_futura = invoice.U_venda_futura
-                            it.controlAccount = contaControle
-                            it.SequenceCode = sequenceCode
-                            it.salesPersonCode = invoice.salesPersonCode
-                            it.journalMemo = "Apropriacao adt Com LC ${journalReclassificado.JdtNum} da entrega. NF $ref | Cont ${invoice.U_venda_futura}"
-                            it.U_TX_DocEntryRef = invoice.docEntry
-                            //TODO coloocar a referencia da nf de forma estruturada.
-                        }
+                try {
+                    val ref = journalReclassificado.Reference
+                        ?.toIntOrNull()
+                        ?: throw Exception("Nao tem numero de referencia. ${journalReclassificado.JdtNum}")
+                    val invoiceFilter = Filter(
+                        Predicate("U_venda_futura", 0, Condicao.GREAT),
+                        Predicate("DocNum", ref, Condicao.EQUAL)
+                    )
+                    inoviceService.get(invoiceFilter).tryGetValues<Invoice>().forEach { invoice ->
+                        val adiantamentos = adiantamentoService.adiantamentosAbertos(invoice)
+                        val adiantamentosDisponiveis = ApropriacaoAdiantamento(invoice, adiantamentos).get()
+                        if (adiantamentosDisponiveis.isNotEmpty()) {
+                            val invoiceApropiacao = Invoice(
+                                invoice.CardCode, null,
+                                listOf(Product(itemConciliacaoVendaFutura, "1",
+                                    "0",
+                                    usage).also {
+                                    it.U_preco_base = 1.0
+                                }),
+                                invoice.getBPL_IDAssignedToInvoice()
+                            ).also {
+                                it.downPaymentsToDraw = adiantamentosDisponiveis
+                                it.U_venda_futura = invoice.U_venda_futura
+                                it.controlAccount = contaControle
+                                it.SequenceCode = sequenceCode
+                                it.salesPersonCode = invoice.salesPersonCode
+                                it.journalMemo = "Apropriacao adt Com LC ${journalReclassificado.JdtNum} da entrega. NF $ref | Cont ${invoice.U_venda_futura}"
+                                it.U_TX_DocEntryRef = invoice.docEntry
+                                //TODO coloocar a referencia da nf de forma estruturada.
+                            }
 
-                        val apropriado = inoviceService
-                            .save(invoiceApropiacao)
-                            .tryGetValue<Document>()
+                            val apropriado = inoviceService
+                                .save(invoiceApropiacao)
+                                .tryGetValue<Document>()
 
-                        try {
-                            val internalRecon = InternalReconciliationsBuilder(
-                                journalReclassificado,
-                                apropriado,
-                            ).build()
+                            try {
+                                val internalRecon = InternalReconciliationsBuilder(
+                                    journalReclassificado,
+                                    apropriado,
+                                ).build()
 
-                            val updateTransCode = UpdateTransactionCode(
-                                journalReclassificado.JdtNum.toString(),
-                                TransactionCodeTypes.VFEC
-                            )
+                                val updateTransCode = UpdateTransactionCode(
+                                    journalReclassificado.JdtNum.toString(),
+                                    TransactionCodeTypes.VFEC
+                                )
 
-                            val batchList = BatchList().add(
-                                Triple(BatchMethod.POST,internalRecon,internalReconciliationsService)
-                            ).add(
-                                Triple(BatchMethod.PATCH,updateTransCode,journalEntriesService)
-                            )
-                            batchService.run(batchList)
-                        }catch (e : Exception){
-                            inoviceService.cancel(apropriado.docEntry.toString())
-                            throw Exception("Não foi possivel realizar a reconciliação, fazendo o cancelamento da apropriação do adiantamento",e)
+                                val batchList = BatchList().add(
+                                    Triple(BatchMethod.POST,internalRecon,internalReconciliationsService)
+                                ).add(
+                                    Triple(BatchMethod.PATCH,updateTransCode,journalEntriesService)
+                                )
+                                batchService.run(batchList)
+                            }catch (e : Exception){
+                                inoviceService.cancel(apropriado.docEntry.toString())
+                                throw Exception("Não foi possivel realizar a reconciliação, fazendo o cancelamento da apropriação do adiantamento",e)
+                            }
                         }
                     }
+                }catch (e : Exception){
+                    logger.error("Erro no processamento da conciliação da venda futura! OJDT ${journalReclassificado.JdtNum}",e)
                 }
         }
     }
