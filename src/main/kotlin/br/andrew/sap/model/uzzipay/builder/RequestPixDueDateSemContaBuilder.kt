@@ -9,7 +9,6 @@ import br.andrew.sap.model.uzzipay.ContaUzziPayPix
 import br.andrew.sap.model.uzzipay.RequestPixDueDate
 
 class RequestPixDueDateSemContaBuilder(val bussinesPartner: BusinessPartner,
-                                       val bussinessPlace: BussinessPlace,
                                        val document : Document,
                                        val parcela : List<Int> = listOf(),
                                        val jurosMoraPercent: Double = 0.0
@@ -27,12 +26,12 @@ class RequestPixDueDateSemContaBuilder(val bussinesPartner: BusinessPartner,
     }
 
     fun comContas(contas : List<ContaUzziPayPix>): RequestPixDueDateBuilder {
-        return comConta(contas?.firstOrNull { it.cnpj==bussinessPlace.cnpjSemMascara() }
-            ?: throw Exception("Conta não encontrada para o CNPJ ${bussinessPlace.cnpjSemMascara()}"))
+        return comConta(contas.firstOrNull { it.idFilial==document.getBPL_IDAssignedToInvoice().toIntOrNull() }
+            ?: throw Exception("Conta não encontrada para a filial ${document.getBPL_IDAssignedToInvoice()}"))
     }
 
     fun comConta(conta : ContaUzziPayPix): RequestPixDueDateBuilder {
-        return RequestPixDueDateBuilder(bussinesPartner, bussinessPlace, document, conta, parcela, jurosMoraPercent)
+        return RequestPixDueDateBuilder(bussinesPartner, document, conta, parcela, jurosMoraPercent)
     }
 
     fun parcelasSolicitadas(): List<Installment> {
@@ -54,7 +53,6 @@ class RequestPixDueDateSemContaBuilder(val bussinesPartner: BusinessPartner,
         val conta = contaSelecionada()
         return RequestPixDueDateBuilder(
             bussinesPartner,
-            bussinessPlace,
             document,
             conta,
             parcelasParaGerar,
@@ -79,8 +77,7 @@ class RequestPixDueDateSemContaBuilder(val bussinesPartner: BusinessPartner,
 
     private fun contaSelecionada(): ContaUzziPayPix {
         return contas.firstOrNull {
-            it.transitoria == bussinessPlace.BPLID.toString() ||
-            it.cnpj==bussinessPlace.cnpjSemMascara()
-        } ?: throw Exception("Conta não encontrada para o CNPJ ${bussinessPlace.cnpjSemMascara()}")
+            it.idFilial == document.getBPL_IDAssignedToInvoice().toIntOrNull()
+        } ?: throw Exception("Conta não encontrada para a filial ${document.getBPL_IDAssignedToInvoice()}")
     }
 }

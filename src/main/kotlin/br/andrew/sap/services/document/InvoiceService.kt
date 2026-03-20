@@ -88,11 +88,8 @@ class InvoiceService(env: SapEnvrioment, restTemplate: RestTemplate, authService
     }
 
     fun createPix(invoice: Invoice, parcela : List<Int> = listOf(), jurosMoraPercent: Double = 0.0): List<Installment> {
-        val bussinessPlace = bussinessPlaceService
-            .getById(invoice.getBPL_IDAssignedToInvoice())
-            .tryGetValue<BussinessPlace>()
         val partner = bussinesPartnersService.getById("'${invoice.CardCode}'").tryGetValue<BusinessPartner>()
-        val builder = RequestPixDueDateSemContaBuilder(partner,bussinessPlace,invoice,parcela,jurosMoraPercent)
+        val builder = RequestPixDueDateSemContaBuilder(partner,invoice,parcela,jurosMoraPercent)
         val requestes = builder.build()
         val parcelasSolicitadas = builder.parcelasSolicitadas()
         if (requestes.isEmpty()) {

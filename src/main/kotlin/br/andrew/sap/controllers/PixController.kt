@@ -81,6 +81,7 @@ class PixController(
 
     @GetMapping("transaction/{id}/conta/{cnpj}/baixa")
     fun verificaPixEhBaixa(@PathVariable id : String, @PathVariable cnpj : String): Transaction {
-        return pixPaymentVerificationService.verificaPixEhBaixa(id, cnpj)
+        //TODO mudar isso depois.
+        throw Exception("Erro, esse parametro agora utiliza ID da filial e nao cnpj")
     }
 }

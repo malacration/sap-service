@@ -41,10 +41,12 @@ class RequestPixDueDate(
     fun getContaSelecioanda(contas : List<ContaUzziPayPix>): ContaUzziPayPix {
         return contas.first { it.cnpj == conta.cnpj }
     }
+
     @JsonIgnoreProperties
     fun getCnpj() : String {
         return cnpj
     }
+
     fun getAmount(): String {
         return "%.2f".format(Locale.ENGLISH, amount)
     }

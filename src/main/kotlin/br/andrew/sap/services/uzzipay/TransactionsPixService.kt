@@ -10,6 +10,7 @@ import br.andrew.sap.services.BussinessPlaceService
 import org.springframework.http.RequestEntity
 import org.springframework.stereotype.Service
 import org.springframework.web.client.RestTemplate
+import kotlin.jvm.Throws
 
 @Service
 class TransactionsPixService(val restTemplate: RestTemplate,
@@ -35,8 +36,7 @@ class TransactionsPixService(val restTemplate: RestTemplate,
 
     fun getContaBy(invoice : Invoice) : ContaUzziPayPix{
         return envrioment
-            .getContaByCnpj(bussinessPlaceService.getById(invoice.getBPL_IDAssignedToInvoice())
-            .tryGetValue<BussinessPlace>())
+            .getContaBpId(invoice.getBPL_IDAssignedToInvoice().toIntOrNull() ?: throw Exception("Falha a converter para inteiro ID da filial"))
     }
 
     fun getBy(invoice : Invoice, conta : ContaUzziPayPix): List<Transaction> {
@@ -52,6 +52,7 @@ class TransactionsPixService(val restTemplate: RestTemplate,
     }
 
     fun getBy(id : String): Transaction {
+        //TODO talvez isso gere erro
         return getBy(id,envrioment.contas[0])
     }
 }

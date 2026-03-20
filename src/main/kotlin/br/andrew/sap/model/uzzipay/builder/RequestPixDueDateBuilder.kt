@@ -14,7 +14,6 @@ import java.time.LocalDate
 
 class RequestPixDueDateBuilder(
     private val bp: BusinessPartner,
-    private val bussinessPlace: BussinessPlace,
     private val document: Document,
     private val conta: ContaUzziPayPix,
     private var parcelas: List<Int> = listOf(),
@@ -41,7 +40,7 @@ class RequestPixDueDateBuilder(
                 BigDecimal(it.total + juros).setScale(2, RoundingMode.HALF_EVEN),
                 effectiveDueDate.toString(),
                 getPayer(),
-                bussinessPlace.cnpjSemMascara())
+                conta.cnpj)
         } ?: listOf()
     }
 

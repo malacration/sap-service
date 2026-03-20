@@ -29,7 +29,6 @@ class RequestPixDueDateSemContaBuilderTests {
     fun buildSemContasConfiguradasLancaErro() {
         val builder = RequestPixDueDateSemContaBuilder(
             newBusinessPartner(),
-            newBussinessPlace("12.345.678/0001-90"),
             newDocument(listOf(newInstallment(1)))
         )
 
@@ -42,13 +41,12 @@ class RequestPixDueDateSemContaBuilderTests {
     fun comContasSemCnpjCorrespondenteLancaErro() {
         val builder = RequestPixDueDateSemContaBuilder(
             newBusinessPartner(),
-            newBussinessPlace("12.345.678/0001-90"),
             newDocument(listOf(newInstallment(1)))
         )
         val contas = listOf(newConta("00999999000199", "PIX-1"))
 
         val erro = assertThrows<Exception> { builder.comContas(contas) }
-        assertTrue((erro.message ?: "").contains("Conta não encontrada para o CNPJ 12345678000190"))
+        assertTrue((erro.message ?: "").contains("Conta não encontrada para a filial 1"))
     }
 
     @Order(3)
@@ -61,7 +59,6 @@ class RequestPixDueDateSemContaBuilderTests {
 
         val builder = RequestPixDueDateSemContaBuilder(
             newBusinessPartner(),
-            newBussinessPlace("12.345.678/0001-90"),
             newDocument(listOf(newInstallment(1), newInstallment(2)))
         )
 
@@ -83,7 +80,6 @@ class RequestPixDueDateSemContaBuilderTests {
 
         val builder = RequestPixDueDateSemContaBuilder(
             newBusinessPartner(),
-            newBussinessPlace("12.345.678/0001-90"),
             newDocument(listOf(newInstallment(1), newInstallment(2))),
             parcela = listOf(2)
         )
@@ -131,6 +127,7 @@ class RequestPixDueDateSemContaBuilderTests {
     private fun newConta(cnpj: String, chavePix: String): ContaUzziPayPix {
         return ContaUzziPayPix().also {
             it.cnpj = cnpj
+            it.idFilial = if(chavePix == "PIX-OK") 1 else 2
             it.chavePix = chavePix
             it.tokenJwt = "token"
             it.privateKey = "key"
