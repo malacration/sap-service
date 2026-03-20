@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import java.text.SimpleDateFormat
 import java.time.LocalDate
+import java.time.LocalTime
 import java.time.ZoneId
 import java.util.*
 
@@ -63,6 +64,7 @@ class RequestQrCodeTests {
 
     @Test
     fun gerarNovaChavePix_deveSanitizarControleDeConsulta() {
+        val vencimento = LocalDate.now().plusDays(2)
         installment.U_pix_proxima_consulta_em = "2026-03-19T10:00:00"
         installment.U_pix_consultar_ate = "2026-03-19T12:00:00"
 
@@ -71,7 +73,7 @@ class RequestQrCodeTests {
                 installment.createExternalIdentifier(document),
                 ContaUzziPayPix().also { it.chavePix = "" },
                 100.00.toBigDecimal(),
-                LocalDate.of(2026, 3, 20),
+                vencimento,
                 player,
                 "1"
             ),
@@ -79,6 +81,6 @@ class RequestQrCodeTests {
         )
 
         Assertions.assertTrue(!installment.U_pix_proxima_consulta_em.isNullOrBlank())
-        Assertions.assertEquals("2026-03-20T23:59:59.999999999", installment.U_pix_consultar_ate)
+        Assertions.assertEquals(vencimento.atTime(LocalTime.MAX).toString(), installment.U_pix_consultar_ate)
     }
 }

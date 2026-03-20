@@ -15,11 +15,6 @@ class PixPaymentVerificationService(
     private val invoiceService: InvoiceService
 ) {
 
-    fun verificaPixEhBaixa(reference: String, cnpj: String): Transaction {
-        val conta = uzziPayEnvrioment.getContaByCnpj(cnpj)
-        return verificaPixEhBaixa(reference, conta)
-    }
-
     fun verificaPixEhBaixa(invoice: Invoice, installment: Installment): Transaction {
         val conta = transactionsPixService.getContaBy(invoice)
         val reference = installment.U_pix_reference ?: throw Exception("Referencia a Parcela não encontrada")
