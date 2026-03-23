@@ -106,6 +106,17 @@ roles:
       actions: [ "get" ]
     - url: "/business-partners/**"
       actions: ["*"]
+  business_partner:
+    - url: "/invoice/**/parcela/*"
+      actions: ["get"]
+    - url: "/invoice/cardcode/**/payment"
+      actions: ["get"]
+    - url: "/business-partners/cpf-cnpj/**"
+      actions: ["get"]
+    - url: "/tax/**/pdf"
+      actions: ["get"]
+    - url: "/installment/**/paid"
+      actions: ["get"]
   qualidade:
     - url: "/batch-stock/item-code/**"
       actions: ["get"]
