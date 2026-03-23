@@ -5,6 +5,6 @@ class OtpCpfCnpj(val cpfCnpj : String, val otp : Int){
     fun getUser() : User {
         return User(cpfCnpj,"Cliente",
             UserOriginEnum.BusinessPartner,
-            "","","",listOf()).also { it.otp = otp }
+            "","","",listOf("business_partner")).also { it.otp = otp }
     }
 }
