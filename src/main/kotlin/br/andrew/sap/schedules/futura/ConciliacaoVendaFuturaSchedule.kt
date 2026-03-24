@@ -90,6 +90,7 @@ class ConciliacaoVendaFuturaSchedule(
                                 it.salesPersonCode = invoice.salesPersonCode
                                 it.journalMemo = "Apropriacao adt Com LC ${journalReclassificado.JdtNum} da entrega. NF $ref | Cont ${invoice.U_venda_futura}"
                                 it.U_TX_DocEntryRef = invoice.docEntry
+                                it.paymentGroupCode = -1
                                 //TODO coloocar a referencia da nf de forma estruturada.
                             }
 
