@@ -116,7 +116,10 @@ class ContratoVendaFuturaController(
         val contrato = service.get(Filter(
             Predicate("DocEntry",pedidoRetirada.docEntryVendaFutura,Condicao.EQUAL)
         )).tryGetValues<Contrato>().firstOrNull() ?: throw  Exception("O contrato nao foi encontrado")
-        val boleto = adiantamentoService.getByContratoVendaFutura(contrato.DocEntry!!).last()
+        val boletos = adiantamentoService.getByContratoVendaFutura(contrato.DocEntry!!)
+        if (boletos.isEmpty())
+            throw Exception("Não existem adiantamentos criados para o contrato ${contrato.DocEntry}. Emita os boletos antes de realizar a retirada.")
+        val boleto = boletos.last()
         val orderSales = orderService.getById(contrato.U_orderDocEntry).tryGetValue<OrderSales>()
         val cotacao = pedidoRetirada.parse(contrato,utilizacaoEntregaVendaFutura,boleto.DocDueDate,orderSales)
         return ResponseEntity.ok(cotacaoController.saveForAngular(cotacao,auth))
