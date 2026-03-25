@@ -22,11 +22,6 @@ class TaxController(
     val bpService : BusinessPartnersService
 ) {
 
-    @GetMapping("{id}",produces = arrayOf("application/pdf"))
-    fun getRegistros(@PathVariable id : Int): ByteArray {
-        val document = documentService.getById(id).tryGetValue<Document>()
-        return service.getBoletosBy(document.getBPL_IDAssignedToInvoice().toInt(),document.docEntry!!,13).ArquivoPdf!!.toByteArray()
-    }
 
 
     @GetMapping("/{id}/pdf",produces = ["application/pdf"])
