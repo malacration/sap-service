@@ -31,8 +31,9 @@ class PedidoRetirada(
         ).also {
             it.salesPersonCode = contrato.U_vendedor
             it.U_venda_futura = contrato.DocEntry
-            it.Incoterms = order.Incoterms
+            it.Incoterms = order.TaxExtension?.Incoterms
             it.U_entrega_vf = 1
+            it.paymentGroupCode = -1
             it.journalMemo = "Entrega de mercadoria ref a contrato Nº ${contrato.DocEntry}"
             it.comments = it.journalMemo
             if(contrato.U_valorFrete > 0){
