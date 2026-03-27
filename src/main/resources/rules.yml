@@ -106,6 +106,10 @@ roles:
       actions: [ "get" ]
     - url: "/business-partners/**"
       actions: ["*"]
+    - url: "/quotation/**"
+      actions: [ "get" ]
+    - url: "/pedido-venda/listar"
+      actions: [ "get" ]
   business_partner:
     - url: "/invoice/**/parcela/*"
       actions: ["get"]

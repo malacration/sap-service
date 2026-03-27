@@ -34,7 +34,8 @@ class ContratoVendaFuturaService(restTemplate: RestTemplate,
     fun getContratos(auth: User,
                      status : Status,
                      idContrato : Int = -1,
-                     filial : Int = -1): OData? {
+                     filial : Int = -1,
+                     cliente : String = "-1"): OData? {
 
         val idContratoIsFilter = if(idContrato == -1)
             Int.MAX_VALUE
@@ -46,6 +47,8 @@ class ContratoVendaFuturaService(restTemplate: RestTemplate,
         else
             -1
 
+        val clienteIsFilter = if(cliente == "-1") "~" else ""
+
         val parameters = listOf(
             Parameter("superVendedor",auth.superVendedor()),
             Parameter("vendedor",auth.id),
@@ -56,6 +59,9 @@ class ContratoVendaFuturaService(restTemplate: RestTemplate,
 
             Parameter("filial",filial),
             Parameter("filialIsFilter",filialIsFilter),
+
+            Parameter("cliente",cliente),
+            Parameter("clienteIsFilter",clienteIsFilter),
 
         )
         return sqlQueriesService.execute("contratos-vendafutura.sql", parameters)
