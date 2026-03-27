@@ -3,6 +3,9 @@ package br.andrew.sap.model.sap.documents.base
 import br.andrew.sap.model.bankplus.Boleto
 import br.andrew.sap.model.sap.ReconciliationRow
 import br.andrew.sap.model.sap.documents.DocumentStatus
+import br.andrew.sap.model.uzzipay.DataRetonroPixQrCode
+import br.andrew.sap.model.uzzipay.RequestPixDueDate
+import br.andrew.sap.model.uzzipay.RequestPixImmediate
 import br.andrew.sap.model.uzzipay.Transaction
 import com.fasterxml.jackson.annotation.JsonFormat
 import com.fasterxml.jackson.annotation.JsonIgnore
@@ -64,6 +67,38 @@ class Installment(
         if(this.U_pix_reference == null)
             return false
         return (this.U_pix_reference == transaction.txId)
+    }
+
+    fun setPix(
+        request: RequestPixDueDate,
+        chave: DataRetonroPixQrCode,
+        dataReferencia: LocalDateTime = LocalDateTime.now()
+    ): Installment {
+        applyPixData(chave, request.getDueDate(), dataReferencia)
+        return this
+    }
+
+    fun setPix(
+        request: RequestPixImmediate,
+        chave: DataRetonroPixQrCode,
+        dataReferencia: LocalDateTime = LocalDateTime.now()
+    ): Installment {
+        val expiracao = dataReferencia.plusSeconds(request.expiration.toLong()).withNano(0)
+        applyPixData(chave, expiracao.toString(), dataReferencia)
+        return this
+    }
+
+    private fun applyPixData(
+        chave: DataRetonroPixQrCode,
+        dueDate: String,
+        dataReferencia: LocalDateTime
+    ) {
+        U_QrCodePix = chave.data.textContent
+        U_pix_textContent = chave.data.textContent
+        U_pix_link = chave.data.link
+        U_pix_reference = chave.data.reference
+        U_pix_due_date = dueDate
+        sanitizarControleConsultaPix(dataReferencia)
     }
 
     @JsonIgnore

@@ -2,6 +2,7 @@ package br.andrew.sap.services.document
 
 import br.andrew.sap.infrastructure.odata.*
 import br.andrew.sap.model.envrioments.SapEnvrioment
+import br.andrew.sap.model.dto.InvoicePixUpdatePayload
 import br.andrew.sap.model.payment.HandlePaymentTermsLines
 import br.andrew.sap.model.payment.PaymentDueDates
 import br.andrew.sap.model.sap.DocEntry
@@ -10,6 +11,7 @@ import br.andrew.sap.model.sap.documents.DownPayment
 import br.andrew.sap.model.sap.documents.Invoice
 import br.andrew.sap.model.sap.documents.OrderSales
 import br.andrew.sap.model.sap.documents.base.Document
+import br.andrew.sap.model.sap.documents.base.Installment
 import br.andrew.sap.model.sap.documents.base.Product
 import br.andrew.sap.model.self.vendafutura.BoletoVf
 import br.andrew.sap.model.self.vendafutura.Contrato
@@ -87,6 +89,14 @@ class DownPaymentService(env: SapEnvrioment,
     fun getByContratoVendaFuturaStatus(id: Int): List<BoletoVf> {
         val parametros = listOf(Parameter("idVendaFutura",id),)
         return sqlQueriesService.execute("boletos-status.sql",parametros)?.tryGetValues<BoletoVf>() ?: listOf()
+    }
+
+    fun updatePixInstallments(docEntry: Int, installments: List<Installment>) {
+        if(installments.isEmpty()) {
+            return
+        }
+        val payload = InvoicePixUpdatePayload.from(installments)
+        this.update(payload, docEntry.toString())
     }
 
     fun adiantamentosAbertos(invoice : Invoice): List<DownPayment> {

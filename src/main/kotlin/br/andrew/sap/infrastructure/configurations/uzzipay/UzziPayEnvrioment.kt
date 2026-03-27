@@ -1,11 +1,11 @@
 package br.andrew.sap.infrastructure.configurations.uzzipay
 
+import br.andrew.sap.model.PixRequestAdiantamento
 import br.andrew.sap.model.sap.BussinessPlace
 import br.andrew.sap.model.uzzipay.ContaUzziPayPix
 import br.andrew.sap.model.uzzipay.builder.RequestPixDueDateSemContaBuilder
 import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.context.annotation.Configuration
-
 
 @Configuration
 @ConfigurationProperties(prefix = "uzzipay", ignoreInvalidFields = true, ignoreUnknownFields = true)
@@ -29,8 +29,10 @@ class UzziPayEnvrioment {
     var contas : List<ContaUzziPayPix> = listOf()
         set(value) {
             field = value
-            if(field.isNotEmpty())
+            if (field.isNotEmpty()) {
+                PixRequestAdiantamento.setUzziPayEnvrioment(this)
                 RequestPixDueDateSemContaBuilder.setUzziPayEnvrioment(this)
+            }
         }
 
     fun buildAuthUrl(): String {
