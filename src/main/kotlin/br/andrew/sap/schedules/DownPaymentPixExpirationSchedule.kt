@@ -2,7 +2,6 @@ package br.andrew.sap.schedules
 
 import br.andrew.sap.model.sap.documents.DownPayment
 import br.andrew.sap.services.document.DownPaymentService
-import br.andrew.sap.services.uzzipay.PixPaymentVerificationService
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
@@ -15,8 +14,7 @@ import java.util.concurrent.TimeUnit
 @Component
 @ConditionalOnProperty(value = ["pix.schedule.enable"], havingValue = "true", matchIfMissing = false)
 class DownPaymentPixExpirationSchedule(
-    private val downPaymentService: DownPaymentService,
-    private val pixPaymentVerificationService: PixPaymentVerificationService
+    private val downPaymentService: DownPaymentService
 ) {
     private val logger: Logger = LoggerFactory.getLogger(DownPaymentPixExpirationSchedule::class.java)
 
@@ -53,30 +51,8 @@ class DownPaymentPixExpirationSchedule(
             return
         }
 
-        val parcelasCancelar = parcelasVencidas.filter { installment ->
-            try {
-                val transaction = pixPaymentVerificationService.verificaPixEhBaixa(downPayment, installment)
-                !transaction.paid
-            } catch (t: Throwable) {
-                logger.error(
-                    "Erro ao verificar pix vencido {} da parcela {} do adiantamento {}",
-                    installment.U_pix_reference,
-                    installment.InstallmentId,
-                    docEntry,
-                    t
-                )
-                false
-            }
-        }
-
-        if(parcelasCancelar.isEmpty()) {
-            return
-        }
-
-        parcelasCancelar.forEach { it.cancelPix() }
-        downPaymentService.updatePixInstallments(
-            downPayment.docEntry ?: throw Exception("DocEntry do adiantamento nao pode ser nulo"),
-            parcelasCancelar
+        downPaymentService.cancel(
+            (downPayment.docEntry ?: throw Exception("DocEntry do adiantamento nao pode ser nulo")).toString()
         )
     }
 }
