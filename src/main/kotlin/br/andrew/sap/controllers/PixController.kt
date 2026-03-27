@@ -40,6 +40,7 @@ class PixController(
     val pixDynamicService : DynamicPixQrCodeService,
     val adiantamentoService : DownPaymentService,
     @Value("\${pix.adiantamento-item:none}") val pixItemAdiantamento : String,
+    @Value("\${pix.utilizacao:-1}") val utilizacao : Int,
     @Value("\${pix.juros.mora.percent:0}") val jurosMoraPercent: Double){
 
     @GetMapping()
@@ -74,7 +75,7 @@ class PixController(
 
         if(pixItemAdiantamento == "none")
             throw Exception("Não foi configurado um item de pix para o adiantamento")
-        val linhas = listOf(Product(pixItemAdiantamento,"1",pixRequest.valor.toString()))
+        val linhas = listOf(Product(pixItemAdiantamento,"1",pixRequest.valor.toString(),utilizacao))
         val adiantamento = DownPayment(
             pixRequest.cardCode,
             LocalDate.now().toString(),

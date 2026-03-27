@@ -7,5 +7,5 @@ FROM
 WHERE
     inst."U_pix_reference" is not null
     and inst."Status" <> 'C'
-    and inst."U_pix_consultar_ate" is not null
-    and inst."U_pix_consultar_ate" < :now
+    and inst."U_pix_due_date" is not null
+    and inst."U_pix_due_date" < :now

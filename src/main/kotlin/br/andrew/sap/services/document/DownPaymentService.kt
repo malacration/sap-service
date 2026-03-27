@@ -10,6 +10,7 @@ import br.andrew.sap.model.payment.HandlePaymentTermsLines
 import br.andrew.sap.model.payment.PaymentDueDates
 import br.andrew.sap.model.sap.DocEntry
 import br.andrew.sap.model.sap.documents.DocumentStatus
+import br.andrew.sap.model.sap.documents.CreditNotes
 import br.andrew.sap.model.sap.documents.DownPayment
 import br.andrew.sap.model.sap.documents.Invoice
 import br.andrew.sap.model.sap.documents.OrderSales
@@ -49,6 +50,7 @@ class DownPaymentService(env: SapEnvrioment,
                          private val bankplus : BankPlusService,
                          private val accountsReceivableService: AccountsReceivableService,
                          private val incomingPaymentService: IncomingPaymentService,
+                         private val creditNotesService: CreditNotesService,
                          private val batchService: BatchService,
                          private val journalEntriesService: JournalEntriesService,
                          @Value("\${venda-futura.adiantamento-item:none}") val vfItemAdiantamento : String,
@@ -141,6 +143,28 @@ class DownPaymentService(env: SapEnvrioment,
 
     fun baixaPixBy(downPayment: DownPayment, installment: Installment, transaction: Transaction, conta: ContaUzziPayPix): Transaction {
         return accountsReceivableService.baixaPixBy(downPayment, installment, transaction, conta)
+    }
+
+    fun estornarPorDevolucao(downPayment: DownPayment): CreditNotes {
+        val docEntry = downPayment.docEntry ?: throw Exception("DocEntry do adiantamento nao pode ser nulo")
+        val devolucaoExistente = sqlQueriesService
+            .execute("devolucao-adiantamento.sql", Parameter("docEntry", docEntry))
+            ?.tryGetValues<DocEntry>()
+            ?.firstOrNull()
+
+        if (devolucaoExistente?.DocEntry != null) {
+            return creditNotesService.getById(devolucaoExistente.DocEntry!!).tryGetValue<CreditNotes>()
+        }
+
+        val devolucao = CreditNotes(downPayment).also {
+            val referencia = downPayment.docNum ?: docEntry.toString()
+            it.comments = "Estorno automatico de adiantamento PIX expirado. Adiantamento $referencia"
+            it.journalMemo = it.comments
+            it.U_TX_DocEntryRef = docEntry
+            it.U_TX_DocTypeRef = downPayment.docObjectCode?.value
+            it.SequenceCode = 1
+        }
+        return creditNotesService.save(devolucao).tryGetValue<CreditNotes>()
     }
 
     fun adiantamentosAbertos(invoice : Invoice): List<DownPayment> {
