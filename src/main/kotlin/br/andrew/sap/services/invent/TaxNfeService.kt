@@ -20,7 +20,6 @@ class TaxNfeService(val envrioment: TaxNfeEnvrioment, val restTemplate: RestTemp
     fun consultar(entidadeId: Int, docEntry: Int, tipoDocumento: Int): DocumentoFiscal {
         val url = "${envrioment.host}/api/v3/${envrioment.base}/invent/docs/consultar".toHttpUrl()
             .newBuilder()
-            .addQueryParameter("entidadeId", entidadeId.toString())
             .addQueryParameter("numeroDocumento", docEntry.toString())
             .addQueryParameter("tipoDocumento", tipoDocumento.toString())
             .build()
