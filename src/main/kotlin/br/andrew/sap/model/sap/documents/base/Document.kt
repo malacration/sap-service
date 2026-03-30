@@ -13,6 +13,7 @@ import br.andrew.sap.model.sap.documents.base.adiantamento.DownPaymentsToDraw
 import br.andrew.sap.model.self.vendafutura.ContratoParse.Companion.parse
 import br.andrew.sap.model.uzzipay.DataRetonroPixQrCode
 import br.andrew.sap.model.uzzipay.RequestPixDueDate
+import br.andrew.sap.model.uzzipay.RequestPixImmediate
 import br.andrew.sap.model.uzzipay.Transaction
 import br.andrew.sap.services.stock.ItemsService
 import br.andrew.sap.services.batch.BatchId
@@ -90,7 +91,9 @@ open class Document(val CardCode : String,
     var TransNum : Int? = null
     var SequenceCode : Int? = null
     var U_TX_DocEntryRef : Int? = null
+    var U_TX_DocTypeRef : Int? = null
     var ClosingRemarks: String? = null
+
 
     fun getOrCreateTaxExtension(): TaxExtension {
         if (this.TaxExtension == null) {
@@ -206,15 +209,18 @@ open class Document(val CardCode : String,
     fun setPix(request: RequestPixDueDate, chave: DataRetonroPixQrCode): Installment? {
         if(request.docEntry() != docEntry)
             throw Exception("O qrCode nao pertence a esse documento")
-        this.documentInstallments!!.find { it.InstallmentId == request.getInstallmentId() }?.also {
-            it.U_QrCodePix = chave.data.textContent
-            it.U_pix_textContent = chave.data.textContent
-            it.U_pix_link = chave.data.link
-            it.U_pix_reference = chave.data.reference
-            it.U_pix_due_date = request.getDueDate()
-            it.sanitizarControleConsultaPix()
-        }
-        return this.documentInstallments!!.find { it.InstallmentId == request.getInstallmentId() }
+        return this.documentInstallments
+            ?.find { it.InstallmentId == request.getInstallmentId() }
+            ?.setPix(request, chave)
+    }
+
+    fun setPix(request: RequestPixImmediate, chave: DataRetonroPixQrCode): Installment? {
+        if(docEntry != null && request.docEntry() != docEntry)
+            throw Exception("O qrCode nao pertence a esse documento")
+        val installmentId = request.getInstallmentId() as Int
+        val installment = this.documentInstallments?.find { it.InstallmentId == installmentId }
+            ?: this.documentInstallments?.firstOrNull().takeIf { docEntry == null && installmentId == 0 }
+        return installment?.setPix(request, chave)
     }
 
     fun getInstallmentBy(transaction: Transaction): Installment? {

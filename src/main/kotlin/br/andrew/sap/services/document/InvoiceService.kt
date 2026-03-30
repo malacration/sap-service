@@ -62,6 +62,7 @@ class InvoiceService(env: SapEnvrioment, restTemplate: RestTemplate, authService
                      val incomingPaymentService: IncomingPaymentService,
                      val transactionPixService : TransactionsPixService,
                      val bankPlusService: BankPlusService,
+                     val accountsReceivableService: AccountsReceivableService,
                      val batchService: BatchService,
                      val journalEntriesService: JournalEntriesService,
                      val sqlQueriesService: SqlQueriesService
@@ -155,43 +156,9 @@ class InvoiceService(env: SapEnvrioment, restTemplate: RestTemplate, authService
     }
 
     fun baixaPixBy(transaction: Transaction, conta : ContaUzziPayPix)  : Transaction {
-        if(!transaction.paid)
-            throw Exception("O Pagamento não foi realizado ainda")
         val invoice = getInvoiceByIdPix(transaction.txId)
         val parcelaBaixar : Installment = invoice.getInstallmentBy(transaction) ?: throw Exception("Nao foi encontrato uma parcela para conciliar")
-        val boletos = try {
-            bankPlusService.getBoletosBy(invoice)
-        } catch (e : Exception){
-            logger.warn(e.message,e)
-            null
-        }
-        val payment = Payment(transaction,conta).also {
-            it.cardCode = invoice.CardCode
-            it.setBPID(invoice.getBPL_IDAssignedToInvoice())
-            it.paymentInvoices = listOf(
-                PaymentInvoice(invoice,transaction,parcelaBaixar)
-            )
-        }
-        val batchList = BatchList()
-        batchList.add(BatchMethod.POST, payment, incomingPaymentService)
-
-        if (conta.hasTransitoryAccount()) {
-            val filialTransitoria = conta.idFilialTransitoria
-                ?.toIntOrNull() ?: throw Exception("Lancamento sem filial transitoria")
-            val valor = transaction.receivedAmount ?: throw Exception("Transacao sem valor recebido")
-            val deb = JournalEntryLines(conta.contaContabilBanco, valor, 0.0, filialTransitoria)
-            val cred = JournalEntryLines(conta.transitoria!!, 0.0, valor, filialTransitoria)
-            val entry = JournalEntry(listOf(deb, cred), "Transferencia Pix transitoria ${transaction.txId} - INV ${invoice.docNum}").also {
-                it.Reference = transaction.txId
-            }
-            batchList.add(BatchMethod.POST, entry, journalEntriesService)
-        }
-        batchService.run(batchList)
-        if(boletos != null){
-            boletos.filter { parcelaBaixar.getBy(it) }
-            .forEach { bankPlusService.cancelarBoleto(it) }
-        }
-        return transaction
+        return accountsReceivableService.baixaPixBy(invoice, parcelaBaixar, transaction, conta)
     }
 
     override fun getEntryOriginalJournal(jdtNum: Int): EntryOriginalJournal {

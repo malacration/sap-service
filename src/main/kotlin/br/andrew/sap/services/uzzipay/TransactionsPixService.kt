@@ -2,6 +2,8 @@ package br.andrew.sap.services.uzzipay
 
 import br.andrew.sap.infrastructure.configurations.uzzipay.UzziPayEnvrioment
 import br.andrew.sap.model.sap.BussinessPlace
+import br.andrew.sap.model.sap.documents.DownPayment
+import br.andrew.sap.model.sap.documents.base.Document
 import br.andrew.sap.model.sap.documents.base.Installment
 import br.andrew.sap.model.sap.documents.Invoice
 import br.andrew.sap.model.uzzipay.ContaUzziPayPix
@@ -34,9 +36,9 @@ class TransactionsPixService(val restTemplate: RestTemplate,
             throw Exception("Nao foi possivel encontrar a transaction")
     }
 
-    fun getContaBy(invoice : Invoice) : ContaUzziPayPix{
+    fun getContaBy(document : Document) : ContaUzziPayPix{
         return envrioment
-            .getContaBpId(invoice.getBPL_IDAssignedToInvoice().toIntOrNull() ?: throw Exception("Falha a converter para inteiro ID da filial"))
+            .getContaBpId(document.getBPL_IDAssignedToInvoice().toIntOrNull() ?: throw Exception("Falha a converter para inteiro ID da filial"))
     }
 
     fun getBy(invoice : Invoice, conta : ContaUzziPayPix): List<Transaction> {

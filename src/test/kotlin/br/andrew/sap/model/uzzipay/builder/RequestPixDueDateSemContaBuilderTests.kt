@@ -129,7 +129,6 @@ class RequestPixDueDateSemContaBuilderTests {
             it.cnpj = cnpj
             it.idFilial = if(chavePix == "PIX-OK") 1 else 2
             it.chavePix = chavePix
-            it.tokenJwt = "token"
             it.privateKey = "key"
             it.consulta = "consulta"
             it.contaContabilBanco = "contabil"
