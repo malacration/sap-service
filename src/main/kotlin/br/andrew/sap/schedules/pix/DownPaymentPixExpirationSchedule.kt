@@ -1,4 +1,4 @@
-package br.andrew.sap.schedules
+package br.andrew.sap.schedules.pix
 
 import br.andrew.sap.model.sap.documents.DownPayment
 import br.andrew.sap.services.document.DownPaymentService

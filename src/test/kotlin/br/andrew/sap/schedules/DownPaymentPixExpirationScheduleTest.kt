@@ -2,6 +2,7 @@ package br.andrew.sap.schedules
 
 import br.andrew.sap.infrastructure.odata.OData
 import br.andrew.sap.model.dto.InstallmentPixConsulta
+import br.andrew.sap.schedules.pix.DownPaymentPixExpirationSchedule
 import br.andrew.sap.services.document.DownPaymentService
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.mock

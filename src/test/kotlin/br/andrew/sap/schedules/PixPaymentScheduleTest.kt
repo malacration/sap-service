@@ -6,6 +6,7 @@ import br.andrew.sap.model.sap.documents.DownPayment
 import br.andrew.sap.model.sap.documents.Invoice
 import br.andrew.sap.model.sap.documents.base.Installment
 import br.andrew.sap.model.uzzipay.Transaction
+import br.andrew.sap.schedules.pix.PixPaymentSchedule
 import br.andrew.sap.services.document.DownPaymentService
 import br.andrew.sap.services.document.InvoiceService
 import br.andrew.sap.services.uzzipay.PixPaymentVerificationService

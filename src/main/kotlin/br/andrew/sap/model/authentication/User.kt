@@ -12,6 +12,7 @@ class User(val id : String,
            val userName : String,
            val emailAddress : String? = null,
            val _password : String? = null,
+           var bussinesPlace : List<Int>,
            var roles : List<String> = listOf()) : UserDetails, Authentication {
 
     private var authenticated = true
@@ -67,7 +68,7 @@ class User(val id : String,
     }
 
     fun isListAllBusinessPartner(): Boolean {
-        return isAdmin() || roles.contains("vendedor_admin")
+        return isAdmin() || roles.contains("vendedor_admin") || roles.contains("caixa")
     }
 
     @JsonIgnore

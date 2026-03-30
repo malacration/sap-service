@@ -20,6 +20,9 @@ class EmployeesInfo(val EmployeeID : Int, val Active: String) : UserSource {
     var MiddleName : String? = null
     var U_password : String? = null
 
+    @JsonIgnore
+    var _bussinesPlace : List<Int> = listOf()
+
     @JsonProperty("eMail")
     var eMail: String? = null
 
@@ -46,5 +49,10 @@ class EmployeesInfo(val EmployeeID : Int, val Active: String) : UserSource {
     @JsonIgnore
     override fun getPassword(): String? {
         return U_password
+    }
+
+    @JsonIgnore
+    override fun getBussinesPlace(): List<Int> {
+        return this._bussinesPlace
     }
 }
