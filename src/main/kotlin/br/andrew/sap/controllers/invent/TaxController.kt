@@ -30,6 +30,6 @@ class TaxController(
     ): ByteArray {
         val document = documentService.getById(id).tryGetValue<Document>()
         securit.acessoCliente(user,bpService.getById("'${document.CardCode}'").tryGetValue<BusinessPartner>())
-        return service.onlyePdf(document.getBPL_IDAssignedToInvoice().toInt(),document.docEntry!!,13)
+        return service.onlyePdf(document.docEntry!!,13)
     }
 }
