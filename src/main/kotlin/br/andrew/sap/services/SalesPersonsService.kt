@@ -14,7 +14,9 @@ import org.springframework.stereotype.Service
 import org.springframework.web.client.RestTemplate
 
 @Service
-class SalesPersonsService(val sqlQueriesService : SqlQueriesService , env: SapEnvrioment, restTemplate: RestTemplate, authService: AuthService) :
+class SalesPersonsService(
+    val filiaisService : BussinessPlaceService,
+    val sqlQueriesService : SqlQueriesService , env: SapEnvrioment, restTemplate: RestTemplate, authService: AuthService) :
         EntitiesService<SalePerson>(env, restTemplate, authService), UserSourceService {
     override fun path(): String {
         return "/b1s/v1/SalesPersons"
@@ -51,7 +53,10 @@ class SalesPersonsService(val sqlQueriesService : SqlQueriesService , env: SapEn
         val resultado = get(filter).tryGetValues<SalePerson>().filter { it.Active == "tYES" }
         if(resultado.size > 1)
             throw Exception("Existe mais de um usuario com o mesmo email")
-        return resultado.firstOrNull()?.getUser() ?: throw Exception("Usuario nao encontrado")
+        val vendedor = resultado.firstOrNull()?.also {
+            it._bussinesPlace = filiaisService.getFilialBySalesPerson(it.SalesEmployeeCode).map { it.BPLId }
+        } ?: throw Exception("Usuario nao encontrado")
+        return vendedor.getUser()
     }
 
     override fun changePassword(user : User, hashedPassword : String) : OData?{

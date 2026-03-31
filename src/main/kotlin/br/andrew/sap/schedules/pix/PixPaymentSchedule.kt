@@ -1,4 +1,4 @@
-package br.andrew.sap.schedules
+package br.andrew.sap.schedules.pix
 
 import br.andrew.sap.model.sap.documents.DownPayment
 import br.andrew.sap.model.sap.documents.Invoice
@@ -12,6 +12,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
 import java.time.LocalDateTime
+import java.time.temporal.ChronoUnit
 import java.util.concurrent.TimeUnit
 
 @Component
@@ -26,7 +27,7 @@ class PixPaymentSchedule(
     private val logger: Logger = LoggerFactory.getLogger(PixPaymentSchedule::class.java)
 
     @Scheduled(fixedDelayString = "\${pix.schedule.delay-minutes:5}", timeUnit = TimeUnit.MINUTES)
-    fun execute() {
+    fun executeInvoice() {
         val agora = LocalDateTime.now()
         invoiceService.getPixsGeradosParaConsulta(agora)
             .groupBy { it.docEntry }
@@ -40,7 +41,12 @@ class PixPaymentSchedule(
                     logger.error("Erro ao consultar pix do documento {}", docEntry, t)
                 }
             }
-        downPaymentService.getPixsGeradosParaConsulta(agora.truncatedTo(java.time.temporal.ChronoUnit.MINUTES).toString())
+    }
+
+    @Scheduled(fixedDelayString = "\${pix.schedule.delay-minutes:5}", timeUnit = TimeUnit.MINUTES)
+    fun executeAdiantamento() {
+        val agora = LocalDateTime.now()
+        downPaymentService.getPixsGeradosParaConsulta(agora.truncatedTo(ChronoUnit.MINUTES).toString())
             .groupBy { it.docEntry }
             .forEach { (docEntry, installments) ->
                 if(docEntry == null) {

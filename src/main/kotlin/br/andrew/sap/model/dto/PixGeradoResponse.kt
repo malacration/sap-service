@@ -29,7 +29,8 @@ data class PixGeradoResponse(
     val taxaJurosMoraPercent: Double,
     val jurosValor: Double,
     val valorTitulo: Double,
-    val valorTotal: Double
+    val valorTotal: Double,
+    val docNum : Int? = null
 ) {
     constructor(installment: Installment, taxaJurosMoraPercent: Double) : this(
         dueDate = installment.dueDate,

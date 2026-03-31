@@ -5,20 +5,24 @@ import br.andrew.sap.infrastructure.WarehouseDefaultConfig
 import br.andrew.sap.infrastructure.configurations.DistribuicaoCustoByBranchConfig
 import br.andrew.sap.infrastructure.odata.*
 import br.andrew.sap.model.authentication.User
+import br.andrew.sap.model.dto.PixGeradoResponse
 import br.andrew.sap.model.sap.documents.OrderSales
 import br.andrew.sap.model.exceptions.CreditException
 import br.andrew.sap.model.forca.PedidoVenda
 import br.andrew.sap.model.sap.Localidade
+import br.andrew.sap.model.sap.documents.DocumentStatus
 import br.andrew.sap.model.sap.documents.base.Document
 import br.andrew.sap.services.*
 import br.andrew.sap.services.abstracts.SqlQueriesService
 import br.andrew.sap.services.document.DocumentForAngular
+import br.andrew.sap.services.document.DownPaymentService
 import br.andrew.sap.services.document.OrdersService
 import br.andrew.sap.services.pricing.ComissaoService
 import br.andrew.sap.services.stock.ItemsService
 import org.slf4j.LoggerFactory
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.data.domain.Page
+import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.Pageable
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.Authentication
@@ -28,6 +32,7 @@ import org.springframework.web.bind.annotation.*
 @RequestMapping("pedido-venda")
 class OrderSalesController(val ordersService: OrdersService,
                            val itemService : ItemsService,
+                           private val downPaymentService: DownPaymentService,
                            val comissaoService: ComissaoService,
                            val telegramService : TelegramRequestService,
                            val applicationEventPublisher: ApplicationEventPublisher,
@@ -72,14 +77,42 @@ class OrderSalesController(val ordersService: OrdersService,
     fun get(page : Pageable, auth : Authentication): ResponseEntity<Page<OrderSales>> {
         if(!(auth is User))
             return ResponseEntity.noContent().build()
-        val predicados = mutableListOf<Predicate>(
-            Predicate("SalesPersonCode",
-                auth.getIdInt(),
-                Condicao.EQUAL)
-        )
+
+        val predicados = if(auth.isListAllBusinessPartner() && !auth.isAdmin())
+            mutableListOf<Predicate>(
+                Predicate("BPL_IDAssignedToInvoice",
+                    auth.bussinesPlace,
+                    Condicao.IN)
+            )
+        else if(auth.isAdmin())
+            mutableListOf<Predicate>()
+        else
+            mutableListOf<Predicate>(
+                Predicate("SalesPersonCode",
+                    auth.getIdInt(),
+                    Condicao.EQUAL)
+            )
         return ResponseEntity.ok(ordersService
             .get(Filter(predicados), OrderBy(mapOf("DocEntry" to Order.DESC)), page)
             .tryGetPageValues<OrderSales>(page)
+        )
+    }
+
+    @GetMapping("pix/{docEntry}")
+    fun getAdiantamentoPixByOrder(@PathVariable docEntry : Int, page : Pageable) : Page<PixGeradoResponse> {
+        val filterPixPedido = Filter(
+            Predicate("U_TX_DocEntryRef",docEntry, Condicao.EQUAL),
+        )
+        val pageResult = downPaymentService.get(filterPixPedido)
+            .tryGetPageValues<Document>(page)
+        val conteudo = pageResult.content
+            .flatMap{ document -> (document.documentInstallments ?: emptyList()).map { Pair(document, it) }   }
+            .mapNotNull { PixGeradoResponse(it.second,0.0) }
+
+        return PageImpl(
+            conteudo,
+            pageResult.pageable,
+            conteudo.size.toLong()
         )
     }
 
