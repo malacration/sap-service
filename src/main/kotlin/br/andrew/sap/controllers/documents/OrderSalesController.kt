@@ -112,11 +112,15 @@ class OrderSalesController(val ordersService: OrdersService,
         val filterPixPedido = Filter(
             Predicate("U_TX_DocEntryRef",docEntry, Condicao.EQUAL),
         )
-        val pageResult = downPaymentService.get(filterPixPedido)
+        val pageResult = downPaymentService.get(filterPixPedido, OrderBy("DocEntry",Order.DESC))
             .tryGetPageValues<Document>(page)
         val conteudo = pageResult.content
             .flatMap{ document -> (document.documentInstallments ?: emptyList()).map { Pair(document, it) }   }
-            .mapNotNull { PixGeradoResponse(it.second,0.0) }
+            .mapNotNull { par ->  PixGeradoResponse(par.second,0.0).also {
+                it.docEntry = par.first.docEntry
+                it.docNum = par.first.docNum
+                it.status = par.first.DocumentStatus
+            } }
 
         return PageImpl(
             conteudo,

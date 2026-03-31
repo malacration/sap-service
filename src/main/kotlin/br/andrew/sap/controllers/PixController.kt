@@ -136,16 +136,25 @@ class PixController(
         @PathVariable docEntry : Int,
         @PathVariable parcela : Int,
     ): Transaction {
-        if (pixDocType.matches(DocumentTypes.oInvoices)) {
+       return  if (pixDocType.matches(DocumentTypes.oInvoices)) {
             val invoice = invoiceService.getById(docEntry)
                 .tryGetValue<Invoice>()
             val parcelaPix = invoice.documentInstallments?.firstOrNull { it.InstallmentId == parcela }
-            return pixPaymentVerificationService.verificaPixEhBaixa(
+            pixPaymentVerificationService.verificaPixEhBaixa(
                 invoice,
                 parcelaPix ?: throw Exception("Referencia a Parcela não encontrada")
             )
-        } else {
-            throw Exception("Tipo de documento não permitido para gerar chave pix")
+        }else if(pixDocType.matches(DocumentTypes.oDownPayments)) {
+           val document = adiantamentoService.getById(docEntry)
+               .tryGetValue<Invoice>()
+           val parcelaPix = document.documentInstallments?.firstOrNull { it.InstallmentId == parcela }
+           pixPaymentVerificationService.verificaPixEhBaixa(
+               document,
+               parcelaPix ?: throw Exception("Referencia a Parcela não encontrada")
+           )
+       }
+       else {
+            throw Exception("Tipo de documento não permitido para consultar chave pix")
         }
     }
 

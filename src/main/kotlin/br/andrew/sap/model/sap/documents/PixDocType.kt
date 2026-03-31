@@ -1,12 +1,9 @@
 package br.andrew.sap.model.sap.documents
 
-/**
- * Subconjunto de DocumentTypes permitido para operações de PIX.
- * Adicione novos tipos aqui conforme forem suportados.
- */
 enum class PixDocType(val documentType: DocumentTypes) {
 
-    oInvoices(DocumentTypes.oInvoices);
+    oInvoices(DocumentTypes.oInvoices),
+    oDownPayments(DocumentTypes.oDownPayments);
 
     val value: Int
         get() = documentType.value

@@ -55,6 +55,8 @@ abstract class DocumentLines(
     var FatherType : String? = null
 
     var BatchNumbers: List<BatchStock> = listOf()
+    @JsonProperty("CFOPCode")
+    var CFOPCode : String? = null
 
 
     @JsonIgnore

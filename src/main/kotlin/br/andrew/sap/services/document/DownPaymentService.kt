@@ -163,6 +163,7 @@ class DownPaymentService(env: SapEnvrioment,
             it.U_TX_DocEntryRef = docEntry
             it.U_TX_DocTypeRef = downPayment.docObjectCode?.value
             it.SequenceCode = 1
+//            it.DocumentLines.forEach { it.Usage = 16; it.CFOPCode = "1000" }
         }
         return creditNotesService.save(devolucao).tryGetValue<CreditNotes>()
     }
