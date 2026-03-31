@@ -74,7 +74,12 @@ class OrderSalesController(val ordersService: OrdersService,
     }
 
     @GetMapping("listar")
-    fun get(page : Pageable, auth : Authentication): ResponseEntity<Page<OrderSales>> {
+    fun get(page : Pageable, auth : Authentication,
+            @RequestParam status: DocumentStatus?,
+            @RequestParam filial: Int?,
+            @RequestParam cliente: String?,
+            @RequestParam data: String?
+    ): ResponseEntity<Page<OrderSales>> {
         if(!(auth is User))
             return ResponseEntity.noContent().build()
 
@@ -92,6 +97,10 @@ class OrderSalesController(val ordersService: OrdersService,
                     auth.getIdInt(),
                     Condicao.EQUAL)
             )
+        if (status != null) predicados.add(Predicate("DocumentStatus", status, Condicao.EQUAL))
+        if (filial != null) predicados.add(Predicate("BPL_IDAssignedToInvoice", filial, Condicao.EQUAL))
+        if (cliente != null) predicados.add(Predicate("CardCode", cliente, Condicao.EQUAL))
+        if (data != null) predicados.add(Predicate("DocDate", data, Condicao.GREAT_EQUAL))
         return ResponseEntity.ok(ordersService
             .get(Filter(predicados), OrderBy(mapOf("DocEntry" to Order.DESC)), page)
             .tryGetPageValues<OrderSales>(page)
