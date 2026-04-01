@@ -15,7 +15,7 @@ import java.time.LocalDate
 data class PixGeradoResponse(
     val dueDate: String?,
     val total: Double,
-    val status: DocumentStatus?,
+    var status: DocumentStatus?,
     val installmentId: Int?,
     val paymentOrdered: String?,
     val percentage: String?,
@@ -25,11 +25,12 @@ data class PixGeradoResponse(
     @JsonProperty("U_pix_link") val U_pix_link: String?,
     @JsonProperty("U_pix_reference") val U_pix_reference: String?,
     @JsonProperty("U_pix_due_date") val U_pix_due_date: String?,
-    val docEntry: Int?,
+    var docEntry: Int?,
     val taxaJurosMoraPercent: Double,
     val jurosValor: Double,
     val valorTitulo: Double,
-    val valorTotal: Double
+    val valorTotal: Double,
+    var docNum : String? = null
 ) {
     constructor(installment: Installment, taxaJurosMoraPercent: Double) : this(
         dueDate = installment.dueDate,

@@ -89,7 +89,33 @@ class RequestPixDueDateSemContaBuilderTests {
         assertEquals(2, requests.first().getInstallmentId())
     }
 
-    private fun newBusinessPartner(): BusinessPartner {
+    @Order(5)
+    @Test
+    fun buildUsaZipCodeDaFilialQuandoEnderecoDoParceiroForInvalido() {
+        val contaSelecionada = newConta("12345678000190", "PIX-OK").also {
+            it.businessPlace = newBussinessPlace("12345678000190").also { place ->
+                place.Street = "Av. Filial"
+                place.City = "Porto Velho"
+                place.State = "RO"
+                place.ZipCode = "76.835-500"
+            }
+        }
+        val env = UzziPayEnvrioment().also { it.contas = listOf(contaSelecionada) }
+        RequestPixDueDateSemContaBuilder.setUzziPayEnvrioment(env)
+
+        val builder = RequestPixDueDateSemContaBuilder(
+            newBusinessPartner(zipCode = "76.835-50"),
+            newDocument(listOf(newInstallment(1)))
+        )
+
+        val request = builder.build().first()
+        assertEquals("76835500", request.payer.zipCode)
+        assertEquals("Rua A", request.payer.address)
+        assertEquals("Cuiaba", request.payer.city)
+        assertEquals("MT", request.payer.state)
+    }
+
+    private fun newBusinessPartner(zipCode: String = "78000000"): BusinessPartner {
         return BusinessPartner().also { bp ->
             bp.cardName = "Cliente Teste"
             bp.emailAddress = "cliente@teste.com"
@@ -100,7 +126,7 @@ class RequestPixDueDateSemContaBuilderTests {
                         it.addressName = "Rua A"
                         it.County = "Cuiaba"
                         it.State = "MT"
-                        it.ZipCode = "78000000"
+                        it.ZipCode = zipCode
                     }
                 )
             )
@@ -129,7 +155,6 @@ class RequestPixDueDateSemContaBuilderTests {
             it.cnpj = cnpj
             it.idFilial = if(chavePix == "PIX-OK") 1 else 2
             it.chavePix = chavePix
-            it.tokenJwt = "token"
             it.privateKey = "key"
             it.consulta = "consulta"
             it.contaContabilBanco = "contabil"

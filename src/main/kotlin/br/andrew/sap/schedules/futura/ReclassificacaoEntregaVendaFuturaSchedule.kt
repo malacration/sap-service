@@ -178,7 +178,7 @@ class ReclassificacaoEntregaVendaFuturaSchedule(
 
                     if (vfItemAdiantamento == "none")
                         throw Exception("O parametro [venda-futura.adiantamento-item] nao pode ser $vfItemAdiantamento")
-                    val linhas = listOf(Product(vfItemAdiantamento, "1", docTotal.toString()))
+                    val linhas = listOf(Product(vfItemAdiantamento,"1",docTotal.toString()))
                     val adiantamento = DownPayment(
                         devolucao.CardCode,
                         null,

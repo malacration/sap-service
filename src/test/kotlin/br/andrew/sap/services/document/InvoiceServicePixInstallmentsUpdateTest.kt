@@ -56,6 +56,7 @@ class InvoiceServicePixInstallmentsUpdateTest {
             mock(IncomingPaymentService::class.java),
             mock(TransactionsPixService::class.java),
             mock(BankPlusService::class.java),
+            mock(AccountsReceivableService::class.java),
             mock(BatchService::class.java),
             mock(JournalEntriesService::class.java),
             mock(SqlQueriesService::class.java)

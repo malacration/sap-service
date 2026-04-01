@@ -5,20 +5,26 @@ import br.andrew.sap.infrastructure.WarehouseDefaultConfig
 import br.andrew.sap.infrastructure.configurations.DistribuicaoCustoByBranchConfig
 import br.andrew.sap.infrastructure.odata.*
 import br.andrew.sap.model.authentication.User
+import br.andrew.sap.model.dto.PixGeradoResponse
 import br.andrew.sap.model.sap.documents.OrderSales
 import br.andrew.sap.model.exceptions.CreditException
 import br.andrew.sap.model.forca.PedidoVenda
+import br.andrew.sap.model.dto.OrderSalesLineItem
+import br.andrew.sap.model.dto.OrderSalesListItem
 import br.andrew.sap.model.sap.Localidade
+import br.andrew.sap.model.sap.documents.DocumentStatus
 import br.andrew.sap.model.sap.documents.base.Document
 import br.andrew.sap.services.*
 import br.andrew.sap.services.abstracts.SqlQueriesService
 import br.andrew.sap.services.document.DocumentForAngular
+import br.andrew.sap.services.document.DownPaymentService
 import br.andrew.sap.services.document.OrdersService
 import br.andrew.sap.services.pricing.ComissaoService
 import br.andrew.sap.services.stock.ItemsService
 import org.slf4j.LoggerFactory
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.data.domain.Page
+import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.Pageable
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.Authentication
@@ -28,6 +34,7 @@ import org.springframework.web.bind.annotation.*
 @RequestMapping("pedido-venda")
 class OrderSalesController(val ordersService: OrdersService,
                            val itemService : ItemsService,
+                           private val downPaymentService: DownPaymentService,
                            val comissaoService: ComissaoService,
                            val telegramService : TelegramRequestService,
                            val applicationEventPublisher: ApplicationEventPublisher,
@@ -69,17 +76,46 @@ class OrderSalesController(val ordersService: OrdersService,
     }
 
     @GetMapping("listar")
-    fun get(page : Pageable, auth : Authentication): ResponseEntity<Page<OrderSales>> {
-        if(!(auth is User))
+    fun listar(auth: Authentication,
+               @RequestParam status: DocumentStatus?,
+               @RequestParam filial: Int?,
+               @RequestParam cliente: String?,
+               @RequestParam data: String?
+    ): ResponseEntity<NextLink<OrderSalesListItem>> {
+        if (auth !is User)
             return ResponseEntity.noContent().build()
-        val predicados = mutableListOf<Predicate>(
-            Predicate("SalesPersonCode",
-                auth.getIdInt(),
-                Condicao.EQUAL)
+        return ResponseEntity.ok(ordersService.listar(auth, status, filial, cliente, data))
+    }
+
+    @GetMapping("{docEntry}/linhas")
+    fun listarLinhas(@PathVariable docEntry: Int): List<OrderSalesLineItem> {
+        return ordersService.listarLinhas(docEntry)
+    }
+
+    @PostMapping("listar/nextlink")
+    fun listarNextLink(@RequestBody nextLink: String): NextLink<OrderSalesListItem> {
+        return ordersService.listarNextLink(nextLink)
+    }
+
+    @GetMapping("pix/{docEntry}")
+    fun getAdiantamentoPixByOrder(@PathVariable docEntry : Int, page : Pageable) : Page<PixGeradoResponse> {
+        val filterPixPedido = Filter(
+            Predicate("U_TX_DocEntryRef",docEntry, Condicao.EQUAL),
         )
-        return ResponseEntity.ok(ordersService
-            .get(Filter(predicados), OrderBy(mapOf("DocEntry" to Order.DESC)), page)
-            .tryGetPageValues<OrderSales>(page)
+        val pageResult = downPaymentService.get(filterPixPedido, OrderBy("DocEntry",Order.DESC))
+            .tryGetPageValues<Document>(page)
+        val conteudo = pageResult.content
+            .flatMap{ document -> (document.documentInstallments ?: emptyList()).map { Pair(document, it) }   }
+            .mapNotNull { par ->  PixGeradoResponse(par.second,0.0).also {
+                it.docEntry = par.first.docEntry
+                it.docNum = par.first.docNum
+                it.status = par.first.DocumentStatus
+            } }
+
+        return PageImpl(
+            conteudo,
+            pageResult.pageable,
+            conteudo.size.toLong()
         )
     }
 

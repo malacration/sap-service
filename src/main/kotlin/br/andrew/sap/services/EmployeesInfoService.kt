@@ -18,6 +18,7 @@ import org.springframework.web.client.RestTemplate
 
 @Service
 class EmployeesInfoService(restTemplate: RestTemplate,
+                           val filiaisService : BussinessPlaceService,
                            env: SapEnvrioment,
                            authService : AuthService)
     : EntitiesService<EmployeesInfo>(env,restTemplate, authService), UserSourceService  {
@@ -34,7 +35,10 @@ class EmployeesInfoService(restTemplate: RestTemplate,
         val resultado = get(filter).tryGetValues<EmployeesInfo>()
         if(resultado.size > 1)
             throw Exception("Existe mais de um usuario com o mesmo email")
-        return resultado.firstOrNull()?.getUser() ?: throw Exception("Usuario nao encontrado")
+        val colaborador = resultado.firstOrNull()?.also {
+            it._bussinesPlace = filiaisService.getFilialByEmployee(it.EmployeeID).map { it.BPLId }
+        } ?: throw Exception("Usuario nao encontrado")
+        return colaborador.getUser()
     }
 
     override fun changePassword(user : User, hashedPassword : String) : OData?{

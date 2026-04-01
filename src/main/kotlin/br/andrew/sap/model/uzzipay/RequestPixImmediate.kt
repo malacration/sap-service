@@ -8,33 +8,17 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.*
 
-class RequestPixDueDate(
+class RequestPixImmediate(
     val externalIdentifier: String,
     private val conta : ContaUzziPayPix,
     private val amount : BigDecimal,
-    dueDate: LocalDate,
-    val payer : Payer,
     private val cnpj: String,
+    val expiration: Int,
     val keyType : Type = Type.EVP,
-    val qrCodePurposeType : String = "BILLET",
+    val qrCodePurposeType : String = "PDV",
 ) {
-    private val dueDate: LocalDate = if (LocalDate.now().isAfter(dueDate)) {
-        LocalDate.now().plusDays(1)
-    } else {
-        dueDate
-    }
 
-    constructor(externalIdentifier: String,
-                conta: ContaUzziPayPix,
-                amount: BigDecimal,
-                dueDate: String, payer: Payer, cnpj: String,
-                keyType: Type = Type.EVP) :
-            this(externalIdentifier,conta,amount,
-                LocalDate.parse(dueDate,DateTimeFormatter.ofPattern("yyy-MM-dd")),
-                payer,
-                cnpj,keyType)
 
-    init { }
     val key = conta.chavePix
 
     @JsonIgnoreProperties
@@ -67,13 +51,4 @@ class RequestPixDueDate(
     fun docNum(): String {
         return externalIdentifier.split("-")[0].replace("Num","")
     }
-
-    fun getDueDate(): String {
-            if (LocalDate.now() == dueDate)
-                return SimpleDateFormat("yyyy-MM-dd")
-                    .format(Date.from(LocalDate.now().plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant()))
-        return dueDate.toString();
-    }
 }
-
-

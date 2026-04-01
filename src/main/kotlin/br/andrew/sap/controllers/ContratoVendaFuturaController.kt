@@ -62,11 +62,12 @@ class ContratoVendaFuturaController(
         @RequestParam(value = "status", defaultValue = "aberto") status : Status,
         @RequestParam(value = "idContrato", defaultValue = "-1") idContrato : Int,
         @RequestParam(value = "filial", defaultValue = "-1") filial : Int,
+        @RequestParam(value = "cliente", defaultValue = "-1") cliente : String,
             ): ResponseEntity<NextLink<Contrato>> {
         if(auth !is User)
             return ResponseEntity.noContent().build()
 
-        val resultado = service.getContratos(auth,status, idContrato, filial)?.tryGetNextValues<Contrato>()
+        val resultado = service.getContratos(auth, status, idContrato, filial, cliente)?.tryGetNextValues<Contrato>()
         return ResponseEntity.ok(resultado)
     }
 

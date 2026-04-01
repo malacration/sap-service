@@ -17,10 +17,9 @@ class TaxNfeService(val envrioment: TaxNfeEnvrioment, val restTemplate: RestTemp
     private val client = OkHttpClient()
     private val mapper = ObjectMapper().registerModule(KotlinModule())
 
-    fun consultar(entidadeId: Int, docEntry: Int, tipoDocumento: Int): DocumentoFiscal {
+    fun consultar(docEntry: Int, tipoDocumento: Int): DocumentoFiscal {
         val url = "${envrioment.host}/api/v3/${envrioment.base}/invent/docs/consultar".toHttpUrl()
             .newBuilder()
-            .addQueryParameter("entidadeId", entidadeId.toString())
             .addQueryParameter("numeroDocumento", docEntry.toString())
             .addQueryParameter("tipoDocumento", tipoDocumento.toString())
             .build()
@@ -34,11 +33,10 @@ class TaxNfeService(val envrioment: TaxNfeEnvrioment, val restTemplate: RestTemp
             ?: throw Exception("Documento fiscal não encontrado para docEntry $docEntry")
     }
 
-    fun onlyePdf(entidadeId: Int, docEntry: Int, tipoDocumento: Int): ByteArray {
-        val documento = consultar(entidadeId, docEntry, tipoDocumento)
+    fun onlyePdf(docEntry: Int, tipoDocumento: Int): ByteArray {
+        val documento = consultar(docEntry, tipoDocumento)
         val url = "${envrioment.host}/api/v3/${envrioment.base}/invent/docs/consultar/pdf".toHttpUrl()
             .newBuilder()
-            .addQueryParameter("entidadeId", entidadeId.toString())
             .addQueryParameter("batchId", documento.batchId)
             .addQueryParameter("modelo", documento.modelo)
             .build()

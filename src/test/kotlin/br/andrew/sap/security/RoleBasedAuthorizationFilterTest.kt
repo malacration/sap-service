@@ -9,12 +9,12 @@ import org.junit.jupiter.api.Test
 class RoleBasedAuthorizationFilterTest {
 
     val semRole = User("windson", "windson",UserOriginEnum.EmployeesInfo,"", "","", listOf())
-    val admin = User("windson", "windson",UserOriginEnum.EmployeesInfo,"", "","", listOf("admin"))
-    val vendedor = User("windson", "windson",UserOriginEnum.EmployeesInfo,"", "","",listOf("vendedor"))
-    val vendedor_admin = User("windson", "windson",UserOriginEnum.EmployeesInfo,"", "","",listOf("vendedor_admin"))
-    val cliente = User("windson", "windson",UserOriginEnum.EmployeesInfo,"", "","", listOf("cliente"))
-    val pix = User("windson", "windson",UserOriginEnum.EmployeesInfo,"", "","", listOf("pix"))
-    val pix_admin = User("windson", "windson",UserOriginEnum.EmployeesInfo,"", "","", listOf("pix_admin"))
+    val admin = User("windson", "windson",UserOriginEnum.EmployeesInfo,"", "","", listOf(),listOf("admin"))
+    val vendedor = User("windson", "windson",UserOriginEnum.EmployeesInfo,"", "","",listOf(),listOf("vendedor"))
+    val vendedor_admin = User("windson", "windson",UserOriginEnum.EmployeesInfo,"", "","",listOf(),listOf("vendedor_admin"))
+    val cliente = User("windson", "windson",UserOriginEnum.EmployeesInfo,"", "","", listOf(),listOf("cliente"))
+    val pix = User("windson", "windson",UserOriginEnum.EmployeesInfo,"", "","", listOf(),listOf("pix"))
+    val pix_admin = User("windson", "windson",UserOriginEnum.EmployeesInfo,"", "","", listOf(),listOf("pix_admin"))
 
     val autorization = RoleBasedAuthorizationFilter(MockRuleService(),"")
 

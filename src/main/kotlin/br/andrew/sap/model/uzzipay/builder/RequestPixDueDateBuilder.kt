@@ -46,14 +46,22 @@ class RequestPixDueDateBuilder(
 
     private fun getPayer() : Payer {
         val addresse = bp.getAddresses().firstOrNull() ?: Address()
+        val addressLine = listOf(addresse.Street, addresse.Block, addresse.addressName)
+            .firstOrNull { !it.isNullOrBlank() }
+            ?: ""
+        val city = listOf(addresse.City, addresse.County)
+            .firstOrNull { !it.isNullOrBlank() }
+            ?: ""
+
         return Payer(
             bp.getCpfCnpj().value,
             bp.cardName?:"Sem Nome",
             bp.emailAddress?:"sememail@windson.com",
-            addresse.addressName?:"Sem Nome",
-            addresse.County?:"Sem Cidade",
-            addresse.State ?: "Sem Estado",
-            addresse.ZipCode ?: "sem ZipCode"
+            addressLine,
+            city,
+            addresse.State ?: "",
+            addresse.ZipCode ?: "",
+            conta.businessPlace
         )
     }
 }
