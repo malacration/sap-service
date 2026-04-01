@@ -9,6 +9,8 @@ import br.andrew.sap.model.dto.PixGeradoResponse
 import br.andrew.sap.model.sap.documents.OrderSales
 import br.andrew.sap.model.exceptions.CreditException
 import br.andrew.sap.model.forca.PedidoVenda
+import br.andrew.sap.model.dto.OrderSalesLineItem
+import br.andrew.sap.model.dto.OrderSalesListItem
 import br.andrew.sap.model.sap.Localidade
 import br.andrew.sap.model.sap.documents.DocumentStatus
 import br.andrew.sap.model.sap.documents.base.Document
@@ -74,37 +76,25 @@ class OrderSalesController(val ordersService: OrdersService,
     }
 
     @GetMapping("listar")
-    fun get(page : Pageable, auth : Authentication,
-            @RequestParam status: DocumentStatus?,
-            @RequestParam filial: Int?,
-            @RequestParam cliente: String?,
-            @RequestParam data: String?
-    ): ResponseEntity<Page<OrderSales>> {
-        if(!(auth is User))
+    fun listar(auth: Authentication,
+               @RequestParam status: DocumentStatus?,
+               @RequestParam filial: Int?,
+               @RequestParam cliente: String?,
+               @RequestParam data: String?
+    ): ResponseEntity<NextLink<OrderSalesListItem>> {
+        if (auth !is User)
             return ResponseEntity.noContent().build()
+        return ResponseEntity.ok(ordersService.listar(auth, status, filial, cliente, data))
+    }
 
-        val predicados = if(auth.isListAllBusinessPartner() && !auth.isAdmin())
-            mutableListOf<Predicate>(
-                Predicate("BPL_IDAssignedToInvoice",
-                    auth.bussinesPlace,
-                    Condicao.IN)
-            )
-        else if(auth.isAdmin())
-            mutableListOf<Predicate>()
-        else
-            mutableListOf<Predicate>(
-                Predicate("SalesPersonCode",
-                    auth.getIdInt(),
-                    Condicao.EQUAL)
-            )
-        if (status != null) predicados.add(Predicate("DocumentStatus", status, Condicao.EQUAL))
-        if (filial != null) predicados.add(Predicate("BPL_IDAssignedToInvoice", filial, Condicao.EQUAL))
-        if (cliente != null) predicados.add(Predicate("CardCode", cliente, Condicao.EQUAL))
-        if (data != null) predicados.add(Predicate("DocDate", data, Condicao.GREAT_EQUAL))
-        return ResponseEntity.ok(ordersService
-            .get(Filter(predicados), OrderBy(mapOf("DocEntry" to Order.DESC)), page)
-            .tryGetPageValues<OrderSales>(page)
-        )
+    @GetMapping("{docEntry}/linhas")
+    fun listarLinhas(@PathVariable docEntry: Int): List<OrderSalesLineItem> {
+        return ordersService.listarLinhas(docEntry)
+    }
+
+    @PostMapping("listar/nextlink")
+    fun listarNextLink(@RequestBody nextLink: String): NextLink<OrderSalesListItem> {
+        return ordersService.listarNextLink(nextLink)
     }
 
     @GetMapping("pix/{docEntry}")
