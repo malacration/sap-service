@@ -62,17 +62,8 @@ class PixController(
                 .tryGetValues<DownPayment>()
                 .firstOrNull()
         }else null
-
-        val installmentOld = adiantamentoOld?.documentInstallments?.firstOrNull()
-        if (adiantamentoOld != null && installmentOld != null && installmentOld.isPixValido()) {
-            installmentOld.DocEntry = adiantamentoOld.docEntry
-            return PixGeradoResponse(installmentOld, 0.0)
-        }
-
-        if (adiantamentoOld != null) {
-            return atualizarPixAdiantamento(adiantamentoOld, pixRequest)
-        }
-
+        if(adiantamentoOld != null)
+             throw Exception("Ja existe um adiantamento para esse pedido, canele antes de gerar outra chave pix.")
         if(pixItemAdiantamento == "none")
             throw Exception("Não foi configurado um item de pix para o adiantamento")
         val linhas = listOf(Product(pixItemAdiantamento,"1",pixRequest.valor.toString(),utilizacao))
@@ -83,10 +74,8 @@ class PixController(
             pixRequest.idFilial.toString())
         adiantamento.U_TX_DocEntryRef = pixRequest.docEntry
         adiantamento.U_TX_DocTypeRef = pixRequest.documentTypes?.value
-
-        val adiantamentoSalvo = adiantamentoService.save(adiantamento).tryGetValue<DownPayment>()
         val adiantamentoComParcelas = adiantamentoService.getById(
-            adiantamentoSalvo.docEntry ?: throw Exception("Falha ao obter docEntry do adiantamento gerado")
+            adiantamentoService.save(adiantamento).tryGetValue<DownPayment>().docEntry ?: throw Exception("Falha ao obter docEntry do adiantamento gerado")
         ).tryGetValue<DownPayment>()
         return atualizarPixAdiantamento(adiantamentoComParcelas, pixRequest)
     }

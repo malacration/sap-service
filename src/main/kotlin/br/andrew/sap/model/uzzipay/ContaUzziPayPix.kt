@@ -2,10 +2,10 @@ package br.andrew.sap.model.uzzipay
 
 import br.andrew.sap.model.sap.BussinessPlace
 
-
 class ContaUzziPayPix {
     lateinit var cnpj : String
     var idFilial : Int? = null
+    var businessPlace: BussinessPlace? = null
     lateinit var privateKey : String
     lateinit var chavePix : String
     lateinit var consulta : String
