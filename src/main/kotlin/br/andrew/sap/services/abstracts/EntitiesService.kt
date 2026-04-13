@@ -29,13 +29,21 @@ open abstract class EntitiesService<T>(protected val env: SapEnvrioment,
         return restT
     }
 
+    protected fun <R> exchangeWithValidSession(
+        responseType: Class<R>,
+        requestBuilder: (Session) -> RequestEntity<*>
+    ) = authService.executeWithValidSession(env.getLogin()) { session ->
+        restT.exchange(requestBuilder(session), responseType)
+    }
+
     open fun save(entry: T & Any) : OData {
         try{
-            val request = RequestEntity
+            return exchangeWithValidSession(OData::class.java) { session ->
+                RequestEntity
                     .post(env.host+this.path())
-                    .header("cookie","B1SESSION=${session().sessionId}")
+                    .header("cookie","B1SESSION=${session.sessionId}")
                     .body(entry)
-            return restT.exchange(request, OData::class.java).body!!
+            }.body!!
         }catch (t : HttpClientErrorException){
             throw t.getResponseBodyAs(SapError::class.java)?.getError(t,entry) ?: t
         }
@@ -46,38 +54,42 @@ open abstract class EntitiesService<T>(protected val env: SapEnvrioment,
             "'$id'"
         else
             id
-        val request = RequestEntity
+        return exchangeWithValidSession(OData::class.java) { session ->
+            RequestEntity
                 .patch(env.host+this.path()+"($idNew)")
-                .header("cookie","B1SESSION=${session().sessionId}")
+                .header("cookie","B1SESSION=${session.sessionId}")
                 .body(entry)
-        return restT.exchange(request, OData::class.java).body
+        }.body
     }
 
     fun put(entry : Any, id : String): OData?{
-        val request = RequestEntity
-            .put(env.host+this.path()+"($id)")
-            .header("cookie","B1SESSION=${session().sessionId}")
-            .body(entry)
-        return restT.exchange(request, OData::class.java).body
+        return exchangeWithValidSession(OData::class.java) { session ->
+            RequestEntity
+                .put(env.host+this.path()+"($id)")
+                .header("cookie","B1SESSION=${session.sessionId}")
+                .body(entry)
+        }.body
     }
 
     fun cancel(id : String): OData? {
-        val request = RequestEntity
+        return exchangeWithValidSession(OData::class.java) { session ->
+            RequestEntity
                 .post(env.host+this.path()+"($id)/Cancel")
-                .header("cookie","B1SESSION=${session().sessionId}")
+                .header("cookie","B1SESSION=${session.sessionId}")
                 .build()
-        return restT.exchange(request, OData::class.java).body
+        }.body
     }
 
     open fun get(filter : Filter = Filter(), order : OrderBy = OrderBy(), page : Pageable = Pageable.ofSize(20)) : OData {
         val aditional = listOf(filter,order).filter { it.toString().isNotEmpty() }.joinToString("&","&")
         val skip = (page.pageNumber*page.pageSize).toString()+"&\$inlinecount=allpages"
-        val request = RequestEntity
+        return exchangeWithValidSession(OData::class.java) { session ->
+            RequestEntity
                 .get(env.host+this.path()+"?\$skip=${skip}"+aditional)
-                .header("cookie","B1SESSION=${session().sessionId}")
+                .header("cookie","B1SESSION=${session.sessionId}")
                 .header("Prefer",  "odata.maxpagesize=${page.pageSize}")
                 .build()
-        return restT.exchange(request, OData::class.java).body ?: OData()
+        }.body ?: OData()
     }
 
     //Se nao for int adicionar aspas! Se ja existir aspas nao fazer nada.
@@ -87,11 +99,12 @@ open abstract class EntitiesService<T>(protected val env: SapEnvrioment,
                 "'$id'"
             else
                 id
-            val request = RequestEntity
-                .get(env.host+this.path()+"(${idNew})")
-                .header("cookie","B1SESSION=${session().sessionId}")
-                .build()
-            return restT.exchange(request, OData::class.java).body!!
+            return exchangeWithValidSession(OData::class.java) { session ->
+                RequestEntity
+                    .get(env.host+this.path()+"(${idNew})")
+                    .header("cookie","B1SESSION=${session.sessionId}")
+                    .build()
+            }.body!!
         }catch (t : HttpClientErrorException){
             throw t.getResponseBodyAs(SapError::class.java)?.getError(t,id) ?: t
         }
@@ -102,11 +115,12 @@ open abstract class EntitiesService<T>(protected val env: SapEnvrioment,
     }
 
     fun delete(id : String) : OData? {
-        val request = RequestEntity
-            .delete(env.host+this.path()+"(${id})")
-            .header("cookie","B1SESSION=${session().sessionId}")
-            .build()
-        return restT.exchange(request, OData::class.java).body
+        return exchangeWithValidSession(OData::class.java) { session ->
+            RequestEntity
+                .delete(env.host+this.path()+"(${id})")
+                .header("cookie","B1SESSION=${session.sessionId}")
+                .build()
+        }.body
     }
 
     fun getBy(doc : DocEntry) : OData {
@@ -147,11 +161,12 @@ open abstract class EntitiesService<T>(protected val env: SapEnvrioment,
     open fun next(next : String) : OData {
         val regex = "/([^/]+)$".toRegex()
         val url = (env.host+this.path()).replace(regex,"/")+next
-        val request = RequestEntity
-            .get(URLDecoder.decode(url,"UTF-8"))
-            .header("cookie","B1SESSION=${session().sessionId}")
-            .build()
-        return restT.exchange(request, OData::class.java).body!!
+        return exchangeWithValidSession(OData::class.java) { session ->
+            RequestEntity
+                .get(URLDecoder.decode(url,"UTF-8"))
+                .header("cookie","B1SESSION=${session.sessionId}")
+                .build()
+        }.body!!
     }
 
     fun <T> getAll(clazz: Class<T>, filter: Filter = Filter()): List<T> {
@@ -166,27 +181,30 @@ open abstract class EntitiesService<T>(protected val env: SapEnvrioment,
     }
 
     fun cru(body: String): OData {
-        val request = RequestEntity
+        return exchangeWithValidSession(OData::class.java) { session ->
+            RequestEntity
                 .post(env.host+this.path())
-                .header("cookie","B1SESSION=${session().sessionId}")
+                .header("cookie","B1SESSION=${session.sessionId}")
                 .body(body)
-        return restT.exchange(request, OData::class.java).body!!
+        }.body!!
     }
 
     fun cruUp(body: String, id : String): OData{
-        val request = RequestEntity
+        return exchangeWithValidSession(OData::class.java) { session ->
+            RequestEntity
                 .patch(env.host+this.path()+"($id)")
-                .header("cookie","B1SESSION=${session().sessionId}")
+                .header("cookie","B1SESSION=${session.sessionId}")
                 .body(body)
-        return restT.exchange(request, OData::class.java).body!!
+        }.body!!
     }
 
     fun serviceCancel(payload : String) {
-        val request = RequestEntity
-            .post(env.host+this.path()+"Service_Cancel")
-            .header("cookie","B1SESSION=${session().sessionId}")
-            .body(payload)
-        restT.exchange(request, Void::class.java)
+        exchangeWithValidSession(Void::class.java) { session ->
+            RequestEntity
+                .post(env.host+this.path()+"Service_Cancel")
+                .header("cookie","B1SESSION=${session.sessionId}")
+                .body(payload)
+        }
     }
 
     fun crossJoin(entidades : List<Entidade>, filter : Filter = Filter(),
@@ -210,17 +228,17 @@ open abstract class EntitiesService<T>(protected val env: SapEnvrioment,
             path = "${crossjoin}?\$apply=$newFilter/$groupBy&"+order.toString()
             throw Exception("agregação ainda nao é suportada")
         }
-        val request = RequestEntity
-            .get(env.host+path+"&\$skip=${skip}")
-            .header("cookie","B1SESSION=${session().sessionId}")
-            .header("Prefer",  "odata.maxpagesize=${page.pageSize}")
-            .build()
-        return restT.exchange(request, OData::class.java).body ?: OData()
+        return exchangeWithValidSession(OData::class.java) { session ->
+            RequestEntity
+                .get(env.host+path+"&\$skip=${skip}")
+                .header("cookie","B1SESSION=${session.sessionId}")
+                .header("Prefer",  "odata.maxpagesize=${page.pageSize}")
+                .build()
+        }.body ?: OData()
     }
 
 
 }
-
 
 
 
