@@ -1,7 +1,6 @@
 package br.andrew.sap.services.batch
 
 import br.andrew.sap.model.envrioments.SapEnvrioment
-import br.andrew.sap.model.sap.Session
 import br.andrew.sap.services.AuthService
 import br.andrew.sap.services.BusinessPartnersService
 import br.andrew.sap.services.abstracts.EntitiesService
@@ -23,12 +22,6 @@ class BatchService(val rest : RestTemplate,
     fun path(): String {
         return "/b1s/v1/\$batch"
     }
-
-    private fun session() : Session {
-        return authService.getToken(env.getLogin())
-    }
-
-
 
     fun body(batchUUID : String, bathList: BatchList): ByteArray {
         val changesetUUID = "changeset_"+ UUID.randomUUID().toString();
@@ -69,13 +62,15 @@ class BatchService(val rest : RestTemplate,
     fun run(bathList: BatchList): List<BatchResponse> {
          val batchUUID = UUID.randomUUID().toString()
         var body = body(batchUUID,bathList)
-        val request = RequestEntity
-            .post(env.host+this.path())
-            .header("Content-Type","multipart/mixed;boundary=batch_$batchUUID")
-            .header("OData-Version","4.0")
-            .header("cookie","B1SESSION=${session().sessionId}")
-            .header("Content-Length",body.size.toString())
-        val retorno = rest.exchange(request.body(body), String::class.java).body
+        val retorno = authService.executeWithValidSession(env.getLogin()) { session ->
+            val request = RequestEntity
+                .post(env.host+this.path())
+                .header("Content-Type","multipart/mixed;boundary=batch_$batchUUID")
+                .header("OData-Version","4.0")
+                .header("cookie","B1SESSION=${session.sessionId}")
+                .header("Content-Length",body.size.toString())
+            rest.exchange(request.body(body), String::class.java).body
+        }
         val resposta = BatchRespondeHandler().parseBatchResponse(retorno!!)
         resposta.filter { !it.success}
             .map { it.errorMessage }
@@ -87,4 +82,3 @@ class BatchService(val rest : RestTemplate,
         return resposta
     }
 }
-

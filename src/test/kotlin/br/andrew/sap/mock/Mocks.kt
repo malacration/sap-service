@@ -1,12 +1,17 @@
 package br.andrew.sap.mock
 
+import br.andrew.sap.model.Login
 import br.andrew.sap.model.envrioments.SapEnvrioment
 import br.andrew.sap.model.sap.Session
 import br.andrew.sap.services.AuthService
 import br.andrew.sap.services.BusinessPartnersService
 import org.mockito.Mockito
+import org.mockito.kotlin.eq
 import org.mockito.kotlin.any
+import org.mockito.kotlin.whenever
+import org.springframework.http.ResponseEntity
 import org.springframework.web.client.RestTemplate
+import java.net.URI
 
 class Mocks {
 
@@ -22,9 +27,16 @@ class Mocks {
         }
 
         fun getAuthService(): AuthService {
-            val auth = Mockito.mock(AuthService::class.java)
-            Mockito.`when`(auth.getToken(any())).thenReturn(Session("","",0))
-            return auth
+            val env = getSapEnvrioment()
+            val rest = Mockito.mock(RestTemplate::class.java)
+            whenever(
+                rest.postForEntity(
+                    any<URI>(),
+                    any<Login>(),
+                    eq(Session::class.java)
+                )
+            ).thenReturn(ResponseEntity.ok(Session("mock-session", "", 30)))
+            return AuthService(env, rest)
         }
     }
 }

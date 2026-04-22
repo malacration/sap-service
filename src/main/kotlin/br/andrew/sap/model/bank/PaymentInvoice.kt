@@ -1,5 +1,6 @@
 package br.andrew.sap.model.bank
 
+import br.andrew.sap.model.sap.documents.DocumentTypes
 import br.andrew.sap.model.sap.documents.DownPayment
 import br.andrew.sap.model.sap.documents.base.Document
 import br.andrew.sap.model.sap.documents.base.Installment
@@ -34,11 +35,12 @@ class PaymentInvoice(val docEntry: Int, val sumApplied: Double, val invoiceType:
 
     companion object {
         private fun getType(document: Document): PaymentType {
-            return when(document) {
-                is Invoice -> PaymentType.it_Invoice
-                is DownPayment -> PaymentType.it_DownPayment
-                else -> throw Exception("Tipo de documento nao suportado para pagamento")
-            }
+            return if(document.docObjectCode == DocumentTypes.oInvoices)
+                PaymentType.it_Invoice
+            else if(document.docObjectCode == DocumentTypes.oDownPayments)
+                PaymentType.it_DownPayment
+            else
+                throw Exception("Tipo de documento nao suportado para pagamento")
         }
     }
 }
