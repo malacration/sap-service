@@ -13,6 +13,7 @@ import java.math.BigDecimal
 @JsonIgnoreProperties(ignoreUnknown = true)
 class BatchesGroupByItemCode {
 
+    var DocEntry : Int? = null
     var ItemCode : String? = null
     var Batches: List<BatchStock>? = null
 

@@ -171,13 +171,22 @@ class CarregamentoController(val carregamentoServico: CarregamentoService,
         val pedidos = pedidoVendaService.getAll(OrderSales::class.java, Filter("DocEntry", docEntrys, Condicao.IN))
         val carregamento = carregamentoServico.getById(docEntry.toString()).tryGetValue<Carregamento>()
 
+        val porPedido = lotesAgrupados.any { it.DocEntry != null }
+
         pedidos.forEach { order ->
             order.DocumentLines
                 .filter { it.U_ORD_CARREGAMENTO == docEntry }
                 .forEach { currentItem ->
-                    val lotesDoItem = lotesAgrupados.find { it.ItemCode == currentItem.ItemCode }
+                    val lotesDoItem = if (porPedido)
+                        lotesAgrupados.find { it.DocEntry == order.DocEntry?.toIntOrNull() && it.ItemCode == currentItem.ItemCode }
+                    else
+                        lotesAgrupados.find { it.ItemCode == currentItem.ItemCode }
+
                     if (lotesDoItem != null) {
-                        currentItem.BatchNumbers = lotesDoItem.getBachesBy(currentItem)
+                        currentItem.BatchNumbers = if (porPedido)
+                            lotesDoItem.Batches ?: emptyList()
+                        else
+                            lotesDoItem.getBachesBy(currentItem)
                     } else {
                         logger.warn("Item sem lote no carregamento $docEntry: ItemCode=${currentItem.ItemCode} Qty=${currentItem.Quantity} Whs=${currentItem.WarehouseCode}")
                     }
