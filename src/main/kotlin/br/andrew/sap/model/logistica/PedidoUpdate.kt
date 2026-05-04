@@ -20,7 +20,12 @@ class PedidoUpdate(
     override fun getId(): String = docEntry
 
     @JsonIgnore
-    override fun getDisplayId(): String = docNum ?: docEntry
+    override fun getDisplayId(): String {
+        if (docNum.isNullOrBlank() || docNum == docEntry) {
+            return docEntry
+        }
+        return "$docNum (DocEntry $docEntry)"
+    }
 }
 
 
