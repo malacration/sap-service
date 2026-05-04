@@ -46,11 +46,31 @@ class CarregamentoController(val carregamentoServico: CarregamentoService,
 
 
     @GetMapping("")
-    fun get(auth : Authentication, page : Pageable): ResponseEntity<Page<Carregamento>> {
+    fun get(auth : Authentication,
+            page : Pageable,
+            @RequestParam(required = false) id: Int?,
+            @RequestParam(required = false) status: String?,
+            @RequestParam(required = false) createDateFrom: String?,
+            @RequestParam(required = false) createDateTo: String?): ResponseEntity<Page<Carregamento>> {
         if(auth !is User)
             return ResponseEntity.noContent().build()
 
-        val pageResult = carregamentoServico.get(Filter(),
+        val filter = Filter().also {
+            if (id != null) {
+                it.add(Predicate("DocEntry", id, Condicao.EQUAL))
+            }
+            if (!status.isNullOrBlank()) {
+                it.add(Predicate("U_Status", status.trim(), Condicao.EQUAL))
+            }
+            if (!createDateFrom.isNullOrBlank()) {
+                it.add(Predicate("CreateDate", createDateFrom.trim(), Condicao.GREAT_EQUAL))
+            }
+            if (!createDateTo.isNullOrBlank()) {
+                it.add(Predicate("CreateDate", createDateTo.trim(), Condicao.LESS_EQUAL))
+            }
+        }
+
+        val pageResult = carregamentoServico.get(filter,
             OrderBy(mapOf("CreateDate" to Order.DESC, "DocEntry" to Order.DESC)),
             page
         ).tryGetPageValues<Carregamento>(page)
