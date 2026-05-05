@@ -46,7 +46,7 @@ class CarregamentoController(val carregamentoServico: CarregamentoService,
                              val applicationEventPublisher: ApplicationEventPublisher,
                              val sqlQueriesService: SqlQueriesService) {
 
-    val logger = LoggerFactory.getLogger(QuotationsController::class.java)
+    val logger = LoggerFactory.getLogger(CarregamentoController::class.java)
     val objectMapper = ObjectMapper().registerModule(KotlinModule())
 
 
