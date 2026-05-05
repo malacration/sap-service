@@ -26,7 +26,7 @@ class BatchServiceTest {
     fun pedidoUpdateExibeDocNumEDocEntryQuandoForemDiferentes() {
         val pedido = PedidoUpdate(
             "67521",
-            listOf(PedidoUpdateLine(1, 0, 10)),
+            listOf(PedidoUpdateLine(1, 0, "10")),
             "70830"
         )
 

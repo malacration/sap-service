@@ -3,6 +3,7 @@ package br.andrew.sap.controllers.documents
 import LogisticaPayload
 import br.andrew.sap.infrastructure.odata.*
 import br.andrew.sap.model.authentication.User
+import br.andrew.sap.model.enums.Cancelled
 import br.andrew.sap.model.sap.BatchesGroupByItemCode
 import br.andrew.sap.model.logistica.Carregamento
 import br.andrew.sap.model.logistica.CarregamentoDto
@@ -21,6 +22,8 @@ import br.andrew.sap.services.document.InvoiceService
 import br.andrew.sap.services.document.OrdersService
 import br.andrew.sap.services.pricing.ComissaoService
 import br.andrew.sap.services.stock.ItemsService
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.kotlin.KotlinModule
 import org.slf4j.LoggerFactory
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.data.domain.Page
@@ -28,6 +31,7 @@ import org.springframework.data.domain.Pageable
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.Authentication
 import org.springframework.web.bind.annotation.*
+import java.math.BigDecimal
 import java.util.Date
 
 @RestController
@@ -43,6 +47,7 @@ class CarregamentoController(val carregamentoServico: CarregamentoService,
                              val sqlQueriesService: SqlQueriesService) {
 
     val logger = LoggerFactory.getLogger(QuotationsController::class.java)
+    val objectMapper = ObjectMapper().registerModule(KotlinModule())
 
 
     @GetMapping("")
@@ -127,7 +132,7 @@ class CarregamentoController(val carregamentoServico: CarregamentoService,
                 val order = pedidoVendaService.getById(it.toString()).tryGetValue<OrderSales>()
                 val pedidosUpdate = PedidoUpdate(
                     order.DocEntry.toString(),
-                    order.DocumentLines.map { line -> PedidoUpdateLine(line.DocEntry!!,line.LineNum!!,ordemCriada.DocEntry) },
+                    order.DocumentLines.map { line -> PedidoUpdateLine(line.DocEntry!!,line.LineNum!!,ordemCriada.DocEntry?.toString()) },
                     order.docNum
                 )
                 Triple(BatchMethod.PATCH,pedidosUpdate,pedidoVendaService)
@@ -207,12 +212,14 @@ class CarregamentoController(val carregamentoServico: CarregamentoService,
                             lotesDoItem.Batches ?: emptyList()
                         else
                             lotesDoItem.getBachesBy(currentItem)
+                        logSelecaoIncompletaDeLote(docEntry, order, currentItem)
                     } else {
-                        logger.warn("Item sem lote no carregamento $docEntry: ItemCode=${currentItem.ItemCode} Qty=${currentItem.Quantity} Whs=${currentItem.WarehouseCode}")
+                        logger.warn("Carregamento $docEntry - Pedido ${order.docNum ?: order.docEntry} sem lote: ${detalharLinhaLote(currentItem)}")
                     }
                 }
         }
 
+        val lotesParaFaturamento = mutableListOf<Pair<OrderSales, Document>>()
         val batchList = BatchList()
 
         pedidos.forEach { pedido ->
@@ -222,8 +229,8 @@ class CarregamentoController(val carregamentoServico: CarregamentoService,
                 ?: throw Exception("SeqCode não encontrado para a filial $bplId")
 
             val linhasDoCarregamento = pedido.DocumentLines.filter { it.U_ORD_CARREGAMENTO == docEntry }
-            logger.info("Carregamento $docEntry - Pedido ${pedido.docEntry}: ${linhasDoCarregamento.size} linhas -> " +
-                linhasDoCarregamento.joinToString { "Item=${it.ItemCode} Qty=${it.Quantity} Lotes=${it.BatchNumbers.size} Whs=${it.WarehouseCode} LineDocEntry=${it.DocEntry} LineNum=${it.LineNum}" })
+            logger.info("Carregamento $docEntry - Pedido ${pedido.docNum ?: pedido.docEntry}: ${linhasDoCarregamento.size} linhas -> " +
+                linhasDoCarregamento.joinToString(" | ") { detalharLinhaLote(it) })
             val pedidoParaFaturar = OrderSales(pedido.CardCode, pedido.DocDueDate, linhasDoCarregamento, bplId).also { p ->
                 p.docObjectCode = pedido.docObjectCode
                 p.salesPersonCode = pedido.salesPersonCode
@@ -246,10 +253,43 @@ class CarregamentoController(val carregamentoServico: CarregamentoService,
             documento.docDate = null
             documento.DocDueDate = null
 
+            lotesParaFaturamento.add(pedido to documento)
             batchList.add(BatchMethod.POST, documento, invoiceService)
         }
 
-        return batchService.run(batchList)
+        return try {
+            batchService.run(batchList)
+        } catch (e: Exception) {
+            logger.error("Erro ao finalizar notas do carregamento $docEntry: ${e.message}", e)
+            lotesParaFaturamento.forEach { (pedido, documento) ->
+                val linhasDoCarregamento = pedido.DocumentLines.filter { it.U_ORD_CARREGAMENTO == docEntry }
+                val payload = objectMapper.writeValueAsString(documento)
+                logger.error(
+                    "Carregamento $docEntry - Pedido ${pedido.docNum ?: pedido.docEntry} payload enviado ao SAP: $payload"
+                )
+                logger.error("Carregamento $docEntry - Pedido ${pedido.docNum ?: pedido.docEntry} linhas para faturamento: " +
+                    linhasDoCarregamento.joinToString(" | ") { detalharLinhaLote(it) })
+            }
+            throw e
+        }
+    }
+
+    private fun logSelecaoIncompletaDeLote(docEntry: Int, pedido: OrderSales, line: br.andrew.sap.model.sap.documents.base.DocumentLines) {
+        val quantidadeLinha = BigDecimal(line.Quantity)
+        val quantidadeLotes = line.BatchNumbers.fold(BigDecimal.ZERO) { acc, batch -> acc + BigDecimal(batch.Quantity) }
+        if (quantidadeLinha.compareTo(quantidadeLotes) != 0) {
+            logger.warn("Carregamento $docEntry - Pedido ${pedido.docNum ?: pedido.docEntry} com seleção incompleta de lote: ${detalharLinhaLote(line)}")
+        }
+    }
+
+    private fun detalharLinhaLote(line: br.andrew.sap.model.sap.documents.base.DocumentLines): String {
+        val quantidadeLotes = line.BatchNumbers.fold(BigDecimal.ZERO) { acc, batch -> acc + BigDecimal(batch.Quantity) }
+        val lotes = if (line.BatchNumbers.isEmpty()) {
+            "sem lotes"
+        } else {
+            line.BatchNumbers.joinToString(",") { "${it.BatchNumber}:${it.Quantity}" }
+        }
+        return "Item=${line.ItemCode} Qty=${line.Quantity} QtyLotes=$quantidadeLotes Whs=${line.WarehouseCode} LineDocEntry=${line.DocEntry} LineNum=${line.LineNum} Lotes=[$lotes]"
     }
 
     @PostMapping("/{id}/status")
@@ -314,7 +354,10 @@ class CarregamentoController(val carregamentoServico: CarregamentoService,
 
     @GetMapping("/notas/{idCarregamento}")
     fun getNotasByCarregamentos(@PathVariable idCarregamento: Int): List<Document> {
-        val filter = Filter(Predicate("U_faturadoOrdemCarregamento", idCarregamento, Condicao.EQUAL))
+        val filter = Filter(mutableListOf(
+            Predicate("U_faturadoOrdemCarregamento", idCarregamento, Condicao.EQUAL),
+            Predicate(Cancelled.tNO, Condicao.EQUAL),
+        ))
         return listOf(invoiceService)
             .map { it.getAll(Document::class.java,filter) }
             .flatMap { it }

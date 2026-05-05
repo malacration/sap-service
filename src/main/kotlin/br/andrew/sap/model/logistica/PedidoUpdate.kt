@@ -33,6 +33,6 @@ class PedidoUpdate(
 @JsonIgnoreProperties(ignoreUnknown = true)
 class PedidoUpdateLine(val DocEntry : Int,
                        val LineNum : Int,
-                       val U_ORD_CARREGAMENTO : Int?){
+                       val U_ORD_CARREGAMENTO : String?){
 
 }
