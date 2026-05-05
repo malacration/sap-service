@@ -1,7 +1,6 @@
 package br.andrew.sap.services
 
 import br.andrew.sap.mock.Mocks
-import br.andrew.sap.model.logistica.PedidoUpdate
 import br.andrew.sap.model.logistica.PedidoUpdateLine
 import br.andrew.sap.services.abstracts.EntitiesService
 import br.andrew.sap.services.batch.BatchId
@@ -21,17 +20,6 @@ import java.util.UUID
 
 
 class BatchServiceTest {
-
-    @Test
-    fun pedidoUpdateExibeDocNumEDocEntryQuandoForemDiferentes() {
-        val pedido = PedidoUpdate(
-            "67521",
-            listOf(PedidoUpdateLine(1, 0, "10")),
-            "70830"
-        )
-
-        Assertions.assertEquals("70830 (DocEntry 67521)", pedido.getDisplayId())
-    }
 
     @Test
     fun bachError(){

@@ -24,6 +24,7 @@ import br.andrew.sap.services.document.PedidoTesteService
 import br.andrew.sap.services.pricing.ComissaoService
 import br.andrew.sap.services.stock.ItemsService
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageImpl
@@ -41,7 +42,8 @@ class OrderSalesController(val ordersService: OrdersService,
                            val comissaoService: ComissaoService,
                            val telegramService : TelegramRequestService,
                            val applicationEventPublisher: ApplicationEventPublisher,
-                           val sqlQueriesService : SqlQueriesService
+                           val sqlQueriesService : SqlQueriesService,
+                           @Value("\${pedido-venda.teste.enable:false}") private val pedidoVendaTesteHabilitado: Boolean
 ) {
 
     val logger = LoggerFactory.getLogger(OrderSalesController::class.java)
@@ -135,18 +137,24 @@ class OrderSalesController(val ordersService: OrdersService,
         }
     }
 
-    @PostMapping("teste")
-    fun criarPedidosTeste(@RequestBody request: PedidoTesteRequest): List<Document> {
-        return pedidoTesteService.criarPedidosTeste(request)
+    @PostMapping("gerar-pedidos-teste")
+    fun criarPedidosTeste(@RequestBody request: PedidoTesteRequest): ResponseEntity<List<Document>> {
+        if (!pedidoVendaTesteHabilitado) {
+            return ResponseEntity.notFound().build()
+        }
+        return ResponseEntity.ok(pedidoTesteService.criarPedidosTeste(request))
     }
 
-    @GetMapping("teste")
+    @GetMapping("gerar-pedidos-teste")
     fun criarPedidosTestePorUrl(@RequestParam quantidade: Int,
                                 @RequestParam localidade: String,
                                 @RequestParam(required = false) filial: Int?,
                                 @RequestParam(required = false) dataInicial: String?,
-                                @RequestParam(required = false) dataFinal: String?): List<Document> {
-        return pedidoTesteService.criarPedidosTeste(
+                                @RequestParam(required = false) dataFinal: String?): ResponseEntity<List<Document>> {
+        if (!pedidoVendaTesteHabilitado) {
+            return ResponseEntity.notFound().build()
+        }
+        return ResponseEntity.ok(pedidoTesteService.criarPedidosTeste(
             PedidoTesteRequest(
                 quantidade = quantidade,
                 localidade = localidade,
@@ -154,7 +162,7 @@ class OrderSalesController(val ordersService: OrdersService,
                 dataInicial = dataInicial,
                 dataFinal = dataFinal
             )
-        )
+        ))
     }
 
     @PostMapping("/searchAll")
