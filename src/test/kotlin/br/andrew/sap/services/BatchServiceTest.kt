@@ -215,9 +215,8 @@ class BatchServiceTest {
         Assertions.assertFalse(erro.message!!.contains("Pedido 70830"))
     }
 
-    private class TestBatchId(private val displayId: String) : BatchId {
-        override fun getId(): String = displayId
-        override fun getDisplayId(): String = displayId
+    private class TestBatchId(private val id: String) : BatchId {
+        override fun getId(): String = id
     }
 
     private class FakeEntityService : EntitiesService<Any>(
