@@ -5,6 +5,7 @@ import br.andrew.sap.infrastructure.WarehouseDefaultConfig
 import br.andrew.sap.infrastructure.configurations.DistribuicaoCustoByBranchConfig
 import br.andrew.sap.infrastructure.odata.*
 import br.andrew.sap.model.authentication.User
+import br.andrew.sap.model.dto.PedidoTesteRequest
 import br.andrew.sap.model.dto.PixGeradoResponse
 import br.andrew.sap.model.sap.documents.OrderSales
 import br.andrew.sap.model.exceptions.CreditException
@@ -19,6 +20,7 @@ import br.andrew.sap.services.abstracts.SqlQueriesService
 import br.andrew.sap.services.document.DocumentForAngular
 import br.andrew.sap.services.document.DownPaymentService
 import br.andrew.sap.services.document.OrdersService
+import br.andrew.sap.services.document.PedidoTesteService
 import br.andrew.sap.services.pricing.ComissaoService
 import br.andrew.sap.services.stock.ItemsService
 import org.slf4j.LoggerFactory
@@ -35,6 +37,7 @@ import org.springframework.web.bind.annotation.*
 class OrderSalesController(val ordersService: OrdersService,
                            val itemService : ItemsService,
                            private val downPaymentService: DownPaymentService,
+                           private val pedidoTesteService: PedidoTesteService,
                            val comissaoService: ComissaoService,
                            val telegramService : TelegramRequestService,
                            val applicationEventPublisher: ApplicationEventPublisher,
@@ -130,6 +133,28 @@ class OrderSalesController(val ordersService: OrdersService,
                 logger.error(e.message,e)
             }
         }
+    }
+
+    @PostMapping("teste")
+    fun criarPedidosTeste(@RequestBody request: PedidoTesteRequest): List<Document> {
+        return pedidoTesteService.criarPedidosTeste(request)
+    }
+
+    @GetMapping("teste")
+    fun criarPedidosTestePorUrl(@RequestParam quantidade: Int,
+                                @RequestParam localidade: String,
+                                @RequestParam(required = false) filial: Int?,
+                                @RequestParam(required = false) dataInicial: String?,
+                                @RequestParam(required = false) dataFinal: String?): List<Document> {
+        return pedidoTesteService.criarPedidosTeste(
+            PedidoTesteRequest(
+                quantidade = quantidade,
+                localidade = localidade,
+                filial = filial,
+                dataInicial = dataInicial,
+                dataFinal = dataFinal
+            )
+        )
     }
 
     @PostMapping("/searchAll")
