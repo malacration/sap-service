@@ -17,6 +17,6 @@ data class CarregamentoDto(
 class PedidoLinha(val docEntry : Int, val lineNum : Int){
 
         fun criaPedidoUpdate(orderId : Int): PedidoUpdateLine {
-                return PedidoUpdateLine(docEntry,lineNum,orderId)
+                return PedidoUpdateLine(docEntry,lineNum,orderId.toString())
         }
 }

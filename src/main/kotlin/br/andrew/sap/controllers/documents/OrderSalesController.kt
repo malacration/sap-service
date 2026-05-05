@@ -5,6 +5,7 @@ import br.andrew.sap.infrastructure.WarehouseDefaultConfig
 import br.andrew.sap.infrastructure.configurations.DistribuicaoCustoByBranchConfig
 import br.andrew.sap.infrastructure.odata.*
 import br.andrew.sap.model.authentication.User
+import br.andrew.sap.model.dto.PedidoTesteRequest
 import br.andrew.sap.model.dto.PixGeradoResponse
 import br.andrew.sap.model.sap.documents.OrderSales
 import br.andrew.sap.model.exceptions.CreditException
@@ -19,9 +20,11 @@ import br.andrew.sap.services.abstracts.SqlQueriesService
 import br.andrew.sap.services.document.DocumentForAngular
 import br.andrew.sap.services.document.DownPaymentService
 import br.andrew.sap.services.document.OrdersService
+import br.andrew.sap.services.document.PedidoTesteService
 import br.andrew.sap.services.pricing.ComissaoService
 import br.andrew.sap.services.stock.ItemsService
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageImpl
@@ -35,10 +38,12 @@ import org.springframework.web.bind.annotation.*
 class OrderSalesController(val ordersService: OrdersService,
                            val itemService : ItemsService,
                            private val downPaymentService: DownPaymentService,
+                           private val pedidoTesteService: PedidoTesteService,
                            val comissaoService: ComissaoService,
                            val telegramService : TelegramRequestService,
                            val applicationEventPublisher: ApplicationEventPublisher,
-                           val sqlQueriesService : SqlQueriesService
+                           val sqlQueriesService : SqlQueriesService,
+                           @Value("\${pedido-venda.teste.enable:false}") private val pedidoVendaTesteHabilitado: Boolean
 ) {
 
     val logger = LoggerFactory.getLogger(OrderSalesController::class.java)
@@ -132,6 +137,34 @@ class OrderSalesController(val ordersService: OrdersService,
         }
     }
 
+    @PostMapping("gerar-pedidos-teste")
+    fun criarPedidosTeste(@RequestBody request: PedidoTesteRequest): ResponseEntity<List<Document>> {
+        if (!pedidoVendaTesteHabilitado) {
+            return ResponseEntity.notFound().build()
+        }
+        return ResponseEntity.ok(pedidoTesteService.criarPedidosTeste(request))
+    }
+
+    @GetMapping("gerar-pedidos-teste")
+    fun criarPedidosTestePorUrl(@RequestParam quantidade: Int,
+                                @RequestParam localidade: String,
+                                @RequestParam(required = false) filial: Int?,
+                                @RequestParam(required = false) dataInicial: String?,
+                                @RequestParam(required = false) dataFinal: String?): ResponseEntity<List<Document>> {
+        if (!pedidoVendaTesteHabilitado) {
+            return ResponseEntity.notFound().build()
+        }
+        return ResponseEntity.ok(pedidoTesteService.criarPedidosTeste(
+            PedidoTesteRequest(
+                quantidade = quantidade,
+                localidade = localidade,
+                filial = filial,
+                dataInicial = dataInicial,
+                dataFinal = dataFinal
+            )
+        ))
+    }
+
     @PostMapping("/searchAll")
     fun search(@RequestBody nextLink : String): NextLink<OrderSales> {
         val result = ordersService.fullSearchTextFallBack2(nextLink)
@@ -166,8 +199,8 @@ class OrderSalesController(val ordersService: OrdersService,
     }
 
     @GetMapping("/searchLocality")
-    fun searchLocalidade(@RequestParam("Code") Code: Int): NextLink<Localidade> {
-        val result = ordersService.SearchLocality(Code)
+    fun searchLocalidade(@RequestParam("search") search: String): NextLink<Localidade> {
+        val result = ordersService.SearchLocality(search)
         return result ?: NextLink(emptyList(), "")
     }
 }

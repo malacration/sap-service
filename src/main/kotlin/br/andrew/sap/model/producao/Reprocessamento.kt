@@ -79,7 +79,8 @@ class Reprocessamento(
 class BatchStock(
     val BatchNumber: String,
     var Quantity: String,
-    val whsCode: String? = null,
+    val WarehouseCode: String? = null,
+    var BaseLineNumber: Int? = null,
     var ItemCode: String? = null,
     var expDate: String? = null,
     var inDate: String? = null,
@@ -94,22 +95,22 @@ class BatchStock(
     }
 
     fun getAmount(line: DocumentLines, desire : BigDecimal) : BatchStock {
-        if(line.WarehouseCode != this.whsCode)
+        if(line.WarehouseCode != this.WarehouseCode)
             throw Exception("Depositos nao podem ser diferentes")
         if(desire > BigDecimal(Quantity)){
-            return BatchStock(BatchNumber,Quantity,whsCode,ItemCode, expDate,inDate,itemName,mnfDate).also {
+            return BatchStock(BatchNumber,Quantity,WarehouseCode,BaseLineNumber,ItemCode, expDate,inDate,itemName,mnfDate).also {
                 Quantity = "0"
             }
         }
         else{
             Quantity = BigDecimal(Quantity).minus(desire).toString()
-            return BatchStock(BatchNumber,desire.toString(),whsCode,ItemCode, expDate,inDate,itemName,mnfDate)
+            return BatchStock(BatchNumber,desire.toString(),WarehouseCode,BaseLineNumber,ItemCode, expDate,inDate,itemName,mnfDate)
         }
     }
 
     constructor(DistNumber : String,
                 quantidade: String,
                 ItemCode: String?,
-                WhsCode: String) : this(DistNumber,quantidade,WhsCode,ItemCode)
+                WhsCode: String) : this(DistNumber,quantidade,WhsCode,null,ItemCode)
 
 }

@@ -72,13 +72,20 @@ class BatchService(val rest : RestTemplate,
             rest.exchange(request.body(body), String::class.java).body
         }
         val resposta = BatchRespondeHandler().parseBatchResponse(retorno!!)
-        resposta.filter { !it.success}
-            .map { it.errorMessage }
-            .reduce { str, batchResponse -> "$batchResponse. \n$str" }
-            .also {
-                if(it?.isNotEmpty() == true)
-                    throw Exception(it)
+        val erros = resposta.withIndex().filter { !it.value.success }
+        if (erros.isNotEmpty()) {
+            val mensagem = erros.joinToString("\n") { indexedResponse ->
+                val response = indexedResponse.value
+                val erro = if ((response.errorMessage ?: "").contains("awaiting approval"))
+                    "documento está aguardando aprovação e não pode ser alterado"
+                else
+                    response.errorMessage ?: response.body ?: "Erro ${response.statusCode}"
+                erro
             }
+            throw Exception(mensagem)
+        }
         return resposta
     }
+
+
 }

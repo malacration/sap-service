@@ -1,5 +1,6 @@
 package br.andrew.sap.services.document
 
+import org.slf4j.LoggerFactory
 import br.andrew.sap.infrastructure.odata.*
 import br.andrew.sap.model.envrioments.SapEnvrioment
 import br.andrew.sap.model.sap.Localidade
@@ -23,6 +24,8 @@ import org.springframework.web.client.RestTemplate
 @Service
 class OrdersService(val sqlQueriesService : SqlQueriesService, env: SapEnvrioment, restTemplate: RestTemplate, authService: AuthService) :
         EntitiesService<Document>(env, restTemplate, authService), ClosableEntitiesService<OrderSales> {
+    val logger = LoggerFactory.getLogger(OrdersService::class.java)
+
     override fun path(): String {
         return "/b1s/v1/Orders"
     }
@@ -71,9 +74,12 @@ class OrdersService(val sqlQueriesService : SqlQueriesService, env: SapEnvriomen
             ?.tryGetNextValues()
     }
 
-    fun SearchLocality(Code: Int): NextLink<Localidade>? {
+    fun SearchLocality(search: String): NextLink<Localidade>? {
+        val titleCase = search.split(" ").joinToString(" ") { it.lowercase().replaceFirstChar { c -> c.uppercase() } }
+        val searchParam = "%${titleCase}%"
+        logger.info("SearchLocality: entrada='$search' parametro='$searchParam'")
         val parameters = listOf(
-            Parameter("Code", Code)
+            Parameter("search", searchParam)
         )
         return sqlQueriesService
             .execute("search-locality.sql", parameters)

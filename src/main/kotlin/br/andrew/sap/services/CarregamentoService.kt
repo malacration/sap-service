@@ -39,7 +39,7 @@ class CarregamentoService(val batchService: BatchService, val pedidoVendaService
 
     fun docEntryPedido(idOrdemCarregamento: Int): List<DocEntry> {
         val parameters = listOf(
-            Parameter("U_ORD_CARREGAMENTO", idOrdemCarregamento)
+            Parameter("U_ORD_CARREGAMENTO", idOrdemCarregamento.toString())
         )
         return sqlQueriesService
             .getAll<DocEntry>("docentry-ordem-carregamento.sql", parameters)
@@ -82,7 +82,8 @@ class CarregamentoService(val batchService: BatchService, val pedidoVendaService
 
             val pedidosUpdate = PedidoUpdate(
                 order.DocEntry.toString(),
-                order.DocumentLines.map { PedidoUpdateLine(it.DocEntry!!, it.LineNum!!, null) }
+                order.DocumentLines.map { PedidoUpdateLine(it.DocEntry!!, it.LineNum!!, null) },
+                order.docNum
             )
             Triple(BatchMethod.PATCH, pedidosUpdate, pedidoVendaService)
         }
@@ -114,7 +115,7 @@ class CarregamentoService(val batchService: BatchService, val pedidoVendaService
 
         for (i in 0 until totalParams) {
             val idParaBusca = if (i < ids.size) ids[i] else lastId
-            parameters.add(Parameter("p${i + 1}", idParaBusca))
+            parameters.add(Parameter("p${i + 1}", idParaBusca.toString()))
         }
 
         val resultados = sqlQueriesService
