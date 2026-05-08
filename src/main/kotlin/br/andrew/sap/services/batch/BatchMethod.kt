@@ -4,7 +4,7 @@ import br.andrew.sap.services.abstracts.EntitiesService
 import okio.Path
 
 enum class BatchMethod {
-        POST,PATCH,CANCEL,PUT;
+        POST,PATCH,CANCEL,PUT,CLOSE;
 
     fun getHttp(service: EntitiesService<*>, id : BatchId? = null): String {
         if(this != POST && id == null)
@@ -14,6 +14,8 @@ enum class BatchMethod {
             "${this} ${service.path()}"
         else if(this == CANCEL) //Nao sei se esse metodo funciona
             "POST ${service.path()}(${id!!.getId()})/Cancel"
+        else if(this == CLOSE)
+            "POST ${service.path()}(${id!!.getId()})/Close"
         else
             "${this} ${service.path()}(${id!!.getId()})"
     }

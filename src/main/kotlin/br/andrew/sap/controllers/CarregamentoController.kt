@@ -15,6 +15,7 @@ import br.andrew.sap.model.sap.documents.base.Document
 import br.andrew.sap.services.*
 import br.andrew.sap.services.abstracts.SqlQueriesService
 import br.andrew.sap.services.batch.BatchList
+import br.andrew.sap.services.batch.BatchId
 import br.andrew.sap.services.batch.BatchMethod
 import br.andrew.sap.services.batch.BatchResponse
 import br.andrew.sap.services.batch.BatchService
@@ -48,6 +49,10 @@ class CarregamentoController(val carregamentoServico: CarregamentoService,
 
     val logger = LoggerFactory.getLogger(CarregamentoController::class.java)
     val objectMapper = ObjectMapper().registerModule(KotlinModule())
+
+    private data class CloseBatchPayload(private val id: String) : BatchId {
+        override fun getId(): String = id
+    }
 
 
     @GetMapping("")
@@ -220,7 +225,8 @@ class CarregamentoController(val carregamentoServico: CarregamentoService,
         }
 
         val lotesParaFaturamento = mutableListOf<Pair<OrderSales, Document>>()
-        val batchList = BatchList()
+        val invoiceBatchList = BatchList()
+        val closeBatchList = BatchList()
 
         pedidos.forEach { pedido ->
             val bplId = pedido.getBPL_IDAssignedToInvoice()
@@ -254,11 +260,14 @@ class CarregamentoController(val carregamentoServico: CarregamentoService,
             documento.DocDueDate = null
 
             lotesParaFaturamento.add(pedido to documento)
-            batchList.add(BatchMethod.POST, documento, invoiceService)
+            invoiceBatchList.add(BatchMethod.POST, documento, invoiceService)
+            val orderId = pedido.DocEntry ?: pedido.docEntry?.toString()
+                ?: throw IllegalStateException("DocEntry do pedido nao encontrado para fechamento")
+            closeBatchList.add(BatchMethod.CLOSE, CloseBatchPayload(orderId), pedidoVendaService)
         }
 
         return try {
-            batchService.run(batchList)
+            batchService.run(listOf(invoiceBatchList, closeBatchList))
         } catch (e: Exception) {
             logger.error("Erro ao finalizar notas do carregamento $docEntry: ${e.message}", e)
             lotesParaFaturamento.forEach { (pedido, documento) ->
