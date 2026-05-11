@@ -18,29 +18,38 @@ class BatchService(val rest : RestTemplate,
                    val bpService: BusinessPartnersService,
                    val authService : AuthService
 ) {
+    private val lineBreak = "\r\n"
 
     fun path(): String {
         return "/b1s/v1/\$batch"
     }
 
     fun body(batchUUID : String, bathList: BatchList): ByteArray {
-        val changesetUUID = "changeset_"+ UUID.randomUUID().toString();
-        val headeyBoundary = (
-                "--batch_$batchUUID\n" +
-                        "Content-Type: multipart/mixed;boundary=$changesetUUID\n\n"
-                )
+        return body(batchUUID, listOf(bathList))
+    }
 
-        val changesets = bathList.mapIndexed { index: Int, it: Triple<BatchMethod,Any, EntitiesService<*>> ->
-            getChangeSet(changesetUUID, it,index+1)
-        }
-        val footer =
-            "--changeset_$changesetUUID--\n"+
-                    "--batch_$batchUUID--"
-        return headeyBoundary.toByteArray().plus(
-            changesets.map { it.toByteArray() }.fold(ByteArray(0)) { acc, byteArray ->
+    fun body(batchUUID: String, batchGroups: List<BatchList>): ByteArray {
+        val body = batchGroups
+            .filter { it.isNotEmpty() }
+            .map { getBatchGroup(batchUUID, it) }
+            .fold(ByteArray(0)) { acc, byteArray ->
                 acc + byteArray
             }
-        ).plus(footer.toByteArray())
+        val footer = "--batch_$batchUUID--"
+        return body.plus(footer.toByteArray())
+    }
+
+    private fun getBatchGroup(batchUUID: String, batchList: BatchList): ByteArray {
+        val changesetUUID = "changeset_" + UUID.randomUUID().toString()
+        val header = (
+            "--batch_$batchUUID$lineBreak" +
+                "Content-Type: multipart/mixed;boundary=$changesetUUID$lineBreak$lineBreak"
+            ).toByteArray()
+        val content = batchList.mapIndexed { index, item ->
+            getChangeSet(changesetUUID, item, index + 1).toByteArray()
+        }.fold(ByteArray(0)) { acc, byteArray -> acc + byteArray }
+        val footer = "--$changesetUUID--$lineBreak"
+        return header.plus(content).plus(footer.toByteArray())
     }
 
     private fun getChangeSet(changeSetUUID : String, item : Triple<BatchMethod,Any, EntitiesService<*>>, contentId : Int) : String{
@@ -50,18 +59,29 @@ class BatchService(val rest : RestTemplate,
     }
 
     private fun getChangeSet(changeSetUUID : String, http : String, json : String, contentId : Int): String {
+        val hasRequestBody = !http.endsWith("Cancel") && !http.endsWith("Close")
+        val requestHeaders = if (hasRequestBody)
+            "Content-Type: application/json$lineBreak"
+        else
+            "Content-Length: 0$lineBreak"
+        val requestBody = if (hasRequestBody) "$lineBreak$json$lineBreak" else lineBreak
 
-        return "--$changeSetUUID\n"+
-                "Content-Type: application/http\n"+
-                "Content-Transfer-Encoding: binary\n" +
-                "Content-ID: $contentId\n\n" +
-                "$http\n\n" +
-                if(http.endsWith("Cancel")) "" else "$json\n"
+        return "--$changeSetUUID$lineBreak" +
+                "Content-Type: application/http$lineBreak"+
+                "Content-Transfer-Encoding: binary$lineBreak" +
+                "Content-ID: $contentId$lineBreak$lineBreak" +
+                "$http HTTP/1.1$lineBreak" +
+                requestHeaders +
+                requestBody
     }
 
     fun run(bathList: BatchList): List<BatchResponse> {
-         val batchUUID = UUID.randomUUID().toString()
-        var body = body(batchUUID,bathList)
+        return run(listOf(bathList))
+    }
+
+    fun run(batchGroups: List<BatchList>): List<BatchResponse> {
+        val batchUUID = UUID.randomUUID().toString()
+        val body = body(batchUUID, batchGroups)
         val retorno = authService.executeWithValidSession(env.getLogin()) { session ->
             val request = RequestEntity
                 .post(env.host+this.path())
