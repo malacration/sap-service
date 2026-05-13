@@ -1,11 +1,21 @@
 SELECT
     inst."DocEntry" AS "DocEntry",
-    inst."InstlmntID" AS "InstallmentId"
+    inst."InstlmntID" AS "InstallmentId",
+    dpi."DocDate",
+    dpi."DocNum",
+    dpi."U_TX_DocEntryRef",
+    dpi."U_TX_DocTypeRef"
 FROM
     DPI6 inst
-    LEFT JOIN ODPI dpi on(dpi."DocEntry" = inst."DocEntry")
+        LEFT JOIN ODPI dpi on(dpi."DocEntry" = inst."DocEntry")
 WHERE
-    inst."U_pix_reference" is not null
-    and inst."Status" <> 'C'
-    and inst."U_pix_due_date" is not null
-    and inst."U_pix_due_date" < :now
+    (
+        inst."U_pix_reference" is not NULL
+        and inst."U_pix_due_date" is not null
+        and inst."U_pix_due_date" < :now
+        OR (
+        dpi."U_TX_DocEntryRef" IS NOT NULL AND dpi."U_TX_DocTypeRef" IS NOT NULL
+        and inst."U_pix_due_date" IS NULL
+        )
+    )
+  and dpi."DocStatus" <> 'C'

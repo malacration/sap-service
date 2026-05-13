@@ -4,6 +4,8 @@ import JournalEntry
 import JournalEntryLines
 import br.andrew.sap.model.bank.Payment
 import br.andrew.sap.model.bank.PaymentInvoice
+import br.andrew.sap.model.exceptions.PixPaymentAmountExceededException
+import br.andrew.sap.model.exceptions.PixPaymentDocumentClosedOrBlockedException
 import br.andrew.sap.model.sap.documents.DownPayment
 import br.andrew.sap.model.sap.documents.Invoice
 import br.andrew.sap.model.sap.documents.base.Document
@@ -57,9 +59,43 @@ class AccountsReceivableService(
             }
             batchList.add(BatchMethod.POST, entry, journalEntriesService)
         }
-        batchService.run(batchList)
+        try {
+            batchService.run(batchList)
+        } catch (e: Exception) {
+            throw traduzirErroBaixaPix(e, installment, transaction)
+        }
         cancelBoletos(document, installment)
         return transaction
+    }
+
+    private fun traduzirErroBaixaPix(
+        erro: Exception,
+        installment: Installment,
+        transaction: Transaction
+    ): Exception {
+        val mensagem = erro.message ?: return erro
+        val erroValorMaiorQueInvoice = mensagem.contains(
+            "Payment amount is greter than invoice amount",
+            ignoreCase = true
+        ) || mensagem.contains(
+            "Payment amount is greater than invoice amount",
+            ignoreCase = true
+        )
+        if(erroValorMaiorQueInvoice) {
+            return PixPaymentAmountExceededException(
+                installment.total,
+                transaction.receivedAmount ?: transaction.originalAmount ?: 0.0,
+                erro
+            )
+        }
+        val documentoFechadoOuBloqueado = mensagem.contains(
+            "invoice is already closed or blocked",
+            ignoreCase = true
+        )
+        if(documentoFechadoOuBloqueado) {
+            return PixPaymentDocumentClosedOrBlockedException(erro)
+        }
+        return erro
     }
 
     private fun memoSuffix(document: Document): String {
