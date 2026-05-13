@@ -31,6 +31,7 @@ dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-web"){
 		exclude("commons-logging")
 	}
+    implementation("org.springframework.boot:spring-boot-starter-websocket")
 	implementation("org.springframework.boot:spring-boot-starter-data-rest")
 	implementation("org.springframework.boot:spring-boot-starter-security")
 	implementation("org.springframework.boot:spring-boot-starter-cache")
@@ -40,12 +41,9 @@ dependencies {
 	implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.1.0")
 	implementation("org.springdoc:springdoc-openapi-ui:1.7.0")
 
-
-
 	implementation("io.jsonwebtoken:jjwt-api:0.12.4")
 	implementation("io.jsonwebtoken:jjwt-impl:0.12.4")
 	implementation("io.jsonwebtoken:jjwt-jackson:0.12.4")
-
 
 	implementation("com.squareup.okhttp3:okhttp:4.12.0")
 

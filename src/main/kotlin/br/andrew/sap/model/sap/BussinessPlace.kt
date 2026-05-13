@@ -14,6 +14,14 @@ class BussinessPlace {
     var BPLID: Int? = null
     @JsonProperty("BPLName")
     var BPLName: String? = null
+
+    var Street: String? = null
+    var Block: String? = null
+    var ZipCode: String? = null
+    var City: String? = null
+    var County: String? = null
+    var State: String? = null
+
     var DefaultCustomerID: String? = null
     var DefaultVendorID: String? = null
     var DefaultWarehouseID: String? = null

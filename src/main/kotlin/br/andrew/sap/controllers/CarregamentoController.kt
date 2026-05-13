@@ -1,7 +1,9 @@
 package br.andrew.sap.controllers.documents
 
+import LogisticaPayload
 import br.andrew.sap.infrastructure.odata.*
 import br.andrew.sap.model.authentication.User
+import br.andrew.sap.model.enums.Cancelled
 import br.andrew.sap.model.sap.BatchesGroupByItemCode
 import br.andrew.sap.model.logistica.Carregamento
 import br.andrew.sap.model.logistica.CarregamentoDto
@@ -9,9 +11,11 @@ import br.andrew.sap.model.logistica.PedidoUpdate
 import br.andrew.sap.model.logistica.PedidoUpdateLine
 import br.andrew.sap.model.sap.documents.DocumentTypes
 import br.andrew.sap.model.sap.documents.OrderSales
+import br.andrew.sap.model.sap.documents.base.Document
 import br.andrew.sap.services.*
 import br.andrew.sap.services.abstracts.SqlQueriesService
 import br.andrew.sap.services.batch.BatchList
+import br.andrew.sap.services.batch.BatchId
 import br.andrew.sap.services.batch.BatchMethod
 import br.andrew.sap.services.batch.BatchResponse
 import br.andrew.sap.services.batch.BatchService
@@ -19,6 +23,8 @@ import br.andrew.sap.services.document.InvoiceService
 import br.andrew.sap.services.document.OrdersService
 import br.andrew.sap.services.pricing.ComissaoService
 import br.andrew.sap.services.stock.ItemsService
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.kotlin.KotlinModule
 import org.slf4j.LoggerFactory
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.data.domain.Page
@@ -26,6 +32,8 @@ import org.springframework.data.domain.Pageable
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.Authentication
 import org.springframework.web.bind.annotation.*
+import java.math.BigDecimal
+import java.util.Date
 
 @RestController
 @RequestMapping("carregamento")
@@ -39,18 +47,47 @@ class CarregamentoController(val carregamentoServico: CarregamentoService,
                              val applicationEventPublisher: ApplicationEventPublisher,
                              val sqlQueriesService: SqlQueriesService) {
 
-    val logger = LoggerFactory.getLogger(QuotationsController::class.java)
+    val logger = LoggerFactory.getLogger(CarregamentoController::class.java)
+    val objectMapper = ObjectMapper().registerModule(KotlinModule())
+
+    private data class CloseBatchPayload(private val id: String) : BatchId {
+        override fun getId(): String = id
+    }
 
 
     @GetMapping("")
-    fun get(auth : Authentication, page : Pageable): ResponseEntity<Page<Carregamento>> {
+    fun get(auth : Authentication,
+            page : Pageable,
+            @RequestParam(required = false) id: Int?,
+            @RequestParam(required = false) status: String?,
+            @RequestParam(required = false) createDateFrom: String?,
+            @RequestParam(required = false) createDateTo: String?): ResponseEntity<Page<Carregamento>> {
         if(auth !is User)
             return ResponseEntity.noContent().build()
-        val carregamento = carregamentoServico.get(Filter(),
+
+        val filter = Filter().also {
+            if (id != null) {
+                it.add(Predicate("DocEntry", id, Condicao.EQUAL))
+            }
+            if (!status.isNullOrBlank()) {
+                it.add(Predicate("U_Status", status.trim(), Condicao.EQUAL))
+            }
+            if (!createDateFrom.isNullOrBlank()) {
+                it.add(Predicate("CreateDate", createDateFrom.trim(), Condicao.GREAT_EQUAL))
+            }
+            if (!createDateTo.isNullOrBlank()) {
+                it.add(Predicate("CreateDate", createDateTo.trim(), Condicao.LESS_EQUAL))
+            }
+        }
+
+        val pageResult = carregamentoServico.get(filter,
             OrderBy(mapOf("CreateDate" to Order.DESC, "DocEntry" to Order.DESC)),
             page
         ).tryGetPageValues<Carregamento>(page)
-        return ResponseEntity.ok(carregamento)
+
+        val pageEnriched = carregamentoServico.preencherTotais(pageResult)
+
+        return ResponseEntity.ok(pageEnriched)
     }
 
     @GetMapping("/{id}")
@@ -76,54 +113,54 @@ class CarregamentoController(val carregamentoServico: CarregamentoService,
         val ordemCriada = if(isNewOrder){
             carregamentoServico.save(dto.ordemCarregamento).tryGetValue<Carregamento>()
         }else{
+            val id = dto.ordemCarregamento.DocEntry.toString()
+
+            dto.ordemCarregamento.docEntryQuantity = null
+            dto.ordemCarregamento.Weight1 = null
+
+            carregamentoServico.update(dto.ordemCarregamento, id)
             dto.ordemCarregamento
             //TODO arrumar esse updatge provavelmente se fizer o bind no front vai funcionar
             //carregamentoServico.update(dto.ordemCarregamento,dto.ordemCarregamento.DocEntry.toString())!!.tryGetValue<Carregamento>()
         }
 
         try {
-            val tripleAdicionar = dto.pedidos.map{
-                val order = pedidoVendaService.getById(it).tryGetValue<OrderSales>()
+            val vinculadosAtualmente = if (!isNewOrder)
+                carregamentoServico.docEntryPedido(ordemCriada.DocEntry!!).map { it.DocEntry }
+            else
+                emptyList()
 
+            val pedidosParaAdicionar = dto.pedidos.filter { it !in vinculadosAtualmente }
+            val pedidosParaRemover = vinculadosAtualmente.filter { it !in dto.pedidos }
+
+            val tripleAdicionar = pedidosParaAdicionar.map {
+                val order = pedidoVendaService.getById(it.toString()).tryGetValue<OrderSales>()
                 val pedidosUpdate = PedidoUpdate(
                     order.DocEntry.toString(),
-                    order.DocumentLines.map { PedidoUpdateLine(it.DocEntry!!,it.LineNum!!,ordemCriada.DocEntry) }
+                    order.DocumentLines.map { line -> PedidoUpdateLine(line.DocEntry!!,line.LineNum!!,ordemCriada.DocEntry?.toString()) },
+                    order.docNum
                 )
                 Triple(BatchMethod.PATCH,pedidosUpdate,pedidoVendaService)
             }
 
-            val tripleRemover = dto.pedidosRemover.map{
-                val order = pedidoVendaService.getById(it).tryGetValue<OrderSales>()
-
+            val tripleRemover = pedidosParaRemover.map {
+                val order = pedidoVendaService.getById(it.toString()).tryGetValue<OrderSales>()
                 val pedidosUpdate = PedidoUpdate(
                     order.DocEntry.toString(),
-                    order.DocumentLines.map { PedidoUpdateLine(it.DocEntry!!,it.LineNum!!,null) }
+                    order.DocumentLines.map { line -> PedidoUpdateLine(line.DocEntry!!,line.LineNum!!,null) },
+                    order.docNum
                 )
                 Triple(BatchMethod.PATCH,pedidosUpdate,pedidoVendaService)
             }
-            batchService.run(BatchList().addAll(tripleAdicionar).addAll(tripleRemover))
+
+            if (tripleAdicionar.isNotEmpty() || tripleRemover.isNotEmpty())
+                batchService.run(BatchList().addAll(tripleAdicionar).addAll(tripleRemover))
         }catch (e : Exception){
             if(isNewOrder){
-                //TODO mudar para falhou e na lista nao listar nada que tenha o status Falhou
-                ordemCriada.also { it.U_status = "Falhou" }
+                ordemCriada.also { it.U_Status = "Falhou" }
                 carregamentoServico.update(ordemCriada,ordemCriada.DocEntry.toString())
             }
             throw e
-        }
-    }
-
-    @PostMapping("/save-carregamento")
-    fun saveCarregamento(@RequestBody ordem: Carregamento): ResponseEntity<Any> {
-        return try {
-            if(ordem.U_status.isNullOrEmpty()) {
-                ordem.U_status = "Aberto"
-            }
-
-            val ordemCriada = carregamentoServico.save(ordem).tryGetValue<Carregamento>()
-            ResponseEntity.ok(ordemCriada)
-        } catch (e: Exception) {
-            logger.error("Erro ao salvar ordem de carregamento", e)
-            ResponseEntity.badRequest().body(mapOf("error" to e.message))
         }
     }
 
@@ -132,11 +169,24 @@ class CarregamentoController(val carregamentoServico: CarregamentoService,
         if(auth !is User)
             return ResponseEntity.noContent().build()
 
-        val carregamento = carregamentoServico.getById(id).tryGetValue<Carregamento>()
-        carregamento.U_status = "Cancelado"
+        val result = carregamentoServico.cancelar(id)
 
-        val result = carregamentoServico.update(carregamento, id)
-        return ResponseEntity.ok(result?.tryGetValue<Carregamento>())
+        return ResponseEntity.ok(result)
+    }
+
+    @PostMapping("/save-carregamento")
+    fun saveCarregamento(@RequestBody ordem: Carregamento): ResponseEntity<Any> {
+        return try {
+            if(ordem.U_Status.isNullOrEmpty()) {
+                ordem.U_Status = "Aberto"
+            }
+
+            val ordemCriada = carregamentoServico.save(ordem).tryGetValue<Carregamento>()
+            ResponseEntity.ok(ordemCriada)
+        } catch (e: Exception) {
+            logger.error("Erro ao salvar ordem de carregamento", e)
+            ResponseEntity.badRequest().body(mapOf("error" to e.message))
+        }
     }
 
     @GetMapping("estoque-em-carregamento")
@@ -149,41 +199,106 @@ class CarregamentoController(val carregamentoServico: CarregamentoService,
     fun saveForAngular(@PathVariable docEntry: Int, @RequestBody lotesAgrupados: List<BatchesGroupByItemCode>): List<BatchResponse> {
         val docEntrys = carregamentoServico.docEntryPedido(docEntry).map { it.DocEntry }
         val pedidos = pedidoVendaService.getAll(OrderSales::class.java, Filter("DocEntry", docEntrys, Condicao.IN))
+        val carregamento = carregamentoServico.getById(docEntry.toString()).tryGetValue<Carregamento>()
+
+        val porPedido = lotesAgrupados.any { it.DocEntry != null }
 
         pedidos.forEach { order ->
             order.DocumentLines
                 .filter { it.U_ORD_CARREGAMENTO == docEntry }
                 .forEach { currentItem ->
-                    val lotes = lotesAgrupados
-                        .firstOrNull { it.ItemCode == currentItem.ItemCode }
-                        ?.Batches
-                        ?: throw Exception("Erro ao fazer bind de lote para item ${currentItem.ItemCode}")
+                    val lotesDoItem = if (porPedido)
+                        lotesAgrupados.find { it.DocEntry == order.DocEntry?.toIntOrNull() && it.ItemCode == currentItem.ItemCode }
+                    else
+                        lotesAgrupados.find { it.ItemCode == currentItem.ItemCode }
 
-                    lotes.forEach { batch ->
-                        batch.ItemCode = currentItem.ItemCode
+                    if (lotesDoItem != null) {
+                        currentItem.BatchNumbers = if (porPedido)
+                            lotesDoItem.Batches ?: emptyList()
+                        else
+                            lotesDoItem.getBachesBy(currentItem)
+                        logSelecaoIncompletaDeLote(docEntry, order, currentItem)
+                    } else {
+                        logger.warn("Carregamento $docEntry - Pedido ${order.docNum ?: order.docEntry} sem lote: ${detalharLinhaLote(currentItem)}")
                     }
-                    currentItem.BatchNumbers = lotes
                 }
         }
 
-        val batchList = BatchList()
+        val lotesParaFaturamento = mutableListOf<Pair<OrderSales, Document>>()
+        val invoiceBatchList = BatchList()
+        val closeBatchList = BatchList()
 
         pedidos.forEach { pedido ->
             val bplId = pedido.getBPL_IDAssignedToInvoice()
-
             val sequenceCodes = carregamentoServico.procuraSequenceCode(bplId)
-            val sequenceCode = sequenceCodes.firstOrNull()
-                ?: throw Exception("Nenhum SequenceCode encontrado para a filial $bplId")
-
-            val seqCodeValue = sequenceCode.SeqCode
+            val seqCodeValue = sequenceCodes.firstOrNull()?.SeqCode
                 ?: throw Exception("SeqCode não encontrado para a filial $bplId")
 
-            val documento = pedido.toDocument(DocumentTypes.oInvoices, seqCodeValue)
+            val linhasDoCarregamento = pedido.DocumentLines.filter { it.U_ORD_CARREGAMENTO == docEntry }
+            logger.info("Carregamento $docEntry - Pedido ${pedido.docNum ?: pedido.docEntry}: ${linhasDoCarregamento.size} linhas -> " +
+                linhasDoCarregamento.joinToString(" | ") { detalharLinhaLote(it) })
+            val pedidoParaFaturar = OrderSales(pedido.CardCode, pedido.DocDueDate, linhasDoCarregamento, bplId).also { p ->
+                p.docObjectCode = pedido.docObjectCode
+                p.salesPersonCode = pedido.salesPersonCode
+                p.paymentGroupCode = pedido.paymentGroupCode
+                p.model = pedido.model
+                p.journalMemo = pedido.journalMemo
+                p.docDate = pedido.docDate
+                p.controlAccount = pedido.controlAccount
+                p.documentAdditionalExpenses = pedido.documentAdditionalExpenses.toMutableList()
+            }
 
-            batchList.add(BatchMethod.POST, documento, invoiceService)
+            val documento = pedidoParaFaturar.toDocument(DocumentTypes.oInvoices, seqCodeValue)
+
+            documento.AttachmentEntry = pedido.AttachmentEntry
+            documento.getOrCreateTaxExtension().Vehicle = carregamento.U_placa
+            documento.getOrCreateTaxExtension().Carrier = carregamento.U_transportadora
+            documento.ClosingRemarks = "Motorista: ${carregamento.U_motorista}. Ordem: ${carregamento.DocEntry}"
+            documento.U_faturadoOrdemCarregamento = docEntry
+
+            documento.docDate = null
+            documento.DocDueDate = null
+
+            lotesParaFaturamento.add(pedido to documento)
+            invoiceBatchList.add(BatchMethod.POST, documento, invoiceService)
+            val orderId = pedido.DocEntry ?: pedido.docEntry?.toString()
+                ?: throw IllegalStateException("DocEntry do pedido nao encontrado para fechamento")
+            closeBatchList.add(BatchMethod.CLOSE, CloseBatchPayload(orderId), pedidoVendaService)
         }
 
-        return batchService.run(batchList)
+        return try {
+            batchService.run(listOf(invoiceBatchList, closeBatchList))
+        } catch (e: Exception) {
+            logger.error("Erro ao finalizar notas do carregamento $docEntry: ${e.message}", e)
+            lotesParaFaturamento.forEach { (pedido, documento) ->
+                val linhasDoCarregamento = pedido.DocumentLines.filter { it.U_ORD_CARREGAMENTO == docEntry }
+                val payload = objectMapper.writeValueAsString(documento)
+                logger.error(
+                    "Carregamento $docEntry - Pedido ${pedido.docNum ?: pedido.docEntry} payload enviado ao SAP: $payload"
+                )
+                logger.error("Carregamento $docEntry - Pedido ${pedido.docNum ?: pedido.docEntry} linhas para faturamento: " +
+                    linhasDoCarregamento.joinToString(" | ") { detalharLinhaLote(it) })
+            }
+            throw e
+        }
+    }
+
+    private fun logSelecaoIncompletaDeLote(docEntry: Int, pedido: OrderSales, line: br.andrew.sap.model.sap.documents.base.DocumentLines) {
+        val quantidadeLinha = BigDecimal(line.Quantity)
+        val quantidadeLotes = line.BatchNumbers.fold(BigDecimal.ZERO) { acc, batch -> acc + BigDecimal(batch.Quantity) }
+        if (quantidadeLinha.compareTo(quantidadeLotes) != 0) {
+            logger.warn("Carregamento $docEntry - Pedido ${pedido.docNum ?: pedido.docEntry} com seleção incompleta de lote: ${detalharLinhaLote(line)}")
+        }
+    }
+
+    private fun detalharLinhaLote(line: br.andrew.sap.model.sap.documents.base.DocumentLines): String {
+        val quantidadeLotes = line.BatchNumbers.fold(BigDecimal.ZERO) { acc, batch -> acc + BigDecimal(batch.Quantity) }
+        val lotes = if (line.BatchNumbers.isEmpty()) {
+            "sem lotes"
+        } else {
+            line.BatchNumbers.joinToString(",") { "${it.BatchNumber}:${it.Quantity}" }
+        }
+        return "Item=${line.ItemCode} Qty=${line.Quantity} QtyLotes=$quantidadeLotes Whs=${line.WarehouseCode} LineDocEntry=${line.DocEntry} LineNum=${line.LineNum} Lotes=[$lotes]"
     }
 
     @PostMapping("/{id}/status")
@@ -225,15 +340,17 @@ class CarregamentoController(val carregamentoServico: CarregamentoService,
     }
 
     @PostMapping("/{id}/logistica")
-    fun updateLogistica(@PathVariable id: String, @RequestBody payload: Map<String, String>, auth: Authentication): ResponseEntity<Any> {
+    fun updateLogistica(@PathVariable id: String, @RequestBody payload: LogisticaPayload, auth: Authentication): ResponseEntity<Any> {
         if (auth !is User) {
             return ResponseEntity.noContent().build()
         }
 
         try {
             val dadosParaAtualizar = mapOf(
-                "U_placa" to payload["U_placa"],
-                "U_motorista" to payload["U_motorista"]
+                "U_placa" to payload.U_placa,
+                "U_motorista" to payload.U_motorista,
+                "U_capacidadeCaminhao" to payload.U_capacidadeCaminhao,
+                "U_transportadora" to payload.U_transportadora
             )
 
             carregamentoServico.update(dadosParaAtualizar, id)
@@ -242,6 +359,33 @@ class CarregamentoController(val carregamentoServico: CarregamentoService,
             logger.error("Erro ao atualizar dados de logística para o carregamento $id", e)
             return ResponseEntity.badRequest().body(mapOf("error" to e.message))
         }
+    }
+
+    @GetMapping("/notas/{idCarregamento}")
+    fun getNotasByCarregamentos(@PathVariable idCarregamento: Int): List<Document> {
+        val filter = Filter(mutableListOf(
+            Predicate("U_faturadoOrdemCarregamento", idCarregamento, Condicao.EQUAL),
+            Predicate(Cancelled.tNO, Condicao.EQUAL),
+        ))
+        return listOf(invoiceService)
+            .map { it.getAll(Document::class.java,filter) }
+            .flatMap { it }
+            .sortedWith(compareBy(
+                { it.docDate },
+                { it.docObjectCode?.ordinal }
+            ))
+    }
+
+    @GetMapping("/search")
+    fun search(@RequestParam("dataInicial", required = false) dataInicial: String?,
+               @RequestParam("dataFinal", required = false) dataFinal: String?,
+               @RequestParam("filial") filial: Int,
+               @RequestParam("localidade") localidade: String,
+               @RequestParam("vendedor") vendedor: Int?): NextLink<OrderSales> {
+        val startDate = dataInicial ?: "1900-01-01"
+        val endDate = dataFinal ?: "2100-12-31"
+        val result = pedidoVendaService.fullSearchTextFallBack(startDate, endDate, filial, localidade,vendedor)
+        return result ?: NextLink(emptyList(), "")
     }
 }
 

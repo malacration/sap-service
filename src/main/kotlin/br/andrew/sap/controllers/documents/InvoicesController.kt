@@ -4,6 +4,7 @@ import br.andrew.sap.infrastructure.BoletoIdsConfig
 import br.andrew.sap.infrastructure.odata.*
 import br.andrew.sap.model.authentication.User
 import br.andrew.sap.model.bankplus.Boleto
+import br.andrew.sap.model.dto.InstallmentPixResumo
 import br.andrew.sap.model.enums.Cancelled
 import br.andrew.sap.model.forca.PedidoVenda
 import br.andrew.sap.model.producao.BatchStock
@@ -12,6 +13,7 @@ import br.andrew.sap.model.sap.documents.Fatura
 import br.andrew.sap.model.sap.documents.Invoice
 import br.andrew.sap.model.sap.documents.OrderSales
 import br.andrew.sap.model.sap.documents.base.Document
+import br.andrew.sap.model.sap.documents.base.Installment
 import br.andrew.sap.services.batch.BatchList
 import br.andrew.sap.services.document.DocumentForAngular
 import br.andrew.sap.services.document.InvoiceService
@@ -22,6 +24,7 @@ import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.Authentication
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.web.bind.annotation.*
 
 
@@ -30,7 +33,8 @@ import org.springframework.web.bind.annotation.*
 class InvoicesController(
     val invoice: InvoiceService,
     val bankPlusService : BankPlusService,
-    val pedidoVenda: OrdersService
+    val pedidoVenda: OrdersService,
+    @Value("\${pix.juros.mora.percent:0}") val jurosMoraPercent: Double
 ) {
 
     val logger = LoggerFactory.getLogger(InvoicesController::class.java)
@@ -74,8 +78,8 @@ class InvoicesController(
     }
 
     @GetMapping("{id}/create-pix")
-    fun createPix(@PathVariable id : Int) : Any{
-        return invoice.createPix(id)
+    fun createPix(@PathVariable id : Int) : List<Installment>{
+        return invoice.createPix(id, listOf(), jurosMoraPercent)
     }
 
     @GetMapping("{id}/baixa-pix")
@@ -99,7 +103,7 @@ class InvoicesController(
     }
 
     @GetMapping("pix")
-    fun teste() : Any{
-        return invoice.getAllPixs();
+    fun teste() : List<InstallmentPixResumo> {
+        return invoice.getAllPixs()
     }
 }

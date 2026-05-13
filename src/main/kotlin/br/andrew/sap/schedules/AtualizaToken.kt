@@ -4,7 +4,9 @@ import br.andrew.sap.model.envrioments.SapEnvrioment
 import br.andrew.sap.services.AuthService
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.springframework.boot.context.event.ApplicationReadyEvent
 import org.springframework.context.annotation.Profile
+import org.springframework.context.event.EventListener
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
 
@@ -18,10 +20,15 @@ class AtualizaToken(
     val logger: Logger = LoggerFactory.getLogger(AtualizaToken::class.java)
 
 
-    @Scheduled(fixedDelay = 15)
+    @EventListener(ApplicationReadyEvent::class)
+    fun warmup() {
+        execute()
+    }
+
+    @Scheduled(fixedDelayString = "\${sap.service.layer.session.keep-alive-ms:60000}")
     fun execute() {
         try {
-            authService.getToken(env.getLogin())
+            authService.keepAlive(env.getLogin())
         } catch (t : Throwable){
             logger.error(t.message, t)
         }

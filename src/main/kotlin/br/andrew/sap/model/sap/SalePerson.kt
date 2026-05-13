@@ -24,6 +24,9 @@ class SalePerson(val SalesEmployeeCode: Int,
 
 
     @JsonIgnore
+    var _bussinesPlace : List<Int> = listOf()
+
+    @JsonIgnore
     fun getEmailAddress(): String {
         if(this.SalesEmployeeCode == -1 || Email == null)
             return emailDefault
@@ -59,6 +62,11 @@ class SalePerson(val SalesEmployeeCode: Int,
     @JsonIgnore
     override fun getPassword(): String? {
         return u_password
+    }
+
+    @JsonIgnore
+    override fun getBussinesPlace(): List<Int> {
+        return this._bussinesPlace
     }
 
     companion object{

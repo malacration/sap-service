@@ -5,6 +5,8 @@ import br.andrew.sap.model.envrioments.SapEnvrioment
 import br.andrew.sap.services.AuthService
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
+import org.mockito.Mockito
+import org.mockito.kotlin.any
 import org.springframework.web.client.RestTemplate
 
 class SqlQueriesServiceTest {
@@ -13,7 +15,8 @@ class SqlQueriesServiceTest {
 
     @Test
     fun test(){
-        val authService = AuthService("",rt)
+        val authService = Mockito.mock(AuthService::class.java)
+        Mockito.`when`(authService.getToken(any())).thenThrow(RuntimeException("Nao deveria chamar login nesse teste"))
         val envrioment = SapEnvrioment("","","","")
         val sq = SqlQueriesService(envrioment,rt ,authService)
 

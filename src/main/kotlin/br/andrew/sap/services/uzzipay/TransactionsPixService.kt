@@ -2,6 +2,8 @@ package br.andrew.sap.services.uzzipay
 
 import br.andrew.sap.infrastructure.configurations.uzzipay.UzziPayEnvrioment
 import br.andrew.sap.model.sap.BussinessPlace
+import br.andrew.sap.model.sap.documents.DownPayment
+import br.andrew.sap.model.sap.documents.base.Document
 import br.andrew.sap.model.sap.documents.base.Installment
 import br.andrew.sap.model.sap.documents.Invoice
 import br.andrew.sap.model.uzzipay.ContaUzziPayPix
@@ -10,10 +12,12 @@ import br.andrew.sap.services.BussinessPlaceService
 import org.springframework.http.RequestEntity
 import org.springframework.stereotype.Service
 import org.springframework.web.client.RestTemplate
+import kotlin.jvm.Throws
 
 @Service
 class TransactionsPixService(val restTemplate: RestTemplate,
                              val bussinessPlaceService : BussinessPlaceService,
+                             val authService: UzziPayAuthService,
                              val envrioment: UzziPayEnvrioment) {
 
     fun url() : String {
@@ -32,10 +36,9 @@ class TransactionsPixService(val restTemplate: RestTemplate,
             throw Exception("Nao foi possivel encontrar a transaction")
     }
 
-    fun getContaBy(invoice : Invoice) : ContaUzziPayPix{
+    fun getContaBy(document : Document) : ContaUzziPayPix{
         return envrioment
-            .getContaByCnpj(bussinessPlaceService.getById(invoice.getBPL_IDAssignedToInvoice())
-            .tryGetValue<BussinessPlace>())
+            .getContaBpId(document.getBPL_IDAssignedToInvoice().toIntOrNull() ?: throw Exception("Falha a converter para inteiro ID da filial"))
     }
 
     fun getBy(invoice : Invoice, conta : ContaUzziPayPix): List<Transaction> {
@@ -51,6 +54,7 @@ class TransactionsPixService(val restTemplate: RestTemplate,
     }
 
     fun getBy(id : String): Transaction {
+        //TODO talvez isso gere erro
         return getBy(id,envrioment.contas[0])
     }
 }

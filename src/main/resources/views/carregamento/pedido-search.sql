@@ -30,7 +30,11 @@ SELECT DISTINCT
     d."U_preco_base" AS "PrecoBase",
     c."Comments" AS "Comentario",
     d."DistribSum" AS "FretePorLinha",
-    c."AtcEntry" AS "AttachmentEntry"
+    c."AtcEntry" AS "AttachmentEntry",
+    d."DistribSum",
+    e."SlpName",
+    e."Telephone",
+    e."Mobil"
 FROM
     "ORDR" c
 JOIN "RDR12" r ON c."DocEntry" = r."DocEntry"
@@ -42,11 +46,14 @@ JOIN "@RO_LOCAIS" l ON r."U_LocalidadeS" = l."Code"
 LEFT JOIN "UGP1" grupo ON grupo."UgpEntry" = 4 AND grupo."UomEntry" = d."UomEntry"
 LEFT JOIN "@ORD_CRG_LINHA" m ON d."DocEntry" = m."U_orderDocEntry"
 LEFT JOIN "@ORD_CARREGAMENTO" x ON m."DocEntry" = x."DocEntry"
+LEFT JOIN "OSLP" e ON e."SlpCode" = c."SlpCode"
 WHERE
     c."DocDate" >= :startDate
     AND c."DocDate" <= :finalDate
     AND r."U_LocalidadeS" = :localidade
     AND c."BPLId" = :filial
+    AND (c."SlpCode" = :vendedor OR c."SlpCode" > :vendedorDisable)
     AND c."DocStatus" = 'O'
     AND (x."U_Status" = 'Cancelado' OR x."U_Status" IS NULL)
     AND d."U_ORD_CARREGAMENTO" IS NULL
+    AND d."Usage" = 9

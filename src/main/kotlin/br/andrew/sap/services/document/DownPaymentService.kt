@@ -2,24 +2,39 @@ package br.andrew.sap.services.document
 
 import br.andrew.sap.infrastructure.odata.*
 import br.andrew.sap.model.envrioments.SapEnvrioment
+import br.andrew.sap.model.bank.Payment
+import br.andrew.sap.model.bank.PaymentInvoice
+import br.andrew.sap.model.dto.InstallmentPixConsulta
+import br.andrew.sap.model.dto.InvoicePixUpdatePayload
 import br.andrew.sap.model.payment.HandlePaymentTermsLines
 import br.andrew.sap.model.payment.PaymentDueDates
 import br.andrew.sap.model.sap.DocEntry
 import br.andrew.sap.model.sap.documents.DocumentStatus
+import br.andrew.sap.model.sap.documents.CreditNotes
 import br.andrew.sap.model.sap.documents.DownPayment
 import br.andrew.sap.model.sap.documents.Invoice
 import br.andrew.sap.model.sap.documents.OrderSales
 import br.andrew.sap.model.sap.documents.base.Document
+import br.andrew.sap.model.uzzipay.ContaUzziPayPix
+import br.andrew.sap.model.uzzipay.Transaction
+import br.andrew.sap.model.sap.documents.base.Installment
 import br.andrew.sap.model.sap.documents.base.Product
 import br.andrew.sap.model.self.vendafutura.BoletoVf
 import br.andrew.sap.model.self.vendafutura.Contrato
+import JournalEntry
+import JournalEntryLines
 import br.andrew.sap.schedules.futura.Soma
 import br.andrew.sap.services.AuthService
+import br.andrew.sap.services.bank.IncomingPaymentService
 import br.andrew.sap.services.abstracts.EntitiesService
 import br.andrew.sap.services.abstracts.SqlQueriesService
 import br.andrew.sap.services.bank.PaymentTermsTypesService
 import br.andrew.sap.services.invent.BankPlusService
+import br.andrew.sap.services.batch.BatchList
+import br.andrew.sap.services.batch.BatchMethod
+import br.andrew.sap.services.batch.BatchService
 import br.andrew.sap.services.invent.OrigemBoletoEnum
+import br.andrew.sap.services.journal.JournalEntriesService
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
@@ -33,6 +48,11 @@ class DownPaymentService(env: SapEnvrioment,
                          private val orderService: OrdersService,
                          private val paymentService : PaymentTermsTypesService,
                          private val bankplus : BankPlusService,
+                         private val accountsReceivableService: AccountsReceivableService,
+                         private val incomingPaymentService: IncomingPaymentService,
+                         private val creditNotesService: CreditNotesService,
+                         private val batchService: BatchService,
+                         private val journalEntriesService: JournalEntriesService,
                          @Value("\${venda-futura.adiantamento-item:none}") val vfItemAdiantamento : String,
                          @Value("\${adiantamento-vf.formaPagamento:none}") vfFormaPagamento : String,
                          restTemplate: RestTemplate,
@@ -87,6 +107,65 @@ class DownPaymentService(env: SapEnvrioment,
     fun getByContratoVendaFuturaStatus(id: Int): List<BoletoVf> {
         val parametros = listOf(Parameter("idVendaFutura",id),)
         return sqlQueriesService.execute("boletos-status.sql",parametros)?.tryGetValues<BoletoVf>() ?: listOf()
+    }
+
+    fun updatePixInstallments(docEntry: Int, installments: List<Installment>) {
+        if(installments.isEmpty()) {
+            return
+        }
+        val payload = InvoicePixUpdatePayload.from(installments)
+        this.update(payload, docEntry.toString())
+    }
+
+    fun getPixsGeradosParaConsulta(dataReferencia: String): List<InstallmentPixConsulta> {
+        return sqlQueriesService.getAll(
+            "down-payment-installment-pix-consulta.sql",
+            listOf(Parameter("now", dataReferencia))
+        )
+    }
+
+    fun getPixsVencidos(dataReferencia: String): List<InstallmentPixConsulta> {
+        return sqlQueriesService.getAll(
+            "down-payment-installment-pix-expirado.sql",
+            listOf(Parameter("now", dataReferencia))
+        )
+    }
+
+    fun getDownPaymentByIdPix(reference: String): DownPayment {
+        val list = sqlQueriesService.execute(
+            "down-payment-by-pix-reference.sql",
+            listOf(Parameter("reference", reference))
+        )?.tryGetValues<DocEntry>()
+            ?.mapNotNull { getBy(it).tryGetValue<DownPayment>() } ?: listOf()
+        if(list.size > 1) throw Exception("Mais de um adiantamento encontrado para o pix ${reference}")
+        return list.firstOrNull() ?: throw Exception("Nenhum adiantamento encontrado para o pix ${reference}")
+    }
+
+    fun baixaPixBy(downPayment: DownPayment, installment: Installment, transaction: Transaction, conta: ContaUzziPayPix): Transaction {
+        return accountsReceivableService.baixaPixBy(downPayment, installment, transaction, conta)
+    }
+
+    fun estornarPorDevolucao(downPayment: DownPayment): CreditNotes {
+        val docEntry = downPayment.docEntry ?: throw Exception("DocEntry do adiantamento nao pode ser nulo")
+        val devolucaoExistente = sqlQueriesService
+            .execute("devolucao-adiantamento.sql", Parameter("docEntry", docEntry))
+            ?.tryGetValues<DocEntry>()
+            ?.firstOrNull()
+
+        if (devolucaoExistente?.DocEntry != null) {
+            return creditNotesService.getById(devolucaoExistente.DocEntry!!).tryGetValue<CreditNotes>()
+        }
+
+        val devolucao = CreditNotes(downPayment).also {
+            val referencia = downPayment.docNum ?: docEntry.toString()
+            it.comments = "Estorno automatico de adiantamento PIX expirado. Adiantamento $referencia"
+            it.journalMemo = it.comments
+            it.U_TX_DocEntryRef = docEntry
+            it.U_TX_DocTypeRef = downPayment.docObjectCode?.value
+            it.SequenceCode = 1
+//            it.DocumentLines.forEach { it.Usage = 16; it.CFOPCode = "1000" }
+        }
+        return creditNotesService.save(devolucao).tryGetValue<CreditNotes>()
     }
 
     fun adiantamentosAbertos(invoice : Invoice): List<DownPayment> {

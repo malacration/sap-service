@@ -16,7 +16,7 @@ class JwtHandlerTests {
     fun testaTokenInicial(){
         val authorities = listOf("admin")
         val userInput = User("id-windson","windson",UserOriginEnum.EmployeesInfo,
-            "windson","","",authorities)
+            "windson","","",listOf(),authorities)
         val tokenOutput = service.getToken(userInput)
         val userOutput = service.getUser(tokenOutput.token)
 

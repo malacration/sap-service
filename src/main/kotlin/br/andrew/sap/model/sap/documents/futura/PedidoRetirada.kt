@@ -23,15 +23,19 @@ class PedidoRetirada(
             CardCode = contrato.U_cardCode,
             DocDueDate = docDueDate,
             DocumentLines = contrato.itens.filter { base ->
-                itensRetirada.map { it.itemCode }
-                    .contains(base.U_itemCode) }
-                .map { parse(it,usage,itemOriginal) },
+                itensRetirada.any{
+                    it.itemCode == base.U_itemCode && it.LineId == base.LineId
+                }
+            }.map { parse(it,usage,itemOriginal) },
             BPL_IDAssignedToInvoice = contrato.U_filial.toString()
         ).also {
             it.salesPersonCode = contrato.U_vendedor
             it.U_venda_futura = contrato.DocEntry
-            it.Incoterms = order.Incoterms
+            it.Incoterms = order.TaxExtension?.Incoterms
             it.U_entrega_vf = 1
+            it.paymentGroupCode = -1
+            it.journalMemo = "Entrega de mercadoria ref a contrato Nº ${contrato.DocEntry}"
+            it.comments = it.journalMemo
             if(contrato.U_valorFrete > 0){
                 val proporcao = it.totalProdutos().divide(contrato.totalProdutos(), RoundingMode.HALF_DOWN)
                 it.frete = BigDecimal(contrato.U_valorFrete.toString()).multiply(proporcao).setScale(2, RoundingMode.HALF_DOWN).toDouble()
@@ -43,7 +47,7 @@ class PedidoRetirada(
         return Product(
             itemCode = itemContrato.U_itemCode,
             quantity = (itensRetirada
-                .filter { it.itemCode == itemContrato.U_itemCode }
+                .filter { it.itemCode == itemContrato.U_itemCode && it.LineId == itemContrato.LineId }
                 .firstOrNull()?: throw Exception("Parse de item nao encontrado")
             ).quantidade.toString() ,
             unitPrice = itemContrato.U_precoNegociado.toString(),
@@ -67,6 +71,6 @@ class PedidoRetirada(
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 class ItemRetirada(
     val itemCode: String,
-    val quantidade: Double){
-
+    val quantidade: Double,
+    val LineId : Int){
 }

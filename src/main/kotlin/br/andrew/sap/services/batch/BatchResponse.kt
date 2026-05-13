@@ -5,5 +5,6 @@ data class BatchResponse(
     val body: String?,
     val success: Boolean,
     val errorCode: String? = null,
-    val errorMessage: String? = null
+    val errorMessage: String? = null,
+    val contentId: Int? = null
 )

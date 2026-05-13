@@ -6,6 +6,7 @@ enum class PaymentType(val valor : String){
     it_OpeningBalance("it_OpeningBalance"),
     it_ClosingBalance("it_ClosingBalance"),
     it_Invoice("it_Invoice"),
+    it_DownPayment("it_DownPayment"),
     it_CredItnote("it_CredItnote"),
     it_TaxInvoice("it_TaxInvoice"),
     it_Return("it_Return"),

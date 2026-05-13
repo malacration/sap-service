@@ -1,5 +1,7 @@
 package br.andrew.sap.model
 
+import br.andrew.sap.model.sap.BussinessPlace
+
 class Conta {
 
     var id: String = ""
@@ -7,6 +9,7 @@ class Conta {
     var descricao: String = ""
     var contaPai: String = ""
     var valoresIndividualizados: List<ValoresIndividualizados> = listOf()
+    var bussinessPlace: BussinessPlace? = null
 
     // generate getters and setters
 }

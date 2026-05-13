@@ -4,7 +4,6 @@ import br.andrew.sap.infrastructure.odata.Filter
 import br.andrew.sap.infrastructure.odata.NextLink
 import br.andrew.sap.infrastructure.odata.OData
 import br.andrew.sap.infrastructure.odata.Parameter
-import br.andrew.sap.model.sap.Session
 import br.andrew.sap.model.envrioments.SapEnvrioment
 import br.andrew.sap.services.AuthService
 import org.springframework.http.RequestEntity
@@ -18,10 +17,6 @@ class SqlQueriesService(
     private val authService: AuthService
 ) {
 
-    private fun session() : Session {
-        return authService.getToken(env.getLogin())
-    }
-
     private val url = env.host+"/b1s/v1"
 
     fun execute(viewName: String, p : Parameter): OData? {
@@ -30,19 +25,23 @@ class SqlQueriesService(
 
     fun execute(viewName : String, parameters : List<Parameter> = listOf()): OData? {
         val parametros = if(parameters.isNotEmpty()) "?"+getParameter(parameters) else ""
-        val request = RequestEntity
-            .get("$url/SQLQueries('$viewName')/List$parametros")
-            .header("cookie","B1SESSION=${session().sessionId}")
-            .build()
-        return restTemplate.exchange(request, OData::class.java).body
+        return authService.executeWithValidSession(env.getLogin()) { session ->
+            val request = RequestEntity
+                .get("$url/SQLQueries('$viewName')/List$parametros")
+                .header("cookie","B1SESSION=${session.sessionId}")
+                .build()
+            restTemplate.exchange(request, OData::class.java).body
+        }
     }
 
     fun nextLink(nextLink : String): OData? {
-        val request = RequestEntity
-            .get("$url/$nextLink")
-            .header("cookie","B1SESSION=${session().sessionId}")
-            .build()
-        return restTemplate.exchange(request, OData::class.java).body
+        return authService.executeWithValidSession(env.getLogin()) { session ->
+            val request = RequestEntity
+                .get("$url/$nextLink")
+                .header("cookie","B1SESSION=${session.sessionId}")
+                .build()
+            restTemplate.exchange(request, OData::class.java).body
+        }
     }
 
     fun getParameter(p : List<Parameter>) : String{

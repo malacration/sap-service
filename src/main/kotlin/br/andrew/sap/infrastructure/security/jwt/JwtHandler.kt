@@ -20,7 +20,12 @@ class JwtHandler(jwtSecret : JwtSecretBean) {
         val origin = UserOriginEnum.valueOf(claims.get("origin").toString())
         val username = claims.get("username").toString()
         val emailAdress = claims.get("emailAddress").toString()
-        return User(claims.id, claims.subject,origin,username,emailAdress,"none",authorities)
+
+        val filiais = if(claims.get("bussinesPlace") == null)
+            listOf<Int>()
+        else
+            (claims.get("bussinesPlace") as List<Int>)
+        return User(claims.id, claims.subject,origin,username,emailAdress,"none",filiais,authorities)
     }
 
     fun getToken(user : User) : Token {
@@ -31,6 +36,7 @@ class JwtHandler(jwtSecret : JwtSecretBean) {
             .claim("origin",user.origin)
             .claim("username",user.username)
             .claim("emailAddress",user.emailAddress)
+            .claim("bussinesPlace",user.bussinesPlace)
             .signWith(secretKey)
             .compact();
         return Token(strTokne)

@@ -19,6 +19,10 @@ class BussinessPlaceService(
         return "/b1s/v1/BusinessPlaces"
     }
 
+    open fun getAllBusinessPlaces(): List<BussinessPlace> {
+        return getAll(BussinessPlace::class.java)
+    }
+
     fun getFilialBySalesPerson(idVendedor : Int): List<Branch> {
         return sqlQuerysServices.execute("filiais-vendedor.sql",Parameter("vendedor",idVendedor))!!.tryGetValues<Branch>()
     }

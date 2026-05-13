@@ -5,10 +5,9 @@ import br.andrew.sap.model.sap.documents.base.Document
 import br.andrew.sap.model.sap.documents.base.Installment
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertThrows
-import java.lang.Exception
 import java.text.SimpleDateFormat
 import java.time.LocalDate
+import java.time.LocalTime
 import java.time.ZoneId
 import java.util.*
 
@@ -64,16 +63,24 @@ class RequestQrCodeTests {
     }
 
     @Test
-    fun dataHoraVencidoDeveDarErro(){
-        val erro = assertThrows<Exception> {
+    fun gerarNovaChavePix_deveSanitizarControleDeConsulta() {
+        val vencimento = LocalDate.now().plusDays(2)
+        installment.U_pix_proxima_consulta_em = "2026-03-19T10:00:00"
+        installment.U_pix_consultar_ate = "2026-03-19T12:00:00"
+
+        document.setPix(
             RequestPixDueDate(
                 installment.createExternalIdentifier(document),
                 ContaUzziPayPix().also { it.chavePix = "" },
                 100.00.toBigDecimal(),
-                LocalDate.now().plusDays(-10),
+                vencimento,
                 player,
-                "1")
-        }
-        Assertions.assertTrue((erro.message ?: "").contains("vencimento não pode ser menor que a data atual"))
+                "1"
+            ),
+            DataRetonroPixQrCode(RetonroPixQrCode("pix", "https://pix", "ref-456", null))
+        )
+
+        Assertions.assertTrue(!installment.U_pix_proxima_consulta_em.isNullOrBlank())
+        Assertions.assertEquals(vencimento.atTime(LocalTime.MAX).toString(), installment.U_pix_consultar_ate)
     }
 }

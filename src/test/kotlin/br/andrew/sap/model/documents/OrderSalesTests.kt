@@ -4,12 +4,20 @@ import br.andrew.sap.model.sap.documents.OrderSales
 import br.andrew.sap.model.sap.documents.base.Product
 import br.andrew.sap.model.sap.documents.futura.ItemRetirada
 import br.andrew.sap.model.sap.documents.futura.PedidoRetirada
+import br.andrew.sap.model.self.vendafutura.Contrato
 import br.andrew.sap.model.self.vendafutura.ContratoParse
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 
 class OrderSalesTests {
 
+    fun fakeAddLineId(contrato : Contrato){
+        var i = 1
+        contrato.itens.forEach {
+            it.LineId = i
+            i++
+        }
+    }
 
     @Test
     fun getQuotationVendaFuturaTest(){
@@ -27,8 +35,9 @@ class OrderSalesTests {
             it.cardName = "windson"
         }
         val contrato = ContratoParse.parse(order)
+        fakeAddLineId(contrato)
         Assertions.assertEquals(100.00,order.totalDespesaAdicional().toDouble())
-        val retirada = PedidoRetirada(50, listOf(ItemRetirada("item",50.00)))
+        val retirada = PedidoRetirada(50, listOf(ItemRetirada("item",50.00,1)))
         val resultado = retirada.parse(contrato,5,null,order)
         Assertions.assertEquals(50.00,resultado.totalDespesaAdicional().toDouble())
     }
@@ -42,6 +51,7 @@ class OrderSalesTests {
             it.DiscountPercent = 0.0
             it.CommisionPercent = 0.0
             it.MeasureUnit = "un"
+            it.LineNum = 1
         })
         val order = OrderSales("", "", produtos, "4").also {
             it.frete = 75.00  // Frete inicial
@@ -49,11 +59,12 @@ class OrderSalesTests {
             it.cardName = "mario"
         }
         val contrato = ContratoParse.parse(order)
+        fakeAddLineId(contrato)
         // Testa o total da despesa inicial (deve ser igual ao frete do pedido de venda)
         Assertions.assertEquals(75.00, order.totalDespesaAdicional().toDouble(), "Falha ao verificar o frete inicial")
 
         // Pedido de retirada proporcional (metade da quantidade)
-        val retirada = PedidoRetirada(50, listOf(ItemRetirada("item1", 50.00)))
+        val retirada = PedidoRetirada(50, listOf(ItemRetirada("item1", 50.00,1)))
         val resultado = retirada.parse(contrato,5,null,order)
 
         // O frete proporcional deve ser a metade do frete original (75 / 2 = 37.50)
@@ -69,6 +80,7 @@ class OrderSalesTests {
             it.DiscountPercent = 0.0
             it.CommisionPercent = 0.0
             it.MeasureUnit = "un"
+            it.LineNum = 1
         })
         val order = OrderSales("", "", produtos, "5").also {
             it.frete = 123.45  // Frete que pode gerar arredondamento
@@ -76,23 +88,20 @@ class OrderSalesTests {
             it.cardName = "jose"
         }
         val contrato = ContratoParse.parse(order)
-
+        fakeAddLineId(contrato)
         // Testa o frete inicial
         Assertions.assertEquals(123.45, order.totalDespesaAdicional().toDouble(), "Falha ao verificar o frete inicial com valor fracionado")
 
         // Pedido de retirada que retira 60 de 200 itens (30%)
-        val retirada = PedidoRetirada(60, listOf(ItemRetirada("item2", 60.00)))
+        val retirada = PedidoRetirada(60, listOf(ItemRetirada("item2", 60.00,1)))
         val resultado = retirada.parse(contrato,9,null,order)
         // Frete proporcional (123.45 * (60/200) = 37.035)
         Assertions.assertEquals(37.03, resultado.totalDespesaAdicional().toDouble(), "Falha ao verificar o frete com arredondamento")
 
-        val retirada2 = PedidoRetirada(60, listOf(ItemRetirada("item2", 140.0)))
+        val retirada2 = PedidoRetirada(60, listOf(ItemRetirada("item2", 140.0,1)))
         val resultado2 = retirada2.parse(contrato,9,null,order)
         Assertions.assertEquals(86.41, resultado2.totalDespesaAdicional().toDouble(), "Falha ao verificar o frete com arredondamento")
 
-
         Assertions.assertEquals(123.44, resultado2.totalDespesaAdicional().plus(resultado.totalDespesaAdicional()).toDouble(), "Falha ao verificar o frete com arredondamento")
-
-
     }
 }

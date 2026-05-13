@@ -4,6 +4,7 @@ package br.andrew.sap.controllers
 import br.andrew.sap.controllers.documents.QuotationsController
 import br.andrew.sap.infrastructure.odata.*
 import br.andrew.sap.model.authentication.User
+import br.andrew.sap.model.enums.Cancelled
 import br.andrew.sap.model.payment.PaymentDueDates
 import br.andrew.sap.model.sap.documents.CreditNotes
 import br.andrew.sap.model.sap.documents.DocumentStatus
@@ -29,7 +30,6 @@ import br.andrew.sap.services.document.DownPaymentService
 import br.andrew.sap.services.document.InvoiceService
 import br.andrew.sap.services.document.OrdersService
 import br.andrew.sap.services.pricing.ComissaoService
-import io.swagger.v3.oas.annotations.Parameter
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.ResponseEntity
@@ -62,11 +62,12 @@ class ContratoVendaFuturaController(
         @RequestParam(value = "status", defaultValue = "aberto") status : Status,
         @RequestParam(value = "idContrato", defaultValue = "-1") idContrato : Int,
         @RequestParam(value = "filial", defaultValue = "-1") filial : Int,
+        @RequestParam(value = "cliente", defaultValue = "-1") cliente : String,
             ): ResponseEntity<NextLink<Contrato>> {
         if(auth !is User)
             return ResponseEntity.noContent().build()
 
-        val resultado = service.getContratos(auth,status, idContrato, filial)?.tryGetNextValues<Contrato>()
+        val resultado = service.getContratos(auth, status, idContrato, filial, cliente)?.tryGetNextValues<Contrato>()
         return ResponseEntity.ok(resultado)
     }
 
@@ -97,7 +98,9 @@ class ContratoVendaFuturaController(
 
     @GetMapping("/entregas/{idContrato}")
     fun entregas(@PathVariable idContrato: Int): List<Document> {
-        val filter = Filter(Predicate("U_venda_futura", idContrato, Condicao.EQUAL),
+        val filter = Filter(
+            Predicate("Cancelled", Cancelled.tNO, Condicao.EQUAL),
+            Predicate("U_venda_futura", idContrato, Condicao.EQUAL),
             Predicate("DownPaymentAmountSC", 0, Condicao.EQUAL))
         return listOf(creditNotesService,invoiceService)
             .map { it.getAll(Document::class.java,filter) }
@@ -111,18 +114,15 @@ class ContratoVendaFuturaController(
 
     @PostMapping("pedido-retirada")
     fun pedidoRetirada(@RequestBody pedidoRetirada : PedidoRetirada, auth : Authentication) : ResponseEntity<Document?> {
-        if(auth !is User)
-            return ResponseEntity.noContent().build()
-
         val contrato = service.get(Filter(
             Predicate("DocEntry",pedidoRetirada.docEntryVendaFutura,Condicao.EQUAL)
         )).tryGetValues<Contrato>().firstOrNull() ?: throw  Exception("O contrato nao foi encontrado")
+        val boletos = adiantamentoService.getByContratoVendaFutura(contrato.DocEntry!!)
+        if (boletos.isEmpty())
+            throw Exception("Não existem adiantamentos criados para o contrato ${contrato.DocEntry}. Emita os boletos antes de realizar a retirada.")
+        val boleto = boletos.last()
         val orderSales = orderService.getById(contrato.U_orderDocEntry).tryGetValue<OrderSales>()
-
-        val cotacao = pedidoRetirada.parse(contrato,utilizacaoEntregaVendaFutura,null,orderSales).also {
-            it.journalMemo = "Entrega de mercadoria ref a contrato Nº ${contrato.DocEntry}"
-            it.comments = it.journalMemo
-        }
+        val cotacao = pedidoRetirada.parse(contrato,utilizacaoEntregaVendaFutura,boleto.DocDueDate,orderSales)
         return ResponseEntity.ok(cotacaoController.saveForAngular(cotacao,auth))
     }
 

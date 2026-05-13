@@ -1,6 +1,9 @@
 package br.andrew.sap.services
 
 import br.andrew.sap.mock.Mocks
+import br.andrew.sap.model.logistica.PedidoUpdateLine
+import br.andrew.sap.services.abstracts.EntitiesService
+import br.andrew.sap.services.batch.BatchId
 import br.andrew.sap.services.batch.BatchList
 import br.andrew.sap.services.batch.BatchService
 import org.junit.jupiter.api.Assertions
@@ -13,6 +16,7 @@ import org.springframework.web.client.RestTemplate
 import org.mockito.kotlin.eq
 import org.springframework.http.RequestEntity
 import org.springframework.http.ResponseEntity
+import java.util.UUID
 
 
 class BatchServiceTest {
@@ -109,6 +113,117 @@ class BatchServiceTest {
         val retorno = BatchService(rest, Mocks.getSapEnvrioment(),Mocks.getBusinessPartnersService(),Mocks.getAuthService())
             .run(BatchList())
 
-        Assertions.assertEquals(4,retorno.size)
+        Assertions.assertEquals(3,retorno.size)
+    }
+
+    @Test
+    fun bachErrorNaoInventaDocNumQuandoContentIdNaoMapeiaParaPedidoReal() {
+        val batchId = UUID.randomUUID()
+        val saida = "--batchresponse_$batchId\n" +
+                "Content-Type: multipart/mixed; boundary=changesetresponse_test\n" +
+                "\n" +
+                "--changesetresponse_test\n" +
+                "Content-Type: application/http\n" +
+                "Content-Transfer-Encoding: binary\n" +
+                "Content-ID: 1\n" +
+                "\n" +
+                "HTTP/1.1 204 No Content\n" +
+                "\n" +
+                "--changesetresponse_test\n" +
+                "Content-Type: application/http\n" +
+                "Content-Transfer-Encoding: binary\n" +
+                "Content-ID: 99\n" +
+                "\n" +
+                "HTTP/1.1 400 Bad Request\n" +
+                "Content-Type: application/json;charset=utf-8\n" +
+                "\n" +
+                "{\n" +
+                "   \"error\" : {\n" +
+                "      \"code\" : \"-1\",\n" +
+                "      \"message\" : \"erro real do pedido\"\n" +
+                "   }\n" +
+                "}\n" +
+                "--changesetresponse_test--\n" +
+                "--batchresponse_$batchId--\n"
+
+        val rest = Mockito.mock(RestTemplate::class.java)
+
+        whenever(
+            rest.exchange(
+                any<RequestEntity<*>>(),
+                eq(String::class.java)
+            )
+        ).thenReturn(ResponseEntity.ok(saida))
+
+        val batchList = BatchList()
+            .add(br.andrew.sap.services.batch.BatchMethod.PATCH, TestBatchId("67521"), FakeEntityService())
+            .add(br.andrew.sap.services.batch.BatchMethod.PATCH, TestBatchId("70830"), FakeEntityService())
+
+        val erro = assertThrows<Exception> {
+            BatchService(rest, Mocks.getSapEnvrioment(), Mocks.getBusinessPartnersService(), Mocks.getAuthService())
+                .run(batchList)
+        }
+
+        Assertions.assertTrue(erro.message!!.contains("erro real do pedido"))
+    }
+
+    @Test
+    fun bachErrorNaoAtribuiPedidoEspecificoQuandoBatchTemMaisDeUmPedido() {
+        val saida = "--batchresponse_S8CsLgI6-Vy8a-5Zez-rbLi-H0M1AXEiT4yu\n" +
+                "Content-Type: application/http\n" +
+                "Content-Transfer-Encoding: binary\n" +
+                "Content-ID: 2\n" +
+                "\n" +
+                "HTTP/1.1 404 Not Found\n" +
+                "Content-Type: application/json;charset=utf-8\n" +
+                "Content-Length: 210\n" +
+                "OData-Version: 4.0\n" +
+                "\n" +
+                "{\n" +
+                "   \"error\" : {\n" +
+                "      \"code\" : \"-2028\",\n" +
+                "      \"details\" : [\n" +
+                "         {\n" +
+                "            \"code\" : \"\",\n" +
+                "            \"message\" : \"\"\n" +
+                "         }\n" +
+                "      ],\n" +
+                "      \"message\" : \"No matching records found (ODBC -2028)\"\n" +
+                "   }\n" +
+                "}\n" +
+                "--batchresponse_S8CsLgI6-Vy8a-5Zez-rbLi-H0M1AXEiT4yu--\n"
+
+        val rest = Mockito.mock(RestTemplate::class.java)
+
+        whenever(
+            rest.exchange(
+                any<RequestEntity<*>>(),
+                eq(String::class.java)
+            )
+        ).thenReturn(ResponseEntity.ok(saida))
+
+        val batchList = BatchList()
+            .add(br.andrew.sap.services.batch.BatchMethod.PATCH, TestBatchId("67521"), FakeEntityService())
+            .add(br.andrew.sap.services.batch.BatchMethod.PATCH, TestBatchId("70830"), FakeEntityService())
+
+        val erro = assertThrows<Exception> {
+            BatchService(rest, Mocks.getSapEnvrioment(), Mocks.getBusinessPartnersService(), Mocks.getAuthService())
+                .run(batchList)
+        }
+
+        Assertions.assertTrue(erro.message!!.contains("No matching records found (ODBC -2028)"))
+        Assertions.assertFalse(erro.message!!.contains("Pedido 70830"))
+    }
+
+    private class TestBatchId(private val id: String) : BatchId {
+        override fun getId(): String = id
+    }
+
+    private class FakeEntityService : EntitiesService<Any>(
+        Mocks.getSapEnvrioment(),
+        Mockito.mock(RestTemplate::class.java),
+        Mocks.getAuthService()
+    ) {
+        override fun path(): String = "/b1s/v1/Orders"
     }
 }

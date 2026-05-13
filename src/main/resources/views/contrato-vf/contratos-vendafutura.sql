@@ -24,6 +24,7 @@ where
     ("@AR_CONTRATO_FUTURO"."U_vendedor" = :vendedor or "@AR_CONTRATO_FUTURO"."U_vendedor" < :superVendedor)
     AND ("@AR_CONTRATO_FUTURO"."DocEntry" = :idContrato or "@AR_CONTRATO_FUTURO"."DocEntry" < :idContratoIsFilter)
     AND ("@AR_CONTRATO_FUTURO"."U_filial" = :filial or "@AR_CONTRATO_FUTURO"."U_filial" < :filialIsFilter)
+    AND ("@AR_CONTRATO_FUTURO"."U_cardCode" = :cliente OR "@AR_CONTRATO_FUTURO"."U_cardCode" < :clienteIsFilter)
     AND ("@AR_CONTRATO_FUTURO"."U_status" = :status)
 group by
 	"@AR_CONTRATO_FUTURO"."DocEntry",

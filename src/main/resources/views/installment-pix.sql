@@ -9,7 +9,9 @@ SELECT
 	inst."InsTotal",
 	inst."U_pix_textContent",
 	inst."U_pix_link",
-	inst."U_pix_reference"
+	inst."U_pix_reference",
+	inst."U_pix_proxima_consulta_em",
+	inst."U_pix_consultar_ate"
 FROM
 	INV6 inst
 	LEFT JOIN OINV inv on(inv."DocEntry" = inst."DocEntry")

@@ -1,7 +1,6 @@
 package br.andrew.sap.services
 
 import br.andrew.sap.infrastructure.odata.OData
-import br.andrew.sap.model.sap.Session
 import br.andrew.sap.model.sap.documents.base.Document
 import br.andrew.sap.model.envrioments.SapEnvrioment
 import org.springframework.http.RequestEntity
@@ -13,17 +12,16 @@ class TaxDocumentsService(val env : SapEnvrioment,
                           val restTemplate: RestTemplate,
                           val authService: AuthService){
 
-    fun session(): Session {
-        return authService.getToken(env.getLogin())
-    }
-
     fun getKeyNfe(docEntry : String) : OData {
         val url = env.host+"/b1s/v1/SQLQueries"
-        val pagamentos = restTemplate.exchange(
-            RequestEntity
-                .get("$url('invoice-fiscal-info.sql')/List?DocEntry=$docEntry")
-                .header("cookie","B1SESSION=${session().sessionId}")
-                .build(), OData::class.java).body!!
+        val pagamentos = authService.executeWithValidSession(env.getLogin()) { session ->
+            restTemplate.exchange(
+                RequestEntity
+                    .get("$url('invoice-fiscal-info.sql')/List?DocEntry=$docEntry")
+                    .header("cookie","B1SESSION=${session.sessionId}")
+                    .build(), OData::class.java
+            ).body!!
+        }
         return pagamentos
     }
 

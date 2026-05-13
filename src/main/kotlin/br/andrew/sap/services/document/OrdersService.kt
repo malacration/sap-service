@@ -1,8 +1,12 @@
 package br.andrew.sap.services.document
 
+import org.slf4j.LoggerFactory
 import br.andrew.sap.infrastructure.odata.*
 import br.andrew.sap.model.envrioments.SapEnvrioment
 import br.andrew.sap.model.sap.Localidade
+import br.andrew.sap.model.authentication.User
+import br.andrew.sap.model.dto.OrderSalesLineItem
+import br.andrew.sap.model.dto.OrderSalesListItem
 import br.andrew.sap.model.sap.documents.DocumentStatus
 import br.andrew.sap.model.sap.documents.OrderSales
 import br.andrew.sap.model.sap.documents.base.Document
@@ -20,6 +24,8 @@ import org.springframework.web.client.RestTemplate
 @Service
 class OrdersService(val sqlQueriesService : SqlQueriesService, env: SapEnvrioment, restTemplate: RestTemplate, authService: AuthService) :
         EntitiesService<Document>(env, restTemplate, authService), ClosableEntitiesService<OrderSales> {
+    val logger = LoggerFactory.getLogger(OrdersService::class.java)
+
     override fun path(): String {
         return "/b1s/v1/Orders"
     }
@@ -39,12 +45,16 @@ class OrdersService(val sqlQueriesService : SqlQueriesService, env: SapEnvriomen
         return get(filter).tryGetPageValues<Document>(page)
     }
 
-    fun fullSearchTextFallBack(dataInicial: String, dataFinal: String, filial: Int, localidade: String): NextLink<OrderSales>? {
+    fun fullSearchTextFallBack(dataInicial: String, dataFinal: String, filial: Int, localidade: String,
+                               vendedor : Int?): NextLink<OrderSales>? {
         val parameters = listOf(
             Parameter("startDate", dataInicial),
             Parameter("finalDate", dataFinal),
             Parameter("filial", filial),
-            Parameter("localidade", localidade)
+            Parameter("localidade", localidade),
+            Parameter("vendedor", vendedor?:-2),
+
+                Parameter("vendedorDisable", if(vendedor == null)  -2 else Int.MAX_VALUE)
         )
         return sqlQueriesService
             .execute("pedido-search.sql", parameters)
@@ -64,13 +74,53 @@ class OrdersService(val sqlQueriesService : SqlQueriesService, env: SapEnvriomen
             ?.tryGetNextValues()
     }
 
-    fun SearchLocality(Code: Int): NextLink<Localidade>? {
+    fun SearchLocality(search: String): NextLink<Localidade>? {
+        val titleCase = search.split(" ").joinToString(" ") { it.lowercase().replaceFirstChar { c -> c.uppercase() } }
+        val searchParam = "%${titleCase}%"
+        logger.info("SearchLocality: entrada='$search' parametro='$searchParam'")
         val parameters = listOf(
-            Parameter("Code", Code)
+            Parameter("search", searchParam)
         )
         return sqlQueriesService
             .execute("search-locality.sql", parameters)
             ?.tryGetNextValues()
+    }
+
+    fun listar(auth: User, status: DocumentStatus?, filial: Int?, cliente: String?, data: String?): NextLink<OrderSalesListItem> {
+        val statusDb = when (status) {
+            DocumentStatus.bost_Open -> "O"
+            DocumentStatus.bost_Close -> "C"
+            else -> "X"
+        }
+        val superVendedor = if (auth.isListAllBusinessPartner()) Int.MAX_VALUE else -1
+        val filialIsFilter = if (filial != null) -1 else Int.MAX_VALUE
+        val clienteIsFilter = if (cliente != null) "" else "~"
+        // statusIsFilter: "~" bypasses (DocStatus < '~' is always true); "" blocks (DocStatus < '' is never true)
+        val statusIsFilter = if (status == null) "~" else ""
+
+        val parameters = listOf(
+            Parameter("superVendedor", superVendedor),
+            Parameter("vendedor", auth.id),
+            Parameter("status", statusDb),
+            Parameter("statusIsFilter", statusIsFilter),
+            Parameter("filial", filial ?: -1),
+            Parameter("filialIsFilter", filialIsFilter),
+            Parameter("cliente", cliente ?: "-1"),
+            Parameter("clienteIsFilter", clienteIsFilter),
+            Parameter("data", data ?: "2000-01-01"),
+        )
+        return sqlQueriesService.execute("pedidos-listar.sql", parameters)
+            ?.tryGetNextValues<OrderSalesListItem>() ?: NextLink(emptyList(), "")
+    }
+
+    fun listarLinhas(docEntry: Int): List<OrderSalesLineItem> {
+        return sqlQueriesService.execute("pedido-linhas.sql", Parameter("docEntry", docEntry))
+            ?.tryGetValues<OrderSalesLineItem>() ?: emptyList()
+    }
+
+    fun listarNextLink(nextLink: String): NextLink<OrderSalesListItem> {
+        return sqlQueriesService.nextLink(nextLink)
+            ?.tryGetNextValues<OrderSalesListItem>() ?: NextLink(emptyList(), "")
     }
 
     fun getPedidosBy(idOrdemCarregamento: Int): List<OrderSales> {

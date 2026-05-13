@@ -18,7 +18,7 @@ class FieldMd(val name : String,
 
     var size : Int? = type?.size
     var ValidValuesMD : List<ValuesMd> = listOf()
-    var subType : String? = if(type == DbType.db_Float) "st_Measurement" else null
+    var subType : DbSubType? = if(type == DbType.db_Float) DbSubType.st_Measurement else DbSubType.st_None
     var defaultValue: String? = null
     var editSize : Int? = null
     @JsonProperty("FieldID")
@@ -28,14 +28,6 @@ class FieldMd(val name : String,
     var LinkedTable : String? = null
     var tableName = tableName.uppercase()
 
-}
-
-enum class DbType(val size : Int?){
-    db_Alpha(254),
-    db_Memo(null), //Observacao
-    db_Numeric(null),
-    db_Float(null),
-    db_Date(null);
 }
 
 @JsonNaming(PropertyNamingStrategies.UpperCamelCaseStrategy::class)

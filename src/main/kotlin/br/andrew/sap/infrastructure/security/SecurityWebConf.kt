@@ -74,6 +74,9 @@ class SecurityWebConf(
                     OneTimePasswordAuthenticationFilter::class.java)
                 .authorizeHttpRequests { it
                     .requestMatchers(
+                        "/",
+                        "/ws",
+                        "/ws/**",
                         "/otp/login",
                         "/state**/**",
                         "/city**/**",

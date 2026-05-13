@@ -25,7 +25,10 @@ interface UserSource {
     }
 
     @JsonIgnore
+    fun getBussinesPlace() : List<Int>
+
+    @JsonIgnore
     fun getUser(): User {
-        return User(getId(),getFullName(),getOrigin(),getUserName(),getEmailAdress(),getPassword())
+        return User(getId(),getFullName(),getOrigin(),getUserName(),getEmailAdress(),getPassword(),getBussinesPlace())
     }
 }

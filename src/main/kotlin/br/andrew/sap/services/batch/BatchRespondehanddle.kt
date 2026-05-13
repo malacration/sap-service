@@ -23,14 +23,18 @@ class BatchRespondeHandler {
             for (changeset in changesets) {
                 // Regex pra achar status code
                 val statusCodeRegex = """HTTP\/1\.1\s+(\d{3})""".toRegex()
-                // Regex para pegar código de erro e mensagem
                 val errorCodeRegex = """"code"\s*:\s*"([^"]+)"""".toRegex()
                 val errorMessageRegex = """"message"\s*:\s*"([^"]+)"""".toRegex()
+                val errorValueRegex = """"value"\s*:\s*"([^"]+)"""".toRegex()
+                val contentIdRegex = """Content-ID:\s*(\d+)""".toRegex(RegexOption.IGNORE_CASE)
 
-                // Captura o status code
                 val statusCode = statusCodeRegex.find(changeset)
                     ?.groupValues?.get(1)
                     ?.toIntOrNull() ?: 0
+
+                if (statusCode == 0) continue
+
+                val contentId = contentIdRegex.find(changeset)?.groupValues?.get(1)?.toIntOrNull()
 
                 val isSuccess = statusCode in 200..299
 
@@ -39,12 +43,14 @@ class BatchRespondeHandler {
                         BatchResponse(
                             statusCode = statusCode,
                             body = changeset,
-                            success = true
+                            success = true,
+                            contentId = contentId
                         )
                     )
                 } else {
-                    var errCode = errorCodeRegex.find(changeset)?.groupValues?.get(1)
-                    var errMsg = errorMessageRegex.find(changeset)?.groupValues?.get(1)
+                    val errCode = errorCodeRegex.find(changeset)?.groupValues?.get(1)
+                    val errMsg = errorMessageRegex.find(changeset)?.groupValues?.get(1)
+                        ?: errorValueRegex.find(changeset)?.groupValues?.get(1)
 
                     results.add(
                         BatchResponse(
@@ -52,7 +58,8 @@ class BatchRespondeHandler {
                             body = changeset,
                             success = false,
                             errorCode = errCode,
-                            errorMessage = errMsg
+                            errorMessage = errMsg,
+                            contentId = contentId
                         )
                     )
                 }

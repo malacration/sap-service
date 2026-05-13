@@ -55,6 +55,8 @@ abstract class DocumentLines(
     var FatherType : String? = null
 
     var BatchNumbers: List<BatchStock> = listOf()
+    @JsonProperty("CFOPCode")
+    var CFOPCode : String? = null
 
 
     @JsonIgnore
@@ -133,6 +135,10 @@ abstract class DocumentLines(
         this.BaseLine = this.LineNum
         this.BaseEntry = this.DocEntry
         this.DocEntry = null
-        this.BatchNumbers.forEach { it.toInvoice() }
+        this.BatchNumbers.forEach {
+            it.BaseLineNumber = this.BaseLine
+            it.ItemCode = this.ItemCode
+            it.toInvoice()
+        }
     }
 }

@@ -25,7 +25,10 @@ class LocalidadeService(val sqlQueriesService : SqlQueriesService, env : SapEnvr
     fun fullSearchTextFallBack(fullText: String, user: User): NextLink<Localidade> {
         if(fullText.startsWith("SQLQueries('localidade-search.sql')"))
             return sqlQueriesService.nextLink(fullText)!!.tryGetNextValues()
-        val busca = if(fullText.toDoubleOrNull() == null )  fullText.replace("*","%") else CpfCnpj(fullText).getWithMask();
+        val busca = if(fullText.toDoubleOrNull() == null)
+            fullText.split(" ").joinToString(" ") { it.lowercase().replaceFirstChar { c -> c.uppercase() } }.replace("*", "%")
+        else
+            CpfCnpj(fullText).getWithMask()
         val parametros = listOf(
             Parameter("valor","'%${busca}%'"),
         )

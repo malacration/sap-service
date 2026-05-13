@@ -14,4 +14,5 @@ class LastPrice(
     val LastPurPrc : BigDecimal = BigDecimal.ZERO,
     val LstEvlPric : BigDecimal = BigDecimal.ZERO,
     val AvgPrice : BigDecimal = BigDecimal.ZERO,
+    val U_productionCost : BigDecimal = BigDecimal.ZERO,
 )

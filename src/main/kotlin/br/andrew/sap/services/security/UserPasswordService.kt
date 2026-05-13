@@ -1,7 +1,6 @@
 package br.andrew.sap.services.security
 
 import br.andrew.sap.infrastructure.odata.OData
-import br.andrew.sap.model.sap.SalePerson
 import br.andrew.sap.model.authentication.User
 import br.andrew.sap.model.authentication.UserOriginEnum
 import br.andrew.sap.model.authentication.UserPassword
@@ -11,7 +10,6 @@ import br.andrew.sap.services.MailService
 import br.andrew.sap.services.MyMailMessage
 import br.andrew.sap.services.SalesPersonsService
 import org.slf4j.LoggerFactory
-import org.springframework.beans.factory.annotation.Value
 import org.springframework.security.authentication.BadCredentialsException
 import org.springframework.security.core.userdetails.UsernameNotFoundException
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
@@ -19,7 +17,7 @@ import org.springframework.stereotype.Service
 
 @Service
 class UserPasswordService(
-    val service : SalesPersonsService,
+    val vendedorService : SalesPersonsService,
     val roleBindService: RoleBindService,
     val mailService : MailService,
     val employerService : EmployeesInfoService
@@ -30,7 +28,7 @@ class UserPasswordService(
     fun login(request : UserPassword) : User{
         logger.info("Tentando fazer login para ${request.username}")
         val storageUser : User = try {
-             service.getByUserName(request.username)
+             vendedorService.getByUserName(request.username)
         }catch (e : Exception){
             try {
                 employerService.getByUserName(request.username)
@@ -65,7 +63,7 @@ class UserPasswordService(
         val isChangePassword = user.password == rawNewPassword
 
         val service : UserSourceService = if(user.origin == UserOriginEnum.SalePerson){
-            this.service
+            this.vendedorService
         }
         else if(user.origin == UserOriginEnum.EmployeesInfo){
             this.employerService

@@ -15,4 +15,10 @@ class ProductTest {
         Assertions.assertEquals(1230.00+11.25-45,produto.total().toDouble()-produto.presumeDesonerado(17.5))
         Assertions.assertEquals("10",produto.ItemCode)
     }
+
+    @Test
+    fun produtoDeveTerUsageNullPadrao(){
+        val produto = Product("10","10","145")
+        Assertions.assertEquals(null,produto.Usage)
+    }
 }

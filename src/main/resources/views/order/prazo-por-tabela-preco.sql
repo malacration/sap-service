@@ -13,3 +13,4 @@ FROM
 	INNER JOIN "OCTG" ON cond."U_prazo" = "OCTG"."GroupNum"
 WHERE
 	"OPLN"."ListNum" = :tabelaPreco
+	AND "OCTG"."U_Rov_EnviarForca" = 1

@@ -2,6 +2,7 @@ package br.andrew.sap.model.sap.documents.base
 
 import br.andrew.sap.model.enums.Cancelled
 import br.andrew.sap.model.WarehouseDefault
+import br.andrew.sap.model.enums.YesNo
 import br.andrew.sap.model.sap.documents.DocumentStatus
 import br.andrew.sap.model.forca.EnderecoId
 import br.andrew.sap.model.sap.DebOrCredt
@@ -12,6 +13,7 @@ import br.andrew.sap.model.sap.documents.base.adiantamento.DownPaymentsToDraw
 import br.andrew.sap.model.self.vendafutura.ContratoParse.Companion.parse
 import br.andrew.sap.model.uzzipay.DataRetonroPixQrCode
 import br.andrew.sap.model.uzzipay.RequestPixDueDate
+import br.andrew.sap.model.uzzipay.RequestPixImmediate
 import br.andrew.sap.model.uzzipay.Transaction
 import br.andrew.sap.services.stock.ItemsService
 import br.andrew.sap.services.batch.BatchId
@@ -34,7 +36,7 @@ import kotlin.collections.mapIndexed
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 open class Document(val CardCode : String,
                     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "YYY-MM-dd", timezone = "UTC")
-                    val DocDueDate : String?,
+                    var DocDueDate : String?,
                     val DocumentLines : List<DocumentLines>,
                     private val BPL_IDAssignedToInvoice : String) : ReconciliationListRows, BatchId{
 
@@ -52,12 +54,14 @@ open class Document(val CardCode : String,
     var DocTotal : String? = null
     var discountPercent : Double? = null
     var totalDiscount : String? = null
+    var ReserveInvoice : YesNo? = null
     var SequenceSerial : String? = null
     var sequenceModel : String? = null //->
     var CreateDate : String? = null
     var SeriesString : String? = null
     var U_ChaveAcesso : String? = null
     var DflWhs: String? = null
+    var U_faturadoOrdemCarregamento : Int = 0
 
     @JsonProperty("U_id_pedido_forca")
     var u_id_pedido_forca: String? = null
@@ -73,7 +77,7 @@ open class Document(val CardCode : String,
     var AttachmentEntry : Int? = null
 
     @JsonProperty("DocumentStatus")
-    val DocumentStatus : DocumentStatus? = null
+    var DocumentStatus : DocumentStatus? = null
     var documentAdditionalExpenses : MutableList<AdditionalExpenses> = mutableListOf()
     var AddressExtension : AddressExtension? = null
     var shipToCode : String? = null
@@ -87,6 +91,16 @@ open class Document(val CardCode : String,
     var TransNum : Int? = null
     var SequenceCode : Int? = null
     var U_TX_DocEntryRef : Int? = null
+    var U_TX_DocTypeRef : Int? = null
+    var ClosingRemarks: String? = null
+
+
+    fun getOrCreateTaxExtension(): TaxExtension {
+        if (this.TaxExtension == null) {
+            this.TaxExtension = TaxExtension()
+        }
+        return this.TaxExtension!!
+    }
 
     @JsonProperty("TaxExtension")
     var TaxExtension: TaxExtension? = null
@@ -192,15 +206,21 @@ open class Document(val CardCode : String,
         return "Document(CardCode='$CardCode', Branch='$BPL_IDAssignedToInvoice', docEntry=$docEntry, docNum=$docNum, pedido_forca=$u_id_pedido_forca)"
     }
 
-    fun setPix(request: RequestPixDueDate, chave: DataRetonroPixQrCode) {
+    fun setPix(request: RequestPixDueDate, chave: DataRetonroPixQrCode): Installment? {
         if(request.docEntry() != docEntry)
             throw Exception("O qrCode nao pertence a esse documento")
-        this.documentInstallments!!.find { it.InstallmentId == request.getInstallmentId() }?.also {
-            it.U_QrCodePix = chave.data.textContent
-            it.U_pix_textContent = chave.data.textContent
-            it.U_pix_link = chave.data.link
-            it.U_pix_reference = chave.data.reference
-        }
+        return this.documentInstallments
+            ?.find { it.InstallmentId == request.getInstallmentId() }
+            ?.setPix(request, chave)
+    }
+
+    fun setPix(request: RequestPixImmediate, chave: DataRetonroPixQrCode): Installment? {
+        if(docEntry != null && request.docEntry() != docEntry)
+            throw Exception("O qrCode nao pertence a esse documento")
+        val installmentId = request.getInstallmentId() as Int
+        val installment = this.documentInstallments?.find { it.InstallmentId == installmentId }
+            ?: this.documentInstallments?.firstOrNull().takeIf { docEntry == null && installmentId == 0 }
+        return installment?.setPix(request, chave)
     }
 
     fun getInstallmentBy(transaction: Transaction): Installment? {
@@ -270,4 +290,3 @@ open class Document(val CardCode : String,
     }
 
 }
-

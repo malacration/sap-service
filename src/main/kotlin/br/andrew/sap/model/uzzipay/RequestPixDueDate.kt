@@ -12,37 +12,41 @@ class RequestPixDueDate(
     val externalIdentifier: String,
     private val conta : ContaUzziPayPix,
     private val amount : BigDecimal,
-    private val dueDate : LocalDate,
-    val Payer : Payer,
+    dueDate: LocalDate,
+    val payer : Payer,
     private val cnpj: String,
     val keyType : Type = Type.EVP,
     val qrCodePurposeType : String = "BILLET",
 ) {
+    private val dueDate: LocalDate = if (LocalDate.now().isAfter(dueDate)) {
+        LocalDate.now().plusDays(1)
+    } else {
+        dueDate
+    }
+
     constructor(externalIdentifier: String,
                 conta: ContaUzziPayPix,
                 amount: BigDecimal,
-                dueDate: String, Payer: Payer, cnpj: String,
+                dueDate: String, payer: Payer, cnpj: String,
                 keyType: Type = Type.EVP) :
             this(externalIdentifier,conta,amount,
                 LocalDate.parse(dueDate,DateTimeFormatter.ofPattern("yyy-MM-dd")),
-                Payer,
+                payer,
                 cnpj,keyType)
 
-    init{
-        if (LocalDate.now() > dueDate)
-            throw Exception("Data de vencimento não pode ser menor que a data atual")
-
-    }
+    init { }
     val key = conta.chavePix
 
     @JsonIgnoreProperties
     fun getContaSelecioanda(contas : List<ContaUzziPayPix>): ContaUzziPayPix {
         return contas.first { it.cnpj == conta.cnpj }
     }
+
     @JsonIgnoreProperties
     fun getCnpj() : String {
         return cnpj
     }
+
     fun getAmount(): String {
         return "%.2f".format(Locale.ENGLISH, amount)
     }
@@ -72,9 +76,4 @@ class RequestPixDueDate(
     }
 }
 
-enum class Type(val type: String) {
-    TaxId("TaxId"),
-    Email("Email"),
-    PhoneNumber("PhoneNumber"),
-    EVP("EVP")
-}
+
