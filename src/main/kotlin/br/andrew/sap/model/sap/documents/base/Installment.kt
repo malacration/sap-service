@@ -47,8 +47,8 @@ class Installment(
 
     var DocEntry : Int? = null
 
-    fun getReconciliationRow(transId : Int, transRowId : Int): InstallmentRow {
-        return InstallmentRow(transId, transRowId, total)
+    fun getReconciliationRow(transId : Int, transRowId : Int, shortName: String? = null): InstallmentRow {
+        return InstallmentRow(transId, transRowId, total, shortName)
 
     }
 
@@ -220,7 +220,12 @@ class Installment(
 
 }
 
-class InstallmentRow(val _transId : Int, val _transRowId : Int, val ammount : Double) : ReconciliationRow{
+class InstallmentRow(
+    val _transId : Int,
+    val _transRowId : Int,
+    val ammount : Double,
+    val shortName: String? = null
+) : ReconciliationRow{
     @JsonIgnoreProperties
     override fun transNumReconciliation(): Int {
         return _transId
@@ -234,5 +239,10 @@ class InstallmentRow(val _transId : Int, val _transRowId : Int, val ammount : Do
     @JsonIgnoreProperties
     override fun reconcileAmount(): Double {
         return abs(ammount)
+    }
+
+    @JsonIgnoreProperties
+    override fun shortNameReconciliation(): String? {
+        return shortName
     }
 }

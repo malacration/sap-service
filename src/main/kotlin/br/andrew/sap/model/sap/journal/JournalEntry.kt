@@ -83,4 +83,8 @@ class JournalEntry(val journalEntryLines : List<JournalEntryLines>, val memo : S
             }
     }
 
+    override fun toString(): String {
+        return "JournalEntry(JdtNum=$JdtNum, memo='$memo')"
+    }
+
 }

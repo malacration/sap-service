@@ -1,6 +1,8 @@
 package br.andrew.sap.schedules.futura
 
 import JournalEntry
+import br.andrew.sap.model.sap.InternalReconciliations
+import br.andrew.sap.model.sap.InternalReconciliationOpenTransRow
 import br.andrew.sap.infrastructure.odata.Condicao
 import br.andrew.sap.infrastructure.odata.Filter
 import br.andrew.sap.infrastructure.odata.Predicate
@@ -98,12 +100,11 @@ class ConciliacaoVendaFuturaSchedule(
                                 .save(invoiceApropiacao)
                                 .tryGetValue<Document>()
 
+                            val internalRecon = InternalReconciliationsBuilder(
+                                journalReclassificado,
+                                apropriado,
+                            ).build()
                             try {
-                                val internalRecon = InternalReconciliationsBuilder(
-                                    journalReclassificado,
-                                    apropriado,
-                                ).build()
-
                                 val updateTransCode = UpdateTransactionCode(
                                     journalReclassificado.JdtNum.toString(),
                                     TransactionCodeTypes.VFEC
@@ -116,6 +117,16 @@ class ConciliacaoVendaFuturaSchedule(
                                 )
                                 batchService.run(batchList)
                             }catch (e : Exception){
+                                logger.error(
+                                    "Erro ao reconciliar apropriacao de adiantamento. {}",
+                                    reconciliationDebug(
+                                        journalReclassificado,
+                                        invoice,
+                                        apropriado,
+                                        internalRecon
+                                    ),
+                                    e
+                                )
                                 inoviceService.cancel(apropriado.docEntry.toString())
                                 throw Exception("Não foi possivel realizar a reconciliação, fazendo o cancelamento da apropriação do adiantamento",e)
                             }
@@ -125,5 +136,25 @@ class ConciliacaoVendaFuturaSchedule(
                     logger.error("Erro no processamento da conciliação da venda futura! OJDT ${journalReclassificado.JdtNum}",e)
                 }
         }
+    }
+
+    private fun reconciliationDebug(
+        journalReclassificado: JournalEntry,
+        invoice: Invoice,
+        apropriado: Document,
+        internalRecon: InternalReconciliations
+    ): String {
+        val linhas = internalRecon.internalReconciliationOpenTransRows
+            ?.joinToString(" | ") { row -> formatRow(row) }
+            ?: "sem linhas"
+        return "contrato=${invoice.U_venda_futura}, cardCode=${invoice.CardCode}, " +
+            "invoiceEntregaDocEntry=${invoice.docEntry}, invoiceEntregaDocNum=${invoice.docNum}, " +
+            "invoiceApropriacaoDocEntry=${apropriado.docEntry}, invoiceApropriacaoDocNum=${apropriado.docNum}, " +
+            "journalJdtNum=${journalReclassificado.JdtNum}, journalMemo='${journalReclassificado.memo}', linhas=[$linhas]"
+    }
+
+    private fun formatRow(row: InternalReconciliationOpenTransRow): String {
+        return "tipo=${row.creditOrDebit}, transId=${row.transId}, transRowId=${row.transRowId}, " +
+            "valor=${row.reconcileAmount}, parceiro=${row.shortName}"
     }
 }
