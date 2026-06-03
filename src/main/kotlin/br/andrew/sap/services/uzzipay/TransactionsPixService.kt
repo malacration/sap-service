@@ -11,6 +11,7 @@ import br.andrew.sap.model.uzzipay.Transaction
 import br.andrew.sap.services.BussinessPlaceService
 import org.springframework.http.RequestEntity
 import org.springframework.stereotype.Service
+import org.springframework.web.util.UriComponentsBuilder
 import org.springframework.web.client.RestTemplate
 import kotlin.jvm.Throws
 
@@ -21,16 +22,21 @@ class TransactionsPixService(val restTemplate: RestTemplate,
                              val envrioment: UzziPayEnvrioment) {
 
     fun url() : String {
-        return envrioment.consultaHost+path()
+        return envrioment.host+"/gateway"+path()
     }
     fun path(): String {
-        return "/api/transactions"
+        return "/v1/transactions"
     }
 
     fun getBy(id : String, conta: ContaUzziPayPix): Transaction {
+        val uri = UriComponentsBuilder
+            .fromUriString(url())
+            .queryParam("reference", id)
+            .build()
+            .toUri()
         val request = RequestEntity
-            .get(url()+"?reference=$id")
-            .header("X-API-Key","${conta.consulta}")
+            .get(uri)
+            .header("Authorization","Bearer ${authService.getToken()}")
             .build()
         return restTemplate.exchange(request, Transaction::class.java).body ?:
             throw Exception("Nao foi possivel encontrar a transaction")

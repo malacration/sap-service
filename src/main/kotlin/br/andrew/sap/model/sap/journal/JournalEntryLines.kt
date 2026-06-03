@@ -50,5 +50,9 @@ class JournalEntryLines(
     override fun reconcileAmount(): Double {
         return debit+Credit
     }
-}
 
+    @JsonIgnore
+    override fun shortNameReconciliation(): String? {
+        return ShortName
+    }
+}

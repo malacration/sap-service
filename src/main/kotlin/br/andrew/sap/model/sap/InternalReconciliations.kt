@@ -54,6 +54,7 @@ interface ReconciliationRow{
     fun transNumReconciliation() : Int
     fun transRowId() : Int
     fun reconcileAmount() : Double
+    fun shortNameReconciliation() : String? = null
 }
 
 enum class DebOrCredt{
@@ -90,6 +91,7 @@ class InternalReconciliationsBuilder(val debs : List<ReconciliationRow>, val cre
                 it.transId = deb.transNumReconciliation()
                 it.reconcileAmount = deb.reconcileAmount()
                 it.transRowId = deb.transRowId()
+                it.shortName = deb.shortNameReconciliation()
             }
         }
     }
@@ -100,6 +102,7 @@ class InternalReconciliationsBuilder(val debs : List<ReconciliationRow>, val cre
             it.transId = cred.transNumReconciliation()
             it.reconcileAmount = cred.reconcileAmount()
             it.transRowId = cred.transRowId()
+            it.shortName = cred.shortNameReconciliation()
         } }
     }
 }

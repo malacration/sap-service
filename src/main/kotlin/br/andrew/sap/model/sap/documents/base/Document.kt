@@ -194,7 +194,11 @@ open class Document(val CardCode : String,
     @JsonIgnore
     override fun getReconciliationRows(debOrCredt: DebOrCredt): List<ReconciliationRow> {
         return this.documentInstallments?.mapIndexed{index : Int, it : Installment ->
-            it.getReconciliationRow(this.TransNum ?: throw Exception("Nao existe numero de transaction"),index)
+            it.getReconciliationRow(
+                this.TransNum ?: throw Exception("Nao existe numero de transaction"),
+                index,
+                this.CardCode
+            )
         }?: throw throw Exception("Nao existe parcelas")
     }
 
