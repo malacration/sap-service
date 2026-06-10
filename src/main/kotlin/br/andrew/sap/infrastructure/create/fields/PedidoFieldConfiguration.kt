@@ -19,6 +19,13 @@ class PedidoFieldConfiguration(val userFieldsMDService: UserFieldsMDService) {
                 .also { it.ValidValuesMD = listOf(ValuesMd("0","NÃO"), ValuesMd("1","SIM")) }
         userFieldsMDService.findOrCreate(updatePedido)
 
+        val legadoVendaFutura = FieldMd("legado_vf","Venda Futura Legada?","ORDR")
+                .also {
+                    it.ValidValuesMD = listOf(ValuesMd("0","NÃO"), ValuesMd("1","SIM"))
+                    it.defaultValue = "0"
+                }
+        userFieldsMDService.findOrCreate(legadoVendaFutura)
+
         val idPedidoForca = FieldMd("id_pedido_forca","Id Pedido Venda","ORDR").also {
             it.size = 20
         }
