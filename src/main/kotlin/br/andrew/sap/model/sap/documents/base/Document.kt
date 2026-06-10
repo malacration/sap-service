@@ -87,6 +87,7 @@ open class Document(val CardCode : String,
     var U_rd_station : String? = null
     var U_venda_futura: Int? = null
     var U_entrega_vf: Int = 0
+    var U_legado_vf : String = "0"
     var downPaymentsToDraw : List<DownPaymentsToDraw>? = null
     var TransNum : Int? = null
     var SequenceCode : Int? = null

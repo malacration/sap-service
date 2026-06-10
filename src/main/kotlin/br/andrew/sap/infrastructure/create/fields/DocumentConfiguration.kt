@@ -35,6 +35,10 @@ class DocumentConfiguration(
                 it.ValidValuesMD = listOf(ValuesMd("0","NÃO"), ValuesMd("1","SIM"))
                 it.defaultValue = "1"
             },
+            FieldMd("legado_vf","Venda Futura Legada?","OINV").also {
+                it.ValidValuesMD = listOf(ValuesMd("0","NÃO"), ValuesMd("1","SIM"))
+                it.defaultValue = "0"
+            },
 
             FieldMd("rd_station","rdStation","OINV").also {
                 it.size = 30
