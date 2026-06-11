@@ -19,3 +19,4 @@ WHERE
         )
     )
   and dpi."DocStatus" <> 'C'
+  and dpi."U_venda_futura" IS NULL

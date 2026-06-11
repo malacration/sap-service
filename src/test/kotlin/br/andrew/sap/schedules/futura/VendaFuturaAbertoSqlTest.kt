@@ -11,6 +11,8 @@ class VendaFuturaAbertoSqlTest {
     fun `ignora pedidos de venda futura legada`() {
         val sql = Files.readString(Path.of("src/main/resources/views/vendafutura-aberto.sql"))
 
-        Assertions.assertTrue(sql.contains("COALESCE(\"ORDR\".\"U_legado_vf\", '0') <> '1'"))
+        Assertions.assertTrue(
+            sql.contains("(\"ORDR\".\"U_legado_vf\" IS NULL OR \"ORDR\".\"U_legado_vf\" <> '1')")
+        )
     }
 }

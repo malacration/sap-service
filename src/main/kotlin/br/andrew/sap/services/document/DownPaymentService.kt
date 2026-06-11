@@ -21,10 +21,13 @@ import br.andrew.sap.model.sap.documents.base.Installment
 import br.andrew.sap.model.sap.documents.base.Product
 import br.andrew.sap.model.self.vendafutura.BoletoVf
 import br.andrew.sap.model.self.vendafutura.Contrato
+import br.andrew.sap.model.sap.partner.BusinessPartner
+import br.andrew.sap.model.uzzipay.builder.RequestPixDueDateSemContaBuilder
 import JournalEntry
 import JournalEntryLines
 import br.andrew.sap.schedules.futura.Soma
 import br.andrew.sap.services.AuthService
+import br.andrew.sap.services.BusinessPartnersService
 import br.andrew.sap.services.bank.IncomingPaymentService
 import br.andrew.sap.services.abstracts.EntitiesService
 import br.andrew.sap.services.abstracts.SqlQueriesService
@@ -35,6 +38,7 @@ import br.andrew.sap.services.batch.BatchMethod
 import br.andrew.sap.services.batch.BatchService
 import br.andrew.sap.services.invent.OrigemBoletoEnum
 import br.andrew.sap.services.journal.JournalEntriesService
+import br.andrew.sap.services.uzzipay.DynamicPixQrCodeService
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
@@ -53,6 +57,8 @@ class DownPaymentService(env: SapEnvrioment,
                          private val creditNotesService: CreditNotesService,
                          private val batchService: BatchService,
                          private val journalEntriesService: JournalEntriesService,
+                         private val pixService: DynamicPixQrCodeService,
+                         private val businessPartnersService: BusinessPartnersService,
                          @Value("\${venda-futura.adiantamento-item:none}") val vfItemAdiantamento : String,
                          @Value("\${adiantamento-vf.formaPagamento:none}") vfFormaPagamento : String,
                          restTemplate: RestTemplate,
@@ -106,7 +112,76 @@ class DownPaymentService(env: SapEnvrioment,
 
     fun getByContratoVendaFuturaStatus(id: Int): List<BoletoVf> {
         val parametros = listOf(Parameter("idVendaFutura",id),)
-        return sqlQueriesService.execute("boletos-status.sql",parametros)?.tryGetValues<BoletoVf>() ?: listOf()
+        val statusSql = sqlQueriesService.execute("boletos-status.sql",parametros)
+            ?.tryGetValues<BoletoVf>()
+            ?: listOf()
+        val devolucaoPorDocNum = statusSql
+            .filter { !it.DocNum.isNullOrBlank() }
+            .associate { it.DocNum to it.devolucao }
+
+        return getByContratoVendaFutura(id, OrderBy("DocDueDate", Order.ASC))
+            .flatMap { document ->
+                val downPayment = document.docEntry
+                    ?.let { getById(it).tryGetValue<DownPayment>() }
+                    ?: document
+                val devolucao = devolucaoPorDocNum[downPayment.docNum]
+                val installments = downPayment.documentInstallments.orEmpty()
+                if(installments.isEmpty()) {
+                    listOf(BoletoVf.from(downPayment, devolucao = devolucao))
+                } else {
+                    installments.map { BoletoVf.from(downPayment, it, devolucao) }
+                }
+            }
+    }
+
+    fun createPixByContratoVendaFutura(id: Int): List<BoletoVf> {
+        getByContratoVendaFutura(id)
+            .filter {
+                it.DocumentStatus == DocumentStatus.bost_Open &&
+                    it.Cancelled != br.andrew.sap.model.enums.Cancelled.tYES
+            }
+            .forEach { document ->
+                val docEntry = document.docEntry
+                    ?: throw Exception("Adiantamento do contrato $id sem DocEntry")
+                val downPayment = getById(docEntry).tryGetValue<DownPayment>()
+                createPix(downPayment)
+            }
+        return getByContratoVendaFuturaStatus(id)
+    }
+
+    fun createPix(
+        downPayment: DownPayment,
+        parcelas: List<Int> = listOf(),
+        jurosMoraPercent: Double = 0.0
+    ): List<Installment> {
+        if(downPayment.documentInstallments.isNullOrEmpty()) {
+            throw Exception(
+                "O adiantamento ${downPayment.docEntry} do contrato ${downPayment.U_venda_futura} " +
+                    "nao possui parcelas no SAP"
+            )
+        }
+        val partner = businessPartnersService
+            .getById("'${downPayment.CardCode}'")
+            .tryGetValue<BusinessPartner>()
+        val builder = RequestPixDueDateSemContaBuilder(
+            partner,
+            downPayment,
+            parcelas,
+            jurosMoraPercent
+        )
+        val requests = builder.build()
+        val parcelasSolicitadas = builder.parcelasSolicitadas()
+        if(requests.isEmpty()) {
+            return parcelasSolicitadas
+        }
+        val installmentsAtualizadas = requests.mapNotNull {
+            downPayment.setPix(it, pixService.genereateFor(it))
+        }
+        updatePixInstallments(
+            downPayment.docEntry ?: throw Exception("DocEntry do adiantamento nao pode ser nulo"),
+            installmentsAtualizadas
+        )
+        return parcelasSolicitadas
     }
 
     fun updatePixInstallments(docEntry: Int, installments: List<Installment>) {
