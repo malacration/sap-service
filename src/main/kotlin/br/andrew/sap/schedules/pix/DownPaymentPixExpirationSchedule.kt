@@ -39,6 +39,9 @@ class DownPaymentPixExpirationSchedule(
 
     private fun processaAdiantamento(docEntry: Int, installmentsIds: Set<Int>, agora: LocalDateTime) {
         val downPayment = downPaymentService.getById(docEntry).tryGetValue<DownPayment>()
+        if(downPayment.U_venda_futura != null) {
+            return
+        }
         val parcelasVencidas = getParcelasVencidas(downPayment, installmentsIds, agora)
 
         if(parcelasVencidas.isEmpty()) {

@@ -135,7 +135,7 @@ class PixController(
             )
         }else if(pixDocType.matches(DocumentTypes.oDownPayments)) {
            val document = adiantamentoService.getById(docEntry)
-               .tryGetValue<Invoice>()
+               .tryGetValue<DownPayment>()
            val parcelaPix = document.documentInstallments?.firstOrNull { it.InstallmentId == parcela }
            pixPaymentVerificationService.verificaPixEhBaixa(
                document,

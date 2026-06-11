@@ -57,6 +57,8 @@ roles:
       actions: [ "get" ]
     - url: "/down-payment/contrato-venda-futura/*"
       actions: [ "get" ]
+    - url: "/down-payment/contrato-venda-futura/*/pix"
+      actions: [ "post" ]
     - url: "/contrato-venda-futura/pedido-retirada"
       actions: [ "*" ]
     - url: "/contrato-venda-futura/**"
@@ -92,6 +94,8 @@ roles:
       actions: [ "get" ]
     - url: "/down-payment/contrato-venda-futura/*"
       actions: [ "get" ]
+    - url: "/down-payment/contrato-venda-futura/*/pix"
+      actions: [ "post" ]
     - url: "/contrato-venda-futura/pedido-retirada"
       actions: [ "*" ]
     - url: "/contrato-venda-futura/entregas/*"

@@ -9,5 +9,5 @@ WHERE
 	AND "ORDR"."DocDate" >= :startDate
 	AND "ORDR"."BPLId" = :filiais
 	AND "ORDR"."U_pedido_update" = '0'
-	AND COALESCE("ORDR"."U_legado_vf", '0') <> '1'
+	AND ("ORDR"."U_legado_vf" IS NULL OR "ORDR"."U_legado_vf" <> '1')
 	AND "ORDR"."DocStatus" = 'O'

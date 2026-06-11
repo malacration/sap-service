@@ -1,4 +1,5 @@
-SELECT
+SELECT DISTINCT
+	"ODPI"."DocEntry",
 	"ODPI"."DocNum",
 	"ODPI"."DocDueDate",
 	"ODPI"."DocTotal",
