@@ -53,6 +53,8 @@ class PixController(
         @RequestBody pixRequest : PixRequestAdiantamento,
         auth : Authentication
     ): PixGeradoResponse {
+        if(auth !is User)
+            throw Exception("Não foi possivel fazer a conversão de auth para User")
         val adiantamentoOld = if(pixRequest.docEntry != null && pixRequest.documentTypes == DocumentTypes.oOrders){
             val filterAdiantamentoOld = Filter(
                 Predicate("U_TX_DocEntryRef",pixRequest.docEntry, Condicao.EQUAL),
@@ -72,6 +74,10 @@ class PixController(
             LocalDate.now().toString(),
             linhas,
             pixRequest.idFilial.toString())
+        adiantamento.comments = (
+                "Origem: ${pixRequest.origem()}. Gerado pelo usuario " +
+                        auth._name
+                ).take(254)
         adiantamento.U_TX_DocEntryRef = pixRequest.docEntry
         adiantamento.U_TX_DocTypeRef = pixRequest.documentTypes?.value
         val adiantamentoComParcelas = adiantamentoService.getById(
