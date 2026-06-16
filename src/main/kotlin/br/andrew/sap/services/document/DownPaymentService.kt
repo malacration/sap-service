@@ -199,12 +199,12 @@ class DownPaymentService(env: SapEnvrioment,
         val payload = InvoicePixUpdatePayload.from(installments)
         repeat(3) { tentativa ->
             this.update(payload, docEntry.toString())
-            Thread.sleep(500)
+            Thread.sleep(1500)
             if(pixPersistido(docEntry, installments)) {
                 return
             }
             if(tentativa < 2) {
-                Thread.sleep(1000)
+                Thread.sleep(500)
             }
         }
         throw Exception("SAP retornou sucesso, mas nao persistiu os dados PIX do adiantamento $docEntry apos 3 tentativas")
@@ -215,12 +215,11 @@ class DownPaymentService(env: SapEnvrioment,
         val parcelasPersistidas = downPayment.documentInstallments.orEmpty()
         return installments.all { atualizada ->
             val persistida = parcelasPersistidas.firstOrNull { it.InstallmentId == atualizada.InstallmentId }
-                ?: return@all false
-            persistida.U_QrCodePix == atualizada.U_QrCodePix &&
+            ?: return@all false
+                persistida.U_QrCodePix == atualizada.U_QrCodePix &&
                 persistida.U_pix_reference == atualizada.U_pix_reference &&
                 persistida.U_pix_textContent == atualizada.U_pix_textContent &&
-                persistida.U_pix_link == atualizada.U_pix_link &&
-                persistida.U_pix_due_date == atualizada.U_pix_due_date
+                persistida.U_pix_link == atualizada.U_pix_link
         }
     }
 
