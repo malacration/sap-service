@@ -7,7 +7,7 @@ FROM
 	INNER JOIN INV9 adt ON nota."DocEntry" = adt."DocEntry"
 	LEFT JOIN RIN1 dev ON dev."BaseEntry" = nota."DocEntry" AND dev."BaseType" = nota."ObjType"
 WHERE
-	(vf."U_status" != 'concluido')
+	vf."U_status" IN ('aberto', 'entregue')
 	AND nota.CANCELED = 'N'
 	AND dev."DocEntry" IS NULL
 	AND EXISTS(SELECT 1 FROM "ODPI" WHERE "ODPI"."U_venda_futura" = vf."DocEntry" AND "ODPI"."CANCELED" = 'N')
