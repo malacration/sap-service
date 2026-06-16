@@ -189,6 +189,7 @@ class SysfeedReceivingOrderService(
             TipoProdutoRecebimento = "GRANEL",
             NrBag = "0",
             NrNotaFiscal = pending.Serial ?: pending.DocNum,
+            NrLoteCodigoRecebimento = pending.NrLoteCodigoRecebimento,
             RegLido = "NAO"
         )
     }
@@ -254,6 +255,7 @@ class SysfeedReceivingOrderService(
                 Serial = SequenceSerial,
                 ItemCode = line.ItemCode,
                 Quantity = line.Quantity,
+                NrLoteCodigoRecebimento = line.BatchNumbers.firstOrNull()?.BatchNumber,
                 CodProd = defaultCodProd,
                 SysfeedStatus = null
             )

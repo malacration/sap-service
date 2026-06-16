@@ -44,6 +44,7 @@ class SysfeedReceivingOrderServiceTest {
         assertEquals("GRANEL", payload.TipoProdutoRecebimento)
         assertEquals("0", payload.NrBag)
         assertEquals("147540", payload.NrNotaFiscal)
+        assertEquals("LOTE-001", payload.NrLoteCodigoRecebimento)
         assertEquals("NAO", payload.RegLido)
     }
 
@@ -67,6 +68,7 @@ class SysfeedReceivingOrderServiceTest {
             ItemCode = "INS000001",
             CodProd = "1",
             Quantity = "10000",
+            NrLoteCodigoRecebimento = "LOTE-001",
             SysfeedStatus = null
         )
 
@@ -87,6 +89,7 @@ class SysfeedReceivingOrderServiceTest {
             Serial = null,
             ItemCode = "INS000001",
             Quantity = "10000",
+            NrLoteCodigoRecebimento = "LOTE-001",
             CodProd = "1",
             SysfeedStatus = null
         )

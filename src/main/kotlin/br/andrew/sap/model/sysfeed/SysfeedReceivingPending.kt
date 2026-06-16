@@ -11,6 +11,7 @@ data class SysfeedReceivingPending(
     val Serial: String? = null,
     val ItemCode: String? = null,
     val Quantity: String,
+    val NrLoteCodigoRecebimento: String? = null,
     val CodProd: String? = null,
     val SysfeedStatus: String? = null
 )
