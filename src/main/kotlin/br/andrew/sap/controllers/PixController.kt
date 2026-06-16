@@ -19,6 +19,7 @@ import br.andrew.sap.services.document.InvoiceService
 import br.andrew.sap.services.uzzipay.DynamicPixQrCodeService
 import br.andrew.sap.services.uzzipay.PixPaymentVerificationService
 import br.andrew.sap.services.uzzipay.TransactionsPixService
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.security.core.Authentication
 import org.springframework.web.bind.annotation.GetMapping
@@ -42,6 +43,8 @@ class PixController(
     @Value("\${pix.adiantamento-item:none}") val pixItemAdiantamento : String,
     @Value("\${pix.utilizacao:-1}") val utilizacao : Int,
     @Value("\${pix.juros.mora.percent:0}") val jurosMoraPercent: Double){
+
+    private val logger = LoggerFactory.getLogger(PixController::class.java)
 
     @GetMapping()
     fun test() : Any?{
@@ -83,7 +86,26 @@ class PixController(
         val adiantamentoComParcelas = adiantamentoService.getById(
             adiantamentoService.save(adiantamento).tryGetValue<DownPayment>().docEntry ?: throw Exception("Falha ao obter docEntry do adiantamento gerado")
         ).tryGetValue<DownPayment>()
-        return atualizarPixAdiantamento(adiantamentoComParcelas, pixRequest)
+        return try {
+            atualizarPixAdiantamento(adiantamentoComParcelas, pixRequest)
+        } catch (e: Exception) {
+            cancelarAdiantamentoGerado(adiantamentoComParcelas, e)
+            throw e
+        }
+    }
+
+    private fun cancelarAdiantamentoGerado(adiantamento: DownPayment, erroOriginal: Exception) {
+        val docEntry = adiantamento.docEntry
+        if(docEntry == null) {
+            logger.error("Falha ao gerar PIX e nao foi possivel cancelar o adiantamento sem DocEntry", erroOriginal)
+            return
+        }
+        try {
+            adiantamentoService.cancel(docEntry.toString())
+        } catch (cancelError: Exception) {
+            erroOriginal.addSuppressed(cancelError)
+            logger.error("Falha ao cancelar adiantamento {} apos erro ao gerar PIX", docEntry, cancelError)
+        }
     }
 
     private fun atualizarPixAdiantamento(

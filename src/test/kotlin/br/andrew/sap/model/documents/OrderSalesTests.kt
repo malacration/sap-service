@@ -38,8 +38,12 @@ class OrderSalesTests {
         fakeAddLineId(contrato)
         Assertions.assertEquals(100.00,order.totalDespesaAdicional().toDouble())
         val retirada = PedidoRetirada(50, listOf(ItemRetirada("item",50.00,1)))
-        val resultado = retirada.parse(contrato,5,null,order)
+        val resultado = retirada.parse(contrato,5,null,order, listOf("123", "456"))
         Assertions.assertEquals(50.00,resultado.totalDespesaAdicional().toDouble())
+        Assertions.assertEquals(
+            "Faturamento referente a entrega de mercadorias do contrato Nº ${contrato.DocEntry} com referencia aos boletos numero 123, 456.",
+            resultado.ClosingRemarks
+        )
     }
 
     @Test

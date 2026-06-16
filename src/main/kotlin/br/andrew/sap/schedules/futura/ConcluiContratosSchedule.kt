@@ -38,6 +38,11 @@ class ConcluiContratosSchedule(
 
     @Scheduled(fixedDelay = 30, timeUnit = TimeUnit.MINUTES)
     fun execute() {
+        atualizarStatusContratosFinanceiramenteConcluidos()
+        atualizarStatusContratosEntregues()
+    }
+
+    private fun atualizarStatusContratosFinanceiramenteConcluidos() {
         var contratosIds : NextLink<DocEntry>? = null
         do {
             contratosIds = if(contratosIds == null)
@@ -55,6 +60,25 @@ class ConcluiContratosSchedule(
             }
         }while (contratosIds?.hasNext() ?: false)
 
+    }
+
+    private fun atualizarStatusContratosEntregues() {
+        var contratosIds : NextLink<DocEntry>? = null
+        do {
+            contratosIds = if(contratosIds == null)
+                sqlQueriesService.execute("entrega-finalizada.sql")?.tryGetNextValues<DocEntry>()
+            else
+                sqlQueriesService.nextLink(contratosIds.nextLink)?.tryGetNextValues<DocEntry>()
+
+            contratosIds?.content?.forEach {
+                val contrato : Contrato = contratoService.getById(it.DocEntry!!).tryGetValue<Contrato>()
+                val entregas = controller.entregas(contrato.DocEntry!!)
+                if(contrato.tudoEntregue(entregas)){
+                    contrato.U_status = Status.entregue
+                    contratoService.update(contrato,contrato.DocEntry.toString())
+                }
+            }
+        }while (contratosIds?.hasNext() ?: false)
     }
 }
 

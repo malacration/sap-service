@@ -22,6 +22,7 @@ import br.andrew.sap.model.sap.documents.base.Product
 import br.andrew.sap.model.self.vendafutura.BoletoVf
 import br.andrew.sap.model.self.vendafutura.Contrato
 import br.andrew.sap.model.sap.partner.BusinessPartner
+import br.andrew.sap.model.self.vendafutura.BoletoOurNumber
 import br.andrew.sap.model.uzzipay.builder.RequestPixDueDateSemContaBuilder
 import JournalEntry
 import JournalEntryLines
@@ -134,6 +135,13 @@ class DownPaymentService(env: SapEnvrioment,
             }
     }
 
+    fun getOurNumbersByContratoVendaFutura(id: Int): List<String> {
+        return sqlQueriesService.execute("boletos-our-number.sql", Parameter("idVendaFutura", id))
+            ?.tryGetValues<BoletoOurNumber>()
+            ?.mapNotNull { it.OurNumber }
+            ?: listOf()
+    }
+
     fun createPixByContratoVendaFutura(id: Int): List<BoletoVf> {
         getByContratoVendaFutura(id)
             .filter {
@@ -189,7 +197,31 @@ class DownPaymentService(env: SapEnvrioment,
             return
         }
         val payload = InvoicePixUpdatePayload.from(installments)
-        this.update(payload, docEntry.toString())
+        repeat(3) { tentativa ->
+            this.update(payload, docEntry.toString())
+            Thread.sleep(500)
+            if(pixPersistido(docEntry, installments)) {
+                return
+            }
+            if(tentativa < 2) {
+                Thread.sleep(1000)
+            }
+        }
+        throw Exception("SAP retornou sucesso, mas nao persistiu os dados PIX do adiantamento $docEntry apos 3 tentativas")
+    }
+
+    private fun pixPersistido(docEntry: Int, installments: List<Installment>): Boolean {
+        val downPayment = getById(docEntry).tryGetValue<DownPayment>()
+        val parcelasPersistidas = downPayment.documentInstallments.orEmpty()
+        return installments.all { atualizada ->
+            val persistida = parcelasPersistidas.firstOrNull { it.InstallmentId == atualizada.InstallmentId }
+                ?: return@all false
+            persistida.U_QrCodePix == atualizada.U_QrCodePix &&
+                persistida.U_pix_reference == atualizada.U_pix_reference &&
+                persistida.U_pix_textContent == atualizada.U_pix_textContent &&
+                persistida.U_pix_link == atualizada.U_pix_link &&
+                persistida.U_pix_due_date == atualizada.U_pix_due_date
+        }
     }
 
     fun getPixsGeradosParaConsulta(dataReferencia: String): List<InstallmentPixConsulta> {
