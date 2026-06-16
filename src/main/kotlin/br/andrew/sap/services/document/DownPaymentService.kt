@@ -22,7 +22,6 @@ import br.andrew.sap.model.sap.documents.base.Product
 import br.andrew.sap.model.self.vendafutura.BoletoVf
 import br.andrew.sap.model.self.vendafutura.Contrato
 import br.andrew.sap.model.sap.partner.BusinessPartner
-import br.andrew.sap.model.self.vendafutura.BoletoOurNumber
 import br.andrew.sap.model.uzzipay.builder.RequestPixDueDateSemContaBuilder
 import JournalEntry
 import JournalEntryLines
@@ -136,10 +135,28 @@ class DownPaymentService(env: SapEnvrioment,
     }
 
     fun getOurNumbersByContratoVendaFutura(id: Int): List<String> {
-        return sqlQueriesService.execute("boletos-our-number.sql", Parameter("idVendaFutura", id))
-            ?.tryGetValues<BoletoOurNumber>()
-            ?.mapNotNull { it.OurNumber }
-            ?: listOf()
+        return getByContratoVendaFutura(id)
+            .flatMap { adiantamento ->
+                val docEntry = adiantamento.docEntry ?: return@flatMap listOf()
+                try {
+                    bankplus.getBoletosBy(
+                        adiantamento.getBPL_IDAssignedToInvoice(),
+                        docEntry.toString(),
+                        OrigemBoletoEnum.adiantamento
+                    )
+                } catch (e: Exception) {
+                    logger.warn(
+                        "Nao foi possivel buscar numero do boleto no BankPlus. contrato={}, adiantamento={}",
+                        id,
+                        docEntry,
+                        e
+                    )
+                    listOf()
+                }
+            }
+            .mapNotNull { it.nossoNumero }
+            .filter { it.isNotBlank() }
+            .distinct()
     }
 
     fun createPixByContratoVendaFutura(id: Int): List<BoletoVf> {
