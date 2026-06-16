@@ -18,13 +18,17 @@ class BankPlusService(val envrioment: BankPlusEnvrioment, val restTemplate: Rest
     val url = envrioment.host
 
     private val logger = LoggerFactory.getLogger(BankPlusService::class.java)
-    fun getBoletosBy(idFilial : String, docEntry : String): List<Boleto> {
+    fun getBoletosBy(
+        idFilial : String,
+        docEntry : String,
+        tipoDocumento: OrigemBoletoEnum = OrigemBoletoEnum.notafiscal
+    ): List<Boleto> {
         val objType = object: ParameterizedTypeReference<List<Boleto>> () {}
         return getEmpresas()
             .filter { it.codigoDaFilial == idFilial }.flatMap {
                 try {
                     restTemplate.exchange(RequestEntity
-                        .get("$url/api/v2/${envrioment.base}/cobranca/${it.id}/notafiscal/${docEntry}/boletos")
+                        .get("$url/api/v2/${envrioment.base}/cobranca/${it.id}/${tipoDocumento}/$docEntry/boletos")
                         .header("Authorization",envrioment.token)
                         .build(), objType).body ?: listOf()
                 } catch (t : HttpClientErrorException){
