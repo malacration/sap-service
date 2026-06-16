@@ -1,6 +1,7 @@
 package br.andrew.sap.services.sysfeed
 
 import br.andrew.sap.model.sysfeed.SysfeedReceivingOrderRequest
+import br.andrew.sap.model.sysfeed.SysfeedSupplierRequest
 import com.fasterxml.jackson.databind.ObjectMapper
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
@@ -13,7 +14,7 @@ import org.springframework.stereotype.Service
 @Service
 class SysfeedIntegratorClient(
     private val objectMapper: ObjectMapper,
-    @Value("\${sysfeed.integrador.base-url:http://localhost:8080}") private val baseUrl: String
+    @Value("\${sysfeed.integrador.base-url:http://localhost:8181}") private val baseUrl: String
 ) {
     private val logger = LoggerFactory.getLogger(SysfeedIntegratorClient::class.java)
     private val client = OkHttpClient()
@@ -111,6 +112,99 @@ class SysfeedIntegratorClient(
                 )
             )
             throw SysfeedIntegratorException("Erro ao enviar ordem de recebimento ${payload.NrProducao} ao integrador: HTTP ${response.code} - $responseBody")
+        }
+    }
+
+    fun createSupplier(payload: SysfeedSupplierRequest) {
+        logJson(
+            "sysfeed_supplier_create_started",
+            mapOf(
+                "cardCode" to payload.cardCode,
+                "payload" to payload
+            )
+        )
+        val body = objectMapper.writeValueAsString(payload).toRequestBody(jsonMediaType)
+        val request = Request.Builder()
+            .url("${baseUrl.trimEnd('/')}/api/sysfeed/fornecedores")
+            .post(body)
+            .build()
+
+        client.newCall(request).execute().use { response ->
+            if (response.isSuccessful) {
+                logJson(
+                    "sysfeed_supplier_create_finished",
+                    mapOf(
+                        "cardCode" to payload.cardCode,
+                        "statusCode" to response.code
+                    )
+                )
+                return
+            }
+            val responseBody = response.body?.string().orEmpty()
+            logJson(
+                "sysfeed_supplier_create_error",
+                mapOf(
+                    "cardCode" to payload.cardCode,
+                    "statusCode" to response.code,
+                    "body" to responseBody
+                )
+            )
+            throw SysfeedIntegratorException("Erro ao enviar fornecedor ${payload.cardCode} ao Sigafran: HTTP ${response.code} - $responseBody")
+        }
+    }
+
+    fun getSupplier(identifier: String): String {
+        logJson("sysfeed_supplier_lookup_started", mapOf("identifier" to identifier))
+        val request = Request.Builder()
+            .url("${baseUrl.trimEnd('/')}/api/sysfeed/fornecedores/$identifier")
+            .get()
+            .build()
+
+        client.newCall(request).execute().use { response ->
+            val responseBody = response.body?.string().orEmpty()
+            if (response.isSuccessful) {
+                logJson(
+                    "sysfeed_supplier_lookup_finished",
+                    mapOf(
+                        "identifier" to identifier,
+                        "statusCode" to response.code
+                    )
+                )
+                return responseBody
+            }
+            logJson(
+                "sysfeed_supplier_lookup_error",
+                mapOf(
+                    "identifier" to identifier,
+                    "statusCode" to response.code,
+                    "body" to responseBody
+                )
+            )
+            throw SysfeedIntegratorException("Erro ao consultar fornecedor $identifier no Sigafran: HTTP ${response.code} - $responseBody")
+        }
+    }
+
+    fun getSuppliers(): String {
+        logJson("sysfeed_supplier_list_started", emptyMap())
+        val request = Request.Builder()
+            .url("${baseUrl.trimEnd('/')}/api/sysfeed/fornecedores")
+            .get()
+            .build()
+
+        client.newCall(request).execute().use { response ->
+            val responseBody = response.body?.string().orEmpty()
+            if (response.isSuccessful) {
+                logJson("sysfeed_supplier_list_finished", mapOf("statusCode" to response.code))
+                return responseBody
+            }
+            logJson(
+                "sysfeed_supplier_list_error",
+                mapOf(
+                    "statusCode" to response.code,
+                    "body" to responseBody
+                )
+            )
+            throw SysfeedIntegratorException("Erro ao listar fornecedores no Sigafran: HTTP ${response.code} - $responseBody")
         }
     }
 

@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.mock
+import org.mockito.kotlin.whenever
 
 class SysfeedReceivingOrderServiceTest {
 
@@ -15,14 +16,20 @@ class SysfeedReceivingOrderServiceTest {
     private val sqlQueriesService = mock<SqlQueriesService>()
     private val integratorClient = mock<SysfeedIntegratorClient>()
     private val configService = mock<SysfeedConfigService>()
+    private val supplierService = mock<SysfeedSupplierService>()
     private val service = SysfeedReceivingOrderService(
         purchaseInvoiceService,
         sqlQueriesService,
         integratorClient,
         configService,
         ObjectMapper(),
+        supplierService,
         "1"
     )
+
+    init {
+        whenever(supplierService.extractCodFornecedor("FOR0002977")).thenReturn("2977")
+    }
 
     @Test
     fun `deve montar recebimento por linha`() {
@@ -32,7 +39,7 @@ class SysfeedReceivingOrderServiceTest {
 
         assertEquals("1475400", payload.NrProducao)
         assertEquals("1", payload.CodProd)
-        assertEquals("1", payload.CodFornecedor)
+        assertEquals("2977", payload.CodFornecedor)
         assertEquals("10000", payload.PesoNominalNF)
         assertEquals("GRANEL", payload.TipoProdutoRecebimento)
         assertEquals("0", payload.NrBag)
@@ -55,6 +62,7 @@ class SysfeedReceivingOrderServiceTest {
             DocEntry = 147540,
             LineNum = 0,
             DocNum = "147540",
+            CardCode = "FOR0002977",
             Serial = null,
             ItemCode = "INS000001",
             CodProd = "1",
@@ -75,6 +83,7 @@ class SysfeedReceivingOrderServiceTest {
             DocEntry = docEntry,
             LineNum = lineNum,
             DocNum = "147540",
+            CardCode = "FOR0002977",
             Serial = null,
             ItemCode = "INS000001",
             Quantity = "10000",

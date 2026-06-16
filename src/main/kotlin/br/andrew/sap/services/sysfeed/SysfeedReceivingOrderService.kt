@@ -20,6 +20,7 @@ class SysfeedReceivingOrderService(
     private val integratorClient: SysfeedIntegratorClient,
     private val configService: SysfeedConfigService,
     private val objectMapper: ObjectMapper,
+    private val supplierService: SysfeedSupplierService,
     @Value("\${sysfeed.recebimento.cod-prod-default:1}") private val defaultCodProd: String
 ) {
     private val logger = LoggerFactory.getLogger(SysfeedReceivingOrderService::class.java)
@@ -122,6 +123,7 @@ class SysfeedReceivingOrderService(
         return pendings.map { pending ->
             try {
                 val payload = buildPayload(pending)
+                supplierService.ensureSupplierSent(pending.CardCode)
                 logJson(
                     "sysfeed_receiving_line_payload_built",
                     mapOf(
@@ -182,7 +184,7 @@ class SysfeedReceivingOrderService(
         return SysfeedReceivingOrderRequest(
             NrProducao = nrProducao,
             CodProd = codProd,
-            CodFornecedor = "1",
+            CodFornecedor = supplierService.extractCodFornecedor(pending.CardCode),
             PesoNominalNF = pesoNominal,
             TipoProdutoRecebimento = "GRANEL",
             NrBag = "0",
@@ -248,6 +250,7 @@ class SysfeedReceivingOrderService(
                 DocEntry = entry,
                 LineNum = line.LineNum ?: index,
                 DocNum = docNum,
+                CardCode = CardCode,
                 Serial = SequenceSerial,
                 ItemCode = line.ItemCode,
                 Quantity = line.Quantity,

@@ -2,6 +2,7 @@ SELECT
     T0."DocEntry" AS "DocEntry",
     T1."LineNum" AS "LineNum",
     T0."DocNum" AS "DocNum",
+    T0."CardCode" AS "CardCode",
     T0."Serial" AS "Serial",
     T1."ItemCode" AS "ItemCode",
     T1."Quantity" AS "Quantity",
