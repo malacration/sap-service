@@ -8,12 +8,15 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.mock
+import org.mockito.kotlin.never
+import org.mockito.kotlin.verify
 
 class SysfeedSupplierServiceTest {
+    private val integratorClient = mock<SysfeedIntegratorClient>()
     private val service = SysfeedSupplierService(
         mock<BusinessPartnersService>(),
         mock<SqlQueriesService>(),
-        mock<SysfeedIntegratorClient>(),
+        integratorClient,
         ObjectMapper()
     )
 
@@ -65,5 +68,19 @@ class SysfeedSupplierServiceTest {
         assertThrows(SysfeedSupplierException::class.java) {
             service.buildPayload(SysfeedSupplierPending(CardCode = "FOR0002977", CardName = ""))
         }
+    }
+
+    @Test
+    fun `nao deve reenviar fornecedor ja enviado`() {
+        val result = service.send(
+            SysfeedSupplierPending(
+                CardCode = "FOR0002977",
+                CardName = "Fornecedor Teste",
+                SysfeedStatus = "ENVIADO"
+            )
+        )
+
+        assertEquals(SysfeedSupplierStatus.SENT, result.status)
+        verify(integratorClient, never()).createSupplier(org.mockito.kotlin.any())
     }
 }

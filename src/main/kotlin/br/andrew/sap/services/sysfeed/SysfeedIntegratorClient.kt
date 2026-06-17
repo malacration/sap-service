@@ -43,15 +43,18 @@ class SysfeedIntegratorClient(
                 return false
             }
             if (response.isSuccessful) {
+                val body = response.body?.string().orEmpty()
+                val exists = receivingOrderLookupFound(nrProducao, body)
                 logJson(
                     "sysfeed_integrator_receiving_order_lookup_finished",
                     mapOf(
                         "nrProducao" to nrProducao,
                         "statusCode" to response.code,
-                        "exists" to true
+                        "exists" to exists,
+                        "body" to body
                     )
                 )
-                return true
+                return exists
             }
             val body = response.body?.string()
             logJson(
@@ -215,6 +218,14 @@ class SysfeedIntegratorClient(
     private fun isDuplicate(body: String): Boolean {
         return body.uppercase().contains("ORDEM DE RECEBIMENTO JÁ EXISTE") ||
             body.uppercase().contains("ORDEM DE RECEBIMENTO JA EXISTE")
+    }
+
+    internal fun receivingOrderLookupFound(nrProducao: String, body: String): Boolean {
+        val trimmed = body.trim()
+        if (trimmed.isBlank() || trimmed == "{}" || trimmed == "[]" || trimmed.equals("null", ignoreCase = true)) {
+            return false
+        }
+        return trimmed.contains(nrProducao)
     }
 }
 

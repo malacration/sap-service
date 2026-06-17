@@ -80,6 +80,13 @@ class SysfeedSupplierService(
 
     fun send(pending: SysfeedSupplierPending): SysfeedSupplierLineResult {
         return try {
+            if (isSupplierSent(pending.SysfeedStatus)) {
+                logJson(
+                    "sysfeed_supplier_already_sent",
+                    mapOf("cardCode" to pending.CardCode)
+                )
+                return SysfeedSupplierLineResult(pending.CardCode, SysfeedSupplierStatus.SENT)
+            }
             val payload = buildPayload(pending)
             logJson(
                 "sysfeed_supplier_payload_built",
@@ -150,6 +157,10 @@ class SysfeedSupplierService(
         )
     }
 
+    private fun isSupplierSent(status: String?): Boolean {
+        return status?.trim()?.uppercase() == SysfeedSupplierStatus.SENT.sapValue
+    }
+
     private fun BusinessPartner.toPending(): SysfeedSupplierPending {
         val address = getAddresses().firstOrNull()
         val tax = getBPFiscalTaxIDCollection()?.firstOrNull()
@@ -164,7 +175,7 @@ class SysfeedSupplierService(
                 .takeIf { it.isNotBlank() },
             Cep = address?.ZipCode,
             Telefone = phone1 ?: phone2,
-            SysfeedStatus = null
+            SysfeedStatus = U_sysfeed_status
         )
     }
 

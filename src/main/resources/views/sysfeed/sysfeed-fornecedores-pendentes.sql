@@ -15,5 +15,5 @@ WHERE T0."CardType" = 'S'
   AND T0."CardCode" >= 'FOR0000032'
   AND T0."CardName" IS NOT NULL
   AND T0."CardName" <> ''
-  AND (T0."U_sysfeed_status" IS NULL OR T0."U_sysfeed_status" = '' OR T0."U_sysfeed_status" = 'PENDENTE' OR T0."U_sysfeed_status" = 'ERRO')
+  AND (T0."U_sysfeed_status" IS NULL OR T0."U_sysfeed_status" = '' OR T0."U_sysfeed_status" = 'PENDENTE')
 ORDER BY T0."CardCode" ASC

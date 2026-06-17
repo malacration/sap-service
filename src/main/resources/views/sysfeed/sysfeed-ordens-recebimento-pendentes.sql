@@ -5,7 +5,7 @@ SELECT
     T0."CardCode" AS "CardCode",
     T0."Serial" AS "Serial",
     T1."ItemCode" AS "ItemCode",
-    T1."Quantity" AS "Quantity",
+    T1."InvQty" AS "Quantity",
     B."BatchNum" AS "NrLoteCodigoRecebimento",
     I."U_LbrOne_Id" AS "CodProd",
     T0."U_sysfeed_status" AS "SysfeedStatus"
@@ -17,5 +17,6 @@ WHERE T0."CANCELED" = 'N'
   AND T0."BPLId" = 2
   AND T1."Usage" = :usage
   AND T0."DocDate" >= :startDate
-  AND (T0."U_sysfeed_status" IS NULL OR T0."U_sysfeed_status" = '' OR T0."U_sysfeed_status" = 'PENDENTE' OR T0."U_sysfeed_status" = 'ERRO' OR T0."U_sysfeed_status" = 'PARCIAL')
+  AND I."U_LbrOne_Id" IS NOT NULL
+  AND (T0."U_sysfeed_status" IS NULL OR T0."U_sysfeed_status" = '' OR T0."U_sysfeed_status" = 'PENDENTE')
 ORDER BY T0."DocEntry" DESC, T1."LineNum" ASC
