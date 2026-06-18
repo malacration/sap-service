@@ -25,6 +25,16 @@ class SysfeedReceivingOrderService(
 ) {
     private val logger = LoggerFactory.getLogger(SysfeedReceivingOrderService::class.java)
 
+    fun getPendingPayloads(): List<SysfeedReceivingOrderRequest> {
+        val config = configService.get().recebimento
+        return getPendingRows(config.startDate, config.usage).map { buildPayload(it) }
+    }
+
+    fun getPayloadsByDocEntry(docEntry: Int): List<SysfeedReceivingOrderRequest> {
+        val document = purchaseInvoiceService.getById(docEntry).tryGetValue<PurchaseInvoice>()
+        return document.toPendings().map { buildPayload(it) }
+    }
+
     fun executePending(): SysfeedReceivingExecutionResult {
         val config = configService.get().recebimento
         logJson(
@@ -35,16 +45,7 @@ class SysfeedReceivingOrderService(
                 "usage" to config.usage
             )
         )
-        val pendings = sqlQueriesService
-            .execute(
-                "sysfeed-ordens-recebimento-pendentes.sql",
-                listOf(
-                    Parameter("startDate", config.startDate),
-                    Parameter("usage", config.usage)
-                )
-            )
-            ?.tryGetValues<SysfeedReceivingPending>()
-            ?: emptyList()
+        val pendings = getPendingRows(config.startDate, config.usage)
 
         logJson(
             "sysfeed_receiving_pending_loaded",
@@ -196,6 +197,19 @@ class SysfeedReceivingOrderService(
 
     fun buildNrProducaoOpch(docEntry: Int, lineNum: Int): String {
         return "$docEntry$lineNum"
+    }
+
+    private fun getPendingRows(startDate: String, usage: Int): List<SysfeedReceivingPending> {
+        return sqlQueriesService
+            .execute(
+                "sysfeed-ordens-recebimento-pendentes.sql",
+                listOf(
+                    Parameter("startDate", startDate),
+                    Parameter("usage", usage)
+                )
+            )
+            ?.tryGetValues<SysfeedReceivingPending>()
+            ?: emptyList()
     }
 
     private fun validateNumeric(field: String, value: String, maxLength: Int? = null) {

@@ -18,12 +18,18 @@ class SysfeedSupplierService(
 ) {
     private val logger = LoggerFactory.getLogger(SysfeedSupplierService::class.java)
 
+    fun getPendingPayloads(): List<SysfeedSupplierRequest> {
+        return getPendingRows().map { buildPayload(it) }
+    }
+
+    fun getPayloadByCardCode(cardCode: String): SysfeedSupplierRequest {
+        val supplier = businessPartnersService.getById("'$cardCode'").tryGetValue<BusinessPartner>()
+        return buildPayload(supplier.toPending())
+    }
+
     fun executePending(): SysfeedSupplierExecutionResult {
         logJson("sysfeed_supplier_execution_started", mapOf("mode" to "pending"))
-        val pendings = sqlQueriesService
-            .execute("sysfeed-fornecedores-pendentes.sql")
-            ?.tryGetValues<SysfeedSupplierPending>()
-            ?: emptyList()
+        val pendings = getPendingRows()
 
         logJson(
             "sysfeed_supplier_pending_loaded",
@@ -159,6 +165,13 @@ class SysfeedSupplierService(
 
     private fun isSupplierSent(status: String?): Boolean {
         return status?.trim()?.uppercase() == SysfeedSupplierStatus.SENT.sapValue
+    }
+
+    private fun getPendingRows(): List<SysfeedSupplierPending> {
+        return sqlQueriesService
+            .execute("sysfeed-fornecedores-pendentes.sql")
+            ?.tryGetValues<SysfeedSupplierPending>()
+            ?: emptyList()
     }
 
     private fun BusinessPartner.toPending(): SysfeedSupplierPending {
