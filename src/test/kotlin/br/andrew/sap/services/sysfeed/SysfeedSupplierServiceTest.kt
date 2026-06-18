@@ -1,23 +1,15 @@
 package br.andrew.sap.services.sysfeed
 
 import br.andrew.sap.model.sysfeed.SysfeedSupplierPending
-import br.andrew.sap.services.BusinessPartnersService
 import br.andrew.sap.services.abstracts.SqlQueriesService
-import com.fasterxml.jackson.databind.ObjectMapper
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.mock
-import org.mockito.kotlin.never
-import org.mockito.kotlin.verify
 
 class SysfeedSupplierServiceTest {
-    private val integratorClient = mock<SysfeedIntegratorClient>()
     private val service = SysfeedSupplierService(
-        mock<BusinessPartnersService>(),
-        mock<SqlQueriesService>(),
-        integratorClient,
-        ObjectMapper()
+        mock<SqlQueriesService>()
     )
 
     @Test
@@ -70,17 +62,4 @@ class SysfeedSupplierServiceTest {
         }
     }
 
-    @Test
-    fun `nao deve reenviar fornecedor ja enviado`() {
-        val result = service.send(
-            SysfeedSupplierPending(
-                CardCode = "FOR0002977",
-                CardName = "Fornecedor Teste",
-                SysfeedStatus = "ENVIADO"
-            )
-        )
-
-        assertEquals(SysfeedSupplierStatus.SENT, result.status)
-        verify(integratorClient, never()).createSupplier(org.mockito.kotlin.any())
-    }
 }

@@ -2,8 +2,6 @@ package br.andrew.sap.services.sysfeed
 
 import br.andrew.sap.model.sysfeed.SysfeedReceivingPending
 import br.andrew.sap.services.abstracts.SqlQueriesService
-import br.andrew.sap.services.document.PurchaseInvoiceService
-import com.fasterxml.jackson.databind.ObjectMapper
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
@@ -12,17 +10,12 @@ import org.mockito.kotlin.whenever
 
 class SysfeedReceivingOrderServiceTest {
 
-    private val purchaseInvoiceService = mock<PurchaseInvoiceService>()
     private val sqlQueriesService = mock<SqlQueriesService>()
-    private val integratorClient = mock<SysfeedIntegratorClient>()
     private val configService = mock<SysfeedConfigService>()
     private val supplierService = mock<SysfeedSupplierService>()
     private val service = SysfeedReceivingOrderService(
-        purchaseInvoiceService,
         sqlQueriesService,
-        integratorClient,
         configService,
-        ObjectMapper(),
         supplierService,
         "1"
     )
@@ -45,6 +38,7 @@ class SysfeedReceivingOrderServiceTest {
         assertEquals("0", payload.NrBag)
         assertEquals("147540", payload.NrNotaFiscal)
         assertEquals("LOTE-001", payload.NrLoteCodigoRecebimento)
+        assertEquals("ABC1D23", payload.Placa)
         assertEquals("NAO", payload.RegLido)
     }
 
@@ -69,6 +63,7 @@ class SysfeedReceivingOrderServiceTest {
             CodProd = "1",
             Quantity = "10000",
             NrLoteCodigoRecebimento = "LOTE-001",
+            Placa = "ABC1D23",
             SysfeedStatus = null
         )
 
@@ -90,6 +85,7 @@ class SysfeedReceivingOrderServiceTest {
             ItemCode = "INS000001",
             Quantity = "10000",
             NrLoteCodigoRecebimento = "LOTE-001",
+            Placa = "ABC1D23",
             CodProd = "1",
             SysfeedStatus = null
         )

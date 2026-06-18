@@ -12,5 +12,6 @@ data class SysfeedReceivingOrderRequest(
     val NrBag: String,
     val NrNotaFiscal: String? = null,
     val NrLoteCodigoRecebimento: String? = null,
+    val Placa: String? = null,
     val RegLido: String = "NAO"
 )

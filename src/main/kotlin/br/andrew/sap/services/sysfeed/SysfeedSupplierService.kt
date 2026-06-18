@@ -1,114 +1,16 @@
 package br.andrew.sap.services.sysfeed
 
-import br.andrew.sap.model.sap.partner.BusinessPartner
 import br.andrew.sap.model.sysfeed.SysfeedSupplierPending
 import br.andrew.sap.model.sysfeed.SysfeedSupplierRequest
-import br.andrew.sap.services.BusinessPartnersService
 import br.andrew.sap.services.abstracts.SqlQueriesService
-import com.fasterxml.jackson.databind.ObjectMapper
-import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 
 @Service
 class SysfeedSupplierService(
-    private val businessPartnersService: BusinessPartnersService,
-    private val sqlQueriesService: SqlQueriesService,
-    private val integratorClient: SysfeedIntegratorClient,
-    private val objectMapper: ObjectMapper
+    private val sqlQueriesService: SqlQueriesService
 ) {
-    private val logger = LoggerFactory.getLogger(SysfeedSupplierService::class.java)
-
     fun getPendingPayloads(): List<SysfeedSupplierRequest> {
         return getPendingRows().map { buildPayload(it) }
-    }
-
-    fun getPayloadByCardCode(cardCode: String): SysfeedSupplierRequest {
-        val supplier = businessPartnersService.getById("'$cardCode'").tryGetValue<BusinessPartner>()
-        return buildPayload(supplier.toPending())
-    }
-
-    fun executePending(): SysfeedSupplierExecutionResult {
-        logJson("sysfeed_supplier_execution_started", mapOf("mode" to "pending"))
-        val pendings = getPendingRows()
-
-        logJson(
-            "sysfeed_supplier_pending_loaded",
-            mapOf("suppliers" to pendings.size)
-        )
-        return SysfeedSupplierExecutionResult(pendings.map { send(it) }).also { result ->
-            logJson(
-                "sysfeed_supplier_execution_finished",
-                mapOf(
-                    "mode" to "pending",
-                    "sent" to result.sent,
-                    "errors" to result.errors
-                )
-            )
-        }
-    }
-
-    fun executeByCardCode(cardCode: String): SysfeedSupplierLineResult {
-        logJson(
-            "sysfeed_supplier_execution_started",
-            mapOf(
-                "mode" to "cardCode",
-                "cardCode" to cardCode
-            )
-        )
-        val supplier = businessPartnersService.getById("'$cardCode'").tryGetValue<BusinessPartner>()
-        return send(supplier.toPending()).also { result ->
-            logJson(
-                "sysfeed_supplier_execution_finished",
-                mapOf(
-                    "mode" to "cardCode",
-                    "cardCode" to cardCode,
-                    "status" to result.status.sapValue,
-                    "error" to result.error
-                )
-            )
-        }
-    }
-
-    fun ensureSupplierSent(cardCode: String) {
-        val result = executeByCardCode(cardCode)
-        if (result.status != SysfeedSupplierStatus.SENT) {
-            throw SysfeedSupplierException(result.error ?: "Erro ao enviar fornecedor $cardCode ao Sigafran")
-        }
-        logJson(
-            "sysfeed_supplier_ensured_for_receiving_order",
-            mapOf("cardCode" to cardCode)
-        )
-    }
-
-    fun getSupplier(identifier: String): String = integratorClient.getSupplier(identifier)
-
-    fun getSuppliers(): String = integratorClient.getSuppliers()
-
-    fun send(pending: SysfeedSupplierPending): SysfeedSupplierLineResult {
-        return try {
-            if (isSupplierSent(pending.SysfeedStatus)) {
-                logJson(
-                    "sysfeed_supplier_already_sent",
-                    mapOf("cardCode" to pending.CardCode)
-                )
-                return SysfeedSupplierLineResult(pending.CardCode, SysfeedSupplierStatus.SENT)
-            }
-            val payload = buildPayload(pending)
-            logJson(
-                "sysfeed_supplier_payload_built",
-                mapOf(
-                    "cardCode" to pending.CardCode,
-                    "payload" to payload
-                )
-            )
-            integratorClient.createSupplier(payload)
-            updateSupplierStatus(pending.CardCode, SysfeedSupplierStatus.SENT)
-            SysfeedSupplierLineResult(pending.CardCode, SysfeedSupplierStatus.SENT)
-        } catch (e: Exception) {
-            logger.error("Erro ao enviar fornecedor {} ao Sigafran", pending.CardCode, e)
-            runCatching { updateSupplierStatus(pending.CardCode, SysfeedSupplierStatus.ERROR) }
-            SysfeedSupplierLineResult(pending.CardCode, SysfeedSupplierStatus.ERROR, e.message)
-        }
     }
 
     fun buildPayload(pending: SysfeedSupplierPending): SysfeedSupplierRequest {
@@ -152,21 +54,6 @@ class SysfeedSupplierService(
         }
     }
 
-    private fun updateSupplierStatus(cardCode: String, status: SysfeedSupplierStatus) {
-        businessPartnersService.update(mapOf("U_sysfeed_status" to status.sapValue), "'$cardCode'")
-        logJson(
-            "sysfeed_supplier_sap_status_updated",
-            mapOf(
-                "cardCode" to cardCode,
-                "status" to status.sapValue
-            )
-        )
-    }
-
-    private fun isSupplierSent(status: String?): Boolean {
-        return status?.trim()?.uppercase() == SysfeedSupplierStatus.SENT.sapValue
-    }
-
     private fun getPendingRows(): List<SysfeedSupplierPending> {
         return sqlQueriesService
             .execute("sysfeed-fornecedores-pendentes.sql")
@@ -174,49 +61,9 @@ class SysfeedSupplierService(
             ?: emptyList()
     }
 
-    private fun BusinessPartner.toPending(): SysfeedSupplierPending {
-        val address = getAddresses().firstOrNull()
-        val tax = getBPFiscalTaxIDCollection()?.firstOrNull()
-        return SysfeedSupplierPending(
-            CardCode = cardCode ?: throw SysfeedSupplierException("cardCode obrigatorio"),
-            CardName = cardName ?: throw SysfeedSupplierException("cardName obrigatorio"),
-            Cnpj = tax?.TaxId0 ?: tax?.TaxId4,
-            InscricaoEstadual = tax?.TaxId1,
-            Endereco = listOfNotNull(address?.Street, address?.StreetNo, address?.Block, address?.City, address?.State)
-                .filter { it.isNotBlank() }
-                .joinToString(", ")
-                .takeIf { it.isNotBlank() },
-            Cep = address?.ZipCode,
-            Telefone = phone1 ?: phone2,
-            SysfeedStatus = U_sysfeed_status
-        )
-    }
-
     private fun onlyDigits(value: String?): String? = value
         ?.replace("\\D".toRegex(), "")
         ?.takeIf { it.isNotBlank() }
-
-    private fun logJson(event: String, fields: Map<String, Any?>) {
-        logger.info(objectMapper.writeValueAsString(mapOf("event" to event) + fields))
-    }
 }
 
 class SysfeedSupplierException(message: String) : RuntimeException(message)
-
-data class SysfeedSupplierExecutionResult(
-    val suppliers: List<SysfeedSupplierLineResult>
-) {
-    val sent: Int = suppliers.count { it.status == SysfeedSupplierStatus.SENT }
-    val errors: Int = suppliers.count { it.status == SysfeedSupplierStatus.ERROR }
-}
-
-data class SysfeedSupplierLineResult(
-    val cardCode: String,
-    val status: SysfeedSupplierStatus,
-    val error: String? = null
-)
-
-enum class SysfeedSupplierStatus(val sapValue: String) {
-    SENT("ENVIADO"),
-    ERROR("ERRO")
-}

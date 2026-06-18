@@ -7,12 +7,14 @@ SELECT
     T1."ItemCode" AS "ItemCode",
     T1."InvQty" AS "Quantity",
     B."BatchNum" AS "NrLoteCodigoRecebimento",
+    T12."Vehicle" AS "Placa",
     I."U_LbrOne_Id" AS "CodProd",
     T0."U_sysfeed_status" AS "SysfeedStatus"
 FROM OPCH T0
 INNER JOIN PCH1 T1 ON T1."DocEntry" = T0."DocEntry"
 INNER JOIN OITM I ON I."ItemCode" = T1."ItemCode"
 LEFT JOIN IBT1 B ON B."BaseType" = 18 AND B."BaseEntry" = T0."DocEntry" AND B."BaseLinNum" = T1."LineNum" AND B."ItemCode" = T1."ItemCode"
+LEFT JOIN PCH12 T12 ON T12."DocEntry" = T0."DocEntry"
 WHERE T0."CANCELED" = 'N'
   AND T0."BPLId" = 2
   AND T1."Usage" = :usage

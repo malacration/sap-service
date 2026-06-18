@@ -20,14 +20,14 @@ class SysfeedStatusService(
                 update(update)
                 SysfeedStatusUpdateResult(
                     tipo = update.tipo,
-                    identificador = update.identificador,
+                    codigo = update.codigo,
                     status = update.status.trim().uppercase(),
                     success = true
                 )
             } catch (e: Exception) {
                 SysfeedStatusUpdateResult(
                     tipo = update.tipo,
-                    identificador = update.identificador,
+                    codigo = update.codigo,
                     status = update.status,
                     success = false,
                     error = e.message
@@ -37,10 +37,10 @@ class SysfeedStatusService(
     }
 
     private fun update(update: SysfeedStatusUpdate) {
-        val identifier = update.identificador.trim()
+        val codigo = update.codigo.trim()
         val status = update.status.trim().uppercase()
-        if (identifier.isBlank()) {
-            throw SysfeedStatusException("identificador obrigatorio")
+        if (codigo.isBlank()) {
+            throw SysfeedStatusException("codigo obrigatorio")
         }
         if (status !in allowedStatuses) {
             throw SysfeedStatusException("Status Sysfeed invalido: ${update.status}")
@@ -48,10 +48,10 @@ class SysfeedStatusService(
 
         val payload = mapOf("U_sysfeed_status" to status)
         when (update.tipo) {
-            SysfeedStatusTarget.FORNECEDOR -> businessPartnersService.update(payload, "'$identifier'")
+            SysfeedStatusTarget.FORNECEDOR -> businessPartnersService.update(payload, "'$codigo'")
             SysfeedStatusTarget.ORDEM_RECEBIMENTO -> {
-                identifier.toIntOrNull() ?: throw SysfeedStatusException("DocEntry invalido: $identifier")
-                purchaseInvoiceService.update(payload, identifier)
+                codigo.toIntOrNull() ?: throw SysfeedStatusException("DocEntry invalido: $codigo")
+                purchaseInvoiceService.update(payload, codigo)
             }
         }
     }

@@ -2,13 +2,13 @@ package br.andrew.sap.model.sysfeed
 
 data class SysfeedStatusUpdate(
     val tipo: SysfeedStatusTarget,
-    val identificador: String,
+    val codigo: String,
     val status: String
 )
 
 data class SysfeedStatusUpdateResult(
     val tipo: SysfeedStatusTarget,
-    val identificador: String,
+    val codigo: String,
     val status: String,
     val success: Boolean,
     val error: String? = null
