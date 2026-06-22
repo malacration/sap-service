@@ -14,7 +14,7 @@ class SysfeedFieldsConfiguration(
     private val userFieldsMDService: UserFieldsMDService
 ) {
     init {
-        listOf("OPDN", "OCRD").forEach { table ->
+        listOf("OPDN", "OPCH", "OCRD", "OWOR").forEach { table ->
             createStatusField(table)
         }
     }
@@ -26,8 +26,7 @@ class SysfeedFieldsConfiguration(
                 ValuesMd("ENVIADO", "Enviado"),
                 ValuesMd("DUPLICADO", "Duplicado"),
                 ValuesMd("ERRO", "Erro"),
-                ValuesMd("PARCIAL", "Parcial"),
-                ValuesMd("IGNORADO", "Ignorado")
+                ValuesMd("PARCIAL", "Parcial")
             )
             it.defaultValue = "PENDENTE"
             userFieldsMDService.findOrCreate(it)

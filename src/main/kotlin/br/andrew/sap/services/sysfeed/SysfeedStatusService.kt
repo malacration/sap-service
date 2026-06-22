@@ -4,15 +4,17 @@ import br.andrew.sap.model.sysfeed.SysfeedStatusTarget
 import br.andrew.sap.model.sysfeed.SysfeedStatusUpdate
 import br.andrew.sap.model.sysfeed.SysfeedStatusUpdateResult
 import br.andrew.sap.services.BusinessPartnersService
+import br.andrew.sap.services.ProductionOrdersService
 import br.andrew.sap.services.document.PurchaseInvoiceService
 import org.springframework.stereotype.Service
 
 @Service
 class SysfeedStatusService(
     private val businessPartnersService: BusinessPartnersService,
-    private val purchaseInvoiceService: PurchaseInvoiceService
+    private val purchaseInvoiceService: PurchaseInvoiceService,
+    private val productionOrdersService: ProductionOrdersService
 ) {
-    private val allowedStatuses = setOf("PENDENTE", "ENVIADO", "DUPLICADO", "ERRO", "PARCIAL", "IGNORADO")
+    private val allowedStatuses = setOf("PENDENTE", "ENVIADO", "DUPLICADO", "ERRO", "PARCIAL")
 
     fun updateAll(updates: List<SysfeedStatusUpdate>): List<SysfeedStatusUpdateResult> {
         return updates.map { update ->
@@ -52,6 +54,10 @@ class SysfeedStatusService(
             SysfeedStatusTarget.ORDEM_RECEBIMENTO -> {
                 codigo.toIntOrNull() ?: throw SysfeedStatusException("DocEntry invalido: $codigo")
                 purchaseInvoiceService.update(payload, codigo)
+            }
+            SysfeedStatusTarget.ORDEM_PRODUCAO -> {
+                codigo.toIntOrNull() ?: throw SysfeedStatusException("DocEntry invalido: $codigo")
+                productionOrdersService.update(payload, codigo)
             }
         }
     }
