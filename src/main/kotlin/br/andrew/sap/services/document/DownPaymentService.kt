@@ -60,6 +60,7 @@ class DownPaymentService(env: SapEnvrioment,
                          private val pixService: DynamicPixQrCodeService,
                          private val businessPartnersService: BusinessPartnersService,
                          @Value("\${venda-futura.adiantamento-item:none}") val vfItemAdiantamento : String,
+                         @Value("\${venda-futura.adiantamento-utilizacao:66}") val vfUtilizacao : Int,
                          @Value("\${adiantamento-vf.formaPagamento:none}") vfFormaPagamento : String,
                          restTemplate: RestTemplate,
                          authService: AuthService,
@@ -80,10 +81,26 @@ class DownPaymentService(env: SapEnvrioment,
         return save(adiantamento).tryGetValue<Document>()
     }
 
+    /**
+     * Monta a devolução (CreditNotes) de um adiantamento de venda futura.
+     * Quando a linha do adiantamento original não possui utilização, usa a
+     * utilização configurada em [vfUtilizacao] ([venda-futura.adiantamento-utilizacao]).
+     */
+    fun devolucaoAdiantamentoVendaFutura(adiantamento: Document): CreditNotes {
+        return CreditNotes(adiantamento).also { aplicaUtilizacaoDevolucao(it) }
+    }
+
+    private fun aplicaUtilizacaoDevolucao(devolucao: CreditNotes) {
+        devolucao.DocumentLines.forEach { linha ->
+            if (linha.Usage == null)
+                linha.Usage = vfUtilizacao
+        }
+    }
+
     fun adiantamentosVendaFuturaWithoutSave(contrato: Contrato, paymentInfo: PaymentDueDates): Document {
         if(vfItemAdiantamento == "none")
             throw Exception("O parametro [venda-futura.adiantamento-item] nao pode ser $vfItemAdiantamento")
-        val linhas = listOf(Product(vfItemAdiantamento,paymentInfo.value.toString(),"1"))
+        val linhas = listOf(Product(vfItemAdiantamento,paymentInfo.value.toString(),"1",vfUtilizacao))
         val adiantamento = DownPayment(
             contrato.U_cardCode,
             paymentInfo.dueDate.toString(),
@@ -92,6 +109,7 @@ class DownPaymentService(env: SapEnvrioment,
         if(vfFormaPagamento != null)
             adiantamento.paymentMethod = vfFormaPagamento
         adiantamento.U_venda_futura = contrato.DocEntry;
+        adiantamento.salesPersonCode = contrato.U_vendedor
         return adiantamento
     }
 
@@ -286,7 +304,7 @@ class DownPaymentService(env: SapEnvrioment,
             it.U_TX_DocEntryRef = docEntry
             it.U_TX_DocTypeRef = downPayment.docObjectCode?.value
             it.SequenceCode = 1
-//            it.DocumentLines.forEach { it.Usage = 16; it.CFOPCode = "1000" }
+            aplicaUtilizacaoDevolucao(it)
         }
         return creditNotesService.save(devolucao).tryGetValue<CreditNotes>()
     }
