@@ -81,6 +81,22 @@ class DownPaymentService(env: SapEnvrioment,
         return save(adiantamento).tryGetValue<Document>()
     }
 
+    /**
+     * Monta a devolução (CreditNotes) de um adiantamento de venda futura.
+     * Quando a linha do adiantamento original não possui utilização, usa a
+     * utilização configurada em [vfUtilizacao] ([venda-futura.adiantamento-utilizacao]).
+     */
+    fun devolucaoAdiantamentoVendaFutura(adiantamento: Document): CreditNotes {
+        return CreditNotes(adiantamento).also { aplicaUtilizacaoDevolucao(it) }
+    }
+
+    private fun aplicaUtilizacaoDevolucao(devolucao: CreditNotes) {
+        devolucao.DocumentLines.forEach { linha ->
+            if (linha.Usage == null)
+                linha.Usage = vfUtilizacao
+        }
+    }
+
     fun adiantamentosVendaFuturaWithoutSave(contrato: Contrato, paymentInfo: PaymentDueDates): Document {
         if(vfItemAdiantamento == "none")
             throw Exception("O parametro [venda-futura.adiantamento-item] nao pode ser $vfItemAdiantamento")
@@ -288,7 +304,7 @@ class DownPaymentService(env: SapEnvrioment,
             it.U_TX_DocEntryRef = docEntry
             it.U_TX_DocTypeRef = downPayment.docObjectCode?.value
             it.SequenceCode = 1
-//            it.DocumentLines.forEach { it.Usage = 16; it.CFOPCode = "1000" }
+            aplicaUtilizacaoDevolucao(it)
         }
         return creditNotesService.save(devolucao).tryGetValue<CreditNotes>()
     }

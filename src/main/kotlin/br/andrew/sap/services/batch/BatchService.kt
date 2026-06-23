@@ -100,7 +100,7 @@ class BatchService(val rest : RestTemplate,
                     "documento está aguardando aprovação e não pode ser alterado"
                 else
                     response.errorMessage ?: response.body ?: "Erro ${response.statusCode}"
-                erro
+                "${response.statusCode} - $erro"
             }
             throw Exception(mensagem)
         }

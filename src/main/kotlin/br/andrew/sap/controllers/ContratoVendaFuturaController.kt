@@ -6,7 +6,6 @@ import br.andrew.sap.infrastructure.odata.*
 import br.andrew.sap.model.authentication.User
 import br.andrew.sap.model.enums.Cancelled
 import br.andrew.sap.model.payment.PaymentDueDates
-import br.andrew.sap.model.sap.documents.CreditNotes
 import br.andrew.sap.model.sap.documents.DocumentStatus
 import br.andrew.sap.model.sap.documents.DownPaymentUnsetVendaFutura
 import br.andrew.sap.model.sap.documents.Invoice
@@ -198,7 +197,7 @@ class ContratoVendaFuturaController(
 
             adiantamentoCancelar.forEach {
                 bathcList.add(BatchMethod.PATCH, DownPaymentUnsetVendaFutura(it),adiantamentoService)
-                bathcList.add(BatchMethod.POST,CreditNotes(it),creditNoteService)
+                bathcList.add(BatchMethod.POST,adiantamentoService.devolucaoAdiantamentoVendaFutura(it),creditNoteService)
             }
 
             if(valorResidual.compareTo(BigDecimal.ZERO) > 0){
