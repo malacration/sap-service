@@ -60,6 +60,7 @@ class DownPaymentService(env: SapEnvrioment,
                          private val pixService: DynamicPixQrCodeService,
                          private val businessPartnersService: BusinessPartnersService,
                          @Value("\${venda-futura.adiantamento-item:none}") val vfItemAdiantamento : String,
+                         @Value("\${venda-futura.adiantamento-utilizacao:66}") val vfUtilizacao : Int,
                          @Value("\${adiantamento-vf.formaPagamento:none}") vfFormaPagamento : String,
                          restTemplate: RestTemplate,
                          authService: AuthService,
@@ -83,7 +84,7 @@ class DownPaymentService(env: SapEnvrioment,
     fun adiantamentosVendaFuturaWithoutSave(contrato: Contrato, paymentInfo: PaymentDueDates): Document {
         if(vfItemAdiantamento == "none")
             throw Exception("O parametro [venda-futura.adiantamento-item] nao pode ser $vfItemAdiantamento")
-        val linhas = listOf(Product(vfItemAdiantamento,paymentInfo.value.toString(),"1"))
+        val linhas = listOf(Product(vfItemAdiantamento,paymentInfo.value.toString(),"1",vfUtilizacao))
         val adiantamento = DownPayment(
             contrato.U_cardCode,
             paymentInfo.dueDate.toString(),
@@ -92,6 +93,7 @@ class DownPaymentService(env: SapEnvrioment,
         if(vfFormaPagamento != null)
             adiantamento.paymentMethod = vfFormaPagamento
         adiantamento.U_venda_futura = contrato.DocEntry;
+        adiantamento.salesPersonCode = contrato.U_vendedor
         return adiantamento
     }
 
