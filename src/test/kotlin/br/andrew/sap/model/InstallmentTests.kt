@@ -1,7 +1,7 @@
 package br.andrew.sap.model
 
 import br.andrew.sap.model.sap.documents.base.Installment
-import org.junit.jupiter.api.Assertions
+import br.andrew.sap.model.sap.documents.base.PixControleData
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
 import java.time.ZoneId
@@ -9,6 +9,9 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import java.time.LocalDateTime
+import java.time.LocalTime
+import java.time.OffsetDateTime
+import java.time.temporal.ChronoUnit
 import java.util.*
 
 class InstallmentTests {
@@ -84,18 +87,28 @@ class InstallmentTests {
         assertTrue(installment.isPixValido())
     }
 
+    private fun noFuso(ano: Int, mes: Int, dia: Int, hora: Int, minuto: Int): OffsetDateTime =
+        LocalDateTime.of(ano, mes, dia, hora, minuto).atZone(PixControleData.ZONA).toOffsetDateTime()
+
     @Test
     fun sanitizarControleConsultaPix_deveLimparUltimaConsultaERegistrarLimite() {
+        val referencia = noFuso(2026, 3, 19, 8, 0)
         val installment = Installment(LocalDate.of(2026, 3, 20), 0.0).also {
             it.U_pix_reference = "ref-123"
             it.U_pix_due_date = "2026-03-20"
             it.U_pix_proxima_consulta_em = "2026-03-19T10:00:00"
         }
 
-        installment.sanitizarControleConsultaPix(LocalDateTime.of(2026, 3, 19, 8, 0))
+        installment.sanitizarControleConsultaPix(referencia)
 
-        assertEquals("2026-03-19T08:00", installment.U_pix_proxima_consulta_em)
-        assertEquals("2026-03-20T23:59:59.999999999", installment.U_pix_consultar_ate)
+        val proximaEsperada = PixControleData.formatar(referencia.truncatedTo(ChronoUnit.MINUTES))
+        val limiteEsperado = PixControleData.formatar(
+            LocalDate.of(2026, 3, 20).atTime(LocalTime.MAX).atZone(PixControleData.ZONA).toOffsetDateTime()
+        )
+        assertEquals(proximaEsperada, installment.U_pix_proxima_consulta_em)
+        assertEquals(limiteEsperado, installment.U_pix_consultar_ate)
+        // o limite (consultar_ate) carrega offset explicito
+        assertTrue(installment.U_pix_consultar_ate!!.startsWith("2026-03-20T23:59:59"))
     }
 
     @Test
@@ -103,13 +116,13 @@ class InstallmentTests {
         val installment = Installment(LocalDate.of(2026, 3, 20), 0.0).also {
             it.U_pix_reference = "ref-123"
             it.U_pix_due_date = "2026-03-20"
-            it.sanitizarControleConsultaPix(LocalDateTime.of(2026, 3, 19, 8, 0))
-            it.U_pix_proxima_consulta_em = "2026-03-19T10:15:00"
+            it.sanitizarControleConsultaPix(noFuso(2026, 3, 19, 8, 0))
+            it.U_pix_proxima_consulta_em = PixControleData.formatar(noFuso(2026, 3, 19, 10, 15))
         }
 
-        assertFalse(installment.podeConsultarPixPagamento(LocalDateTime.of(2026, 3, 19, 10, 10)))
-        assertTrue(installment.podeConsultarPixPagamento(LocalDateTime.of(2026, 3, 19, 10, 15)))
-        assertFalse(installment.podeConsultarPixPagamento(LocalDateTime.of(2026, 3, 21, 0, 0)))
+        assertFalse(installment.podeConsultarPixPagamento(noFuso(2026, 3, 19, 10, 10)))
+        assertTrue(installment.podeConsultarPixPagamento(noFuso(2026, 3, 19, 10, 15)))
+        assertFalse(installment.podeConsultarPixPagamento(noFuso(2026, 3, 21, 0, 0)))
     }
 
     @Test
@@ -125,5 +138,35 @@ class InstallmentTests {
         assertEquals(8, installment.diasAtraso(LocalDate.of(2026, 2, 4)))
         val juros = installment.calcularJurosSimplesPorDia(0.166666, LocalDate.of(2026, 2, 4))
         assertEquals(28.66, juros)
+    }
+
+    @Test
+    fun isPixValido_usaConsultarAte_eToleraValorLegadoNaive() {
+        // valor legado sem offset (formato antigo ja persistido no SAP)
+        val installment = Installment(LocalDate.now(), 0.0).also {
+            it.U_pix_reference = "ref-123"
+            it.U_pix_consultar_ate = LocalDate.now().atTime(LocalTime.MAX).toString()
+        }
+        assertTrue(installment.isPixValido())
+    }
+
+    @Test
+    fun isPixValido_deveSerFalso_quandoConsultarAteJaPassou() {
+        val installment = Installment(LocalDate.now(), 0.0).also {
+            it.U_pix_reference = "ref-123"
+            it.U_pix_consultar_ate = PixControleData.formatar(noFuso(2020, 1, 1, 0, 0))
+        }
+        assertFalse(installment.isPixValido())
+    }
+
+    @Test
+    fun consultarAte_deveSerTimezoneAware_aposGeracao() {
+        val installment = Installment(LocalDate.of(2026, 3, 20), 0.0).also {
+            it.U_pix_due_date = "2026-03-20"
+            it.sanitizarControleConsultaPix(noFuso(2026, 3, 19, 8, 0))
+        }
+        // valor deve ser um OffsetDateTime valido (offset explicito) e fazer round-trip no formato
+        val valor = installment.U_pix_consultar_ate!!
+        assertEquals(valor, PixControleData.formatar(OffsetDateTime.parse(valor)))
     }
 }

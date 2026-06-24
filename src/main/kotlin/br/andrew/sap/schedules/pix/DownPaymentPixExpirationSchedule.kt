@@ -1,6 +1,7 @@
 package br.andrew.sap.schedules.pix
 
 import br.andrew.sap.model.sap.documents.DownPayment
+import br.andrew.sap.model.sap.documents.base.PixControleData
 import br.andrew.sap.services.document.DownPaymentService
 import br.andrew.sap.services.uzzipay.PixPaymentVerificationService
 import org.slf4j.Logger
@@ -8,7 +9,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
-import java.time.LocalDateTime
+import java.time.OffsetDateTime
 import java.time.temporal.ChronoUnit.MINUTES
 import java.util.concurrent.TimeUnit
 
@@ -22,8 +23,8 @@ class DownPaymentPixExpirationSchedule(
 
     @Scheduled(fixedDelayString = "\${pix.schedule.adiantamento-expirado-delay-minutes:1}", timeUnit = TimeUnit.MINUTES)
     fun execute() {
-        val agora = LocalDateTime.now().truncatedTo(MINUTES)
-        downPaymentService.getPixsVencidos(agora.toString())
+        val agora = PixControleData.agora().truncatedTo(MINUTES)
+        downPaymentService.getPixsVencidos(PixControleData.formatar(agora))
             .groupBy { it.docEntry }
             .forEach { (docEntry, installments) ->
                 if(docEntry == null) {
@@ -37,7 +38,7 @@ class DownPaymentPixExpirationSchedule(
             }
     }
 
-    private fun processaAdiantamento(docEntry: Int, installmentsIds: Set<Int>, agora: LocalDateTime) {
+    private fun processaAdiantamento(docEntry: Int, installmentsIds: Set<Int>, agora: OffsetDateTime) {
         val downPayment = downPaymentService.getById(docEntry).tryGetValue<DownPayment>()
         if(downPayment.U_venda_futura != null) {
             return
@@ -65,7 +66,7 @@ class DownPaymentPixExpirationSchedule(
     private fun getParcelasVencidas(
         downPayment: DownPayment,
         installmentsIds: Set<Int>,
-        agora: LocalDateTime
+        agora: OffsetDateTime
     ) = downPayment.documentInstallments
         ?.filter { it.InstallmentId != null && installmentsIds.contains(it.InstallmentId) }
         ?.filter {

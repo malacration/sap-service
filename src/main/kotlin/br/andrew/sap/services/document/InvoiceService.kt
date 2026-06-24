@@ -19,7 +19,6 @@ import br.andrew.sap.model.sap.journal.OriginalJournal
 import JournalEntry
 import JournalEntryLines
 import br.andrew.sap.model.sap.partner.BusinessPartner
-import br.andrew.sap.model.dto.InvoicePixUpdatePayload
 import br.andrew.sap.model.dto.InstallmentPixConsulta
 import br.andrew.sap.model.dto.InstallmentPixResumo
 import br.andrew.sap.model.uzzipay.ContaUzziPayPix
@@ -49,8 +48,9 @@ import org.springframework.data.domain.Pageable
 import org.springframework.http.RequestEntity
 import org.springframework.stereotype.Service
 import org.springframework.web.client.RestTemplate
+import br.andrew.sap.model.sap.documents.base.PixControleData
 import java.text.SimpleDateFormat
-import java.time.LocalDateTime
+import java.time.OffsetDateTime
 import java.time.temporal.ChronoUnit.MINUTES
 import java.util.*
 
@@ -102,35 +102,10 @@ class InvoiceService(env: SapEnvrioment, restTemplate: RestTemplate, authService
     }
 
     fun updatePixInstallments(docEntry: Int, installments: List<Installment>) {
-        if(installments.isEmpty()) {
-            return
-        }
-        val payload = InvoicePixUpdatePayload.from(installments)
-        repeat(3) { tentativa ->
-            this.update(payload, docEntry.toString())
-            Thread.sleep(500)
-            if(pixPersistido(docEntry, installments)) {
-                return
-            }
-            if(tentativa < 2) {
-                Thread.sleep(1000)
-            }
-        }
-        throw Exception("SAP retornou sucesso, mas nao persistiu os dados PIX da nota $docEntry apos 3 tentativas")
-    }
-
-    private fun pixPersistido(docEntry: Int, installments: List<Installment>): Boolean {
-        val invoice = getById(docEntry).tryGetValue<Invoice>()
-        val parcelasPersistidas = invoice.documentInstallments.orEmpty()
-        return installments.all { atualizada ->
-            val persistida = parcelasPersistidas.firstOrNull { it.InstallmentId == atualizada.InstallmentId }
-                ?: return@all false
-            persistida.U_QrCodePix == atualizada.U_QrCodePix &&
-                persistida.U_pix_reference == atualizada.U_pix_reference &&
-                persistida.U_pix_textContent == atualizada.U_pix_textContent &&
-                persistida.U_pix_link == atualizada.U_pix_link &&
-                persistida.U_pix_due_date == atualizada.U_pix_due_date
-        }
+        PixInstallmentUpdater.atualizar(
+            this, sqlQueriesService, "installment-pix-persistido.sql",
+            docEntry, installments, "da nota"
+        )
     }
 
     fun getInvoiceByIdPix(reference: String): Invoice {
@@ -150,9 +125,9 @@ class InvoiceService(env: SapEnvrioment, restTemplate: RestTemplate, authService
     }
 
     fun getPixsGeradosParaConsulta(
-        dataReferencia: LocalDateTime
+        dataReferencia: OffsetDateTime
     ): List<InstallmentPixConsulta> {
-        val agora = dataReferencia.truncatedTo(MINUTES).toString()
+        val agora = PixControleData.formatar(dataReferencia.truncatedTo(MINUTES))
         return sqlQueriesService.getAll(
             "installment-pix-consulta.sql",
             listOf(Parameter("now", agora))

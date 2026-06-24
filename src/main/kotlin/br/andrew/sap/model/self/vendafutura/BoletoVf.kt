@@ -45,7 +45,8 @@ class BoletoVf {
                 it.U_pix_textContent = installment?.U_pix_textContent
                 it.U_pix_link = installment?.U_pix_link
                 it.U_pix_reference = installment?.U_pix_reference
-                it.U_pix_due_date = installment?.U_pix_due_date
+                // envia a validade digital (consultar_ate, timezone-aware) no campo due_date consumido pelo front
+                it.U_pix_due_date = installment?.U_pix_consultar_ate
                 it.U_pix_proxima_consulta_em = installment?.U_pix_proxima_consulta_em
                 it.U_pix_consultar_ate = installment?.U_pix_consultar_ate
             }

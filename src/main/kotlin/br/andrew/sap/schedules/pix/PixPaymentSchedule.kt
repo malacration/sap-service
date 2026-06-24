@@ -2,6 +2,7 @@ package br.andrew.sap.schedules.pix
 
 import br.andrew.sap.model.sap.documents.DownPayment
 import br.andrew.sap.model.sap.documents.Invoice
+import br.andrew.sap.model.sap.documents.base.PixControleData
 import br.andrew.sap.services.document.DownPaymentService
 import br.andrew.sap.services.document.InvoiceService
 import br.andrew.sap.services.uzzipay.PixPaymentVerificationService
@@ -11,7 +12,7 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
-import java.time.LocalDateTime
+import java.time.OffsetDateTime
 import java.time.temporal.ChronoUnit
 import java.util.concurrent.TimeUnit
 
@@ -28,7 +29,7 @@ class PixPaymentSchedule(
 
     @Scheduled(fixedDelayString = "\${pix.schedule.delay-minutes:5}", timeUnit = TimeUnit.MINUTES)
     fun executeInvoice() {
-        val agora = LocalDateTime.now()
+        val agora = PixControleData.agora()
         invoiceService.getPixsGeradosParaConsulta(agora)
             .groupBy { it.docEntry }
             .forEach { (docEntry, installments) ->
@@ -45,8 +46,8 @@ class PixPaymentSchedule(
 
     @Scheduled(fixedDelayString = "\${pix.schedule.delay-minutes:5}", timeUnit = TimeUnit.MINUTES)
     fun executeAdiantamento() {
-        val agora = LocalDateTime.now()
-        downPaymentService.getPixsGeradosParaConsulta(agora.truncatedTo(ChronoUnit.MINUTES).toString())
+        val agora = PixControleData.agora()
+        downPaymentService.getPixsGeradosParaConsulta(PixControleData.formatar(agora.truncatedTo(ChronoUnit.MINUTES)))
             .groupBy { it.docEntry }
             .forEach { (docEntry, installments) ->
                 if(docEntry == null) {
@@ -60,7 +61,7 @@ class PixPaymentSchedule(
             }
     }
 
-    private fun processaInvoice(docEntry: Int, installmentsIds: Set<Int>, agora: LocalDateTime) {
+    private fun processaInvoice(docEntry: Int, installmentsIds: Set<Int>, agora: OffsetDateTime) {
         val invoice = invoiceService.getById(docEntry).tryGetValue<Invoice>()
         val parcelasElegiveis = invoice.documentInstallments
             ?.filter { it.InstallmentId != null && installmentsIds.contains(it.InstallmentId) }
@@ -91,7 +92,7 @@ class PixPaymentSchedule(
         }
     }
 
-    private fun processaAdiantamento(docEntry: Int, installmentsIds: Set<Int>, agora: LocalDateTime) {
+    private fun processaAdiantamento(docEntry: Int, installmentsIds: Set<Int>, agora: OffsetDateTime) {
         val downPayment = downPaymentService.getById(docEntry).tryGetValue<DownPayment>()
         val parcelasElegiveis = downPayment.documentInstallments
             ?.filter { it.InstallmentId != null && installmentsIds.contains(it.InstallmentId) }

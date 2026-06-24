@@ -3,6 +3,7 @@ package br.andrew.sap.model.uzzipay
 import br.andrew.sap.model.sap.documents.DocumentTypes
 import br.andrew.sap.model.sap.documents.base.Document
 import br.andrew.sap.model.sap.documents.base.Installment
+import br.andrew.sap.model.sap.documents.base.PixControleData
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import java.text.SimpleDateFormat
@@ -81,6 +82,9 @@ class RequestQrCodeTests {
         )
 
         Assertions.assertTrue(!installment.U_pix_proxima_consulta_em.isNullOrBlank())
-        Assertions.assertEquals(vencimento.atTime(LocalTime.MAX).toString(), installment.U_pix_consultar_ate)
+        val limiteEsperado = PixControleData.formatar(
+            vencimento.atTime(LocalTime.MAX).atZone(PixControleData.ZONA).toOffsetDateTime()
+        )
+        Assertions.assertEquals(limiteEsperado, installment.U_pix_consultar_ate)
     }
 }
