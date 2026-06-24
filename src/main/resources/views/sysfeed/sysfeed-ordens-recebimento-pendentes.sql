@@ -7,6 +7,9 @@ SELECT
     T1."ItemCode" AS "ItemCode",
     T1."InvQty" AS "Quantity",
     B."BatchNum" AS "NrLoteCodigoRecebimento",
+    B."ExpDate" AS "DataValidade",
+    B."MnfDate" AS "DataFabricacao",
+    T0."DocDate" AS "DataRegistro",
     T12."Vehicle" AS "Placa",
     I."U_LbrOne_Id" AS "CodProd",
     T0."U_sysfeed_status" AS "SysfeedStatus"

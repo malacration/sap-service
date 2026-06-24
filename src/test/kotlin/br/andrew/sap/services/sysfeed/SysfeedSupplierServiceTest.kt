@@ -62,4 +62,34 @@ class SysfeedSupplierServiceTest {
         }
     }
 
+    @Test
+    fun `deve normalizar cardCode somente digitos`() {
+        assertEquals("FOR0012345", service.normalizeCardCode("12345"))
+    }
+
+    @Test
+    fun `deve normalizar cardCode com prefixo FOR sem padding`() {
+        assertEquals("FOR0012345", service.normalizeCardCode("FOR12345"))
+    }
+
+    @Test
+    fun `deve normalizar cardCode ja formatado`() {
+        assertEquals("FOR0012345", service.normalizeCardCode("FOR0012345"))
+    }
+
+    @Test
+    fun `deve normalizar cardCode case insensitive`() {
+        assertEquals("FOR0012345", service.normalizeCardCode("for12345"))
+    }
+
+    @Test
+    fun `deve rejeitar cardCode invalido`() {
+        assertThrows(SysfeedSupplierException::class.java) {
+            service.normalizeCardCode("FOR")
+        }
+        assertThrows(SysfeedSupplierException::class.java) {
+            service.normalizeCardCode("FORXYZ")
+        }
+    }
+
 }

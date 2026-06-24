@@ -125,6 +125,17 @@ roles:
       actions: ["get"]
     - url: "/installment/**/paid"
       actions: ["get"]
+  sysfeed:
+    - url: "/sysfeed/fornecedores/pendentes"
+      actions: ["get"]
+    - url: "/sysfeed/fornecedores/*"
+      actions: ["get"]
+    - url: "/sysfeed/ordens-recebimento/pendentes"
+      actions: ["get"]
+    - url: "/sysfeed/ordens-producao/pendentes"
+      actions: ["get"]
+    - url: "/sysfeed/status"
+      actions: ["post"]
   qualidade:
     - url: "/batch-stock/item-code/**"
       actions: ["get"]

@@ -8,6 +8,8 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
 import java.math.RoundingMode
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 
 @Service
 class SysfeedReceivingOrderService(
@@ -40,7 +42,10 @@ class SysfeedReceivingOrderService(
             NrBag = "0",
             NrNotaFiscal = pending.Serial ?: pending.DocNum,
             NrLoteCodigoRecebimento = pending.NrLoteCodigoRecebimento,
-            Placa = pending.Placa,
+            DataValidade = formatSapDate(pending.DataValidade),
+            DataFabricacao = formatSapDate(pending.DataFabricacao),
+            DataRegistro = formatSapDate(pending.DataRegistro),
+            Placa = pending.Placa?.takeIf { it.isNotBlank() } ?: "SEM PLACA",
             RegLido = "NAO"
         )
     }
@@ -68,6 +73,16 @@ class SysfeedReceivingOrderService(
         }
         if (maxLength != null && value.length > maxLength) {
             throw SysfeedReceivingValidationException("$field deve ter no maximo $maxLength digitos: $value")
+        }
+    }
+
+    private fun formatSapDate(sapDate: String?): String? {
+        if (sapDate.isNullOrBlank()) return null
+        return try {
+            val date = LocalDate.parse(sapDate.take(10))
+            date.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) + " 00:00:00"
+        } catch (e: Exception) {
+            null
         }
     }
 

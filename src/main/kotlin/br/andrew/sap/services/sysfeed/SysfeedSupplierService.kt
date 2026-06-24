@@ -1,5 +1,6 @@
 package br.andrew.sap.services.sysfeed
 
+import br.andrew.sap.infrastructure.odata.Parameter
 import br.andrew.sap.model.sysfeed.SysfeedSupplierPending
 import br.andrew.sap.model.sysfeed.SysfeedSupplierRequest
 import br.andrew.sap.services.abstracts.SqlQueriesService
@@ -11,6 +12,21 @@ class SysfeedSupplierService(
 ) {
     fun getPendingPayloads(): List<SysfeedSupplierRequest> {
         return getPendingRows().map { buildPayload(it) }
+    }
+
+    fun getByCardCode(rawCardCode: String): SysfeedSupplierRequest? {
+        val cardCode = normalizeCardCode(rawCardCode)
+        val row = getRowByCardCode(cardCode) ?: return null
+        return buildPayload(row)
+    }
+
+    fun normalizeCardCode(rawCardCode: String): String {
+        val code = rawCardCode.trim().uppercase()
+        val digits = if (code.startsWith("FOR")) code.removePrefix("FOR") else code
+        if (digits.isBlank() || !digits.matches(Regex("\\d+"))) {
+            throw SysfeedSupplierException("CardCode inválido: $rawCardCode")
+        }
+        return "FOR" + digits.padStart(7, '0')
     }
 
     fun buildPayload(pending: SysfeedSupplierPending): SysfeedSupplierRequest {
@@ -59,6 +75,13 @@ class SysfeedSupplierService(
             .execute("sysfeed-fornecedores-pendentes.sql")
             ?.tryGetValues<SysfeedSupplierPending>()
             ?: emptyList()
+    }
+
+    private fun getRowByCardCode(cardCode: String): SysfeedSupplierPending? {
+        return sqlQueriesService
+            .execute("sysfeed-fornecedor-por-cardcode.sql", Parameter("cardCode", cardCode))
+            ?.tryGetValues<SysfeedSupplierPending>()
+            ?.firstOrNull()
     }
 
     private fun onlyDigits(value: String?): String? = value
