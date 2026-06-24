@@ -27,6 +27,14 @@ class PixRequestAdiantamento(
         return getImmediateRequest(null)
     }
 
+    fun origem(): String {
+        return when (documentTypes) {
+            null -> "PIX avulso"
+            DocumentTypes.oOrders -> "PIX pelo pedido de venda (DocEntry $docEntry)"
+            else -> "PIX pelo documento ${documentTypes.label} (DocEntry $docEntry)"
+        }
+    }
+
     fun getImmediateRequest(adiantamento: DownPayment?): RequestPixImmediate {
         val conta = contaSelecionada()
         val installmentId = adiantamento?.documentInstallments

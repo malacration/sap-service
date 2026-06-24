@@ -17,7 +17,13 @@ class PedidoRetirada(
     val docEntryVendaFutura : Int,
     val itensRetirada : List<ItemRetirada>){
 
-    fun parse(contrato: Contrato, usage: Int, docDueDate : String? = null, order : Document): Quotation {
+    fun parse(
+        contrato: Contrato,
+        usage: Int,
+        docDueDate : String? = null,
+        order : Document,
+        numerosBoletos: List<String> = listOf()
+    ): Quotation {
         val itemOriginal = order.DocumentLines?.get(0)
         return Quotation(
             CardCode = contrato.U_cardCode,
@@ -36,6 +42,7 @@ class PedidoRetirada(
             it.paymentGroupCode = -1
             it.journalMemo = "Entrega de mercadoria ref a contrato Nº ${contrato.DocEntry}"
             it.comments = it.journalMemo
+            it.ClosingRemarks = observacaoFooter(contrato, numerosBoletos)
             if(contrato.U_valorFrete > 0){
                 val proporcao = it.totalProdutos().divide(contrato.totalProdutos(), RoundingMode.HALF_DOWN)
                 it.frete = BigDecimal(contrato.U_valorFrete.toString()).multiply(proporcao).setScale(2, RoundingMode.HALF_DOWN).toDouble()
@@ -63,6 +70,17 @@ class PedidoRetirada(
             it.CostingCode2 = lineOriginal?.CostingCode2
             it.LineTotal = null
         }
+    }
+
+    private fun observacaoFooter(contrato: Contrato, numerosBoletos: List<String>): String {
+        val boletos = numerosBoletos
+            .filter { it.isNotBlank() }
+            .distinct()
+            .joinToString(", ")
+            .ifBlank { "nao encontrados" }
+
+        return "Faturamento referente a entrega de mercadorias do contrato Nº ${contrato.DocEntry} " +
+            "com referencia aos boletos numero $boletos."
     }
 }
 

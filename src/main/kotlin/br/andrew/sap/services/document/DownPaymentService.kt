@@ -5,7 +5,6 @@ import br.andrew.sap.model.envrioments.SapEnvrioment
 import br.andrew.sap.model.bank.Payment
 import br.andrew.sap.model.bank.PaymentInvoice
 import br.andrew.sap.model.dto.InstallmentPixConsulta
-import br.andrew.sap.model.dto.InvoicePixUpdatePayload
 import br.andrew.sap.model.payment.HandlePaymentTermsLines
 import br.andrew.sap.model.payment.PaymentDueDates
 import br.andrew.sap.model.sap.DocEntry
@@ -60,6 +59,7 @@ class DownPaymentService(env: SapEnvrioment,
                          private val pixService: DynamicPixQrCodeService,
                          private val businessPartnersService: BusinessPartnersService,
                          @Value("\${venda-futura.adiantamento-item:none}") val vfItemAdiantamento : String,
+                         @Value("\${venda-futura.adiantamento-utilizacao:66}") val vfUtilizacao : Int,
                          @Value("\${adiantamento-vf.formaPagamento:none}") vfFormaPagamento : String,
                          restTemplate: RestTemplate,
                          authService: AuthService,
@@ -80,10 +80,26 @@ class DownPaymentService(env: SapEnvrioment,
         return save(adiantamento).tryGetValue<Document>()
     }
 
+    /**
+     * Monta a devolução (CreditNotes) de um adiantamento de venda futura.
+     * Quando a linha do adiantamento original não possui utilização, usa a
+     * utilização configurada em [vfUtilizacao] ([venda-futura.adiantamento-utilizacao]).
+     */
+    fun devolucaoAdiantamentoVendaFutura(adiantamento: Document): CreditNotes {
+        return CreditNotes(adiantamento).also { aplicaUtilizacaoDevolucao(it) }
+    }
+
+    private fun aplicaUtilizacaoDevolucao(devolucao: CreditNotes) {
+        devolucao.DocumentLines.forEach { linha ->
+            if (linha.Usage == null)
+                linha.Usage = vfUtilizacao
+        }
+    }
+
     fun adiantamentosVendaFuturaWithoutSave(contrato: Contrato, paymentInfo: PaymentDueDates): Document {
         if(vfItemAdiantamento == "none")
             throw Exception("O parametro [venda-futura.adiantamento-item] nao pode ser $vfItemAdiantamento")
-        val linhas = listOf(Product(vfItemAdiantamento,paymentInfo.value.toString(),"1"))
+        val linhas = listOf(Product(vfItemAdiantamento,paymentInfo.value.toString(),"1",vfUtilizacao))
         val adiantamento = DownPayment(
             contrato.U_cardCode,
             paymentInfo.dueDate.toString(),
@@ -92,6 +108,7 @@ class DownPaymentService(env: SapEnvrioment,
         if(vfFormaPagamento != null)
             adiantamento.paymentMethod = vfFormaPagamento
         adiantamento.U_venda_futura = contrato.DocEntry;
+        adiantamento.salesPersonCode = contrato.U_vendedor
         return adiantamento
     }
 
@@ -132,6 +149,31 @@ class DownPaymentService(env: SapEnvrioment,
                     installments.map { BoletoVf.from(downPayment, it, devolucao) }
                 }
             }
+    }
+
+    fun getOurNumbersByContratoVendaFutura(id: Int): List<String> {
+        return getByContratoVendaFutura(id)
+            .flatMap { adiantamento ->
+                val docEntry = adiantamento.docEntry ?: return@flatMap listOf()
+                try {
+                    bankplus.getBoletosBy(
+                        adiantamento.getBPL_IDAssignedToInvoice(),
+                        docEntry.toString(),
+                        OrigemBoletoEnum.adiantamento
+                    )
+                } catch (e: Exception) {
+                    logger.warn(
+                        "Nao foi possivel buscar numero do boleto no BankPlus. contrato={}, adiantamento={}",
+                        id,
+                        docEntry,
+                        e
+                    )
+                    listOf()
+                }
+            }
+            .mapNotNull { it.nossoNumero }
+            .filter { it.isNotBlank() }
+            .distinct()
     }
 
     fun createPixByContratoVendaFutura(id: Int): List<BoletoVf> {
@@ -185,11 +227,10 @@ class DownPaymentService(env: SapEnvrioment,
     }
 
     fun updatePixInstallments(docEntry: Int, installments: List<Installment>) {
-        if(installments.isEmpty()) {
-            return
-        }
-        val payload = InvoicePixUpdatePayload.from(installments)
-        this.update(payload, docEntry.toString())
+        PixInstallmentUpdater.atualizar(
+            this, sqlQueriesService, "down-payment-installment-pix-persistido.sql",
+            docEntry, installments, "do adiantamento"
+        )
     }
 
     fun getPixsGeradosParaConsulta(dataReferencia: String): List<InstallmentPixConsulta> {
@@ -238,7 +279,7 @@ class DownPaymentService(env: SapEnvrioment,
             it.U_TX_DocEntryRef = docEntry
             it.U_TX_DocTypeRef = downPayment.docObjectCode?.value
             it.SequenceCode = 1
-//            it.DocumentLines.forEach { it.Usage = 16; it.CFOPCode = "1000" }
+            aplicaUtilizacaoDevolucao(it)
         }
         return creditNotesService.save(devolucao).tryGetValue<CreditNotes>()
     }

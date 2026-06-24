@@ -6,7 +6,6 @@ import br.andrew.sap.infrastructure.odata.*
 import br.andrew.sap.model.authentication.User
 import br.andrew.sap.model.enums.Cancelled
 import br.andrew.sap.model.payment.PaymentDueDates
-import br.andrew.sap.model.sap.documents.CreditNotes
 import br.andrew.sap.model.sap.documents.DocumentStatus
 import br.andrew.sap.model.sap.documents.DownPaymentUnsetVendaFutura
 import br.andrew.sap.model.sap.documents.Invoice
@@ -121,8 +120,9 @@ class ContratoVendaFuturaController(
         if (boletos.isEmpty())
             throw Exception("Não existem adiantamentos criados para o contrato ${contrato.DocEntry}. Emita os boletos antes de realizar a retirada.")
         val boleto = boletos.last()
+        val numerosBoletos = adiantamentoService.getOurNumbersByContratoVendaFutura(contrato.DocEntry!!)
         val orderSales = orderService.getById(contrato.U_orderDocEntry).tryGetValue<OrderSales>()
-        val cotacao = pedidoRetirada.parse(contrato,utilizacaoEntregaVendaFutura,boleto.DocDueDate,orderSales)
+        val cotacao = pedidoRetirada.parse(contrato,utilizacaoEntregaVendaFutura,boleto.DocDueDate,orderSales,numerosBoletos)
         return ResponseEntity.ok(cotacaoController.saveForAngular(cotacao,auth))
     }
 
@@ -197,7 +197,7 @@ class ContratoVendaFuturaController(
 
             adiantamentoCancelar.forEach {
                 bathcList.add(BatchMethod.PATCH, DownPaymentUnsetVendaFutura(it),adiantamentoService)
-                bathcList.add(BatchMethod.POST,CreditNotes(it),creditNoteService)
+                bathcList.add(BatchMethod.POST,adiantamentoService.devolucaoAdiantamentoVendaFutura(it),creditNoteService)
             }
 
             if(valorResidual.compareTo(BigDecimal.ZERO) > 0){

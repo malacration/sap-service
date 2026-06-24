@@ -46,6 +46,26 @@ class PixRequestAdiantamentoTests {
         assertTrue((erro.message ?: "").contains("docEntry e documentTypes devem ser informados juntos"))
     }
 
+    @Test
+    fun origemSemDocumentoEhPixAvulso() {
+        val request = PixRequestAdiantamento("C-001", BigDecimal("100.00"), 1)
+
+        assertEquals("PIX avulso", request.origem())
+    }
+
+    @Test
+    fun origemComPedidoIdentificaPedidoDeVenda() {
+        val request = PixRequestAdiantamento(
+            "C-001",
+            BigDecimal("100.00"),
+            1,
+            docEntry = 987,
+            documentTypes = DocumentTypes.oOrders
+        )
+
+        assertEquals("PIX pelo pedido de venda (DocEntry 987)", request.origem())
+    }
+
 
     @Test
     fun getImmediateRequestSelecionaContaDaFilialEMapeiaCampos() {
