@@ -5,7 +5,6 @@ import br.andrew.sap.model.envrioments.SapEnvrioment
 import br.andrew.sap.model.bank.Payment
 import br.andrew.sap.model.bank.PaymentInvoice
 import br.andrew.sap.model.dto.InstallmentPixConsulta
-import br.andrew.sap.model.dto.InvoicePixUpdatePayload
 import br.andrew.sap.model.payment.HandlePaymentTermsLines
 import br.andrew.sap.model.payment.PaymentDueDates
 import br.andrew.sap.model.sap.DocEntry
@@ -228,34 +227,10 @@ class DownPaymentService(env: SapEnvrioment,
     }
 
     fun updatePixInstallments(docEntry: Int, installments: List<Installment>) {
-        if(installments.isEmpty()) {
-            return
-        }
-        val payload = InvoicePixUpdatePayload.from(installments)
-        repeat(3) { tentativa ->
-            this.update(payload, docEntry.toString())
-            Thread.sleep(1500)
-            if(pixPersistido(docEntry, installments)) {
-                return
-            }
-            if(tentativa < 2) {
-                Thread.sleep(500)
-            }
-        }
-        throw Exception("SAP retornou sucesso, mas nao persistiu os dados PIX do adiantamento $docEntry apos 3 tentativas")
-    }
-
-    private fun pixPersistido(docEntry: Int, installments: List<Installment>): Boolean {
-        val downPayment = getById(docEntry).tryGetValue<DownPayment>()
-        val parcelasPersistidas = downPayment.documentInstallments.orEmpty()
-        return installments.all { atualizada ->
-            val persistida = parcelasPersistidas.firstOrNull { it.InstallmentId == atualizada.InstallmentId }
-            ?: return@all false
-                persistida.U_QrCodePix == atualizada.U_QrCodePix &&
-                persistida.U_pix_reference == atualizada.U_pix_reference &&
-                persistida.U_pix_textContent == atualizada.U_pix_textContent &&
-                persistida.U_pix_link == atualizada.U_pix_link
-        }
+        PixInstallmentUpdater.atualizar(
+            this, sqlQueriesService, "down-payment-installment-pix-persistido.sql",
+            docEntry, installments, "do adiantamento"
+        )
     }
 
     fun getPixsGeradosParaConsulta(dataReferencia: String): List<InstallmentPixConsulta> {

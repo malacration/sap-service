@@ -44,7 +44,8 @@ data class PixGeradoResponse(
         U_pix_textContent = installment.U_pix_textContent,
         U_pix_link = installment.U_pix_link,
         U_pix_reference = installment.U_pix_reference,
-        U_pix_due_date = installment.U_pix_due_date,
+        // envia a validade digital (consultar_ate, timezone-aware) no campo due_date consumido pelo front
+        U_pix_due_date = installment.U_pix_consultar_ate,
         docEntry = installment.DocEntry,
         taxaJurosMoraPercent = taxaJurosMoraPercent,
         jurosValor = calcularJuros(installment, taxaJurosMoraPercent),

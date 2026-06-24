@@ -34,6 +34,8 @@ class BoletoVfTest {
         assertEquals("O", boleto.DocStatus)
         assertEquals("ref-123", boleto.U_pix_reference)
         assertEquals("pix-copia-cola", boleto.U_pix_textContent)
-        assertEquals("2026-06-20", boleto.U_pix_due_date)
+        // o DTO envia a validade digital (consultar_ate) no campo due_date consumido pelo front
+        assertEquals("2026-06-20T23:59:59", boleto.U_pix_due_date)
+        assertEquals("2026-06-20T23:59:59", boleto.U_pix_consultar_ate)
     }
 }

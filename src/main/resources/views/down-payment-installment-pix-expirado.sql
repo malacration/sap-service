@@ -11,11 +11,11 @@ FROM
 WHERE
     (
         inst."U_pix_reference" is not NULL
-        and inst."U_pix_due_date" is not null
-        and inst."U_pix_due_date" < :now
+        and inst."U_pix_consultar_ate" is not null
+        and inst."U_pix_consultar_ate" < :now
         OR (
         dpi."U_TX_DocEntryRef" IS NOT NULL AND dpi."U_TX_DocTypeRef" IS NOT NULL
-        and inst."U_pix_due_date" IS NULL
+        and inst."U_pix_consultar_ate" IS NULL
         )
     )
   and dpi."DocStatus" <> 'C'

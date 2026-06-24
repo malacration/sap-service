@@ -20,7 +20,6 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.OffsetDateTime
-import java.time.ZoneOffset
 import java.time.temporal.ChronoUnit
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit.MINUTES
@@ -72,7 +71,7 @@ class Installment(
     fun setPix(
         request: RequestPixDueDate,
         chave: DataRetonroPixQrCode,
-        dataReferencia: LocalDateTime = LocalDateTime.now()
+        dataReferencia: OffsetDateTime = PixControleData.agora()
     ): Installment {
         applyPixData(chave, request.getDueDate(), dataReferencia)
         return this
@@ -81,17 +80,17 @@ class Installment(
     fun setPix(
         request: RequestPixImmediate,
         chave: DataRetonroPixQrCode,
-        dataReferencia: LocalDateTime = LocalDateTime.now()
+        dataReferencia: OffsetDateTime = PixControleData.agora()
     ): Installment {
         val expiracao = dataReferencia.plusSeconds(request.expiration.toLong()).withNano(0)
-        applyPixData(chave, expiracao.toString(), dataReferencia)
+        applyPixData(chave, PixControleData.formatar(expiracao), dataReferencia)
         return this
     }
 
     private fun applyPixData(
         chave: DataRetonroPixQrCode,
         dueDate: String,
-        dataReferencia: LocalDateTime
+        dataReferencia: OffsetDateTime
     ) {
         U_QrCodePix = chave.data.textContent
         U_pix_textContent = chave.data.textContent
@@ -103,26 +102,26 @@ class Installment(
 
     @JsonIgnore
     fun isPixValido(): Boolean {
-        if(U_pix_reference.isNullOrEmpty() || U_pix_due_date.isNullOrEmpty()) {
+        if(U_pix_reference.isNullOrEmpty()) {
             return false
         }
+        val validade = getPixConsultarAte() ?: return false
         return try {
-            val data = parsePixDueDate(U_pix_due_date!!)
-            !data.isBefore(LocalDate.now())
+            !validade.isBefore(PixControleData.agora())
         } catch (ex: Exception) {
             ex.printStackTrace()
             false
         }
     }
 
-    fun sanitizarControleConsultaPix(dataReferencia: LocalDateTime = LocalDateTime.now()) {
-        U_pix_proxima_consulta_em = dataReferencia.truncatedTo(MINUTES).toString()
-        U_pix_consultar_ate = getPixDueDateTime()
-            ?.toString()
-            ?: dataReferencia.plusDays(1).toString()
+    fun sanitizarControleConsultaPix(dataReferencia: OffsetDateTime = PixControleData.agora()) {
+        U_pix_proxima_consulta_em = PixControleData.formatar(dataReferencia.truncatedTo(MINUTES))
+        U_pix_consultar_ate = getPixValidadeCalculada()
+            ?.let { PixControleData.formatar(it) }
+            ?: PixControleData.formatar(dataReferencia.plusDays(1))
     }
 
-    fun podeConsultarPixPagamento(dataReferencia: LocalDateTime = LocalDateTime.now()): Boolean {
+    fun podeConsultarPixPagamento(dataReferencia: OffsetDateTime = PixControleData.agora()): Boolean {
         if(U_pix_reference.isNullOrBlank()) {
             return false
         }
@@ -131,22 +130,24 @@ class Installment(
             return false
         }
         val proximaConsulta = getPixProximaConsultaEm() ?: return true
-        return proximaConsulta.truncatedTo(MINUTES) <= dataReferencia.truncatedTo(MINUTES)
+        return !proximaConsulta.truncatedTo(MINUTES).isAfter(dataReferencia.truncatedTo(MINUTES))
     }
 
-    fun registrarConsultaPix(intervaloMinutos: Long, dataReferencia: LocalDateTime = LocalDateTime.now()) {
-        U_pix_proxima_consulta_em = dataReferencia.plusMinutes(intervaloMinutos).truncatedTo(MINUTES).toString()
+    fun registrarConsultaPix(intervaloMinutos: Long, dataReferencia: OffsetDateTime = PixControleData.agora()) {
+        U_pix_proxima_consulta_em = PixControleData.formatar(
+            dataReferencia.plusMinutes(intervaloMinutos).truncatedTo(MINUTES)
+        )
     }
 
-    fun getPixProximaConsultaEm(): LocalDateTime? {
-        return parseIsoDateTime(U_pix_proxima_consulta_em)
+    fun getPixProximaConsultaEm(): OffsetDateTime? {
+        return parseOffset(U_pix_proxima_consulta_em)
     }
 
-    fun getPixConsultarAte(): LocalDateTime? {
-        return parseIsoDateTime(U_pix_consultar_ate)
+    fun getPixConsultarAte(): OffsetDateTime? {
+        return parseOffset(U_pix_consultar_ate) ?: getPixValidadeCalculada()
     }
 
-    fun calcularJurosSimplesPorDia(taxaDiariaPercent: Double, dataReferencia: LocalDate = LocalDate.now(),
+    fun calcularJurosSimplesPorDia(taxaDiariaPercent: Double, dataReferencia: LocalDate = LocalDate.now(PixControleData.ZONA),
                                    valorBase: Double = total): Double {
         if(_dueDate == null) {
             return 0.0
@@ -163,43 +164,44 @@ class Installment(
         return juros.setScale(2, RoundingMode.DOWN).toDouble()
     }
 
-    private fun parsePixDueDate(value: String): LocalDate {
-        return try {
-            LocalDate.parse(value, DateTimeFormatter.ISO_LOCAL_DATE)
-        } catch (ex: Exception) {
-            getPixDueDateTime(value)?.toLocalDate() ?: throw ex
-        }
-    }
-
-    private fun getPixDueDateTime(value: String? = U_pix_due_date): LocalDateTime? {
+    /**
+     * Validade digital do PIX derivada do [U_pix_due_date]: para data pura usa o fim do
+     * dia no fuso do sistema; para datetime (com ou sem offset) converte para OffsetDateTime.
+     * Usado como fallback quando [U_pix_consultar_ate] ainda nao foi gravado (registros legados).
+     */
+    private fun getPixValidadeCalculada(value: String? = U_pix_due_date): OffsetDateTime? {
         if(value.isNullOrBlank()) {
             return null
         }
         return try {
-            LocalDate.parse(value, DateTimeFormatter.ISO_LOCAL_DATE).atTime(LocalTime.MAX)
+            LocalDate.parse(value, DateTimeFormatter.ISO_LOCAL_DATE)
+                .atTime(LocalTime.MAX)
+                .atZone(PixControleData.ZONA)
+                .toOffsetDateTime()
+        } catch (_: Exception) {
+            parseOffset(value)
+        }
+    }
+
+    private fun parseOffset(value: String?): OffsetDateTime? {
+        if(value.isNullOrBlank()) {
+            return null
+        }
+        return try {
+            OffsetDateTime.parse(value, DateTimeFormatter.ISO_OFFSET_DATE_TIME)
         } catch (_: Exception) {
             try {
-                OffsetDateTime.parse(value, DateTimeFormatter.ISO_DATE_TIME).toLocalDateTime()
-            } catch (_: Exception) {
+                // valores legados sem offset: interpreta no fuso do sistema
                 LocalDateTime.parse(value, DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+                    .atZone(PixControleData.ZONA)
+                    .toOffsetDateTime()
+            } catch (_: Exception) {
+                null
             }
         }
     }
 
-    private fun parseIsoDateTime(value: String?): LocalDateTime? {
-        if(value.isNullOrBlank()) {
-            return null
-        }
-        return try {
-            LocalDateTime.parse(value, DateTimeFormatter.ISO_LOCAL_DATE_TIME)
-        } catch (_: Exception) {
-            OffsetDateTime.parse(value, DateTimeFormatter.ISO_DATE_TIME)
-                .withOffsetSameInstant(ZoneOffset.UTC)
-                .toLocalDateTime()
-        }
-    }
-
-    fun diasAtraso(dataReferencia: LocalDate = LocalDate.now()): Long {
+    fun diasAtraso(dataReferencia: LocalDate = LocalDate.now(PixControleData.ZONA)): Long {
         if(_dueDate == null) {
             return 0
         }
