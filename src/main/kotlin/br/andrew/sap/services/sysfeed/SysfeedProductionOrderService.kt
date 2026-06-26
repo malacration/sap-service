@@ -18,8 +18,17 @@ class SysfeedProductionOrderService(
 ) {
     private val outputDateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy")
 
-    fun getPendingPayloads(): List<SysfeedProductionOrderRequest> {
-        return getPendingRows().map { buildPayload(it) }
+    fun getPendingPayloads(dataCorte: String? = null): List<SysfeedProductionOrderRequest> {
+        return getPendingRows(resolveStartDate(dataCorte)).map { buildPayload(it) }
+    }
+
+    private fun resolveStartDate(dataCorte: String?): String {
+        val informado = dataCorte?.trim()?.takeIf { it.isNotBlank() } ?: return startDate
+        return try {
+            LocalDate.parse(informado).toString()
+        } catch (e: Exception) {
+            throw SysfeedProductionOrderValidationException("dataCorte invalida: $informado (use o formato yyyy-MM-dd)")
+        }
     }
 
     fun buildPayload(pending: SysfeedProductionOrderPending): SysfeedProductionOrderRequest {
@@ -59,7 +68,7 @@ class SysfeedProductionOrderService(
         )
     }
 
-    private fun getPendingRows(): List<SysfeedProductionOrderPending> {
+    private fun getPendingRows(startDate: String): List<SysfeedProductionOrderPending> {
         return sqlQueriesService
             .execute(
                 "sysfeed-ordens-producao-pendentes.sql",

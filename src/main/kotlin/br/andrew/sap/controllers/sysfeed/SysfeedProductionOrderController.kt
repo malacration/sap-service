@@ -4,6 +4,7 @@ import br.andrew.sap.model.sysfeed.SysfeedProductionOrderRequest
 import br.andrew.sap.services.sysfeed.SysfeedProductionOrderService
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
@@ -12,7 +13,9 @@ class SysfeedProductionOrderController(
     private val service: SysfeedProductionOrderService
 ) {
     @GetMapping("pendentes")
-    fun getPending(): List<SysfeedProductionOrderRequest> {
-        return service.getPendingPayloads()
+    fun getPending(
+        @RequestParam(required = false) dataCorte: String?
+    ): List<SysfeedProductionOrderRequest> {
+        return service.getPendingPayloads(dataCorte)
     }
 }
