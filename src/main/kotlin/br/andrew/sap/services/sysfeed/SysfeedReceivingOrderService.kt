@@ -18,9 +18,28 @@ class SysfeedReceivingOrderService(
     private val supplierService: SysfeedSupplierService,
     @Value("\${sysfeed.recebimento.cod-prod-default:1}") private val defaultCodProd: String
 ) {
-    fun getPendingPayloads(): List<SysfeedReceivingOrderRequest> {
+    fun getPendingPayloads(
+        dataCorte: String? = null,
+        usages: List<Int>? = null
+    ): List<SysfeedReceivingOrderRequest> {
         val config = configService.get().recebimento
-        return getPendingRows(config.startDate, config.usage).map { buildPayload(it) }
+        val startDate = resolveStartDate(dataCorte, config.startDate)
+        return resolveUsages(usages, config.usage)
+            .flatMap { getPendingRows(startDate, it) }
+            .map { buildPayload(it) }
+    }
+
+    private fun resolveStartDate(dataCorte: String?, fallback: String): String {
+        val informado = dataCorte?.trim()?.takeIf { it.isNotBlank() } ?: return fallback
+        return try {
+            LocalDate.parse(informado).toString()
+        } catch (e: Exception) {
+            throw SysfeedReceivingValidationException("dataCorte invalida: $informado (use o formato yyyy-MM-dd)")
+        }
+    }
+
+    private fun resolveUsages(usages: List<Int>?, fallback: Int): List<Int> {
+        return usages?.filter { it > 0 }?.distinct()?.takeIf { it.isNotEmpty() } ?: listOf(fallback)
     }
 
     fun buildPayload(pending: SysfeedReceivingPending): SysfeedReceivingOrderRequest {
