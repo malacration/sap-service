@@ -7,8 +7,8 @@ SELECT
     T1."ItemCode" AS "ItemCode",
     T1."InvQty" AS "Quantity",
     B."BatchNum" AS "NrLoteCodigoRecebimento",
-    B."ExpDate" AS "DataValidade",
-    B."MnfDate" AS "DataFabricacao",
+    L."ExpDate" AS "DataValidade",
+    L."PrdDate" AS "DataFabricacao",
     T0."DocDate" AS "DataRegistro",
     T12."Vehicle" AS "Placa",
     I."U_LbrOne_Id" AS "CodProd",
@@ -17,6 +17,7 @@ FROM OPCH T0
 INNER JOIN PCH1 T1 ON T1."DocEntry" = T0."DocEntry"
 INNER JOIN OITM I ON I."ItemCode" = T1."ItemCode"
 LEFT JOIN IBT1 B ON B."BaseType" = 18 AND B."BaseEntry" = T0."DocEntry" AND B."BaseLinNum" = T1."LineNum" AND B."ItemCode" = T1."ItemCode"
+LEFT JOIN OIBT L ON L."ItemCode" = B."ItemCode" AND L."BatchNum" = B."BatchNum"
 LEFT JOIN PCH12 T12 ON T12."DocEntry" = T0."DocEntry"
 WHERE T0."CANCELED" = 'N'
   AND T0."BPLId" = 2
