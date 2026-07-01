@@ -14,5 +14,6 @@ LEFT JOIN OITT F ON F."Code" = T0."ItemCode"
 WHERE T0."Status" = 'R'
   AND T0."PostDate" >= :startDate
   AND F."U_LbrOne_Id" IS NOT NULL
+  AND T0."Type" = 'S'
   AND (T0."U_sysfeed_status" IS NULL OR T0."U_sysfeed_status" = '' OR T0."U_sysfeed_status" = 'PENDENTE')
 ORDER BY T0."DocEntry" DESC
