@@ -7,6 +7,8 @@ import br.andrew.sap.services.BusinessPartnersService
 import br.andrew.sap.services.ProductionOrdersService
 import br.andrew.sap.services.document.PurchaseInvoiceService
 import org.springframework.stereotype.Service
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
 @Service
 class SysfeedStatusService(
@@ -15,6 +17,7 @@ class SysfeedStatusService(
     private val productionOrdersService: ProductionOrdersService
 ) {
     private val allowedStatuses = setOf("PENDENTE", "ENVIADO", "DUPLICADO", "ERRO", "PARCIAL")
+    private val dtIntegracaoFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS")
 
     fun updateAll(updates: List<SysfeedStatusUpdate>): List<SysfeedStatusUpdateResult> {
         return updates.map { update ->
@@ -48,15 +51,23 @@ class SysfeedStatusService(
             throw SysfeedStatusException("Status Sysfeed invalido: ${update.status}")
         }
 
-        val payload = mapOf("U_sysfeed_status" to status)
+        val agora = LocalDateTime.now()
+        val payload = mutableMapOf<String, Any>("U_sysfeed_status" to status)
         when (update.tipo) {
             SysfeedStatusTarget.FORNECEDOR -> businessPartnersService.update(payload, "'$codigo'")
             SysfeedStatusTarget.ORDEM_RECEBIMENTO -> {
                 codigo.toIntOrNull() ?: throw SysfeedStatusException("DocEntry invalido: $codigo")
+                payload["U_LbrOne_DtIntegracao"] = agora.format(dtIntegracaoFormatter)
+                payload["U_LbrOne_HrIntegracao"] = agora.hour * 100 + agora.minute
                 purchaseInvoiceService.update(payload, codigo)
             }
             SysfeedStatusTarget.ORDEM_PRODUCAO -> {
                 codigo.toIntOrNull() ?: throw SysfeedStatusException("DocEntry invalido: $codigo")
+                payload["U_LbrOne_DtIntegracao"] = agora.format(dtIntegracaoFormatter)
+                payload["U_LbrOne_HrIntegracao"] = agora.hour * 100 + agora.minute
+                update.obs?.trim()?.takeIf { it.isNotBlank() }?.let {
+                    payload["U_LbrOne_Obs_Integracao"] = it
+                }
                 productionOrdersService.update(payload, codigo)
             }
         }

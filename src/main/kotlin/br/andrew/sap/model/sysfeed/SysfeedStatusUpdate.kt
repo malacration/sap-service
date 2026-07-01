@@ -6,7 +6,9 @@ data class SysfeedStatusUpdate(
     val tipo: SysfeedStatusTarget,
     @JsonAlias("identificador")
     val codigo: String,
-    val status: String
+    val status: String,
+    @JsonAlias("observacao", "erro", "mensagem", "message", "obsIntegracao", "Obs_Integracao")
+    val obs: String? = null
 )
 
 data class SysfeedStatusUpdateResult(

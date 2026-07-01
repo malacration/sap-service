@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import org.mockito.kotlin.check
 import org.mockito.kotlin.eq
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.verify
@@ -34,8 +35,47 @@ class SysfeedStatusServiceTest {
         assertEquals(3, result.size)
         assertTrue(result.all { it.success })
         verify(businessPartnersService).update(eq(mapOf("U_sysfeed_status" to "ENVIADO")), eq("'FOR0002977'"))
-        verify(purchaseInvoiceService).update(eq(mapOf("U_sysfeed_status" to "ERRO")), eq("144594"))
-        verify(productionOrdersService).update(eq(mapOf("U_sysfeed_status" to "DUPLICADO")), eq("12345"))
+        verify(purchaseInvoiceService).update(
+            check<Map<String, Any>> {
+                assertEquals("ERRO", it["U_sysfeed_status"])
+                assertTrue(it.containsKey("U_LbrOne_DtIntegracao"))
+                assertTrue(it["U_LbrOne_HrIntegracao"] is Int)
+                assertFalse(it.containsKey("U_LbrOne_Obs_Integracao"))
+            },
+            eq("144594")
+        )
+        verify(productionOrdersService).update(
+            check<Map<String, Any>> {
+                assertEquals("DUPLICADO", it["U_sysfeed_status"])
+                assertTrue(it.containsKey("U_LbrOne_DtIntegracao"))
+                assertTrue(it["U_LbrOne_HrIntegracao"] is Int)
+                assertFalse(it.containsKey("U_LbrOne_Obs_Integracao"))
+            },
+            eq("12345")
+        )
+    }
+
+    @Test
+    fun `deve gravar observacao apenas na ordem de producao`() {
+        service.updateAll(
+            listOf(
+                SysfeedStatusUpdate(SysfeedStatusTarget.ORDEM_PRODUCAO, "12345", "ERRO", "falha ao processar formula"),
+                SysfeedStatusUpdate(SysfeedStatusTarget.ORDEM_RECEBIMENTO, "144594", "ERRO", "obs ignorada no recebimento")
+            )
+        )
+
+        verify(productionOrdersService).update(
+            check<Map<String, Any>> {
+                assertEquals("falha ao processar formula", it["U_LbrOne_Obs_Integracao"])
+            },
+            eq("12345")
+        )
+        verify(purchaseInvoiceService).update(
+            check<Map<String, Any>> {
+                assertFalse(it.containsKey("U_LbrOne_Obs_Integracao"))
+            },
+            eq("144594")
+        )
     }
 
     @Test
