@@ -100,7 +100,7 @@ class Contrato(
     }
 
     fun tudoEntregue(entregas: List<Document>): Boolean {
-        val totais: Map<String, Double> = entregas.asSequence()
+        val entregue: Map<String, Double> = entregas.asSequence()
             .filter { it.Cancelled == Cancelled.tNO }
             .flatMap { e ->
                 val sign = if (e.docObjectCode == DocumentTypes.oCreditNotes) -1.0 else 1.0
@@ -109,8 +109,14 @@ class Contrato(
             .groupBy { it.first ?: throw Exception("Nao e permitido item sem ItemCode") }
             .mapValues { (_, xs) -> xs.sumOf { it.second } }
 
-        return !this.itens.any {
-            totais[it.U_itemCode] != it.U_quantity
+        val contratado: Map<String, Double> = this.itens
+            .groupBy { it.U_itemCode }
+            .mapValues { (_, xs) -> xs.sumOf { it.U_quantity } }
+
+        // Conclui somente quando cada item foi entregue exatamente na quantidade contratada.
+        // Entrega a mais que o contrato (ou item fora do contrato) reprova a conclusao.
+        return (contratado.keys + entregue.keys).all { itemCode ->
+            Math.abs((entregue[itemCode] ?: 0.0) - (contratado[itemCode] ?: 0.0)) < 0.0001
         }
     }
 
