@@ -40,11 +40,11 @@ class SysfeedProductionOrderService(
         validateNumeric("codFormula", codFormula, 10)
         validateNumeric("codIntFormula", codFormula, 10)
 
-        val plannedQty = normalizeNumeric(pending.Quantidade)
-        validateNotZero("PlannedQty", plannedQty)
+        val quantidadeTotal = normalizeNumeric(pending.Quantidade)
+        validateNotZero("PlannedQty", quantidadeTotal)
         val tamanhoBatelada = normalizeNumeric(pending.QuantBat ?: pending.Quantidade)
         validateNotZero("U_LbrOne_Batelada", tamanhoBatelada)
-        val quantidadeBateladas = divideQuantity(plannedQty, tamanhoBatelada)
+        val quantidadeBateladas = divideQuantity(quantidadeTotal, tamanhoBatelada)
         val descricao = pending.DescricaoOrdemProducao
             ?.trim()
             ?.takeIf { it.isNotBlank() }
@@ -57,10 +57,11 @@ class SysfeedProductionOrderService(
             codIntOrdemProducao = codOrdemProducao,
             codFormula = codFormula,
             codIntFormula = codFormula,
-            quantidade = tamanhoBatelada,
+            // SYSFEED: Quantidade = total da OP, QuantBat = tamanho da batelada, TotalQuantidade = nro de bateladas.
+            quantidade = quantidadeTotal,
             prioridade = "1",
             totalQuantidade = quantidadeBateladas,
-            quantBat = quantidadeBateladas,
+            quantBat = tamanhoBatelada,
             dataEntradaOP = formatDate(pending.DataEntradaOP),
             dataEntregaProducao = formatDate(pending.DataEntregaProducao),
             tipoOrdemProducao = "A",
