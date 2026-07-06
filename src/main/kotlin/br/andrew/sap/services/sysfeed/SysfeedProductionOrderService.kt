@@ -4,7 +4,6 @@ import br.andrew.sap.infrastructure.odata.Parameter
 import br.andrew.sap.model.sysfeed.SysfeedProductionOrderPending
 import br.andrew.sap.model.sysfeed.SysfeedProductionOrderRequest
 import br.andrew.sap.services.abstracts.SqlQueriesService
-import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
 import java.math.RoundingMode
@@ -13,17 +12,20 @@ import java.time.format.DateTimeFormatter
 
 @Service
 class SysfeedProductionOrderService(
-    private val sqlQueriesService: SqlQueriesService,
-    @Value("\${sysfeed.producao.start-date:2026-04-01}") private val startDate: String
+    private val sqlQueriesService: SqlQueriesService
 ) {
     private val outputDateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy")
 
-    fun getPendingPayloads(dataCorte: String? = null): List<SysfeedProductionOrderRequest> {
+    fun getPendingPayloads(dataCorte: String): List<SysfeedProductionOrderRequest> {
         return getPendingRows(resolveStartDate(dataCorte)).map { buildPayload(it) }
     }
 
-    private fun resolveStartDate(dataCorte: String?): String {
-        val informado = dataCorte?.trim()?.takeIf { it.isNotBlank() } ?: return startDate
+    // dataCorte vem sempre do integrador; sem ele nao ha o que consultar.
+    private fun resolveStartDate(dataCorte: String): String {
+        val informado = dataCorte.trim()
+        if (informado.isBlank()) {
+            throw SysfeedProductionOrderValidationException("dataCorte obrigatoria (use o formato yyyy-MM-dd)")
+        }
         return try {
             LocalDate.parse(informado).toString()
         } catch (e: Exception) {

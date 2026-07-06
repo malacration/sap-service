@@ -14,7 +14,7 @@ class SysfeedProductionOrderController(
 ) {
     @GetMapping("pendentes")
     fun getPending(
-        @RequestParam(required = false) dataCorte: String?
+        @RequestParam dataCorte: String
     ): List<SysfeedProductionOrderRequest> {
         return service.getPendingPayloads(dataCorte)
     }

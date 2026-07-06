@@ -14,23 +14,25 @@ import java.time.format.DateTimeFormatter
 @Service
 class SysfeedReceivingOrderService(
     private val sqlQueriesService: SqlQueriesService,
-    private val configService: SysfeedConfigService,
     private val supplierService: SysfeedSupplierService,
     @Value("\${sysfeed.recebimento.cod-prod-default:1}") private val defaultCodProd: String
 ) {
+    // dataCorte e usages vem sempre do integrador; sem eles nao ha o que consultar.
     fun getPendingPayloads(
-        dataCorte: String? = null,
-        usages: List<Int>? = null
+        dataCorte: String,
+        usages: List<Int>
     ): List<SysfeedReceivingOrderRequest> {
-        val config = configService.get().recebimento
-        val startDate = resolveStartDate(dataCorte, config.startDate)
-        return resolveUsages(usages, config.usage)
+        val startDate = resolveStartDate(dataCorte)
+        return resolveUsages(usages)
             .flatMap { getPendingRows(startDate, it) }
             .map { buildPayload(it) }
     }
 
-    private fun resolveStartDate(dataCorte: String?, fallback: String): String {
-        val informado = dataCorte?.trim()?.takeIf { it.isNotBlank() } ?: return fallback
+    private fun resolveStartDate(dataCorte: String): String {
+        val informado = dataCorte.trim()
+        if (informado.isBlank()) {
+            throw SysfeedReceivingValidationException("dataCorte obrigatoria (use o formato yyyy-MM-dd)")
+        }
         return try {
             LocalDate.parse(informado).toString()
         } catch (e: Exception) {
@@ -38,8 +40,9 @@ class SysfeedReceivingOrderService(
         }
     }
 
-    private fun resolveUsages(usages: List<Int>?, fallback: Int): List<Int> {
-        return usages?.filter { it > 0 }?.distinct()?.takeIf { it.isNotEmpty() } ?: listOf(fallback)
+    private fun resolveUsages(usages: List<Int>): List<Int> {
+        return usages.filter { it > 0 }.distinct().takeIf { it.isNotEmpty() }
+            ?: throw SysfeedReceivingValidationException("usage obrigatorio (informe ao menos uma utilizacao maior que zero)")
     }
 
     fun buildPayload(pending: SysfeedReceivingPending): SysfeedReceivingOrderRequest {

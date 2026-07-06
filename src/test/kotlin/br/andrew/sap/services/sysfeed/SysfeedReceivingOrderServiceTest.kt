@@ -1,8 +1,6 @@
 package br.andrew.sap.services.sysfeed
 
 import br.andrew.sap.infrastructure.odata.Parameter
-import br.andrew.sap.model.sysfeed.SysfeedConfig
-import br.andrew.sap.model.sysfeed.SysfeedReceivingConfig
 import br.andrew.sap.model.sysfeed.SysfeedReceivingPending
 import br.andrew.sap.services.abstracts.SqlQueriesService
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -18,11 +16,9 @@ import org.mockito.kotlin.whenever
 class SysfeedReceivingOrderServiceTest {
 
     private val sqlQueriesService = mock<SqlQueriesService>()
-    private val configService = mock<SysfeedConfigService>()
     private val supplierService = mock<SysfeedSupplierService>()
     private val service = SysfeedReceivingOrderService(
         sqlQueriesService,
-        configService,
         supplierService,
         "1"
     )
@@ -33,8 +29,6 @@ class SysfeedReceivingOrderServiceTest {
 
     @Test
     fun `deve usar dataCorte e usage informados`() {
-        whenever(configService.get()).thenReturn(SysfeedConfig(SysfeedReceivingConfig("2026-01-01", 15)))
-
         service.getPendingPayloads("2026-05-10", listOf(20))
 
         val captor = argumentCaptor<List<Parameter>>()
@@ -45,9 +39,7 @@ class SysfeedReceivingOrderServiceTest {
 
     @Test
     fun `deve consultar uma vez por usage informado`() {
-        whenever(configService.get()).thenReturn(SysfeedConfig(SysfeedReceivingConfig("2026-01-01", 15)))
-
-        service.getPendingPayloads(null, listOf(15, 20))
+        service.getPendingPayloads("2026-01-01", listOf(15, 20))
 
         val captor = argumentCaptor<List<Parameter>>()
         verify(sqlQueriesService, times(2)).execute(eq("sysfeed-ordens-recebimento-pendentes.sql"), captor.capture())
@@ -56,23 +48,23 @@ class SysfeedReceivingOrderServiceTest {
     }
 
     @Test
-    fun `deve usar config quando dataCorte e usage ausentes`() {
-        whenever(configService.get()).thenReturn(SysfeedConfig(SysfeedReceivingConfig("2026-02-01", 15)))
+    fun `deve bloquear dataCorte ausente no recebimento`() {
+        assertThrows(SysfeedReceivingValidationException::class.java) {
+            service.getPendingPayloads("", listOf(15))
+        }
+    }
 
-        service.getPendingPayloads(null, null)
-
-        val captor = argumentCaptor<List<Parameter>>()
-        verify(sqlQueriesService).execute(eq("sysfeed-ordens-recebimento-pendentes.sql"), captor.capture())
-        assertEquals("startDate='2026-02-01'", captor.firstValue[0].toString())
-        assertEquals("usage=15", captor.firstValue[1].toString())
+    @Test
+    fun `deve bloquear usage ausente no recebimento`() {
+        assertThrows(SysfeedReceivingValidationException::class.java) {
+            service.getPendingPayloads("2026-01-01", emptyList())
+        }
     }
 
     @Test
     fun `deve bloquear dataCorte invalida no recebimento`() {
-        whenever(configService.get()).thenReturn(SysfeedConfig(SysfeedReceivingConfig("2026-01-01", 15)))
-
         assertThrows(SysfeedReceivingValidationException::class.java) {
-            service.getPendingPayloads("data-invalida", null)
+            service.getPendingPayloads("data-invalida", listOf(15))
         }
     }
 

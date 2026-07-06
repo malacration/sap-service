@@ -15,14 +15,13 @@ import org.mockito.kotlin.verify
 
 class SysfeedProductionOrderServiceTest {
     private val service = SysfeedProductionOrderService(
-        mock<SqlQueriesService>(),
-        "2026-04-01"
+        mock<SqlQueriesService>()
     )
 
     @Test
     fun `deve usar dataCorte informado na consulta`() {
         val sqlQueriesService = mock<SqlQueriesService>()
-        val service = SysfeedProductionOrderService(sqlQueriesService, "2026-04-01")
+        val service = SysfeedProductionOrderService(sqlQueriesService)
 
         service.getPendingPayloads("2026-05-10")
 
@@ -32,15 +31,10 @@ class SysfeedProductionOrderServiceTest {
     }
 
     @Test
-    fun `deve usar data padrao quando dataCorte ausente`() {
-        val sqlQueriesService = mock<SqlQueriesService>()
-        val service = SysfeedProductionOrderService(sqlQueriesService, "2026-04-01")
-
-        service.getPendingPayloads(null)
-
-        val captor = argumentCaptor<List<Parameter>>()
-        verify(sqlQueriesService).execute(eq("sysfeed-ordens-producao-pendentes.sql"), captor.capture())
-        assertEquals("startDate='2026-04-01'", captor.firstValue.first().toString())
+    fun `deve bloquear dataCorte ausente`() {
+        assertThrows(SysfeedProductionOrderValidationException::class.java) {
+            service.getPendingPayloads("")
+        }
     }
 
     @Test
