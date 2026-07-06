@@ -2,128 +2,101 @@ roles:
   admin:
     - url: "/**"
       actions: ["*"]
-  pix:
-    - url: "/pix"
-      actions: ["get"]
-    - url: "/pix/**"
-      actions: ["get"]
-    - url: "/invoice/*/create-pix"
-      actions: ["get"]
-    - url: "/invoice/*/baixa-pix"
-      actions: ["get"]
-    - url: "/invoice/pix"
-      actions: ["get"]
-  pix_admin:
-    - url: "/pix"
-      actions: ["get"]
-    - url: "/pix/**"
-      actions: ["get"]
-    - url: "/invoice/*/create-pix"
-      actions: ["get"]
-    - url: "/invoice/*/baixa-pix"
-      actions: ["get"]
-    - url: "/invoice/pix"
-      actions: ["get"]
+
   vendedor:
     - url: "/nextlink"
-      actions: [ "post" ]
+      actions: ["post"]
     - url: "/item/search"
-      actions: [ "post" ]
+      actions: ["post"]
     - url: "/business-partners/pedido-venda-parceiro/*"
       actions: ["get"]
     - url: "/contrato-venda-futura"
       actions: ["*"]
-    - url: "branch"
+    - url: "/branch"
       actions: ["get"]
-    - url : "/business-partners/search"
+    - url: "/business-partners/search"
       actions: ["*"]
-    - url: "item/search/branch/**"
+    - url: "/item/search/branch/**"
       actions: ["*"]
-    - url: "prazo/tabela/**"
+    - url: "/prazo/tabela/**"
       actions: ["get"]
     - url: "/quotation/angular/**"
-      actions: [ "post" ]
+      actions: ["post"]
     - url: "/condicao/**"
-      actions: [ "get" ]
+      actions: ["get"]
     - url: "/forma-pagamento/filial/*/cardcode/*"
-      actions: [ "get" ]
+      actions: ["get"]
     - url: "/quotation/**"
-      actions: [ "get" ]
+      actions: ["get"]
     - url: "/pedido-venda/listar"
-      actions: [ "get" ]
+      actions: ["get"]
     - url: "/pedido-venda/angular"
-      actions: [ "post" ]
+      actions: ["post"]
     - url: "/future-sales/pedidos/*"
-      actions: [ "get" ]
+      actions: ["get"]
     - url: "/down-payment/contrato-venda-futura/*"
-      actions: [ "get" ]
-    - url: "/down-payment/contrato-venda-futura/*/pix"
-      actions: [ "post" ]
+      actions: ["get"]
     - url: "/contrato-venda-futura/pedido-retirada"
-      actions: [ "*" ]
+      actions: ["*"]
     - url: "/contrato-venda-futura/**"
-      actions: [ "get" ]
+      actions: ["get"]
     - url: "/contrato-venda-futura/troca"
-      actions: [ "post"]
+      actions: ["post"]
     - url: "/contrato-venda-futura/emitir-boletos/*"
       actions: ["get"]
     - url: "/business-partners/cientes"
-      actions: [ "get" ]
+      actions: ["get"]
     - url: "/business-partners/*"
-      actions: [ "get" ]
+      actions: ["get"]
     - url: "/business-partners/contas-receber/**"
-      actions: [ "get" ]
+      actions: ["get"]
+    - url: "/down-payment/contrato-venda-futura/*/pix"
+      actions: [ "post" ]
+
   vendedor_admin:
+    - url: "/down-payment/contrato-venda-futura/*/pix"
+      actions: [ "post" ]
     - url: "/nextlink"
-      actions: [ "post" ]
+      actions: ["post"]
     - url: "/item/search"
-      actions: [ "post" ]
+      actions: ["post"]
+    - url: "/item/search/branch/**"
+      actions: ["*"]
     - url: "/painel/**"
-      actions: [ "*" ]
+      actions: ["*"]
     - url: "/branch"
       actions: ["get"]
     - url: "/sales-person/search"
-      actions: [ "*" ]
-    - url: "/sales-person/search"
-      actions: [ "*" ]
+      actions: ["*"]
     - url: "/sales-person/*/business-partners"
-      actions: [ "*" ]
+      actions: ["*"]
     - url: "/sales-person/replace/*/por/*"
-      actions: [ "*" ]
+      actions: ["*"]
     - url: "/forma-pagamento/filial/*/cardcode/*"
-      actions: [ "get" ]
+      actions: ["get"]
     - url: "/down-payment/contrato-venda-futura/*"
-      actions: [ "get" ]
-    - url: "/down-payment/contrato-venda-futura/*/pix"
-      actions: [ "post" ]
+      actions: ["get"]
     - url: "/contrato-venda-futura/pedido-retirada"
-      actions: [ "*" ]
+      actions: ["*"]
     - url: "/contrato-venda-futura/entregas/*"
-      actions: [ "get" ]
+      actions: ["get"]
     - url: "/contrato-venda-futura/**"
-      actions: [ "get" ]
+      actions: ["get"]
+    - url: "/contrato-venda-futura/nextlink"
+      actions: ["post"]
     - url: "/contrato-venda-futura/troca"
-      actions: [ "post"]
+      actions: ["post"]
     - url: "/contrato-venda-futura/emitir-boletos/*"
       actions: ["get"]
     - url: "/future-sales/pedidos/*"
-      actions: [ "get" ]
+      actions: ["get"]
     - url: "/business-partners/**"
       actions: ["*"]
+    - url: "/prazo/tabela/**"
+      actions: ["get"]
+    - url: "/pedido-venda/angular"
+      actions: ["*"]
     - url: "/quotation/**"
-      actions: [ "get" ]
-    - url: "/pedido-venda/listar"
-      actions: [ "get" ]
-  business_partner:
-    - url: "/invoice/**/parcela/*"
-      actions: ["get"]
-    - url: "/invoice/cardcode/**/payment"
-      actions: ["get"]
-    - url: "/business-partners/cpf-cnpj/**"
-      actions: ["get"]
-    - url: "/tax/**/pdf"
-      actions: ["get"]
-    - url: "/installment/**/paid"
       actions: ["get"]
   sysfeed:
     - url: "/sysfeed/fornecedores/pendentes"
@@ -140,7 +113,7 @@ roles:
     - url: "/batch-stock/item-code/**"
       actions: ["get"]
     - url: "/reprocessamento/**"
-      actions: [ "*" ]
+      actions: ["*"]
     - url: "/item/search"
       actions: ["post"]
     - url: "/painel/**"
@@ -153,3 +126,136 @@ roles:
       actions: ["*"]
     - url: "/locais/search"
       actions: ["*"]
+
+  logistica:
+    - url: "/carregamento"
+      actions: ["get", "post"]
+    - url: "/carregamento/search"
+      actions: ["get"]
+    - url: "/carregamento/estoque-em-carregamento"
+      actions: ["get"]
+    - url: "/carregamento/notas/*"
+      actions: ["get"]
+    - url: "/carregamento/*/logistica"
+      actions: ["post"]
+    - url: "/carregamento/*/cancel"
+      actions: ["post"]
+    - url: "/branch"
+      actions: ["get"]
+    - url: "/locais/search"
+      actions: ["post"]
+    - url: "/locais/*"
+      actions: ["get"]
+    - url: "/sales-person/search"
+      actions: ["post"]
+    - url: "/pedido-venda/findAllLoadOrders"
+      actions: ["post"]
+    - url: "/pedido-venda/findLoadOrders"
+      actions: ["get"]
+    - url: "/painel/pedidos"
+      actions: ["get"]
+    - url: "/business-partners/search"
+      actions: ["post"]
+    - url: "/business-partners/*"
+      actions: ["get"]
+    - url: "/item/search"
+      actions: ["post"]
+
+  logistica_faturar:
+    - url: "/carregamento"
+      actions: ["get", "post"]
+    - url: "/carregamento/search"
+      actions: ["get"]
+    - url: "/carregamento/estoque-em-carregamento"
+      actions: ["get"]
+    - url: "/carregamento/notas/*"
+      actions: ["get"]
+    - url: "/carregamento/*/logistica"
+      actions: ["post"]
+    - url: "/carregamento/*/cancel"
+      actions: ["post"]
+    - url: "/carregamento/*/status"
+      actions: ["post"]
+    - url: "/carregamento/generate-from-loading-order/*"
+      actions: ["post"]
+    - url: "/batch-stock/item-code/**"
+      actions: ["get"]
+    - url: "/branch"
+      actions: ["get"]
+    - url: "/locais/search"
+      actions: ["post"]
+    - url: "/locais/*"
+      actions: ["get"]
+    - url: "/sales-person/search"
+      actions: ["post"]
+    - url: "/pedido-venda/findAllLoadOrders"
+      actions: ["post"]
+    - url: "/pedido-venda/findLoadOrders"
+      actions: ["get"]
+    - url: "/painel/pedidos"
+      actions: ["get"]
+    - url: "/business-partners/search"
+      actions: ["post"]
+    - url: "/business-partners/*"
+      actions: ["get"]
+    - url: "/item/search"
+      actions: ["post"]
+  pix:
+    - url: "/business-partners/search"
+      actions: [ "*" ]
+    - url: "/branch"
+      actions: [ "get" ]
+    - url: "/pix"
+      actions: ["get"]
+    - url: "/pix/**"
+      actions: ["get"]
+    - url: "/pix/gerar-chave/**"
+      actions: ["get","post"]
+    - url: "/pix/transaction/**"
+      actions: ["get"]
+    - url: "/pix/checar-chave/**"
+      actions: ["get"]
+    - url: "/invoice/*/create-pix"
+      actions: ["get"]
+    - url: "/invoice/*/baixa-pix"
+      actions: ["get"]
+    - url: "/invoice/pix"
+      actions: ["get"]
+    - url: "/down-payment/contrato-venda-futura/*/pix"
+      actions: [ "post" ]
+
+  pix_admin:
+    - url: "/business-partners/search"
+      actions: [ "*" ]
+    - url: "/branch"
+      actions: [ "get" ]
+    - url: "/pix"
+      actions: ["get"]
+    - url: "/pix/**"
+      actions: ["get"]
+    - url: "/pix/gerar-chave/**"
+      actions: ["get"]
+    - url: "/pix/transaction/**"
+      actions: ["get"]
+    - url: "/pix/checar-chave/**"
+      actions: ["get"]
+    - url: "/invoice/*/create-pix"
+      actions: ["get"]
+    - url: "/invoice/*/baixa-pix"
+      actions: ["get"]
+    - url: "/invoice/pix"
+      actions: ["get"]
+    - url: "/down-payment/contrato-venda-futura/*/pix"
+      actions: [ "post" ]
+
+  business_partner:
+    - url: "/invoice/**/parcela/*"
+      actions: ["get"]
+    - url: "/invoice/cardcode/**/payment"
+      actions: ["get"]
+    - url: "/business-partners/cpf-cnpj/**"
+      actions: ["get"]
+    - url: "/tax/**/pdf"
+      actions: ["get"]
+    - url: "/installment/**/paid"
+      actions: ["get"]

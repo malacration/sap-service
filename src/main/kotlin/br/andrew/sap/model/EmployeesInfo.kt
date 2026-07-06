@@ -20,6 +20,12 @@ class EmployeesInfo(val EmployeeID : Int, val Active: String) : UserSource {
     var MiddleName : String? = null
     var U_password : String? = null
 
+    /**
+     * Vinculo do colaborador com um vendedor (campo padrao do SAP B1,
+     * OHEM.salesPrson). Vem -1 quando nao ha vendedor vinculado.
+     */
+    var SalesPersonCode : Int? = null
+
     @JsonIgnore
     var _bussinesPlace : List<Int> = listOf()
 
