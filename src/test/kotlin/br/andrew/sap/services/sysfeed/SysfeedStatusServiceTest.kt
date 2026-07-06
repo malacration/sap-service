@@ -35,21 +35,52 @@ class SysfeedStatusServiceTest {
         assertEquals(3, result.size)
         assertTrue(result.all { it.success })
         verify(businessPartnersService).update(eq(mapOf("U_sysfeed_status" to "ENVIADO")), eq("'FOR0002977'"))
+        // ERRO nao e sucesso: nao deve marcar DtIntegracao (senao travaria o reprocessamento).
         verify(purchaseInvoiceService).update(
             check<Map<String, Any>> {
                 assertEquals("ERRO", it["U_sysfeed_status"])
-                assertTrue(it.containsKey("U_LbrOne_DtIntegracao"))
-                assertTrue(it["U_LbrOne_HrIntegracao"] is Int)
+                assertFalse(it.containsKey("U_LbrOne_DtIntegracao"))
+                assertFalse(it.containsKey("U_LbrOne_HrIntegracao"))
                 assertFalse(it.containsKey("U_LbrOne_Obs_Integracao"))
             },
             eq("144594")
         )
+        // DUPLICADO conta como envio concluido: marca DtIntegracao (trava anti-reenvio).
         verify(productionOrdersService).update(
             check<Map<String, Any>> {
                 assertEquals("DUPLICADO", it["U_sysfeed_status"])
                 assertTrue(it.containsKey("U_LbrOne_DtIntegracao"))
                 assertTrue(it["U_LbrOne_HrIntegracao"] is Int)
                 assertFalse(it.containsKey("U_LbrOne_Obs_Integracao"))
+            },
+            eq("12345")
+        )
+    }
+
+    @Test
+    fun `deve marcar DtIntegracao apenas em status de sucesso`() {
+        service.updateAll(
+            listOf(
+                SysfeedStatusUpdate(SysfeedStatusTarget.ORDEM_RECEBIMENTO, "144594", "ENVIADO"),
+                SysfeedStatusUpdate(SysfeedStatusTarget.ORDEM_PRODUCAO, "12345", "PARCIAL")
+            )
+        )
+
+        // ENVIADO -> marca DtIntegracao (vira a trava anti-reenvio na view de pendentes).
+        verify(purchaseInvoiceService).update(
+            check<Map<String, Any>> {
+                assertEquals("ENVIADO", it["U_sysfeed_status"])
+                assertTrue(it.containsKey("U_LbrOne_DtIntegracao"))
+                assertTrue(it["U_LbrOne_HrIntegracao"] is Int)
+            },
+            eq("144594")
+        )
+        // PARCIAL nao trava: sem DtIntegracao, segue reprocessavel.
+        verify(productionOrdersService).update(
+            check<Map<String, Any>> {
+                assertEquals("PARCIAL", it["U_sysfeed_status"])
+                assertFalse(it.containsKey("U_LbrOne_DtIntegracao"))
+                assertFalse(it.containsKey("U_LbrOne_HrIntegracao"))
             },
             eq("12345")
         )

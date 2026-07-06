@@ -16,4 +16,5 @@ WHERE T0."Status" = 'R'
   AND F."U_LbrOne_Id" IS NOT NULL
   AND T0."Type" = 'S'
   AND (T0."U_sysfeed_status" IS NULL OR T0."U_sysfeed_status" = '' OR T0."U_sysfeed_status" = 'PENDENTE')
+  AND T0."U_LbrOne_DtIntegracao" IS NULL
 ORDER BY T0."DocEntry" DESC
