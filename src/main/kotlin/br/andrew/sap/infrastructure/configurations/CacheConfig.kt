@@ -63,6 +63,7 @@ class CacheConfigurationProperties(@Value("\${otp.ttl:300}") val otpTTL : Long) 
         cacheExpirations["produto-estrutura-selecao"] = timeoutSeconds
         cacheExpirations["produtos"] = timeoutSeconds
         cacheExpirations["unidade-grupo"] = timeoutSeconds
+        cacheExpirations["employee-salesperson"] = timeoutSeconds
     }
 
     fun getCacheExpirations(): Map<String, Long> {

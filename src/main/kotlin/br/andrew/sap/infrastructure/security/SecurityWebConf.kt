@@ -4,6 +4,11 @@ import br.andrew.sap.infrastructure.security.otp.OneTimePasswordAuthenticationPr
 import br.andrew.sap.infrastructure.security.jwt.JwtAuthenticationFilter
 import br.andrew.sap.infrastructure.security.jwt.JwtHandler
 import br.andrew.sap.infrastructure.security.jwt.JwtSecretBean
+import br.andrew.sap.infrastructure.security.keycloak.KeycloakAuthenticationFilter
+import br.andrew.sap.infrastructure.security.keycloak.KeycloakJwtService
+import br.andrew.sap.infrastructure.security.keycloak.KeycloakProperties
+import br.andrew.sap.infrastructure.security.keycloak.KeycloakProvisioningEntryPoint
+import br.andrew.sap.infrastructure.security.keycloak.KeycloakUserMapper
 import br.andrew.sap.infrastructure.security.otp.DisableOneTimePasswordAuthenticationFilter
 import br.andrew.sap.infrastructure.security.otp.OneTimePasswordAuthenticationFilter
 import br.andrew.sap.infrastructure.security.password.UserPasswordAuthenticationFilter
@@ -36,7 +41,10 @@ class SecurityWebConf(
     jwtSecretBean : JwtSecretBean,
     private val ruleService: RuleService,
     private val userPasswordService: UserPasswordService,
-    private val otpService : OneTimePasswordService
+    private val otpService : OneTimePasswordService,
+    private val keycloakProperties : KeycloakProperties,
+    private val keycloakJwtService : KeycloakJwtService,
+    private val keycloakUserMapper : KeycloakUserMapper
 )  {
 
     private val jwtHandler = JwtHandler(jwtSecretBean)
@@ -64,6 +72,9 @@ class SecurityWebConf(
                     JwtAuthenticationFilter(jwtHandler,disable),
                     UsernamePasswordAuthenticationFilter::class.java)
                 .addFilterBefore(
+                    KeycloakAuthenticationFilter(keycloakProperties,keycloakJwtService,keycloakUserMapper),
+                    JwtAuthenticationFilter::class.java)
+                .addFilterBefore(
                     OneTimePasswordAuthenticationFilter(authManager,jwtHandler,otpService),
                     JwtAuthenticationFilter::class.java)
                 .addFilterBefore(
@@ -77,6 +88,7 @@ class SecurityWebConf(
                         "/",
                         "/ws",
                         "/ws/**",
+                        "/auth/config",
                         "/otp/login",
                         "/state**/**",
                         "/city**/**",
@@ -101,6 +113,7 @@ class SecurityWebConf(
                     .permitAll()
                     .anyRequest().authenticated()
                 }
+                .exceptionHandling { it.authenticationEntryPoint(KeycloakProvisioningEntryPoint()) }
                 .csrf { it.disable() }
                 .cors(CorsConfig().customizer)
                 .build()

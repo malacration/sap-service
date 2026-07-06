@@ -14,3 +14,14 @@ uzzipay.contas[0].tokenJwt=jwt
 pix.schedule.enable=false
 pix.schedule.delay-minutes=5
 pix.schedule.consulta-interval-minutes=5
+
+# ----- Autenticacao via Keycloak (toggle) -----
+# Quando habilitado, o backend passa a aceitar tokens do Keycloak (RS256, via
+# JWKS) e o /auth/config instrui o front-sap a usar o fluxo OIDC. Os tokens
+# internos do /otp/login (cliente externo) continuam sendo aceitos.
+keycloak.enabled=false
+keycloak.url=https://keycloak.exemplo.com
+keycloak.realm=rovema
+keycloak.client-id=front-sap
+# Claim opcional que carrega o codigo SAP do usuario (default: sap_code)
+keycloak.sap-id-claim=sap_code
