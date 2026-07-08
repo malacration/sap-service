@@ -58,12 +58,25 @@ abstract class DocumentLines(
     @JsonProperty("CFOPCode")
     var CFOPCode : String? = null
 
+    // Impostos ja calculados pelo SAP nesta linha. Populado no deserializer
+    // (o setJson por reflexao so trata escalares). @JsonIgnore para nao inflar o payload
+    // nem ser enviado de volta ao SAP; a leitura vem do DocumentLinesDeserializer.
+    @JsonIgnore
+    var LineTaxJurisdictions : List<LineTaxJurisdiction> = listOf()
+
 
     @JsonIgnore
     var valorDesonerado : BigDecimal = BigDecimal(0)
 
     @JsonIgnore
     var resto: BigDecimal = BigDecimal(0)
+
+    // Valor liquido da linha (LineTotal - imposto desonerado). Preenchido SOMENTE no fluxo
+    // de /entregas (Document.preencheDesonerado). Fica null nos demais fluxos e, por
+    // @JsonInclude(NON_EMPTY), e omitido do payload de PATCH do SAP - senao o Service Layer
+    // rejeitaria esse campo nao-SAP nos updates dos schedules de desonerado.
+    @JsonProperty("LineTotalDesonerado")
+    var lineTotalDesonerado : Double? = null
 
     abstract fun Duplicate() : DocumentLines
 
@@ -94,6 +107,23 @@ abstract class DocumentLines(
     @JsonIgnore
     fun presumeDesonerado(rate: Double): Double {
         return total().toDouble()*rate/100
+    }
+
+    // Calcula o valor liquido da linha: subtrai do LineTotal o TaxAmount ja calculado pelo
+    // SAP nas jurisdicoes cujo JurisdictionType e um imposto desonerado. Sem imposto a
+    // reduzir, retorna o proprio LineTotal. Nao e getter (nao serializa sozinho) - o
+    // resultado e guardado em lineTotalDesonerado apenas no fluxo de /entregas.
+    fun calcularLineTotalDesonerado(desoneradoIds: List<Int>): Double? {
+        val total = LineTotal ?: return null
+        if (desoneradoIds.isEmpty())
+            return total
+        val imposto = LineTaxJurisdictions
+            .filter { desoneradoIds.contains(it.JurisdictionType) }
+            .sumOf { it.TaxAmount ?: 0.0 }
+        return BigDecimal.valueOf(total)
+            .minus(BigDecimal.valueOf(imposto))
+            .setScale(2, RoundingMode.HALF_UP)
+            .toDouble()
     }
 
     fun setDistribuicaoCusto(custoByBranch: DistribuicaoCustoByBranch) {
