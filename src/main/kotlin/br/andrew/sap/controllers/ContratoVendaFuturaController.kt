@@ -29,6 +29,7 @@ import br.andrew.sap.services.document.DownPaymentService
 import br.andrew.sap.services.document.InvoiceService
 import br.andrew.sap.services.document.OrdersService
 import br.andrew.sap.services.pricing.ComissaoService
+import br.andrew.sap.model.impostos.ImpostosDesonerados
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.ResponseEntity
@@ -52,7 +53,8 @@ class ContratoVendaFuturaController(
     val orderService : OrdersService,
     val batchService: BatchService,
     @Value("\${venda-futura.entrega:9}") val utilizacaoEntregaVendaFutura : Int,
-    val cotacaoController : QuotationsController){
+    val cotacaoController : QuotationsController,
+    val impostosDesonerados : ImpostosDesonerados){
     val logger = LoggerFactory.getLogger(ContratoVendaFuturaController::class.java)
 
     @GetMapping("")
@@ -105,6 +107,7 @@ class ContratoVendaFuturaController(
             .map { it.getAll(Document::class.java,filter) }
             .flatMap { it }
             .filter{ it.DocumentLines.none { it.BaseType == 203}}
+            .onEach { it.preencheDesonerado(impostosDesonerados.ids) }
             .sortedWith(compareBy(
                 { it.docDate },
                 { it.docObjectCode?.ordinal }

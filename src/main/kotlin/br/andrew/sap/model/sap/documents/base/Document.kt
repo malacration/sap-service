@@ -135,6 +135,13 @@ open class Document(val CardCode : String,
                 .groupBy { it.TaxCode!! } as Map<String, List<Product>>
     }
 
+    // Recebe os ids (JurisdictionType) dos impostos desonerados e distribui para as
+    // proprias linhas, que passam a saber calcular o valor liquido via
+    // DocumentLines.getLineTotalDesonerado() usando o TaxAmount ja gravado pelo SAP.
+    fun preencheDesonerado(desoneradoIds: List<Int>) {
+        DocumentLines.forEach { it.desoneradoIds = desoneradoIds }
+    }
+
     fun usaBrenchDefaultWarehouse(branchs : List<WarehouseDefault>){
         branchs.firstOrNull{ it.BPLID == BPL_IDAssignedToInvoice }
                 ?.also { usaBrenchDefaultWarehouse(it) }

@@ -58,12 +58,23 @@ abstract class DocumentLines(
     @JsonProperty("CFOPCode")
     var CFOPCode : String? = null
 
+    // Impostos ja calculados pelo SAP nesta linha. Populado no deserializer
+    // (o setJson por reflexao so trata escalares). @JsonIgnore para nao inflar o payload
+    // nem ser enviado de volta ao SAP; a leitura vem do DocumentLinesDeserializer.
+    @JsonIgnore
+    var LineTaxJurisdictions : List<LineTaxJurisdiction> = listOf()
+
 
     @JsonIgnore
     var valorDesonerado : BigDecimal = BigDecimal(0)
 
     @JsonIgnore
     var resto: BigDecimal = BigDecimal(0)
+
+    // Ids (JurisdictionType) dos impostos desonerados, preenchidos no fluxo de entrega.
+    // Usados para localizar o TaxAmount ja calculado pelo SAP em LineTaxJurisdictions.
+    @JsonIgnore
+    var desoneradoIds : List<Int> = listOf()
 
     abstract fun Duplicate() : DocumentLines
 
@@ -94,6 +105,24 @@ abstract class DocumentLines(
     @JsonIgnore
     fun presumeDesonerado(rate: Double): Double {
         return total().toDouble()*rate/100
+    }
+
+    // Valor liquido da linha ja com o imposto desonerado removido do LineTotal.
+    // O SAP grava o LineTotal com o imposto embutido (desoneracao so ao final da linha),
+    // entao subtraimos o TaxAmount ja calculado pelo SAP nas jurisdicoes cujo
+    // JurisdictionType e um imposto desonerado. Sem imposto a reduzir, retorna o LineTotal.
+    @JsonProperty("LineTotalDesonerado")
+    fun getLineTotalDesonerado(): Double? {
+        val total = LineTotal ?: return null
+        if (desoneradoIds.isEmpty())
+            return total
+        val imposto = LineTaxJurisdictions
+            .filter { desoneradoIds.contains(it.JurisdictionType) }
+            .sumOf { it.TaxAmount ?: 0.0 }
+        return BigDecimal.valueOf(total)
+            .minus(BigDecimal.valueOf(imposto))
+            .setScale(2, RoundingMode.HALF_UP)
+            .toDouble()
     }
 
     fun setDistribuicaoCusto(custoByBranch: DistribuicaoCustoByBranch) {
