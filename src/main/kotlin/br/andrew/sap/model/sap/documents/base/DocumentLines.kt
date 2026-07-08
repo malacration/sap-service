@@ -71,10 +71,12 @@ abstract class DocumentLines(
     @JsonIgnore
     var resto: BigDecimal = BigDecimal(0)
 
-    // Ids (JurisdictionType) dos impostos desonerados, preenchidos no fluxo de entrega.
-    // Usados para localizar o TaxAmount ja calculado pelo SAP em LineTaxJurisdictions.
-    @JsonIgnore
-    var desoneradoIds : List<Int> = listOf()
+    // Valor liquido da linha (LineTotal - imposto desonerado). Preenchido SOMENTE no fluxo
+    // de /entregas (Document.preencheDesonerado). Fica null nos demais fluxos e, por
+    // @JsonInclude(NON_EMPTY), e omitido do payload de PATCH do SAP - senao o Service Layer
+    // rejeitaria esse campo nao-SAP nos updates dos schedules de desonerado.
+    @JsonProperty("LineTotalDesonerado")
+    var lineTotalDesonerado : Double? = null
 
     abstract fun Duplicate() : DocumentLines
 
@@ -107,12 +109,11 @@ abstract class DocumentLines(
         return total().toDouble()*rate/100
     }
 
-    // Valor liquido da linha ja com o imposto desonerado removido do LineTotal.
-    // O SAP grava o LineTotal com o imposto embutido (desoneracao so ao final da linha),
-    // entao subtraimos o TaxAmount ja calculado pelo SAP nas jurisdicoes cujo
-    // JurisdictionType e um imposto desonerado. Sem imposto a reduzir, retorna o LineTotal.
-    @JsonProperty("LineTotalDesonerado")
-    fun getLineTotalDesonerado(): Double? {
+    // Calcula o valor liquido da linha: subtrai do LineTotal o TaxAmount ja calculado pelo
+    // SAP nas jurisdicoes cujo JurisdictionType e um imposto desonerado. Sem imposto a
+    // reduzir, retorna o proprio LineTotal. Nao e getter (nao serializa sozinho) - o
+    // resultado e guardado em lineTotalDesonerado apenas no fluxo de /entregas.
+    fun calcularLineTotalDesonerado(desoneradoIds: List<Int>): Double? {
         val total = LineTotal ?: return null
         if (desoneradoIds.isEmpty())
             return total
