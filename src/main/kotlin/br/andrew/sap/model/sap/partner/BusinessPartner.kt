@@ -59,6 +59,7 @@ class BusinessPartner() {
     var U_Rov_Nome_Mae : String? = null
 
     var U_keyUpdate : String? = null
+    var U_sysfeed_status : String? = null
     var U_dataSerasa : Date? = null
     var CreditLimit : Double? = null
     var CurrentAccountBalance : Double? = null

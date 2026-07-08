@@ -12,5 +12,6 @@ class Item(val itemCode : String) {
 
     var itemPrices : List<ItemPrice> = emptyList()
     var ItemWarehouseInfoCollection : List<ItemWarehouseInfo>? = null
+    var U_lbrOne_id: String? = null
 
 }
