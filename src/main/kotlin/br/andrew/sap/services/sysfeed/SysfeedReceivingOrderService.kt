@@ -4,6 +4,7 @@ import br.andrew.sap.infrastructure.odata.Parameter
 import br.andrew.sap.model.sysfeed.SysfeedReceivingOrderRequest
 import br.andrew.sap.model.sysfeed.SysfeedReceivingPending
 import br.andrew.sap.services.abstracts.SqlQueriesService
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
@@ -17,7 +18,11 @@ class SysfeedReceivingOrderService(
     private val supplierService: SysfeedSupplierService,
     @Value("\${sysfeed.recebimento.cod-prod-default:1}") private val defaultCodProd: String
 ) {
+    private val logger = LoggerFactory.getLogger(SysfeedReceivingOrderService::class.java)
+
     // dataCorte e usages vem sempre do integrador; sem eles nao ha o que consultar.
+    // Cada linha e montada isoladamente: uma linha invalida e ignorada e reportada,
+    // sem derrubar o lote inteiro das linhas validas.
     fun getPendingPayloads(
         dataCorte: String,
         usages: List<Int>
@@ -25,7 +30,17 @@ class SysfeedReceivingOrderService(
         val startDate = resolveStartDate(dataCorte)
         return resolveUsages(usages)
             .flatMap { getPendingRows(startDate, it) }
-            .map { buildPayload(it) }
+            .mapNotNull { pending ->
+                try {
+                    buildPayload(pending)
+                } catch (e: Exception) {
+                    logger.warn(
+                        "SYSFEED_ORDEM_RECEBIMENTO_IGNORADA docEntry={} lineNum={} motivo={}",
+                        pending.DocEntry, pending.LineNum, e.message
+                    )
+                    null
+                }
+            }
     }
 
     private fun resolveStartDate(dataCorte: String): String {
@@ -104,6 +119,8 @@ class SysfeedReceivingOrderService(
             val date = LocalDate.parse(sapDate.take(10))
             date.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) + " 00:00:00"
         } catch (e: Exception) {
+            // Data invalida na origem: omitimos o campo (opcional) e registramos, em vez de falhar silenciosamente.
+            logger.warn("SYSFEED_ORDEM_RECEBIMENTO_DATA_INVALIDA valor={} motivo={}", sapDate, e.message)
             null
         }
     }

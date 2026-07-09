@@ -4,6 +4,7 @@ import br.andrew.sap.infrastructure.odata.Parameter
 import br.andrew.sap.model.sysfeed.SysfeedProductionOrderPending
 import br.andrew.sap.model.sysfeed.SysfeedProductionOrderRequest
 import br.andrew.sap.services.abstracts.SqlQueriesService
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
 import java.math.RoundingMode
@@ -14,10 +15,20 @@ import java.time.format.DateTimeFormatter
 class SysfeedProductionOrderService(
     private val sqlQueriesService: SqlQueriesService
 ) {
+    private val logger = LoggerFactory.getLogger(SysfeedProductionOrderService::class.java)
     private val outputDateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy")
 
+    // Cada ordem e montada isoladamente: uma linha invalida e ignorada e reportada,
+    // sem derrubar o lote inteiro das ordens validas.
     fun getPendingPayloads(dataCorte: String): List<SysfeedProductionOrderRequest> {
-        return getPendingRows(resolveStartDate(dataCorte)).map { buildPayload(it) }
+        return getPendingRows(resolveStartDate(dataCorte)).mapNotNull { pending ->
+            try {
+                buildPayload(pending)
+            } catch (e: Exception) {
+                logger.warn("SYSFEED_ORDEM_PRODUCAO_IGNORADA docEntry={} motivo={}", pending.DocEntry, e.message)
+                null
+            }
+        }
     }
 
     // dataCorte vem sempre do integrador; sem ele nao ha o que consultar.
@@ -44,9 +55,10 @@ class SysfeedProductionOrderService(
 
         val quantidadeTotal = normalizeNumeric(pending.Quantidade)
         validateNotZero("PlannedQty", quantidadeTotal)
-        val tamanhoBatelada = normalizeNumeric(pending.QuantBat ?: pending.Quantidade)
-        validateNotZero("U_LbrOne_Batelada", tamanhoBatelada)
-        val quantidadeBateladas = divideQuantity(quantidadeTotal, tamanhoBatelada)
+        // U_LbrOne_Batelada ja e o NUMERO de bateladas (nao o tamanho).
+        val quantidadeBateladas = normalizeNumeric(pending.QuantBat ?: "1")
+        validateNotZero("U_LbrOne_Batelada", quantidadeBateladas)
+        val tamanhoBatelada = divideQuantity(quantidadeTotal, quantidadeBateladas)
         val descricao = pending.DescricaoOrdemProducao
             ?.trim()
             ?.takeIf { it.isNotBlank() }
@@ -59,11 +71,11 @@ class SysfeedProductionOrderService(
             codIntOrdemProducao = codOrdemProducao,
             codFormula = codFormula,
             codIntFormula = codFormula,
-            // SYSFEED: Quantidade = total da OP, QuantBat = tamanho da batelada, TotalQuantidade = nro de bateladas.
-            quantidade = quantidadeTotal,
+            // SYSFEED: Quantidade = tamanho da batelada; QuantBat e TotalQuantidade = numero de bateladas.
+            quantidade = tamanhoBatelada,
             prioridade = "1",
             totalQuantidade = quantidadeBateladas,
-            quantBat = tamanhoBatelada,
+            quantBat = quantidadeBateladas,
             dataEntradaOP = formatDate(pending.DataEntradaOP),
             dataEntregaProducao = formatDate(pending.DataEntregaProducao),
             tipoOrdemProducao = "A",
@@ -119,12 +131,18 @@ class SysfeedProductionOrderService(
 
     private fun formatDate(value: String?): String? {
         val date = value?.trim()?.takeIf { it.isNotBlank() } ?: return null
-        val normalized = if (date.matches(Regex("\\d{8}"))) {
-            "${date.substring(0, 4)}-${date.substring(4, 6)}-${date.substring(6, 8)}"
-        } else {
-            date.take(10)
+        return try {
+            val normalized = if (date.matches(Regex("\\d{8}"))) {
+                "${date.substring(0, 4)}-${date.substring(4, 6)}-${date.substring(6, 8)}"
+            } else {
+                date.take(10)
+            }
+            LocalDate.parse(normalized).format(outputDateFormatter)
+        } catch (e: Exception) {
+            // Data invalida na origem nao deve derrubar a ordem: apenas omitimos o campo (opcional) e registramos.
+            logger.warn("SYSFEED_ORDEM_PRODUCAO_DATA_INVALIDA valor={} motivo={}", value, e.message)
+            null
         }
-        return LocalDate.parse(normalized).format(outputDateFormatter)
     }
 }
 

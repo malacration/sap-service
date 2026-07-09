@@ -52,10 +52,10 @@ class SysfeedProductionOrderServiceTest {
         assertEquals("12345", payload.codIntOrdemProducao)
         assertEquals("100", payload.codFormula)
         assertEquals("100", payload.codIntFormula)
-        assertEquals("1000", payload.quantidade)
+        assertEquals("2000", payload.quantidade)
         assertEquals("1", payload.prioridade)
-        assertEquals("4", payload.totalQuantidade)
-        assertEquals("250", payload.quantBat)
+        assertEquals("10", payload.totalQuantidade)
+        assertEquals("10", payload.quantBat)
         assertEquals("A", payload.tipoOrdemProducao)
         assertEquals("ORDEM DE PRODUCAO 12345", payload.descricaoOrdemProducao)
         assertEquals("18/06/2026", payload.dataEntradaOP)
@@ -108,13 +108,13 @@ class SysfeedProductionOrderServiceTest {
         descricao: String? = null,
         dataEntrada: String? = "2026-06-18",
         dataEntrega: String? = "2026-06-19",
-        quantBat: String? = "250"
+        quantBat: String? = "10"
     ): SysfeedProductionOrderPending {
         return SysfeedProductionOrderPending(
             DocEntry = docEntry,
             DocNum = "12345",
             ItemCode = "PA0001",
-            Quantidade = "1000.000000",
+            Quantidade = "20000.000000",
             DataEntradaOP = dataEntrada,
             DataEntregaProducao = dataEntrega,
             DescricaoOrdemProducao = descricao,
