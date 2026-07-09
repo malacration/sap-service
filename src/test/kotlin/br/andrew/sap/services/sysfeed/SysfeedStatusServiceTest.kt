@@ -9,6 +9,7 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.check
@@ -35,12 +36,15 @@ class SysfeedStatusServiceTest {
         assertEquals(3, result.size)
         assertTrue(result.all { it.success })
         verify(businessPartnersService).update(eq(mapOf("U_sysfeed_status" to "ENVIADO")), eq("'FOR0002977'"))
-        // ERRO nao e sucesso: nao deve marcar DtIntegracao (senao travaria o reprocessamento).
+        // ERRO nao e sucesso: limpa DtIntegracao/HrIntegracao (null) para nao travar o reprocessamento.
+        // Omitir as chaves deixaria o valor antigo no PATCH; por isso enviamos null explicito.
         verify(purchaseInvoiceService).update(
-            check<Map<String, Any>> {
+            check<Map<String, Any?>> {
                 assertEquals("ERRO", it["U_sysfeed_status"])
-                assertFalse(it.containsKey("U_LbrOne_DtIntegracao"))
-                assertFalse(it.containsKey("U_LbrOne_HrIntegracao"))
+                assertTrue(it.containsKey("U_LbrOne_DtIntegracao"))
+                assertNull(it["U_LbrOne_DtIntegracao"])
+                assertTrue(it.containsKey("U_LbrOne_HrIntegracao"))
+                assertNull(it["U_LbrOne_HrIntegracao"])
                 assertFalse(it.containsKey("U_LbrOne_Obs_Integracao"))
             },
             eq("144594")
@@ -75,12 +79,14 @@ class SysfeedStatusServiceTest {
             },
             eq("144594")
         )
-        // PARCIAL nao trava: sem DtIntegracao, segue reprocessavel.
+        // PARCIAL nao e sucesso: limpa a trava (DtIntegracao/HrIntegracao = null) para seguir reprocessavel.
         verify(productionOrdersService).update(
-            check<Map<String, Any>> {
+            check<Map<String, Any?>> {
                 assertEquals("PARCIAL", it["U_sysfeed_status"])
-                assertFalse(it.containsKey("U_LbrOne_DtIntegracao"))
-                assertFalse(it.containsKey("U_LbrOne_HrIntegracao"))
+                assertTrue(it.containsKey("U_LbrOne_DtIntegracao"))
+                assertNull(it["U_LbrOne_DtIntegracao"])
+                assertTrue(it.containsKey("U_LbrOne_HrIntegracao"))
+                assertNull(it["U_LbrOne_HrIntegracao"])
             },
             eq("12345")
         )

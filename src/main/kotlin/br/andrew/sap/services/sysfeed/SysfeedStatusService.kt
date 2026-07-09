@@ -55,31 +55,41 @@ class SysfeedStatusService(
 
         val agora = LocalDateTime.now()
         // DtIntegracao/HrIntegracao marcam envio concluido com sucesso e viram a trava anti-reenvio
-        // (a view de pendentes exige DtIntegracao NULL). So gravamos em status de sucesso para nao
-        // bloquear o reprocessamento de ERRO/PARCIAL apos o status voltar para PENDENTE.
+        // (a view de pendentes exige DtIntegracao NULL). Em status de sucesso gravamos a trava;
+        // em qualquer outro status (PENDENTE/ERRO/PARCIAL) a limpamos explicitamente, senao um item
+        // reenviado continuaria fora da view de pendentes e nunca voltaria para a fila.
         val marcarIntegracao = status in successStatuses
-        val payload = mutableMapOf<String, Any>("U_sysfeed_status" to status)
+        val payload = mutableMapOf<String, Any?>("U_sysfeed_status" to status)
         when (update.tipo) {
             SysfeedStatusTarget.FORNECEDOR -> businessPartnersService.update(payload, "'$codigo'")
             SysfeedStatusTarget.ORDEM_RECEBIMENTO -> {
                 codigo.toIntOrNull() ?: throw SysfeedStatusException("DocEntry invalido: $codigo")
-                if (marcarIntegracao) {
-                    payload["U_LbrOne_DtIntegracao"] = agora.format(dtIntegracaoFormatter)
-                    payload["U_LbrOne_HrIntegracao"] = agora.hour * 100 + agora.minute
-                }
+                aplicarTravaIntegracao(payload, marcarIntegracao, agora)
                 purchaseInvoiceService.update(payload, codigo)
             }
             SysfeedStatusTarget.ORDEM_PRODUCAO -> {
                 codigo.toIntOrNull() ?: throw SysfeedStatusException("DocEntry invalido: $codigo")
-                if (marcarIntegracao) {
-                    payload["U_LbrOne_DtIntegracao"] = agora.format(dtIntegracaoFormatter)
-                    payload["U_LbrOne_HrIntegracao"] = agora.hour * 100 + agora.minute
-                }
+                aplicarTravaIntegracao(payload, marcarIntegracao, agora)
                 update.obs?.trim()?.takeIf { it.isNotBlank() }?.let {
                     payload["U_LbrOne_Obs_Integracao"] = it
                 }
                 productionOrdersService.update(payload, codigo)
             }
+        }
+    }
+
+    // Sucesso grava a trava anti-reenvio; nao-sucesso a limpa (null) para devolver o item a fila.
+    private fun aplicarTravaIntegracao(
+        payload: MutableMap<String, Any?>,
+        marcarIntegracao: Boolean,
+        agora: LocalDateTime
+    ) {
+        if (marcarIntegracao) {
+            payload["U_LbrOne_DtIntegracao"] = agora.format(dtIntegracaoFormatter)
+            payload["U_LbrOne_HrIntegracao"] = agora.hour * 100 + agora.minute
+        } else {
+            payload["U_LbrOne_DtIntegracao"] = null
+            payload["U_LbrOne_HrIntegracao"] = null
         }
     }
 }
