@@ -19,6 +19,6 @@ class DesoneradoServiceTest {
 
     @Test
     fun test(){
-        Assertions.assertTrue(desoneradoService!!.allImpotos.containsAll(listOf(10,20,30)))
+        Assertions.assertTrue(desoneradoService!!.impostos.ids.containsAll(listOf(10,20,30)))
     }
 }

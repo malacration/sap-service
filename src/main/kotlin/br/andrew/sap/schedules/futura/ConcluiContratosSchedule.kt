@@ -3,6 +3,7 @@ package br.andrew.sap.schedules.futura
 import br.andrew.sap.controllers.ContratoVendaFuturaController
 import br.andrew.sap.infrastructure.odata.NextLink
 import br.andrew.sap.model.sap.DocEntry
+import br.andrew.sap.model.dto.ContratoParaFinalizar
 import br.andrew.sap.model.self.vendafutura.Contrato
 import br.andrew.sap.model.self.vendafutura.Status
 import br.andrew.sap.services.ContratoVendaFuturaService
@@ -15,6 +16,7 @@ import org.springframework.context.annotation.Profile
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
 import java.math.BigDecimal
+import java.math.RoundingMode
 import java.util.concurrent.TimeUnit
 
 
@@ -43,17 +45,18 @@ class ConcluiContratosSchedule(
     }
 
     private fun atualizarStatusContratosFinanceiramenteConcluidos() {
-        var contratosIds : NextLink<DocEntry>? = null
+        var contratosIds : NextLink<ContratoParaFinalizar>? = null
         do {
             contratosIds = if(contratosIds == null)
-                sqlQueriesService.execute("para-finalizar.sql")?.tryGetNextValues<DocEntry>()
+                sqlQueriesService.execute("para-finalizar.sql")?.tryGetNextValues<ContratoParaFinalizar>()
             else
-                sqlQueriesService.nextLink(contratosIds.nextLink)?.tryGetNextValues<DocEntry>()
+                sqlQueriesService.nextLink(contratosIds.nextLink)?.tryGetNextValues<ContratoParaFinalizar>()
 
             contratosIds?.content?.forEach {
-                val contrato : Contrato = contratoService.getById(it.DocEntry!!).tryGetValue<Contrato>()
+                val contrato : Contrato = contratoService.getById(it.docEntry!!).tryGetValue<Contrato>()
                 val entregas = controller.entregas(contrato.DocEntry!!)
-                if(contrato.tudoEntregue(entregas)){
+                val apropriado = BigDecimal.valueOf(it.apropriado ?: 0.0).setScale(2, RoundingMode.HALF_UP)
+                if(contrato.tudoEntregue(entregas) && contrato.total().compareTo(apropriado) == 0){
                     contrato.U_status = Status.concluido
                     contratoService.update(contrato,contrato.DocEntry.toString())
                 }
