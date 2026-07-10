@@ -203,6 +203,12 @@ class ContratoVendaFuturaController(
         if(notaSaida.U_venda_futura != contrato.DocEntry)
             throw Exception("A nota de saída informada não pertence a este contrato")
 
+        // A devolução tem que ser avulsa (sem contrato) ou já ser deste contrato (reprocessamento).
+        // Se já pertence a OUTRO contrato, o passo 3 a desvincularia dele — barra aqui.
+        val vfDevolucao = devolucao.U_venda_futura
+        if(vfDevolucao != null && vfDevolucao != 0 && vfDevolucao != contrato.DocEntry)
+            throw Exception("A devolução ${devolucao.docNum} já está vinculada a outro contrato de venda futura ($vfDevolucao)")
+
         val itensContrato = contrato.itens.map { it.U_itemCode }.toSet()
         val itensFora = devolucao.DocumentLines.mapNotNull { it.ItemCode }.filter { !itensContrato.contains(it) }
         if(itensFora.isNotEmpty())
@@ -221,13 +227,27 @@ class ContratoVendaFuturaController(
         if(notaSaida.U_vf_estornada == 1)
             throw Exception("A nota de saída ${notaSaida.docNum} já foi estornada/vinculada a uma devolução")
 
+        // "Já conciliada" precisa ser o PAR EXATO (esta devolução × esta nota), não apenas o
+        // tipo do documento — senão uma devolução conciliada com outra fatura seria tratada
+        // como reprocessamento e o passo 5 (conciliação nota × devolução) seria pulado
+        // indevidamente.
+        val devolucaoJaConciliada = internalReconciliationsService.reconciliacaoEntre(
+            devolucao.docEntry ?: -1, DocumentTypes.oCreditNotes.value,
+            notaSaida.docEntry ?: -1, DocumentTypes.oInvoices.value).isNotEmpty()
+
+        // A devolução avulsa deve estar aberta ou — em reprocessamento — conciliada exatamente
+        // com ESTA nota. Conciliada com qualquer OUTRO documento é a devolução errada: barra
+        // antes de qualquer lançamento.
+        val devolucaoTemConciliacao = internalReconciliationsService
+            .contrapartidasReconciliacao(devolucao.docEntry ?: -1, DocumentTypes.oCreditNotes.value)
+            .isNotEmpty()
+        if(devolucaoTemConciliacao && !devolucaoJaConciliada)
+            throw Exception("A devolução ${devolucao.docNum} já está conciliada com outro documento; " +
+                "não pode ser vinculada a esta nota")
+
         // Estado da nota: só aberta (sem conciliação) ou conciliada com reclassificação (30).
         // Se já estiver conciliada com uma devolução (14) que NÃO seja esta, é provável
-        // cancelamento em duplicidade. Se for ESTA devolução, é um reprocessamento válido
-        // (a devolução avulsa começa sem conciliação; a única que criamos é com esta nota).
-        val devolucaoJaConciliada = internalReconciliationsService
-            .contrapartidasReconciliacao(devolucao.docEntry ?: -1, DocumentTypes.oCreditNotes.value)
-            .contains(DocumentTypes.oInvoices.value)
+        // cancelamento em duplicidade.
         val notaContrapartidas = internalReconciliationsService
             .contrapartidasReconciliacao(notaSaida.docEntry ?: -1, DocumentTypes.oInvoices.value)
         if(notaContrapartidas.contains(DocumentTypes.oCreditNotes.value) && !devolucaoJaConciliada)
