@@ -44,6 +44,10 @@ class DocumentConfiguration(
                 it.size = 30
             },
             FieldMd("pix_due_date","Pix Due Date","OINV"),
+            FieldMd("vf_estornada","Estornada VF?","OINV").also {
+                it.ValidValuesMD = listOf(ValuesMd("0","NÃO"), ValuesMd("1","SIM"))
+                it.defaultValue = "0"
+            },
         ).forEach { userFieldsMDService.findOrCreate(it) }
     }
 }

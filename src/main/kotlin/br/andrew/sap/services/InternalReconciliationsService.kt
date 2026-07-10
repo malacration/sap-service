@@ -49,6 +49,24 @@ class InternalReconciliationsService(
                 Parameter("docEntry",docEntry))
         )?.tryGetValues<RecomNum>() ?: listOf()
     }
+
+    /**
+     * Tipos de objeto (SrcObjTyp) das contrapartidas com que [document] está conciliado em
+     * reconciliações internas não canceladas. 13 = nota de saída, 14 = devolução,
+     * 30 = lançamento contábil (reclassificação).
+     */
+    fun contrapartidasReconciliacao(document : Document): List<Int> {
+        return contrapartidasReconciliacao(document.docEntry ?: -1, document.docObjectCode?.value ?: 13)
+    }
+
+    fun contrapartidasReconciliacao(docEntry : Int, objType : Int = 13): List<Int> {
+        return sqlQueriesService.execute(
+            "reconciliacao-interna-contrapartida.sql",
+            listOf(
+                Parameter("objType",objType),
+                Parameter("docEntry",docEntry))
+        )?.tryGetValues<ContrapartidaReconciliacao>()?.map { it.SrcObjTyp } ?: listOf()
+    }
 }
 
 
@@ -56,3 +74,8 @@ class InternalReconciliationsService(
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 class RecomNum(val ReconNum : Int)
+
+@JsonNaming(PropertyNamingStrategies.UpperCamelCaseStrategy::class)
+@JsonIgnoreProperties(ignoreUnknown = true)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
+class ContrapartidaReconciliacao(val SrcObjTyp : Int)
