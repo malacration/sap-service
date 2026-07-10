@@ -59,6 +59,22 @@ class InternalReconciliationsService(
         return contrapartidasReconciliacao(document.docEntry ?: -1, document.docObjectCode?.value ?: 13)
     }
 
+    /**
+     * ReconNum das reconciliações internas ativas que ligam especificamente os documentos A e B
+     * (cada um por SrcObjTyp + SrcObjAbs). Permite cancelar só a conciliação de interesse, sem
+     * afetar outras conciliações do documento.
+     */
+    fun reconciliacaoEntre(docEntryA : Int, objTypeA : Int, docEntryB : Int, objTypeB : Int): List<RecomNum> {
+        return sqlQueriesService.execute(
+            "reconciliacao-interna-entre.sql",
+            listOf(
+                Parameter("objTypeA", objTypeA),
+                Parameter("docEntryA", docEntryA),
+                Parameter("objTypeB", objTypeB),
+                Parameter("docEntryB", docEntryB))
+        )?.tryGetValues<RecomNum>() ?: listOf()
+    }
+
     fun contrapartidasReconciliacao(docEntry : Int, objType : Int = 13): List<Int> {
         return sqlQueriesService.execute(
             "reconciliacao-interna-contrapartida.sql",

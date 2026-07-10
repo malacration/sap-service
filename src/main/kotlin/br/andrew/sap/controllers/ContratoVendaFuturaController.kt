@@ -215,12 +215,33 @@ class ContratoVendaFuturaController(
         if(totalDev.compareTo(totalNota) != 0)
             throw Exception("O total da devolução ($totalDev) não bate com a nota de saída informada ($totalNota)")
 
+        // Idempotência mestre: o flag U_vf_estornada só é setado no fim do fluxo (passo 7).
+        // Se já está 1, a operação foi concluída antes (ou a nota foi liberada por outro fluxo)
+        // — não reprocessa.
+        if(notaSaida.U_vf_estornada == 1)
+            throw Exception("A nota de saída ${notaSaida.docNum} já foi estornada/vinculada a uma devolução")
+
         // Estado da nota: só aberta (sem conciliação) ou conciliada com reclassificação (30).
-        // Se já estiver conciliada com uma devolução (14), é provável cancelamento em duplicidade.
-        val contrapartidas = internalReconciliationsService
+        // Se já estiver conciliada com uma devolução (14) que NÃO seja esta, é provável
+        // cancelamento em duplicidade. Se for ESTA devolução, é um reprocessamento válido
+        // (a devolução avulsa começa sem conciliação; a única que criamos é com esta nota).
+        val devolucaoJaConciliada = internalReconciliationsService
+            .contrapartidasReconciliacao(devolucao.docEntry ?: -1, DocumentTypes.oCreditNotes.value)
+            .contains(DocumentTypes.oInvoices.value)
+        val notaContrapartidas = internalReconciliationsService
             .contrapartidasReconciliacao(notaSaida.docEntry ?: -1, DocumentTypes.oInvoices.value)
-        if(contrapartidas.contains(DocumentTypes.oCreditNotes.value))
+        if(notaContrapartidas.contains(DocumentTypes.oCreditNotes.value) && !devolucaoJaConciliada)
             throw Exception("A nota de saída já está conciliada com uma devolução (provável cancelamento em duplicidade)")
+
+        // A nota só deve estar conciliada com a reclassificação (lançamento contábil, 30) e/ou,
+        // em reprocessamento, com esta devolução (14). Qualquer outra conciliação ativa
+        // (ex.: pagamento) é estado inesperado: barra aqui para não desfazer, mais adiante,
+        // vínculos financeiros não relacionados.
+        val tiposEsperados = setOf(DocumentTypes.oJournalEntries.value, DocumentTypes.oCreditNotes.value)
+        val tiposInesperados = notaContrapartidas.filter { it !in tiposEsperados }
+        if(tiposInesperados.isNotEmpty())
+            throw Exception("A nota de saída possui conciliações não esperadas (tipos ${tiposInesperados.joinToString()}); " +
+                "resolva no SAP antes de vincular a devolução")
 
         // Reclassificação já apropriada (adiantamento consumido, transcode VFEC): cenário mais
         // complexo, tratado à parte. Barra antes de qualquer lançamento para não sujar a contabilidade.
@@ -228,12 +249,29 @@ class ContratoVendaFuturaController(
             throw Exception("A reclassificação desta nota já teve o adiantamento apropriado; " +
                 "faça o acerto dessa devolução manualmente no SAP por enquanto")
 
-        // ---- Execução ----
-        // 3. Vincular a devolução ao contrato
-        creditNotesService.update("{\"U_venda_futura\": ${contrato.DocEntry}}", devolucao.docEntry.toString())
+        // A reversão (passo 6.1) depende da reclassificação inicial (VFET/VFEC) da nota. Se a
+        // nota está aberta e nunca foi reclassificada, não há o que reverter. Localiza aqui,
+        // ainda na validação, para falhar ANTES de qualquer lançamento — do contrário o
+        // vínculo, a conciliação do cliente e o VFDV já teriam sido postados sem rollback.
+        val reclassificacao = journalEntriesService
+            .getAll(JournalEntry::class.java, Filter(Predicate("Reference", notaSaida.docNum ?: "", Condicao.EQUAL)))
+            .firstOrNull {
+                it.TransactionCode == TransactionCodeTypes.VFET.toString() ||
+                it.TransactionCode == TransactionCodeTypes.VFEC.toString()
+            } ?: throw Exception("A nota de saída ${notaSaida.docNum} não possui reclassificação (VFET/VFEC) a reverter")
 
-        // 4. Cancelar a conciliação da reclassificação (reabre a nota; não apaga o lançamento)
-        internalReconciliationsService.reconciliacaoByDocument(notaSaida.docEntry ?: -1, DocumentTypes.oInvoices.value)
+        // ---- Execução (cada passo é idempotente: um retry após falha parcial é seguro) ----
+        // 3. Vincular a devolução ao contrato (pula se já vinculada).
+        if(devolucao.U_venda_futura != contrato.DocEntry)
+            creditNotesService.update("{\"U_venda_futura\": ${contrato.DocEntry}}", devolucao.docEntry.toString())
+
+        // 4. Cancelar a conciliação da reclassificação — APENAS a reconciliação que liga esta
+        // nota ao lançamento de reclassificação (VFET/VFEC). Não mexe em outras conciliações da
+        // nota (ex.: pagamentos), para não desfazer vínculos financeiros não relacionados.
+        // Idempotente: a query só traz reconciliações ativas, então uma já cancelada não volta.
+        internalReconciliationsService.reconciliacaoEntre(
+            notaSaida.docEntry ?: -1, DocumentTypes.oInvoices.value,
+            reclassificacao.JdtNum ?: -1, DocumentTypes.oJournalEntries.value)
             .forEach {
                 internalReconciliationsService
                     .serviceCancel("{ \"InternalReconciliationParams\": { \"ReconNum\": \"${it.ReconNum}\"} }")
@@ -245,25 +283,25 @@ class ContratoVendaFuturaController(
         val notaSaidaConciliar = invoiceService.getById(notaSaida.docEntry ?: -1).tryGetValue<Invoice>()
         val devolucaoConciliar = creditNotesService.getById(devolucao.docEntry ?: -1).tryGetValue<Invoice>()
 
-        // 5. Conciliar o cliente (nota de saída × devolução)
-        internalReconciliationsService.save(InternalReconciliationsBuilder(notaSaidaConciliar, devolucaoConciliar).build())
+        // 5. Conciliar o cliente (nota de saída × devolução) — pula se já conciliada.
+        if(!devolucaoJaConciliada)
+            internalReconciliationsService.save(InternalReconciliationsBuilder(notaSaidaConciliar, devolucaoConciliar).build())
 
-        // 6. Reverter a reclassificação (VFDV) + estorno do adiantamento
+        // 6. Reverter a reclassificação (VFDV) + estorno do adiantamento. Idempotente:
+        // saveOrRecouverReference recupera o VFDV pela Reference em vez de duplicar.
         val vfdv = estornoReclassificacaoService.estornar(devolucaoConciliar, listOf(notaSaida.docEntry ?: -1))
 
-        // 6.1. Conciliar a reclassificação inicial (VFET/VFEC da nota) com o estorno (VFDV).
-        // O passo 4 reabriu a reclassificação e o VFDV está em aberto na mesma conta controle;
-        // aqui os dois se fecham entre si.
-        val reclassificacao = journalEntriesService
-            .getAll(JournalEntry::class.java, Filter(Predicate("Reference", notaSaida.docNum ?: "", Condicao.EQUAL)))
-            .firstOrNull {
-                it.TransactionCode == TransactionCodeTypes.VFET.toString() ||
-                it.TransactionCode == TransactionCodeTypes.VFEC.toString()
-            } ?: throw Exception("Reclassificação inicial (VFET/VFEC) da nota ${notaSaida.docNum} não encontrada")
-        internalReconciliationsService.save(InternalReconciliationsBuilder(reclassificacao, vfdv).build())
+        // 6.1. Conciliar a reclassificação inicial com o estorno (VFDV). Pula se a reclassificação
+        // já está conciliada com outro lançamento contábil — que, após o passo 4, só pode ser o VFDV.
+        val reclassJaConciliadaComVfdv = internalReconciliationsService
+            .contrapartidasReconciliacao(reclassificacao.JdtNum ?: -1, DocumentTypes.oJournalEntries.value)
+            .contains(DocumentTypes.oJournalEntries.value)
+        if(!reclassJaConciliadaComVfdv)
+            internalReconciliationsService.save(InternalReconciliationsBuilder(reclassificacao, vfdv).build())
 
         // 7. Fechar o flag para o schedule estorno() não reprocessar e ocultar a nota na UI
-        // (não pode mais ser estornada/selecionada, pois já recebeu esta devolução).
+        // (não pode mais ser estornada/selecionada, pois já recebeu esta devolução). Updates
+        // idempotentes (setam o mesmo valor). U_vf_estornada só é setado aqui, no fim.
         creditNotesService.update("{\"U_conciliar_automatico\": \"0\"}", devolucao.docEntry.toString())
         invoiceService.update("{\"U_vf_estornada\": \"1\"}", notaSaida.docEntry.toString())
     }
