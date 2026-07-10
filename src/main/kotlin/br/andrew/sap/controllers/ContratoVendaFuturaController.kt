@@ -188,11 +188,13 @@ class ContratoVendaFuturaController(
     @PostMapping("/{docEntryContrato}/vincular-devolucao")
     fun vincularDevolucao(@PathVariable docEntryContrato : Int, @RequestBody body : VincularDevolucao) {
         val contrato = service.getById(docEntryContrato).tryGetValue<Contrato>()
-        val devolucao = creditNotesService.get(Filter(
+        val devolucaoResolvida = creditNotesService.get(Filter(
             Predicate("DocNum", body.devolucaoDocNum, Condicao.EQUAL),
             Predicate("Cancelled", Cancelled.tNO, Condicao.EQUAL)
         )).tryGetValues<Invoice>().firstOrNull()
             ?: throw Exception("Devolução com DocNum ${body.devolucaoDocNum} não encontrada")
+        // GET único garante as linhas completas (BaseType/BaseEntry) para amarrar a devolução à nota.
+        val devolucao = creditNotesService.getById(devolucaoResolvida.docEntry ?: -1).tryGetValue<Invoice>()
         val notaSaida = invoiceService.getById(body.notaSaidaDocEntry).tryGetValue<Invoice>()
 
         // ---- Validações (nenhuma postagem é feita antes de todas passarem) ----
@@ -209,10 +211,34 @@ class ContratoVendaFuturaController(
         if(vfDevolucao != null && vfDevolucao != 0 && vfDevolucao != contrato.DocEntry)
             throw Exception("A devolução ${devolucao.docNum} já está vinculada a outro contrato de venda futura ($vfDevolucao)")
 
-        val itensContrato = contrato.itens.map { it.U_itemCode }.toSet()
-        val itensFora = devolucao.DocumentLines.mapNotNull { it.ItemCode }.filter { !itensContrato.contains(it) }
-        if(itensFora.isNotEmpty())
-            throw Exception("A devolução contém itens que não estão no contrato: ${itensFora.joinToString()}")
+        // A devolução tem que corresponder à NOTA selecionada — não apenas conter itens que
+        // existem no contrato. Com duas entregas de mesmo item/total, checar só o contrato
+        // permitiria vincular a devolução de uma entrega à outra. (A nota já foi validada como
+        // pertencente ao contrato acima, então isto também garante itens dentro do contrato.)
+        val basesDaDevolucao = devolucao.DocumentLines
+            .filter { it.BaseType == DocumentTypes.oInvoices.value }
+            .mapNotNull { it.BaseEntry }
+            .toSet()
+        if(basesDaDevolucao.isNotEmpty()) {
+            // Devolução copiada de nota(s) de saída: a base tem que ser exatamente a nota selecionada.
+            if(basesDaDevolucao != setOf(notaSaida.docEntry))
+                throw Exception("A devolução ${devolucao.docNum} não foi gerada a partir da nota de saída selecionada")
+        } else {
+            // Sem documento base: valida item + quantidade linha a linha contra a própria nota.
+            val qtdNota = notaSaida.DocumentLines
+                .filter { it.ItemCode != null }
+                .groupBy { it.ItemCode!! }
+                .mapValues { (_, ls) -> ls.sumOf { BigDecimal(it.Quantity.replace(',', '.')) } }
+            devolucao.DocumentLines
+                .filter { it.ItemCode != null }
+                .groupBy { it.ItemCode!! }
+                .forEach { (item, ls) ->
+                    val qDev = ls.sumOf { BigDecimal(it.Quantity.replace(',', '.')) }
+                    if(qDev.compareTo(qtdNota[item] ?: BigDecimal.ZERO) > 0)
+                        throw Exception("A devolução ${devolucao.docNum} tem item/quantidade que não confere com a " +
+                            "nota de saída selecionada (item $item)")
+                }
+        }
 
         val totalDev = BigDecimal(devolucao.DocTotal ?: throw Exception("Devolução sem total"))
             .setScale(2, RoundingMode.HALF_UP)
