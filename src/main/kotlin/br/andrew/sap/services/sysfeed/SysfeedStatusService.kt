@@ -73,6 +73,7 @@ class SysfeedStatusService(
                 update.obs?.trim()?.takeIf { it.isNotBlank() }?.let {
                     payload["U_LbrOne_Obs_Integracao"] = it
                 }
+                aplicarNumeroSysfeed(payload, marcarIntegracao, update.numeroSysfeed)
                 productionOrdersService.update(payload, codigo)
             }
         }
@@ -90,6 +91,19 @@ class SysfeedStatusService(
         } else {
             payload["U_LbrOne_DtIntegracao"] = null
             payload["U_LbrOne_HrIntegracao"] = null
+        }
+    }
+
+    // Numero so faz sentido junto de um status de sucesso; em qualquer outro (PENDENTE/ERRO/
+    // PARCIAL) ele e limpo, senao a ordem fica marcada como "nao enviada" com um numero antigo
+    // ainda preenchido — o que na pratica parece uma duplicidade quando reenviada de verdade.
+    private fun aplicarNumeroSysfeed(payload: MutableMap<String, Any?>, marcarIntegracao: Boolean, numeroSysfeed: String?) {
+        if (marcarIntegracao) {
+            numeroSysfeed?.trim()?.takeIf { it.isNotBlank() }?.let {
+                payload["U_sysfeed_numero"] = it
+            }
+        } else {
+            payload["U_sysfeed_numero"] = null
         }
     }
 }
