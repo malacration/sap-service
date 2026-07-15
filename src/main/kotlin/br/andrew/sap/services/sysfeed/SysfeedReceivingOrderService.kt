@@ -114,10 +114,16 @@ class SysfeedReceivingOrderService(
     }
 
     private fun formatSapDate(sapDate: String?): String? {
-        if (sapDate.isNullOrBlank()) return null
+        val date = sapDate?.trim()?.takeIf { it.isNotBlank() } ?: return null
         return try {
-            val date = LocalDate.parse(sapDate.take(10))
-            date.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) + " 00:00:00"
+            // SQL Queries do Service Layer as vezes devolvem a data sem separadores (yyyyMMdd)
+            // em vez de yyyy-MM-dd — mesmo caso ja tratado em SysfeedProductionOrderService.
+            val normalized = if (date.matches(Regex("\\d{8}"))) {
+                "${date.substring(0, 4)}-${date.substring(4, 6)}-${date.substring(6, 8)}"
+            } else {
+                date.take(10)
+            }
+            LocalDate.parse(normalized).format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) + " 00:00:00"
         } catch (e: Exception) {
             // Data invalida na origem: omitimos o campo (opcional) e registramos, em vez de falhar silenciosamente.
             logger.warn("SYSFEED_ORDEM_RECEBIMENTO_DATA_INVALIDA valor={} motivo={}", sapDate, e.message)

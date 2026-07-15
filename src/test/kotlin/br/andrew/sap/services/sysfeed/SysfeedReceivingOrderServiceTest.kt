@@ -87,6 +87,46 @@ class SysfeedReceivingOrderServiceTest {
     }
 
     @Test
+    fun `deve formatar datas com hifens`() {
+        val pending = pending().copy(
+            DataRegistro = "2026-06-18",
+            DataFabricacao = "2026-06-01",
+            DataValidade = "2027-06-01",
+        )
+
+        val payload = service.buildPayload(pending)
+
+        assertEquals("18/06/2026 00:00:00", payload.DataRegistro)
+        assertEquals("01/06/2026 00:00:00", payload.DataFabricacao)
+        assertEquals("01/06/2027 00:00:00", payload.DataValidade)
+    }
+
+    @Test
+    fun `deve formatar datas sem hifens`() {
+        val pending = pending().copy(
+            DataRegistro = "20260618",
+            DataFabricacao = "20260601",
+            DataValidade = "20270601",
+        )
+
+        val payload = service.buildPayload(pending)
+
+        assertEquals("18/06/2026 00:00:00", payload.DataRegistro)
+        assertEquals("01/06/2026 00:00:00", payload.DataFabricacao)
+        assertEquals("01/06/2027 00:00:00", payload.DataValidade)
+    }
+
+    @Test
+    fun `deve omitir data invalida sem derrubar o restante do payload`() {
+        val pending = pending().copy(DataFabricacao = "data-invalida")
+
+        val payload = service.buildPayload(pending)
+
+        assertEquals(null, payload.DataFabricacao)
+        assertEquals("1475400", payload.NrProducao)
+    }
+
+    @Test
     fun `deve bloquear nr producao com mais de oito digitos`() {
         val pending = pending(docEntry = 10000000, lineNum = 0)
 
