@@ -6,6 +6,7 @@ import br.andrew.sap.services.abstracts.SqlQueriesService
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.argumentCaptor
@@ -57,9 +58,16 @@ class SysfeedProductionOrderServiceTest {
         assertEquals("10", payload.totalQuantidade)
         assertEquals("10", payload.quantBat)
         assertEquals("A", payload.tipoOrdemProducao)
-        assertEquals("ORDEM DE PRODUCAO 12345", payload.descricaoOrdemProducao)
+        assertNull(payload.descricaoOrdemProducao)
         assertEquals("18/06/2026", payload.dataEntradaOP)
         assertEquals("19/06/2026", payload.dataEntregaProducao)
+    }
+
+    @Test
+    fun `deve enviar apenas o comentario da ordem quando presente`() {
+        val payload = service.buildPayload(pending(descricao = "Observacao do operador"))
+
+        assertEquals("Observacao do operador", payload.descricaoOrdemProducao)
     }
 
     @Test

@@ -59,10 +59,7 @@ class SysfeedProductionOrderService(
         val quantidadeBateladas = normalizeNumeric(pending.QuantBat ?: "1")
         validateNotZero("U_LbrOne_Batelada", quantidadeBateladas)
         val tamanhoBatelada = divideQuantity(quantidadeTotal, quantidadeBateladas)
-        val descricao = pending.DescricaoOrdemProducao
-            ?.trim()
-            ?.takeIf { it.isNotBlank() }
-            ?: "ORDEM DE PRODUCAO $codOrdemProducao"
+        val descricao = pending.DescricaoOrdemProducao?.trim()?.takeIf { it.isNotBlank() }
         validateMaxLength("tipoOrdemProducao", "A", 1)
         validateMaxLength("descricaoOrdemProducao", descricao, 200)
 
