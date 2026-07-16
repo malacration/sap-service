@@ -261,7 +261,10 @@ class DownPaymentService(env: SapEnvrioment,
         return accountsReceivableService.baixaPixBy(downPayment, installment, transaction, conta)
     }
 
-    fun estornarPorDevolucao(downPayment: DownPayment): CreditNotes {
+    fun estornarPorDevolucao(
+        downPayment: DownPayment,
+        motivo: String = "Estorno automatico de adiantamento PIX expirado."
+    ): CreditNotes {
         val docEntry = downPayment.docEntry ?: throw Exception("DocEntry do adiantamento nao pode ser nulo")
         val devolucaoExistente = sqlQueriesService
             .execute("devolucao-adiantamento.sql", Parameter("docEntry", docEntry))
@@ -274,7 +277,7 @@ class DownPaymentService(env: SapEnvrioment,
 
         val devolucao = CreditNotes(downPayment).also {
             val referencia = downPayment.docNum ?: docEntry.toString()
-            it.comments = "Estorno automatico de adiantamento PIX expirado. Adiantamento $referencia"
+            it.comments = "$motivo Adiantamento $referencia"
             it.journalMemo = it.comments
             it.U_TX_DocEntryRef = docEntry
             it.U_TX_DocTypeRef = downPayment.docObjectCode?.value

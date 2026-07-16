@@ -83,45 +83,47 @@ class PixController(
                 ).take(254)
         adiantamento.U_TX_DocEntryRef = pixRequest.docEntry
         adiantamento.U_TX_DocTypeRef = pixRequest.documentTypes?.value
-        val adiantamentoComParcelas = adiantamentoService.getById(
-            adiantamentoService.save(adiantamento).tryGetValue<DownPayment>().docEntry ?: throw Exception("Falha ao obter docEntry do adiantamento gerado")
-        ).tryGetValue<DownPayment>()
-        return try {
-            atualizarPixAdiantamento(adiantamentoComParcelas, pixRequest)
+        val immediate = pixRequest.getImmediateRequest()
+        val dadosPix = pixDynamicService.genereateFor(immediate)
+        val docEntry = try {
+            adiantamentoService.save(adiantamento).tryGetValue<DownPayment>().docEntry
+                ?: throw Exception("Falha ao obter docEntry do adiantamento gerado")
         } catch (e: Exception) {
-            cancelarAdiantamentoGerado(adiantamentoComParcelas, e)
+            logger.error("Pix {} gerado na uzzipay mas o adiantamento nao foi criado", dadosPix.data.reference, e)
+            throw e
+        }
+        return try {
+            val adiantamentoComParcelas = adiantamentoService.getById(docEntry).tryGetValue<DownPayment>()
+            val installmentAtualizado = adiantamentoComParcelas.documentInstallments?.firstOrNull()
+                ?.setPix(immediate, dadosPix)
+                ?: throw Exception("Parcela do adiantamento não encontrada para associar o pix")
+            adiantamentoService.updatePixInstallments(docEntry, listOf(installmentAtualizado))
+            installmentAtualizado.DocEntry = docEntry
+            PixGeradoResponse(installmentAtualizado, 0.0)
+        } catch (e: Exception) {
+            estornarAdiantamentoGerado(docEntry, e)
             throw e
         }
     }
 
-    private fun cancelarAdiantamentoGerado(adiantamento: DownPayment, erroOriginal: Exception) {
-        val docEntry = adiantamento.docEntry
-        if(docEntry == null) {
-            logger.error("Falha ao gerar PIX e nao foi possivel cancelar o adiantamento sem DocEntry", erroOriginal)
-            return
-        }
+    private fun estornarAdiantamentoGerado(docEntry: Int, erroOriginal: Exception) {
+        var referencia = docEntry.toString()
         try {
-            adiantamentoService.cancel(docEntry.toString())
-        } catch (cancelError: Exception) {
-            erroOriginal.addSuppressed(cancelError)
-            logger.error("Falha ao cancelar adiantamento {} apos erro ao gerar PIX", docEntry, cancelError)
+            val adiantamento = adiantamentoService.getById(docEntry).tryGetValue<DownPayment>()
+            referencia = adiantamento.docNum ?: referencia
+            adiantamentoService.estornarPorDevolucao(
+                adiantamento,
+                "Estorno automatico por falha ao gravar dados do PIX."
+            )
+        } catch (estornoError: Exception) {
+            erroOriginal.addSuppressed(estornoError)
+            logger.error("Falha ao estornar adiantamento {} apos erro na geracao do pix", docEntry, estornoError)
+            throw Exception(
+                "${erroOriginal.message}. Nao foi possivel estornar o adiantamento $referencia automaticamente," +
+                        " faca a devolucao manual antes de gerar um novo PIX.",
+                erroOriginal
+            )
         }
-    }
-
-    private fun atualizarPixAdiantamento(
-        adiantamento: DownPayment,
-        pixRequest: PixRequestAdiantamento
-    ): PixGeradoResponse {
-        val immediate = pixRequest.getImmediateRequest(adiantamento)
-        val dadosPix = pixDynamicService.genereateFor(immediate)
-        val installmentAtualizado = adiantamento.setPix(immediate, dadosPix)
-            ?: throw Exception("Parcela do adiantamento não encontrada para associar o pix")
-        adiantamentoService.updatePixInstallments(
-            adiantamento.docEntry ?: throw Exception("Falha ao obter docEntry do adiantamento"),
-            listOf(installmentAtualizado)
-        )
-        installmentAtualizado.DocEntry = adiantamento.docEntry
-        return PixGeradoResponse(installmentAtualizado, 0.0)
     }
 
     @GetMapping("gerar-chave/docType/{pixDocType}/docEntry/{docEntry}/parcela/{parcela}")
