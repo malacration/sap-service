@@ -127,6 +127,33 @@ class SysfeedReceivingOrderServiceTest {
     }
 
     @Test
+    fun `deve preservar peso fracionario`() {
+        val pending = pending().copy(Quantity = "1234.56")
+
+        val payload = service.buildPayload(pending)
+
+        assertEquals("1234.56", payload.PesoNominalNF)
+    }
+
+    @Test
+    fun `deve preservar peso fracionario vindo com virgula`() {
+        val pending = pending().copy(Quantity = "1234,56")
+
+        val payload = service.buildPayload(pending)
+
+        assertEquals("1234.56", payload.PesoNominalNF)
+    }
+
+    @Test
+    fun `deve remover zeros a direita do peso`() {
+        val pending = pending().copy(Quantity = "10000.000000")
+
+        val payload = service.buildPayload(pending)
+
+        assertEquals("10000", payload.PesoNominalNF)
+    }
+
+    @Test
     fun `deve bloquear nr producao com mais de oito digitos`() {
         val pending = pending(docEntry = 10000000, lineNum = 0)
 

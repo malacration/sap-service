@@ -8,7 +8,6 @@ import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
-import java.math.RoundingMode
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
@@ -67,8 +66,8 @@ class SysfeedReceivingOrderService(
         val codProd = pending.CodProd?.takeIf { it.isNotBlank() } ?: defaultCodProd
         validateNumeric("CodProd", codProd)
 
-        val pesoNominal = normalizeNumeric(pending.Quantity)
-        validateNumeric("PesoNominalNF", pesoNominal)
+        // PesoNominalNF e Float no SYSFEED (aceita casas decimais) - nao arredondar para inteiro.
+        val pesoNominal = parseDecimal("PesoNominalNF", pending.Quantity)
 
         return SysfeedReceivingOrderRequest(
             NrProducao = nrProducao,
@@ -131,13 +130,15 @@ class SysfeedReceivingOrderService(
         }
     }
 
-    private fun normalizeNumeric(value: String): String {
+    // Mantem as casas decimais originais, sem arredondar, removendo apenas zeros a direita
+    // (ex.: "10000.000000" vira "10000") - diferente de validateNumeric, que exige inteiro.
+    private fun parseDecimal(field: String, value: String): String {
         val decimal = try {
             BigDecimal(value.replace(",", "."))
         } catch (e: NumberFormatException) {
-            throw SysfeedReceivingValidationException("Valor numerico invalido: $value")
+            throw SysfeedReceivingValidationException("$field invalido: $value")
         }
-        return decimal.setScale(0, RoundingMode.HALF_UP).toPlainString()
+        return decimal.stripTrailingZeros().toPlainString()
     }
 }
 
