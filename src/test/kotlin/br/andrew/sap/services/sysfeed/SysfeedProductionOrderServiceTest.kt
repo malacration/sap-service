@@ -6,6 +6,7 @@ import br.andrew.sap.services.abstracts.SqlQueriesService
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.argumentCaptor
@@ -57,9 +58,16 @@ class SysfeedProductionOrderServiceTest {
         assertEquals("10", payload.totalQuantidade)
         assertEquals("10", payload.quantBat)
         assertEquals("A", payload.tipoOrdemProducao)
-        assertEquals("ORDEM DE PRODUCAO 12345", payload.descricaoOrdemProducao)
+        assertNull(payload.descricaoOrdemProducao)
         assertEquals("18/06/2026", payload.dataEntradaOP)
         assertEquals("19/06/2026", payload.dataEntregaProducao)
+    }
+
+    @Test
+    fun `deve enviar apenas o comentario da ordem quando presente`() {
+        val payload = service.buildPayload(pending(descricao = "Observacao do operador"))
+
+        assertEquals("Observacao do operador", payload.descricaoOrdemProducao)
     }
 
     @Test
@@ -101,6 +109,43 @@ class SysfeedProductionOrderServiceTest {
         assertThrows(SysfeedProductionOrderValidationException::class.java) {
             service.buildPayload(pending(quantBat = "0"))
         }
+    }
+
+    @Test
+    fun `deve preservar quantidade fracionaria em uma unica batelada`() {
+        val payload = service.buildPayload(pending(quantBat = "1").copy(Quantidade = "44.28"))
+
+        assertEquals("44.28", payload.quantidade)
+        assertEquals("1", payload.totalQuantidade)
+        assertEquals("1", payload.quantBat)
+    }
+
+    @Test
+    fun `deve preservar quantidade fracionaria vinda com virgula`() {
+        val payload = service.buildPayload(pending(quantBat = "1").copy(Quantidade = "44,28"))
+
+        assertEquals("44.28", payload.quantidade)
+    }
+
+    @Test
+    fun `deve arredondar tamanho de batelada em ate quatro casas decimais`() {
+        val payload = service.buildPayload(pending(quantBat = "3").copy(Quantidade = "100"))
+
+        // 100 / 3 = 33,3333... arredondado para 4 casas (HALF_UP)
+        assertEquals("33.3333", payload.quantidade)
+        assertEquals("3", payload.totalQuantidade)
+        assertEquals("3", payload.quantBat)
+    }
+
+    @Test
+    fun `nao deve arredondar numero de bateladas fracionario vindo do SAP`() {
+        // U_LbrOne_Batelada (QuantBat) e Integer no SYSFEED - continua sendo arredondado,
+        // diferente de Quantidade.
+        val payload = service.buildPayload(pending(quantBat = "2.4").copy(Quantidade = "100"))
+
+        assertEquals("2", payload.totalQuantidade)
+        assertEquals("2", payload.quantBat)
+        assertEquals("50", payload.quantidade)
     }
 
     private fun pending(

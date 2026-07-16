@@ -17,6 +17,7 @@ class SysfeedFieldsConfiguration(
         listOf("OPDN", "OPCH", "OCRD", "OWOR").forEach { table ->
             createStatusField(table)
         }
+        createNumeroSysfeedField("OWOR")
     }
 
     private fun createStatusField(table: String) {
@@ -29,6 +30,16 @@ class SysfeedFieldsConfiguration(
                 ValuesMd("PARCIAL", "Parcial")
             )
             it.defaultValue = "PENDENTE"
+            userFieldsMDService.findOrCreate(it)
+        }
+    }
+
+    // Numero atribuido pelo sigafran ao enviar a ordem de producao ao SYSFEED, gravado de
+    // volta no SAP so para rastreabilidade (nao e usado como chave anti-duplicidade).
+    // Texto (nao numerico) porque e so exibicao/consulta; 10 chars cobre o CodOrdemProducao (max 10 digitos).
+    private fun createNumeroSysfeedField(table: String) {
+        FieldMd("sysfeed_numero", "Numero Sysfeed", table).also {
+            it.size = 10
             userFieldsMDService.findOrCreate(it)
         }
     }

@@ -8,7 +8,6 @@ import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
-import java.math.RoundingMode
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
@@ -67,8 +66,8 @@ class SysfeedReceivingOrderService(
         val codProd = pending.CodProd?.takeIf { it.isNotBlank() } ?: defaultCodProd
         validateNumeric("CodProd", codProd)
 
-        val pesoNominal = normalizeNumeric(pending.Quantity)
-        validateNumeric("PesoNominalNF", pesoNominal)
+        // PesoNominalNF e Float no SYSFEED (aceita casas decimais) - nao arredondar para inteiro.
+        val pesoNominal = parseDecimal("PesoNominalNF", pending.Quantity)
 
         return SysfeedReceivingOrderRequest(
             NrProducao = nrProducao,
@@ -114,10 +113,16 @@ class SysfeedReceivingOrderService(
     }
 
     private fun formatSapDate(sapDate: String?): String? {
-        if (sapDate.isNullOrBlank()) return null
+        val date = sapDate?.trim()?.takeIf { it.isNotBlank() } ?: return null
         return try {
-            val date = LocalDate.parse(sapDate.take(10))
-            date.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) + " 00:00:00"
+            // SQL Queries do Service Layer as vezes devolvem a data sem separadores (yyyyMMdd)
+            // em vez de yyyy-MM-dd — mesmo caso ja tratado em SysfeedProductionOrderService.
+            val normalized = if (date.matches(Regex("\\d{8}"))) {
+                "${date.substring(0, 4)}-${date.substring(4, 6)}-${date.substring(6, 8)}"
+            } else {
+                date.take(10)
+            }
+            LocalDate.parse(normalized).format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) + " 00:00:00"
         } catch (e: Exception) {
             // Data invalida na origem: omitimos o campo (opcional) e registramos, em vez de falhar silenciosamente.
             logger.warn("SYSFEED_ORDEM_RECEBIMENTO_DATA_INVALIDA valor={} motivo={}", sapDate, e.message)
@@ -125,13 +130,15 @@ class SysfeedReceivingOrderService(
         }
     }
 
-    private fun normalizeNumeric(value: String): String {
+    // Mantem as casas decimais originais, sem arredondar, removendo apenas zeros a direita
+    // (ex.: "10000.000000" vira "10000") - diferente de validateNumeric, que exige inteiro.
+    private fun parseDecimal(field: String, value: String): String {
         val decimal = try {
             BigDecimal(value.replace(",", "."))
         } catch (e: NumberFormatException) {
-            throw SysfeedReceivingValidationException("Valor numerico invalido: $value")
+            throw SysfeedReceivingValidationException("$field invalido: $value")
         }
-        return decimal.setScale(0, RoundingMode.HALF_UP).toPlainString()
+        return decimal.stripTrailingZeros().toPlainString()
     }
 }
 

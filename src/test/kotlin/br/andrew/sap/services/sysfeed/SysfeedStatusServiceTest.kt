@@ -116,6 +116,98 @@ class SysfeedStatusServiceTest {
     }
 
     @Test
+    fun `deve gravar numero sysfeed apenas na ordem de producao`() {
+        service.updateAll(
+            listOf(
+                SysfeedStatusUpdate(SysfeedStatusTarget.ORDEM_PRODUCAO, "12345", "ENVIADO", numeroSysfeed = "36001"),
+                SysfeedStatusUpdate(SysfeedStatusTarget.ORDEM_RECEBIMENTO, "144594", "ENVIADO", numeroSysfeed = "1472080"),
+                SysfeedStatusUpdate(SysfeedStatusTarget.FORNECEDOR, "FOR0002977", "ENVIADO", numeroSysfeed = "999")
+            )
+        )
+
+        verify(productionOrdersService).update(
+            check<Map<String, Any>> {
+                assertEquals("36001", it["U_sysfeed_numero"])
+            },
+            eq("12345")
+        )
+        verify(purchaseInvoiceService).update(
+            check<Map<String, Any>> {
+                assertFalse(it.containsKey("U_sysfeed_numero"))
+            },
+            eq("144594")
+        )
+        verify(businessPartnersService).update(
+            check<Map<String, Any?>> {
+                assertFalse(it.containsKey("U_sysfeed_numero"))
+            },
+            eq("'FOR0002977'")
+        )
+    }
+
+    @Test
+    fun `nao deve gravar numero sysfeed quando ausente ou em branco`() {
+        service.updateAll(
+            listOf(
+                SysfeedStatusUpdate(SysfeedStatusTarget.ORDEM_PRODUCAO, "12345", "ENVIADO"),
+                SysfeedStatusUpdate(SysfeedStatusTarget.ORDEM_PRODUCAO, "12346", "ENVIADO", numeroSysfeed = "   ")
+            )
+        )
+
+        verify(productionOrdersService).update(
+            check<Map<String, Any>> { assertFalse(it.containsKey("U_sysfeed_numero")) },
+            eq("12345")
+        )
+        verify(productionOrdersService).update(
+            check<Map<String, Any>> { assertFalse(it.containsKey("U_sysfeed_numero")) },
+            eq("12346")
+        )
+    }
+
+    @Test
+    fun `deve limpar numero sysfeed quando status nao e sucesso`() {
+        service.updateAll(
+            listOf(
+                SysfeedStatusUpdate(SysfeedStatusTarget.ORDEM_PRODUCAO, "12345", "PENDENTE", numeroSysfeed = "36001"),
+                SysfeedStatusUpdate(SysfeedStatusTarget.ORDEM_PRODUCAO, "12346", "ERRO", numeroSysfeed = "36002"),
+            )
+        )
+
+        // PENDENTE/ERRO limpam U_sysfeed_numero mesmo que um numero antigo tenha sido enviado no
+        // request — nao faz sentido a ordem mostrar "nao enviada" com um numero de uma tentativa anterior.
+        verify(productionOrdersService).update(
+            check<Map<String, Any?>> {
+                assertTrue(it.containsKey("U_sysfeed_numero"))
+                assertNull(it["U_sysfeed_numero"])
+            },
+            eq("12345")
+        )
+        verify(productionOrdersService).update(
+            check<Map<String, Any?>> {
+                assertTrue(it.containsKey("U_sysfeed_numero"))
+                assertNull(it["U_sysfeed_numero"])
+            },
+            eq("12346")
+        )
+    }
+
+    @Test
+    fun `deve aceitar nrSysfeed como alias de numeroSysfeed`() {
+        val update = jacksonObjectMapper().readValue<SysfeedStatusUpdate>(
+            """
+            {
+              "tipo": "ORDEM_PRODUCAO",
+              "identificador": "12345",
+              "status": "ENVIADO",
+              "nrSysfeed": "36001"
+            }
+            """.trimIndent()
+        )
+
+        assertEquals("36001", update.numeroSysfeed)
+    }
+
+    @Test
     fun `deve retornar erro individual para status invalido`() {
         val result = service.updateAll(
             listOf(SysfeedStatusUpdate(SysfeedStatusTarget.FORNECEDOR, "FOR0002977", "INVALIDO"))

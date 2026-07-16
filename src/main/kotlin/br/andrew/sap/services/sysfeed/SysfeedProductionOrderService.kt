@@ -53,16 +53,16 @@ class SysfeedProductionOrderService(
         validateNumeric("codFormula", codFormula, 10)
         validateNumeric("codIntFormula", codFormula, 10)
 
-        val quantidadeTotal = normalizeNumeric(pending.Quantidade)
+        // Quantidade e Numeric no SYSFEED (aceita casas decimais) — nao arredondar para inteiro
+        // aqui, senao uma OP com quantidade fracionaria (ex.: 44,28) vira 44 antes mesmo de dividir.
+        val quantidadeTotal = parseDecimal("PlannedQty", pending.Quantidade)
         validateNotZero("PlannedQty", quantidadeTotal)
-        // U_LbrOne_Batelada ja e o NUMERO de bateladas (nao o tamanho).
+        // U_LbrOne_Batelada ja e o NUMERO de bateladas (nao o tamanho); TotalQuantidade/QuantBat
+        // sao Integer no SYSFEED, entao este sim e arredondado.
         val quantidadeBateladas = normalizeNumeric(pending.QuantBat ?: "1")
-        validateNotZero("U_LbrOne_Batelada", quantidadeBateladas)
-        val tamanhoBatelada = divideQuantity(quantidadeTotal, quantidadeBateladas)
-        val descricao = pending.DescricaoOrdemProducao
-            ?.trim()
-            ?.takeIf { it.isNotBlank() }
-            ?: "ORDEM DE PRODUCAO $codOrdemProducao"
+        validateNotZero("U_LbrOne_Batelada", BigDecimal(quantidadeBateladas))
+        val tamanhoBatelada = divideQuantity(quantidadeTotal, BigDecimal(quantidadeBateladas))
+        val descricao = pending.DescricaoOrdemProducao?.trim()?.takeIf { it.isNotBlank() }
         validateMaxLength("tipoOrdemProducao", "A", 1)
         validateMaxLength("descricaoOrdemProducao", descricao, 200)
 
@@ -109,23 +109,29 @@ class SysfeedProductionOrderService(
     }
 
     private fun normalizeNumeric(value: String): String {
-        val decimal = try {
-            BigDecimal(value.replace(",", "."))
-        } catch (e: NumberFormatException) {
-            throw SysfeedProductionOrderValidationException("Valor numerico invalido: $value")
-        }
-        return decimal.setScale(0, RoundingMode.HALF_UP).toPlainString()
+        return parseDecimal("valor", value).setScale(0, RoundingMode.HALF_UP).toPlainString()
     }
 
-    private fun validateNotZero(field: String, value: String) {
-        if (BigDecimal(value) == BigDecimal.ZERO) {
+    private fun parseDecimal(field: String, value: String): BigDecimal {
+        return try {
+            BigDecimal(value.replace(",", "."))
+        } catch (e: NumberFormatException) {
+            throw SysfeedProductionOrderValidationException("$field invalido: $value")
+        }
+    }
+
+    private fun validateNotZero(field: String, value: BigDecimal) {
+        if (value.compareTo(BigDecimal.ZERO) == 0) {
             throw SysfeedProductionOrderValidationException("$field deve ser maior que zero")
         }
     }
 
-    private fun divideQuantity(totalQuantidade: String, quantBat: String): String {
-        return BigDecimal(totalQuantidade)
-            .divide(BigDecimal(quantBat), 0, RoundingMode.HALF_UP)
+    // Quantidade e Numeric no SYSFEED: mantem ate 4 casas decimais (mesma precisao exibida no
+    // "Tam. Bat." do SYSFEED), removendo zeros a direita para nao poluir o valor de OPs sem fracao.
+    private fun divideQuantity(totalQuantidade: BigDecimal, quantBat: BigDecimal): String {
+        return totalQuantidade
+            .divide(quantBat, 4, RoundingMode.HALF_UP)
+            .stripTrailingZeros()
             .toPlainString()
     }
 
