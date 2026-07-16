@@ -49,6 +49,40 @@ class InternalReconciliationsService(
                 Parameter("docEntry",docEntry))
         )?.tryGetValues<RecomNum>() ?: listOf()
     }
+
+    /**
+     * Tipos de objeto (SrcObjTyp) das contrapartidas com que [document] está conciliado em
+     * reconciliações internas não canceladas. 13 = nota de saída, 14 = devolução,
+     * 30 = lançamento contábil (reclassificação).
+     */
+    fun contrapartidasReconciliacao(document : Document): List<Int> {
+        return contrapartidasReconciliacao(document.docEntry ?: -1, document.docObjectCode?.value ?: 13)
+    }
+
+    /**
+     * ReconNum das reconciliações internas ativas que ligam especificamente os documentos A e B
+     * (cada um por SrcObjTyp + SrcObjAbs). Permite cancelar só a conciliação de interesse, sem
+     * afetar outras conciliações do documento.
+     */
+    fun reconciliacaoEntre(docEntryA : Int, objTypeA : Int, docEntryB : Int, objTypeB : Int): List<RecomNum> {
+        return sqlQueriesService.execute(
+            "reconciliacao-interna-entre.sql",
+            listOf(
+                Parameter("objTypeA", objTypeA),
+                Parameter("docEntryA", docEntryA),
+                Parameter("objTypeB", objTypeB),
+                Parameter("docEntryB", docEntryB))
+        )?.tryGetValues<RecomNum>() ?: listOf()
+    }
+
+    fun contrapartidasReconciliacao(docEntry : Int, objType : Int = 13): List<Int> {
+        return sqlQueriesService.execute(
+            "reconciliacao-interna-contrapartida.sql",
+            listOf(
+                Parameter("objType",objType),
+                Parameter("docEntry",docEntry))
+        )?.tryGetValues<ContrapartidaReconciliacao>()?.map { it.SrcObjTyp } ?: listOf()
+    }
 }
 
 
@@ -56,3 +90,8 @@ class InternalReconciliationsService(
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 class RecomNum(val ReconNum : Int)
+
+@JsonNaming(PropertyNamingStrategies.UpperCamelCaseStrategy::class)
+@JsonIgnoreProperties(ignoreUnknown = true)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
+class ContrapartidaReconciliacao(val SrcObjTyp : Int)

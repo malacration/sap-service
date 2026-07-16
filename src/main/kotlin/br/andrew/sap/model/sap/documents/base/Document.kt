@@ -87,6 +87,7 @@ open class Document(val CardCode : String,
     var U_rd_station : String? = null
     var U_venda_futura: Int? = null
     var U_entrega_vf: Int = 0
+    var U_vf_estornada: Int = 0
     var U_legado_vf : String = "0"
     var downPaymentsToDraw : List<DownPaymentsToDraw>? = null
     var TransNum : Int? = null
@@ -201,13 +202,17 @@ open class Document(val CardCode : String,
 
     @JsonIgnore
     override fun getReconciliationRows(debOrCredt: DebOrCredt): List<ReconciliationRow> {
-        return this.documentInstallments?.mapIndexed{index : Int, it : Installment ->
-            it.getReconciliationRow(
-                this.TransNum ?: throw Exception("Nao existe numero de transaction"),
-                index,
-                this.CardCode
-            )
-        }?: throw throw Exception("Nao existe parcelas")
+        val transId = this.TransNum ?: throw Exception("Nao existe numero de transaction")
+        val installments = this.documentInstallments
+        // Com parcelas (uma ou várias): cada parcela é uma linha da transação (transRowId = índice).
+        if (!installments.isNullOrEmpty())
+            return installments.mapIndexed { index, it ->
+                it.getReconciliationRow(transId, index, this.CardCode)
+            }
+        // Sem parcelas (ex.: devolução): reconcilia o documento inteiro numa única linha (row 0).
+        val total = this.DocTotal?.toDoubleOrNull()
+            ?: throw Exception("Documento sem parcelas e sem DocTotal para reconciliar")
+        return listOf(InstallmentRow(transId, 0, total, this.CardCode))
     }
 
     override fun getId(): String {
