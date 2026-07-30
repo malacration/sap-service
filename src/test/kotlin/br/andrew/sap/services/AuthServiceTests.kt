@@ -1,8 +1,8 @@
 //package br.andrew.sap.services
 //
-//import br.andrew.sap.model.Login
-//import br.andrew.sap.model.envrioments.SapEnvrioment
-//import br.andrew.sap.model.sap.Session
+//import br.andrew.sap.model.sistema.Login
+//import br.andrew.sap.model.sistema.SapEnvrioment
+//import br.andrew.sap.model.sap.sistema.Session
 //import org.junit.jupiter.api.Assertions.assertEquals
 //import org.junit.jupiter.api.Test
 //import org.mockito.kotlin.any

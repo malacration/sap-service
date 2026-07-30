@@ -1,6 +1,6 @@
 package br.andrew.sap.json
 
-import br.andrew.sap.model.sap.SapError
+import br.andrew.sap.model.sap.sistema.SapError
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import org.junit.jupiter.api.Test

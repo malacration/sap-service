@@ -1,6 +1,6 @@
 package br.andrew.sap.model.sap.partner
 
-import br.andrew.sap.model.ContactOpaque
+import br.andrew.sap.model.cadastro.ContactOpaque
 import br.andrew.sap.model.bank.PaymentMethod
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties

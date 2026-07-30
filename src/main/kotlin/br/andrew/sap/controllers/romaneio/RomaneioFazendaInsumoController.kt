@@ -13,6 +13,15 @@ import br.andrew.sap.services.romaneio.RomaneioPesagemService
 import br.andrew.sap.services.romaneio.RomaneioSaidaInsumoService
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.client.RestTemplate
+import br.andrew.sap.services.cadastro.FazendaService
+import br.andrew.sap.services.logistica.RegistroCompraInsumoService
+import br.andrew.sap.services.cadastro.MotoristaContratoService
+import br.andrew.sap.services.cadastro.MotoristaPecuariaService
+import br.andrew.sap.services.integracao.TelegramRequestService
+import br.andrew.sap.services.comercial.AlternateCatService
+import br.andrew.sap.model.cadastro.MotoristaContrato
+import br.andrew.sap.model.cadastro.MotoristaPecuaria
+import br.andrew.sap.model.cadastro.Fazenda
 
 @RestController
 @RequestMapping("romaneio-fazenda-insumo")

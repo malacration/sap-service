@@ -1,13 +1,13 @@
 package br.andrew.sap.schedules
 
-import br.andrew.sap.controllers.Pedido4AssinaturaController
+import br.andrew.sap.controllers.comercial.Pedido4AssinaturaController
 import br.andrew.sap.infrastructure.odata.Condicao
 import br.andrew.sap.infrastructure.odata.Filter
 import br.andrew.sap.infrastructure.odata.OData
 import br.andrew.sap.infrastructure.odata.Predicate
 import br.andrew.sap.model.sap.documents.base.Document
-import br.andrew.sap.services.TelegramRequestService
-import br.andrew.sap.services.document.QuotationsService
+import br.andrew.sap.services.integracao.TelegramRequestService
+import br.andrew.sap.services.documents.QuotationsService
 import br.andrew.sap.services.softexpert.DocumentExpertService
 import br.andrew.sap.services.softexpert.WorkFlowService
 import br.andrew.sap.workflow.NewAssocDocumentResponseType

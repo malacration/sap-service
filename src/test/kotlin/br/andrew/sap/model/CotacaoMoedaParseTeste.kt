@@ -1,6 +1,6 @@
 package br.andrew.sap.model
 
-import br.andrew.sap.model.bacen.CotacaoMoeda
+import br.andrew.sap.model.integracao.CotacaoMoeda
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.fasterxml.jackson.module.kotlin.jacksonTypeRef

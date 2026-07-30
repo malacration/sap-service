@@ -1,7 +1,7 @@
 package br.andrew.sap.services.bacen
 
-import br.andrew.sap.model.sap.CurrencyRate
-import br.andrew.sap.model.bacen.CotacaoMoeda
+import br.andrew.sap.model.sap.financeiro.CurrencyRate
+import br.andrew.sap.model.integracao.CotacaoMoeda
 import java.time.ZoneId
 
 class CotacaoMoedaParse {

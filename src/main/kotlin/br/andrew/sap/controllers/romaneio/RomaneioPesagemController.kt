@@ -3,8 +3,8 @@ package br.andrew.sap.controllers.romaneio
 import br.andrew.sap.infrastructure.odata.*
 import br.andrew.sap.model.enums.TipoContratoFazenda
 import br.andrew.sap.model.romaneio.RomaneioPesagem
-import br.andrew.sap.services.FazendaService
-import br.andrew.sap.services.RegistroCompraInsumoService
+import br.andrew.sap.services.cadastro.FazendaService
+import br.andrew.sap.services.logistica.RegistroCompraInsumoService
 import br.andrew.sap.services.romaneio.RomaneioPesagemService
 import br.andrew.sap.services.romaneio.RomaneioPesagemServiceSaida
 import org.springframework.data.domain.Page

@@ -2,8 +2,8 @@ package br.andrew.sap.infrastructure.create.udo
 
 import br.andrew.sap.model.entity.*
 import br.andrew.sap.model.enums.YesNo
-import br.andrew.sap.model.sap.TableMd
-import br.andrew.sap.model.sap.TbType
+import br.andrew.sap.model.sap.sistema.TableMd
+import br.andrew.sap.model.sap.sistema.TbType
 import br.andrew.sap.services.structs.UserFieldsMDService
 import br.andrew.sap.services.structs.UserKeyMDService
 import br.andrew.sap.services.structs.UserObjectsMDService

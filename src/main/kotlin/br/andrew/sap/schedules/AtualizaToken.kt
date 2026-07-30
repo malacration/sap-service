@@ -1,7 +1,7 @@
 package br.andrew.sap.schedules
 
-import br.andrew.sap.model.envrioments.SapEnvrioment
-import br.andrew.sap.services.AuthService
+import br.andrew.sap.model.sistema.SapEnvrioment
+import br.andrew.sap.services.security.AuthService
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.boot.context.event.ApplicationReadyEvent

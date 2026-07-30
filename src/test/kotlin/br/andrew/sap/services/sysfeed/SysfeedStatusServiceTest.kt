@@ -2,9 +2,9 @@ package br.andrew.sap.services.sysfeed
 
 import br.andrew.sap.model.sysfeed.SysfeedStatusTarget
 import br.andrew.sap.model.sysfeed.SysfeedStatusUpdate
-import br.andrew.sap.services.BusinessPartnersService
-import br.andrew.sap.services.ProductionOrdersService
-import br.andrew.sap.services.document.PurchaseInvoiceService
+import br.andrew.sap.services.cadastro.BusinessPartnersService
+import br.andrew.sap.services.logistica.ProductionOrdersService
+import br.andrew.sap.services.documents.PurchaseInvoiceService
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import org.junit.jupiter.api.Assertions.assertEquals

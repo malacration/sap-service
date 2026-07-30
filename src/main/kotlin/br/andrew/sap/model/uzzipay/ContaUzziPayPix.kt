@@ -1,6 +1,6 @@
 package br.andrew.sap.model.uzzipay
 
-import br.andrew.sap.model.sap.BussinessPlace
+import br.andrew.sap.model.sap.cadastro.BussinessPlace
 
 class ContaUzziPayPix {
     lateinit var cnpj : String

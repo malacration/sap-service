@@ -1,7 +1,7 @@
 package br.andrew.sap.model.romaneio
 
-import br.andrew.sap.model.Fazenda
-import br.andrew.sap.model.MotoristaPecuaria
+import br.andrew.sap.model.cadastro.Fazenda
+import br.andrew.sap.model.cadastro.MotoristaPecuaria
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonProperty

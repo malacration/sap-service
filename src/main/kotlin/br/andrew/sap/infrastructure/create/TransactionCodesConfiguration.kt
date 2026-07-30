@@ -1,7 +1,7 @@
 package br.andrew.sap.infrastructure.create
 
 import br.andrew.sap.model.transaction.TransactionCodeTypes
-import br.andrew.sap.services.TransactionCodesService
+import br.andrew.sap.services.comercial.TransactionCodesService
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Profile
 

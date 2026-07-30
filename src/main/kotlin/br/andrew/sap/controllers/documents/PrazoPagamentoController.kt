@@ -1,7 +1,7 @@
 package br.andrew.sap.controllers.documents
 
-import br.andrew.sap.model.PrazoPagamentoDto
-import br.andrew.sap.services.PrazoPagamentoService
+import br.andrew.sap.model.comercial.PrazoPagamentoDto
+import br.andrew.sap.services.comercial.PrazoPagamentoService
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestMapping

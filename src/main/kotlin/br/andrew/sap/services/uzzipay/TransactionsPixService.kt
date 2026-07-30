@@ -1,14 +1,14 @@
 package br.andrew.sap.services.uzzipay
 
 import br.andrew.sap.infrastructure.configurations.uzzipay.UzziPayEnvrioment
-import br.andrew.sap.model.sap.BussinessPlace
+import br.andrew.sap.model.sap.cadastro.BussinessPlace
 import br.andrew.sap.model.sap.documents.DownPayment
 import br.andrew.sap.model.sap.documents.base.Document
 import br.andrew.sap.model.sap.documents.base.Installment
 import br.andrew.sap.model.sap.documents.Invoice
 import br.andrew.sap.model.uzzipay.ContaUzziPayPix
 import br.andrew.sap.model.uzzipay.Transaction
-import br.andrew.sap.services.BussinessPlaceService
+import br.andrew.sap.services.cadastro.BussinessPlaceService
 import org.springframework.http.RequestEntity
 import org.springframework.stereotype.Service
 import org.springframework.web.util.UriComponentsBuilder

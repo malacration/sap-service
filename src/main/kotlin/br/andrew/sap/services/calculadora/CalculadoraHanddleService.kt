@@ -5,7 +5,7 @@ import br.andrew.sap.infrastructure.odata.Filter
 import br.andrew.sap.model.calculadora.Produto
 import br.andrew.sap.model.calculadora.Receita
 import br.andrew.sap.model.calculadora.ReceitaLinhas
-import br.andrew.sap.services.ProductTreesService
+import br.andrew.sap.services.comercial.ProductTreesService
 import br.andrew.sap.services.pricing.PriceListsService
 import br.andrew.sap.services.stock.ItemsService
 import br.andrew.sap.services.stock.ResourceService

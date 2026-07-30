@@ -3,9 +3,9 @@ package br.andrew.sap.services.sysfeed
 import br.andrew.sap.model.sysfeed.SysfeedStatusTarget
 import br.andrew.sap.model.sysfeed.SysfeedStatusUpdate
 import br.andrew.sap.model.sysfeed.SysfeedStatusUpdateResult
-import br.andrew.sap.services.BusinessPartnersService
-import br.andrew.sap.services.ProductionOrdersService
-import br.andrew.sap.services.document.PurchaseInvoiceService
+import br.andrew.sap.services.cadastro.BusinessPartnersService
+import br.andrew.sap.services.logistica.ProductionOrdersService
+import br.andrew.sap.services.documents.PurchaseInvoiceService
 import org.springframework.stereotype.Service
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter

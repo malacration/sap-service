@@ -1,16 +1,16 @@
 package br.andrew.sap.events.listener
 
-import br.andrew.sap.model.sap.ErrorMsg
-import br.andrew.sap.model.envrioments.SapEnvrioment
-import br.andrew.sap.model.sap.SapError
+import br.andrew.sap.model.sap.sistema.ErrorMsg
+import br.andrew.sap.model.sistema.SapEnvrioment
+import br.andrew.sap.model.sap.sistema.SapError
 import br.andrew.sap.model.sap.documents.base.Document
 import br.andrew.sap.model.exceptions.BusinessPartnerNotAssignedException
 import br.andrew.sap.model.exceptions.PixPaymentException
 import br.andrew.sap.model.exceptions.SapGenericException
 import br.andrew.sap.model.telegram.TipoMensagem
-import br.andrew.sap.services.BusinessPartnersService
-import br.andrew.sap.services.document.OrdersService
-import br.andrew.sap.services.TelegramRequestService
+import br.andrew.sap.services.cadastro.BusinessPartnersService
+import br.andrew.sap.services.documents.OrdersService
+import br.andrew.sap.services.integracao.TelegramRequestService
 import org.springframework.context.event.EventListener
 import org.springframework.stereotype.Component
 

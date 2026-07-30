@@ -1,7 +1,7 @@
 package br.andrew.sap.controllers.romaneio
 
 import br.andrew.sap.infrastructure.odata.OData
-import br.andrew.sap.services.RegistroVendaInsumoService
+import br.andrew.sap.services.logistica.RegistroVendaInsumoService
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestMapping

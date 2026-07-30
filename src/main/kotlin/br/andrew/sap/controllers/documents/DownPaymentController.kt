@@ -1,7 +1,7 @@
 package br.andrew.sap.controllers.documents
 
 import br.andrew.sap.model.self.vendafutura.BoletoVf
-import br.andrew.sap.services.document.DownPaymentService
+import br.andrew.sap.services.documents.DownPaymentService
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping

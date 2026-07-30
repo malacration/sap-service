@@ -2,7 +2,7 @@ package br.andrew.sap.infrastructure.security.keycloak
 
 import br.andrew.sap.model.authentication.User
 import br.andrew.sap.model.authentication.UserOriginEnum
-import br.andrew.sap.services.EmployeesInfoService
+import br.andrew.sap.services.cadastro.EmployeesInfoService
 import br.andrew.sap.services.security.RuleService
 import io.jsonwebtoken.Claims
 import org.springframework.stereotype.Component

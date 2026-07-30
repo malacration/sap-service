@@ -2,8 +2,8 @@ package br.andrew.sap.services.address
 
 import br.andrew.sap.infrastructure.odata.OData
 import br.andrew.sap.model.sap.address.City
-import br.andrew.sap.model.envrioments.SapEnvrioment
-import br.andrew.sap.services.AuthService
+import br.andrew.sap.model.sistema.SapEnvrioment
+import br.andrew.sap.services.security.AuthService
 import org.springframework.cache.annotation.Cacheable
 import org.springframework.http.RequestEntity
 import org.springframework.stereotype.Service
@@ -23,7 +23,7 @@ class CityService(val env : SapEnvrioment,
             val odata = authService.executeWithValidSession(env.getLogin()) { session ->
                 val request = RequestEntity
                     .get(uri)
-                    .header("cookie","B1SESSION=${session.sessionId}")
+                    .header("cookie", session.cookieHeader())
                     .build()
                 restTemplate.exchange(request, OData::class.java).body
             }

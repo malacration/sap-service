@@ -13,7 +13,7 @@ import br.andrew.sap.infrastructure.security.otp.DisableOneTimePasswordAuthentic
 import br.andrew.sap.infrastructure.security.otp.OneTimePasswordAuthenticationFilter
 import br.andrew.sap.infrastructure.security.password.UserPasswordAuthenticationFilter
 import br.andrew.sap.services.security.OneTimePasswordService
-import br.andrew.sap.services.my.UserJwtService
+import br.andrew.sap.services.security.UserJwtService
 import br.andrew.sap.services.security.RuleService
 import br.andrew.sap.services.security.UserPasswordService
 import org.springframework.beans.factory.annotation.Value

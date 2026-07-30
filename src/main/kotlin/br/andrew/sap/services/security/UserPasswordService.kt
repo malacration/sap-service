@@ -5,10 +5,10 @@ import br.andrew.sap.model.authentication.User
 import br.andrew.sap.model.authentication.UserOriginEnum
 import br.andrew.sap.model.authentication.UserPassword
 import br.andrew.sap.model.authentication.UserSourceService
-import br.andrew.sap.services.EmployeesInfoService
-import br.andrew.sap.services.MailService
-import br.andrew.sap.services.MyMailMessage
-import br.andrew.sap.services.SalesPersonsService
+import br.andrew.sap.services.cadastro.EmployeesInfoService
+import br.andrew.sap.services.integracao.MailService
+import br.andrew.sap.services.integracao.MyMailMessage
+import br.andrew.sap.services.cadastro.SalesPersonsService
 import org.slf4j.LoggerFactory
 import org.springframework.security.authentication.BadCredentialsException
 import org.springframework.security.core.userdetails.UsernameNotFoundException

@@ -1,6 +1,6 @@
 package br.andrew.sap.json
 
-import br.andrew.sap.model.sap.InternalReconciliations
+import br.andrew.sap.model.sap.comercial.InternalReconciliations
 import br.andrew.sap.model.self.vendafutura.Contrato
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule

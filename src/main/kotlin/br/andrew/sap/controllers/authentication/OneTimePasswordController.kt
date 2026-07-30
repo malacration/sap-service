@@ -5,6 +5,10 @@ import br.andrew.sap.services.*
 import br.andrew.sap.services.security.OneTimePasswordService
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.web.bind.annotation.*
+import br.andrew.sap.services.cadastro.BusinessPartnersService
+import br.andrew.sap.services.integracao.MailService
+import br.andrew.sap.services.integracao.TelegramRequestService
+import br.andrew.sap.services.integracao.MyMailMessage
 
 @RestController
 @RequestMapping("otp")

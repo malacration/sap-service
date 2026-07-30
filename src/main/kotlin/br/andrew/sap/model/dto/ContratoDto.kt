@@ -3,7 +3,7 @@ package br.andrew.sap.model.dto
 import br.andrew.sap.infrastructure.odata.Condicao
 import br.andrew.sap.infrastructure.odata.Filter
 import br.andrew.sap.infrastructure.odata.Predicate
-import br.andrew.sap.model.sap.SalePerson
+import br.andrew.sap.model.sap.cadastro.SalePerson
 import br.andrew.sap.model.sap.documents.OrderSales
 import br.andrew.sap.model.self.vendafutura.Contrato
 import br.andrew.sap.model.self.vendafutura.Item

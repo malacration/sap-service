@@ -1,0 +1,189 @@
+package br.andrew.sap.controllers.financeiro
+import br.andrew.sap.infrastructure.odata.Condicao
+import br.andrew.sap.infrastructure.odata.Filter
+import br.andrew.sap.infrastructure.odata.Predicate
+import br.andrew.sap.model.comercial.PixRequestAdiantamento
+import br.andrew.sap.model.authentication.User
+import br.andrew.sap.model.dto.PixGeradoResponse
+import br.andrew.sap.model.sap.documents.DocumentStatus
+import br.andrew.sap.model.sap.documents.DocumentTypes
+import br.andrew.sap.model.sap.documents.DownPayment
+import br.andrew.sap.model.sap.documents.Invoice
+import br.andrew.sap.model.sap.documents.PixDocType
+import br.andrew.sap.model.sap.documents.base.Product
+import br.andrew.sap.model.sap.documents.matches
+import br.andrew.sap.model.uzzipay.Transaction
+import br.andrew.sap.services.documents.DownPaymentService
+import br.andrew.sap.services.documents.InvoiceService
+import br.andrew.sap.services.uzzipay.DynamicPixQrCodeService
+import br.andrew.sap.services.uzzipay.PixPaymentVerificationService
+import br.andrew.sap.services.uzzipay.TransactionsPixService
+import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Value
+import org.springframework.security.core.Authentication
+import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PathVariable
+import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.RequestBody
+import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
+import org.springframework.web.bind.annotation.RestController
+import java.time.LocalDate
+
+
+@RestController
+@RequestMapping("pix")
+class PixController(
+    val transactionsPixService: TransactionsPixService,
+    val invoiceService: InvoiceService,
+    val pixPaymentVerificationService: PixPaymentVerificationService,
+    val pixDynamicService : DynamicPixQrCodeService,
+    val adiantamentoService : DownPaymentService,
+    @Value("\${pix.adiantamento-item:none}") val pixItemAdiantamento : String,
+    @Value("\${pix.utilizacao:-1}") val utilizacao : Int,
+    @Value("\${pix.juros.mora.percent:0}") val jurosMoraPercent: Double){
+
+    private val logger = LoggerFactory.getLogger(PixController::class.java)
+
+    @GetMapping()
+    fun test() : Any?{
+        return "ok"
+    }
+
+    @PostMapping("gerar-chave")
+    fun gerarChavePixByValor(
+        @RequestBody pixRequest : PixRequestAdiantamento,
+        auth : Authentication
+    ): PixGeradoResponse {
+        if(auth !is User)
+            throw Exception("Não foi possivel fazer a conversão de auth para User")
+        val adiantamentoOld = if(pixRequest.docEntry != null && pixRequest.documentTypes == DocumentTypes.oOrders){
+            val filterAdiantamentoOld = Filter(
+                Predicate("U_TX_DocEntryRef",pixRequest.docEntry, Condicao.EQUAL),
+                Predicate("DocumentStatus",DocumentStatus.bost_Open, Condicao.EQUAL),
+            )
+            adiantamentoService.get(filterAdiantamentoOld)
+                .tryGetValues<DownPayment>()
+                .firstOrNull()
+        }else null
+        if(adiantamentoOld != null)
+             throw Exception("Ja existe um adiantamento para esse pedido, canele antes de gerar outra chave pix.")
+        if(pixItemAdiantamento == "none")
+            throw Exception("Não foi configurado um item de pix para o adiantamento")
+        val linhas = listOf(Product(pixItemAdiantamento,"1",pixRequest.valor.toString(),utilizacao))
+        val adiantamento = DownPayment(
+            pixRequest.cardCode,
+            LocalDate.now().toString(),
+            linhas,
+            pixRequest.idFilial.toString())
+        adiantamento.comments = (
+                "Origem: ${pixRequest.origem()}. Gerado pelo usuario " +
+                        auth._name
+                ).take(254)
+        adiantamento.U_TX_DocEntryRef = pixRequest.docEntry
+        adiantamento.U_TX_DocTypeRef = pixRequest.documentTypes?.value
+        val immediate = pixRequest.getImmediateRequest()
+        val dadosPix = pixDynamicService.genereateFor(immediate)
+        val docEntry = try {
+            adiantamentoService.save(adiantamento).tryGetValue<DownPayment>().docEntry
+                ?: throw Exception("Falha ao obter docEntry do adiantamento gerado")
+        } catch (e: Exception) {
+            logger.error("Pix {} gerado na uzzipay mas o adiantamento nao foi criado", dadosPix.data.reference, e)
+            throw e
+        }
+        return try {
+            val adiantamentoComParcelas = adiantamentoService.getById(docEntry).tryGetValue<DownPayment>()
+            val installmentAtualizado = adiantamentoComParcelas.documentInstallments?.firstOrNull()
+                ?.setPix(immediate, dadosPix)
+                ?: throw Exception("Parcela do adiantamento não encontrada para associar o pix")
+            adiantamentoService.updatePixInstallments(docEntry, listOf(installmentAtualizado))
+            installmentAtualizado.DocEntry = docEntry
+            PixGeradoResponse(installmentAtualizado, 0.0)
+        } catch (e: Exception) {
+            estornarAdiantamentoGerado(docEntry, e)
+            throw e
+        }
+    }
+
+    private fun estornarAdiantamentoGerado(docEntry: Int, erroOriginal: Exception) {
+        var referencia = docEntry.toString()
+        try {
+            val adiantamento = adiantamentoService.getById(docEntry).tryGetValue<DownPayment>()
+            referencia = adiantamento.docNum ?: referencia
+            adiantamentoService.estornarPorDevolucao(
+                adiantamento,
+                "Estorno automatico por falha ao gravar dados do PIX."
+            )
+        } catch (estornoError: Exception) {
+            erroOriginal.addSuppressed(estornoError)
+            logger.error("Falha ao estornar adiantamento {} apos erro na geracao do pix", docEntry, estornoError)
+            throw Exception(
+                "${erroOriginal.message}. Nao foi possivel estornar o adiantamento $referencia automaticamente," +
+                        " faca a devolucao manual antes de gerar um novo PIX.",
+                erroOriginal
+            )
+        }
+    }
+
+    @GetMapping("gerar-chave/docType/{pixDocType}/docEntry/{docEntry}/parcela/{parcela}")
+    fun gerarChave(
+        @PathVariable pixDocType : PixDocType,
+        @PathVariable docEntry : Int,
+        @PathVariable parcela : Int,
+        @RequestParam("juros", defaultValue = "true") juros: Boolean = true,
+        auth : Authentication
+    ): List<PixGeradoResponse> {
+        if(auth !is User)
+            throw Exception("Não foi possivel fazer a conversão de auth para User")
+        if(!auth.isAllCreatePix(juros))
+            throw Exception("Não é permitido criar pix!")
+        val jurosPercent = if(juros) jurosMoraPercent else 0.0
+        if (pixDocType.matches(DocumentTypes.oInvoices)) {
+            val invoice = invoiceService.getById(docEntry).tryGetValue<Invoice>()
+            return invoiceService.createPix(invoice,parcela,jurosPercent).map { installment ->
+                PixGeradoResponse(installment, jurosPercent)
+            }
+        } else {
+            throw Exception("Tipo de documento não permitido para gerar chave pix")
+        }
+    }
+
+    @GetMapping("checar-chave/docType/{pixDocType}/docEntry/{docEntry}/parcela/{parcela}")
+    fun checkChave(
+        @PathVariable pixDocType : PixDocType,
+        @PathVariable docEntry : Int,
+        @PathVariable parcela : Int,
+    ): Transaction {
+       return  if (pixDocType.matches(DocumentTypes.oInvoices)) {
+            val invoice = invoiceService.getById(docEntry)
+                .tryGetValue<Invoice>()
+            val parcelaPix = invoice.documentInstallments?.firstOrNull { it.InstallmentId == parcela }
+            pixPaymentVerificationService.verificaPixEhBaixa(
+                invoice,
+                parcelaPix ?: throw Exception("Referencia a Parcela não encontrada")
+            )
+        }else if(pixDocType.matches(DocumentTypes.oDownPayments)) {
+           val document = adiantamentoService.getById(docEntry)
+               .tryGetValue<DownPayment>()
+           val parcelaPix = document.documentInstallments?.firstOrNull { it.InstallmentId == parcela }
+           pixPaymentVerificationService.verificaPixEhBaixa(
+               document,
+               parcelaPix ?: throw Exception("Referencia a Parcela não encontrada")
+           )
+       }
+       else {
+            throw Exception("Tipo de documento não permitido para consultar chave pix")
+        }
+    }
+
+    @GetMapping("transaction/{id}")
+    fun consultaTransactionQrCode(@PathVariable id : String): Transaction {
+        return transactionsPixService.getBy(id)
+    }
+
+    @GetMapping("transaction/{id}/conta/{cnpj}/baixa")
+    fun verificaPixEhBaixa(@PathVariable id : String, @PathVariable cnpj : String): Transaction {
+        //TODO mudar isso depois.
+        throw Exception("Erro, esse parametro agora utiliza ID da filial e nao cnpj")
+    }
+}

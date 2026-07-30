@@ -2,7 +2,7 @@ package br.andrew.sap.schedules.pix
 
 import br.andrew.sap.model.sap.documents.DownPayment
 import br.andrew.sap.model.sap.documents.base.PixControleData
-import br.andrew.sap.services.document.DownPaymentService
+import br.andrew.sap.services.documents.DownPaymentService
 import br.andrew.sap.services.uzzipay.PixPaymentVerificationService
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory

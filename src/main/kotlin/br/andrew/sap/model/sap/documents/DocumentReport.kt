@@ -1,6 +1,6 @@
 package br.andrew.sap.model.sap.documents
 
-import br.andrew.sap.model.sap.BussinessPlace
+import br.andrew.sap.model.sap.cadastro.BussinessPlace
 import br.andrew.sap.model.bank.PaymentMethod
 import br.andrew.sap.model.sap.documents.base.Document
 import br.andrew.sap.model.sap.documents.base.Product

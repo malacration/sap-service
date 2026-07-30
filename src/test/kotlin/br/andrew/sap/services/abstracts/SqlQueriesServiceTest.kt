@@ -1,8 +1,8 @@
 package br.andrew.sap.services.abstracts
 
 import br.andrew.sap.infrastructure.odata.Parameter
-import br.andrew.sap.model.envrioments.SapEnvrioment
-import br.andrew.sap.services.AuthService
+import br.andrew.sap.model.sistema.SapEnvrioment
+import br.andrew.sap.services.security.AuthService
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito

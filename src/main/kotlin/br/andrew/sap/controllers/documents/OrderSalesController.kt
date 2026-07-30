@@ -12,15 +12,15 @@ import br.andrew.sap.model.exceptions.CreditException
 import br.andrew.sap.model.forca.PedidoVenda
 import br.andrew.sap.model.dto.OrderSalesLineItem
 import br.andrew.sap.model.dto.OrderSalesListItem
-import br.andrew.sap.model.sap.Localidade
+import br.andrew.sap.model.sap.cadastro.Localidade
 import br.andrew.sap.model.sap.documents.DocumentStatus
 import br.andrew.sap.model.sap.documents.base.Document
 import br.andrew.sap.services.*
 import br.andrew.sap.services.abstracts.SqlQueriesService
-import br.andrew.sap.services.document.DocumentForAngular
-import br.andrew.sap.services.document.DownPaymentService
-import br.andrew.sap.services.document.OrdersService
-import br.andrew.sap.services.document.PedidoTesteService
+import br.andrew.sap.services.documents.DocumentForAngular
+import br.andrew.sap.services.documents.DownPaymentService
+import br.andrew.sap.services.documents.OrdersService
+import br.andrew.sap.services.documents.PedidoTesteService
 import br.andrew.sap.services.pricing.ComissaoService
 import br.andrew.sap.services.stock.ItemsService
 import org.slf4j.LoggerFactory
@@ -32,6 +32,7 @@ import org.springframework.data.domain.Pageable
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.Authentication
 import org.springframework.web.bind.annotation.*
+import br.andrew.sap.services.integracao.TelegramRequestService
 
 @RestController
 @RequestMapping("pedido-venda")

@@ -1,6 +1,6 @@
 package br.andrew.sap.infrastructure.configurations
 
-import br.andrew.sap.model.sap.SapUser
+import br.andrew.sap.model.sap.sistema.SapUser
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 

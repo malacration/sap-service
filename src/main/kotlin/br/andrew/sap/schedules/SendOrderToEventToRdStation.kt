@@ -1,14 +1,14 @@
 package br.andrew.sap.schedules
 
-import br.andrew.sap.controllers.RdStationController
+import br.andrew.sap.controllers.integracao.RdStationController
 import br.andrew.sap.infrastructure.odata.Condicao
 import br.andrew.sap.infrastructure.odata.Filter
 import br.andrew.sap.infrastructure.odata.Predicate
 import br.andrew.sap.model.sap.documents.DocumentStatus
 import br.andrew.sap.model.sap.documents.OrderSales
 import br.andrew.sap.model.telegram.TipoMensagem
-import br.andrew.sap.services.TelegramRequestService
-import br.andrew.sap.services.document.OrdersService
+import br.andrew.sap.services.integracao.TelegramRequestService
+import br.andrew.sap.services.documents.OrdersService
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value

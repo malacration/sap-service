@@ -9,8 +9,8 @@ import br.andrew.sap.model.sap.documents.Quotation
 import br.andrew.sap.model.sap.documents.base.Document
 import br.andrew.sap.model.forca.PedidoVenda
 import br.andrew.sap.services.*
-import br.andrew.sap.services.document.DocumentForAngular
-import br.andrew.sap.services.document.QuotationsService
+import br.andrew.sap.services.documents.DocumentForAngular
+import br.andrew.sap.services.documents.QuotationsService
 import br.andrew.sap.services.pricing.ComissaoService
 import br.andrew.sap.services.stock.ItemsService
 import org.slf4j.LoggerFactory
@@ -20,6 +20,7 @@ import org.springframework.data.domain.Pageable
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.Authentication
 import org.springframework.web.bind.annotation.*
+import br.andrew.sap.services.integracao.TelegramRequestService
 
 @RestController
 @RequestMapping("quotation")

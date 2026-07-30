@@ -3,11 +3,11 @@ package br.andrew.sap.services.abstracts
 import br.andrew.sap.infrastructure.odata.Filter
 import br.andrew.sap.infrastructure.odata.OData
 import br.andrew.sap.infrastructure.odata.OrderBy
-import br.andrew.sap.model.sap.DocEntry
-import br.andrew.sap.model.envrioments.SapEnvrioment
-import br.andrew.sap.model.sap.SapError
-import br.andrew.sap.model.sap.Session
-import br.andrew.sap.services.AuthService
+import br.andrew.sap.model.sap.comercial.DocEntry
+import br.andrew.sap.model.sistema.SapEnvrioment
+import br.andrew.sap.model.sap.sistema.SapError
+import br.andrew.sap.model.sap.sistema.Session
+import br.andrew.sap.services.security.AuthService
 import org.springframework.data.domain.Pageable
 import org.springframework.http.RequestEntity
 import org.springframework.web.client.HttpClientErrorException
@@ -41,7 +41,7 @@ open abstract class EntitiesService<T>(protected val env: SapEnvrioment,
             return exchangeWithValidSession(OData::class.java) { session ->
                 RequestEntity
                     .post(env.host+this.path())
-                    .header("cookie","B1SESSION=${session.sessionId}")
+                    .header("cookie", session.cookieHeader())
                     .body(entry)
             }.body!!
         }catch (t : HttpClientErrorException){
@@ -57,7 +57,7 @@ open abstract class EntitiesService<T>(protected val env: SapEnvrioment,
         return exchangeWithValidSession(OData::class.java) { session ->
             RequestEntity
                 .patch(env.host+this.path()+"($idNew)")
-                .header("cookie","B1SESSION=${session.sessionId}")
+                .header("cookie", session.cookieHeader())
                 .body(entry)
         }.body
     }
@@ -66,7 +66,7 @@ open abstract class EntitiesService<T>(protected val env: SapEnvrioment,
         return exchangeWithValidSession(OData::class.java) { session ->
             RequestEntity
                 .put(env.host+this.path()+"($id)")
-                .header("cookie","B1SESSION=${session.sessionId}")
+                .header("cookie", session.cookieHeader())
                 .body(entry)
         }.body
     }
@@ -75,7 +75,7 @@ open abstract class EntitiesService<T>(protected val env: SapEnvrioment,
         return exchangeWithValidSession(OData::class.java) { session ->
             RequestEntity
                 .post(env.host+this.path()+"($id)/Cancel")
-                .header("cookie","B1SESSION=${session.sessionId}")
+                .header("cookie", session.cookieHeader())
                 .build()
         }.body
     }
@@ -86,7 +86,7 @@ open abstract class EntitiesService<T>(protected val env: SapEnvrioment,
         return exchangeWithValidSession(OData::class.java) { session ->
             RequestEntity
                 .get(env.host+this.path()+"?\$skip=${skip}"+aditional)
-                .header("cookie","B1SESSION=${session.sessionId}")
+                .header("cookie", session.cookieHeader())
                 .header("Prefer",  "odata.maxpagesize=${page.pageSize}")
                 .build()
         }.body ?: OData()
@@ -102,7 +102,7 @@ open abstract class EntitiesService<T>(protected val env: SapEnvrioment,
             return exchangeWithValidSession(OData::class.java) { session ->
                 RequestEntity
                     .get(env.host+this.path()+"(${idNew})")
-                    .header("cookie","B1SESSION=${session.sessionId}")
+                    .header("cookie", session.cookieHeader())
                     .build()
             }.body!!
         }catch (t : HttpClientErrorException){
@@ -118,7 +118,7 @@ open abstract class EntitiesService<T>(protected val env: SapEnvrioment,
         return exchangeWithValidSession(OData::class.java) { session ->
             RequestEntity
                 .delete(env.host+this.path()+"(${id})")
-                .header("cookie","B1SESSION=${session.sessionId}")
+                .header("cookie", session.cookieHeader())
                 .build()
         }.body
     }
@@ -164,7 +164,7 @@ open abstract class EntitiesService<T>(protected val env: SapEnvrioment,
         return exchangeWithValidSession(OData::class.java) { session ->
             RequestEntity
                 .get(URLDecoder.decode(url,"UTF-8"))
-                .header("cookie","B1SESSION=${session.sessionId}")
+                .header("cookie", session.cookieHeader())
                 .build()
         }.body!!
     }
@@ -184,7 +184,7 @@ open abstract class EntitiesService<T>(protected val env: SapEnvrioment,
         return exchangeWithValidSession(OData::class.java) { session ->
             RequestEntity
                 .post(env.host+this.path())
-                .header("cookie","B1SESSION=${session.sessionId}")
+                .header("cookie", session.cookieHeader())
                 .body(body)
         }.body!!
     }
@@ -193,7 +193,7 @@ open abstract class EntitiesService<T>(protected val env: SapEnvrioment,
         return exchangeWithValidSession(OData::class.java) { session ->
             RequestEntity
                 .patch(env.host+this.path()+"($id)")
-                .header("cookie","B1SESSION=${session.sessionId}")
+                .header("cookie", session.cookieHeader())
                 .body(body)
         }.body!!
     }
@@ -202,7 +202,7 @@ open abstract class EntitiesService<T>(protected val env: SapEnvrioment,
         exchangeWithValidSession(Void::class.java) { session ->
             RequestEntity
                 .post(env.host+this.path()+"Service_Cancel")
-                .header("cookie","B1SESSION=${session.sessionId}")
+                .header("cookie", session.cookieHeader())
                 .body(payload)
         }
     }
@@ -231,7 +231,7 @@ open abstract class EntitiesService<T>(protected val env: SapEnvrioment,
         return exchangeWithValidSession(OData::class.java) { session ->
             RequestEntity
                 .get(env.host+path+"&\$skip=${skip}")
-                .header("cookie","B1SESSION=${session.sessionId}")
+                .header("cookie", session.cookieHeader())
                 .header("Prefer",  "odata.maxpagesize=${page.pageSize}")
                 .build()
         }.body ?: OData()

@@ -2,8 +2,8 @@ package br.andrew.sap.services.romaneio
 
 import br.andrew.sap.infrastructure.odata.*
 import br.andrew.sap.model.romaneio.RomaneioPesagem
-import br.andrew.sap.model.envrioments.SapEnvrioment
-import br.andrew.sap.services.AuthService
+import br.andrew.sap.model.sistema.SapEnvrioment
+import br.andrew.sap.services.security.AuthService
 import br.andrew.sap.services.abstracts.EntitiesService
 import br.andrew.sap.services.structs.QuerysServices
 import org.springframework.data.domain.Page
@@ -31,7 +31,7 @@ class RomaneioPesagemServiceSaida(restTemplate: RestTemplate,
         val skip = (page.pageNumber*page.pageSize).toString()+"&\$inlinecount=allpages"
         val request = RequestEntity
                 .get(env.host+crosJoin+expand+filter)
-                .header("cookie","B1SESSION=${session().sessionId}")
+                .header("cookie", session().cookieHeader())
                 .build()
         return restT.exchange(request, OData::class.java).body?.tryGetPageValues(page) ?: OData().tryGetPageValues(page)
     }
@@ -42,7 +42,7 @@ class RomaneioPesagemServiceSaida(restTemplate: RestTemplate,
         val sql = parametros.toSql()
         return restT.exchange(RequestEntity
                 .get("$url('romaneio-sem-saida.sql')/List?\$skip=${skip}&$sql")
-                .header("cookie","B1SESSION=${session().sessionId}")
+                .header("cookie", session().cookieHeader())
                 .build(), OData::class.java).body!!.tryGetPageValues(page)
     }
 

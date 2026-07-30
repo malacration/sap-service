@@ -1,5 +1,5 @@
 package br.andrew.sap.model.sap.documents.base
-import br.andrew.sap.model.Comissao
+import br.andrew.sap.model.sistema.Comissao
 import br.andrew.sap.model.producao.BatchStock
 import br.andrew.sap.model.sap.documents.DocumentTypes
 import br.andrew.sap.services.stock.ItemsService

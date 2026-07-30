@@ -1,0 +1,31 @@
+package br.andrew.sap.services.comercial
+import br.andrew.sap.infrastructure.odata.Condicao
+import br.andrew.sap.infrastructure.odata.Filter
+import br.andrew.sap.infrastructure.odata.Predicate
+import br.andrew.sap.model.estoque.Item
+import br.andrew.sap.model.comercial.ItemAlternate
+import br.andrew.sap.model.sistema.SapEnvrioment
+import br.andrew.sap.services.abstracts.EntitiesService
+import org.springframework.stereotype.Service
+import org.springframework.web.client.RestTemplate
+import br.andrew.sap.services.security.AuthService
+
+@Service
+class AlternateCatService(env : SapEnvrioment,
+                          restTemplate: RestTemplate,
+                          authService: AuthService)
+    : EntitiesService<Item>(env, restTemplate,authService) {
+
+    override fun path(): String {
+        return "/b1s/v1/AlternateCatNum"
+    }
+
+    fun get(itemCode: String, cardCode: String): ItemAlternate? {
+        val filter = Filter(
+            Predicate("ItemCode", itemCode,Condicao.EQUAL ),
+            Predicate("CardCode",itemCode,Condicao.EQUAL))
+        return get(filter).tryGetValues<ItemAlternate>().firstOrNull()
+    }
+}
+
+

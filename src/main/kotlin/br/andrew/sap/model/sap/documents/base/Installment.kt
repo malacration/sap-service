@@ -1,7 +1,7 @@
 package br.andrew.sap.model.sap.documents.base
 
 import br.andrew.sap.model.bankplus.Boleto
-import br.andrew.sap.model.sap.ReconciliationRow
+import br.andrew.sap.model.sap.comercial.ReconciliationRow
 import br.andrew.sap.model.sap.documents.DocumentStatus
 import br.andrew.sap.model.uzzipay.DataRetonroPixQrCode
 import br.andrew.sap.model.uzzipay.RequestPixDueDate

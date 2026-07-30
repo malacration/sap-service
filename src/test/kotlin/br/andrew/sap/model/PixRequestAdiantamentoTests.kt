@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import java.math.BigDecimal
 import java.time.LocalDate
+import br.andrew.sap.model.comercial.PixRequestAdiantamento
 
 class PixRequestAdiantamentoTests {
 

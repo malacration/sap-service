@@ -3,9 +3,9 @@ package br.andrew.sap.controllers.invent
 import br.andrew.sap.infrastructure.security.MethodSecurityConfig
 import br.andrew.sap.model.sap.documents.base.Document
 import br.andrew.sap.model.sap.partner.BusinessPartner
-import br.andrew.sap.services.BusinessPartnersService
-import br.andrew.sap.services.document.InvoiceService
-import br.andrew.sap.services.invent.TaxNfeService
+import br.andrew.sap.services.cadastro.BusinessPartnersService
+import br.andrew.sap.services.documents.InvoiceService
+import br.andrew.sap.services.fiscal.TaxNfeService
 import org.springframework.security.core.Authentication
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable

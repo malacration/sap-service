@@ -1,7 +1,7 @@
 package br.andrew.sap.services.bacen
 
 import br.andrew.sap.infrastructure.odata.OData
-import br.andrew.sap.model.bacen.CotacaoMoeda
+import br.andrew.sap.model.integracao.CotacaoMoeda
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import org.springframework.web.client.RestTemplate

@@ -1,8 +1,8 @@
 package br.andrew.sap.services.batch
 
-import br.andrew.sap.model.envrioments.SapEnvrioment
-import br.andrew.sap.services.AuthService
-import br.andrew.sap.services.BusinessPartnersService
+import br.andrew.sap.model.sistema.SapEnvrioment
+import br.andrew.sap.services.security.AuthService
+import br.andrew.sap.services.cadastro.BusinessPartnersService
 import br.andrew.sap.services.abstracts.EntitiesService
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
@@ -87,7 +87,7 @@ class BatchService(val rest : RestTemplate,
                 .post(env.host+this.path())
                 .header("Content-Type","multipart/mixed;boundary=batch_$batchUUID")
                 .header("OData-Version","4.0")
-                .header("cookie","B1SESSION=${session.sessionId}")
+                .header("cookie", session.cookieHeader())
                 .header("Content-Length",body.size.toString())
             rest.exchange(request.body(body), String::class.java).body
         }

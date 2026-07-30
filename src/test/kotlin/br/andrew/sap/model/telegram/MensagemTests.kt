@@ -1,6 +1,6 @@
 package br.andrew.sap.model.telegram
 
-import br.andrew.sap.model.ContactOpaque
+import br.andrew.sap.model.cadastro.ContactOpaque
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 

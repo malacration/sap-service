@@ -1,6 +1,6 @@
 package br.andrew.sap.infrastructure.security
 
-import br.andrew.sap.controllers.BacenController
+import br.andrew.sap.controllers.financeiro.BacenController
 import br.andrew.sap.infrastructure.security.jwt.JwtHandler
 import br.andrew.sap.model.authentication.User
 import br.andrew.sap.services.security.PasswordEmptyException

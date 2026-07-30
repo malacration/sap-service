@@ -9,8 +9,8 @@ import br.andrew.sap.services.abstracts.EntitiesService
 import br.andrew.sap.services.bank.IncomingPaymentService
 import org.springframework.stereotype.Service
 import br.andrew.sap.services.bank.VendorPaymentService
-import br.andrew.sap.services.document.InvoiceService
-import br.andrew.sap.services.document.PurchaseInvoiceService
+import br.andrew.sap.services.documents.InvoiceService
+import br.andrew.sap.services.documents.PurchaseInvoiceService
 import okhttp3.internal.concurrent.TaskRunner.Companion.logger
 
 @Service

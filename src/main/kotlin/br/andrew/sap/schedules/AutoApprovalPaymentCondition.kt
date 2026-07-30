@@ -4,9 +4,9 @@ import br.andrew.sap.infrastructure.odata.Condicao
 import br.andrew.sap.infrastructure.odata.Filter
 import br.andrew.sap.infrastructure.odata.OData
 import br.andrew.sap.infrastructure.odata.Predicate
-import br.andrew.sap.model.sap.ApprovalRequests
-import br.andrew.sap.model.sap.SapUser
-import br.andrew.sap.services.TelegramRequestService
+import br.andrew.sap.model.sap.comercial.ApprovalRequests
+import br.andrew.sap.model.sap.sistema.SapUser
+import br.andrew.sap.services.integracao.TelegramRequestService
 import br.andrew.sap.services.approval.ApprovalRequestsService
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory

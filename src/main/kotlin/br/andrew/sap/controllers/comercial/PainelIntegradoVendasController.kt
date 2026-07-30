@@ -1,0 +1,29 @@
+package br.andrew.sap.controllers.comercial
+
+import br.andrew.sap.infrastructure.odata.NextLink
+import br.andrew.sap.model.comercial.PainelIntegradoVendas
+import br.andrew.sap.services.comercial.PainelIntegradoVendasService
+import org.springframework.web.bind.annotation.*
+
+
+@RestController
+@RequestMapping("painel")
+class PainelIntegradoVendasController(
+    private val painelIntegradoVendasServices: PainelIntegradoVendasService
+) {
+
+    @GetMapping("pedidos")
+    fun searchPedidos(
+        @RequestParam("dataInicial") dataInicial: String,
+        @RequestParam("dataFinal")   dataFinal:   String,
+        @RequestParam("filial") filial: String,
+        @RequestParam("cliente", required = false) cliente: String?,
+        @RequestParam("item", required = false) item: String?,
+        @RequestParam("vendedor", required = false) vendedor: String?,
+        @RequestParam("agrupador", required = false) agrupador: String?,
+        @RequestParam("localidade", required = false) localidade: String?,
+        @RequestParam("incoterms", required = false) incoterms: String?
+    ): NextLink<PainelIntegradoVendas>? {
+        return painelIntegradoVendasServices.searchExpeditionOrders(dataInicial,dataFinal,filial,cliente,item,vendedor,agrupador,localidade,incoterms)
+    }
+}

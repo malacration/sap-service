@@ -10,7 +10,7 @@ import br.andrew.sap.model.uzzipay.Transaction
 import br.andrew.sap.services.bank.IncomingPaymentService
 import br.andrew.sap.services.batch.BatchList
 import br.andrew.sap.services.batch.BatchService
-import br.andrew.sap.services.invent.BankPlusService
+import br.andrew.sap.services.fiscal.BankPlusService
 import br.andrew.sap.services.journal.JournalEntriesService
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertSame
@@ -19,6 +19,7 @@ import org.junit.jupiter.api.assertThrows
 import org.mockito.Mockito.mock
 import org.mockito.kotlin.any
 import org.mockito.kotlin.whenever
+import br.andrew.sap.services.documents.AccountsReceivableService
 
 class AccountsReceivableServiceTest {
 

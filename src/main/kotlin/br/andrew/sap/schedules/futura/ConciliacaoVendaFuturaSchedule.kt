@@ -1,12 +1,12 @@
 package br.andrew.sap.schedules.futura
 
 import JournalEntry
-import br.andrew.sap.model.sap.InternalReconciliations
-import br.andrew.sap.model.sap.InternalReconciliationOpenTransRow
+import br.andrew.sap.model.sap.comercial.InternalReconciliations
+import br.andrew.sap.model.sap.comercial.InternalReconciliationOpenTransRow
 import br.andrew.sap.infrastructure.odata.Condicao
 import br.andrew.sap.infrastructure.odata.Filter
 import br.andrew.sap.infrastructure.odata.Predicate
-import br.andrew.sap.model.sap.InternalReconciliationsBuilder
+import br.andrew.sap.model.sap.comercial.InternalReconciliationsBuilder
 import br.andrew.sap.model.sap.documents.DocumentStatus
 import br.andrew.sap.model.sap.documents.Invoice
 import br.andrew.sap.model.sap.documents.base.Document
@@ -14,13 +14,13 @@ import br.andrew.sap.model.sap.documents.base.Product
 import br.andrew.sap.model.sap.documents.base.adiantamento.ApropriacaoAdiantamento
 import br.andrew.sap.model.transaction.TransactionCodeTypes
 import br.andrew.sap.model.transaction.UpdateTransactionCode
-import br.andrew.sap.services.InternalReconciliationsService
+import br.andrew.sap.services.financeiro.InternalReconciliationsService
 import br.andrew.sap.services.batch.BatchId
 import br.andrew.sap.services.batch.BatchList
 import br.andrew.sap.services.batch.BatchMethod
 import br.andrew.sap.services.batch.BatchService
-import br.andrew.sap.services.document.DownPaymentService
-import br.andrew.sap.services.document.InvoiceService
+import br.andrew.sap.services.documents.DownPaymentService
+import br.andrew.sap.services.documents.InvoiceService
 import br.andrew.sap.services.journal.JournalEntriesService
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory

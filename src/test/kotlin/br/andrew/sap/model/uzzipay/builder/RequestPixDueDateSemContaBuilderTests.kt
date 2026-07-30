@@ -1,7 +1,7 @@
 package br.andrew.sap.model.uzzipay.builder
 
 import br.andrew.sap.infrastructure.configurations.uzzipay.UzziPayEnvrioment
-import br.andrew.sap.model.sap.BussinessPlace
+import br.andrew.sap.model.sap.cadastro.BussinessPlace
 import br.andrew.sap.model.sap.documents.DocumentTypes
 import br.andrew.sap.model.sap.documents.base.Document
 import br.andrew.sap.model.sap.documents.base.Installment

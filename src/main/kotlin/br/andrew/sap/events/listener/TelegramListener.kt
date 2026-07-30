@@ -2,9 +2,9 @@ package br.andrew.sap.events.listener
 
 import br.andrew.sap.events.OrderSalesSaveEvent
 import br.andrew.sap.model.sap.documents.base.Document
-import br.andrew.sap.model.envrioments.SapEnvrioment
+import br.andrew.sap.model.sistema.SapEnvrioment
 import br.andrew.sap.model.telegram.TipoMensagem
-import br.andrew.sap.services.TelegramRequestService
+import br.andrew.sap.services.integracao.TelegramRequestService
 import org.springframework.context.event.EventListener
 import org.springframework.stereotype.Component
 

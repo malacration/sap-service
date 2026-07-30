@@ -4,8 +4,8 @@ import br.andrew.sap.infrastructure.odata.Filter
 import br.andrew.sap.infrastructure.odata.NextLink
 import br.andrew.sap.infrastructure.odata.OData
 import br.andrew.sap.infrastructure.odata.Parameter
-import br.andrew.sap.model.envrioments.SapEnvrioment
-import br.andrew.sap.services.AuthService
+import br.andrew.sap.model.sistema.SapEnvrioment
+import br.andrew.sap.services.security.AuthService
 import org.springframework.http.RequestEntity
 import org.springframework.stereotype.Service
 import org.springframework.web.client.RestTemplate
@@ -28,7 +28,7 @@ class SqlQueriesService(
         return authService.executeWithValidSession(env.getLogin()) { session ->
             val request = RequestEntity
                 .get("$url/SQLQueries('$viewName')/List$parametros")
-                .header("cookie","B1SESSION=${session.sessionId}")
+                .header("cookie", session.cookieHeader())
                 .build()
             restTemplate.exchange(request, OData::class.java).body
         }
@@ -38,7 +38,7 @@ class SqlQueriesService(
         return authService.executeWithValidSession(env.getLogin()) { session ->
             val request = RequestEntity
                 .get("$url/$nextLink")
-                .header("cookie","B1SESSION=${session.sessionId}")
+                .header("cookie", session.cookieHeader())
                 .build()
             restTemplate.exchange(request, OData::class.java).body
         }
