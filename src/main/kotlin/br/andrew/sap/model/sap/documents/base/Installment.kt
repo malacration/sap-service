@@ -165,6 +165,22 @@ class Installment(
     }
 
     /**
+     * Juros de mora usado nos PIX: mesma regra de [RequestPixDueDateBuilder] para escolher a
+     * data de referencia. Titulo a vencer usa hoje (juros zero); titulo vencido usa hoje+1,
+     * porque o vencimento do QR Code tambem e empurrado para hoje+1.
+     */
+    fun calcularJurosPix(taxaJurosMoraPercent: Double): Double {
+        if(taxaJurosMoraPercent <= 0.0) {
+            return 0.0
+        }
+        val vencimento = dueDate ?: return 0.0
+        val vencimentoLocal = LocalDate.parse(vencimento)
+        val hoje = LocalDate.now()
+        val dataReferencia = if(vencimentoLocal.isBefore(hoje)) hoje.plusDays(1) else hoje
+        return calcularJurosSimplesPorDia(taxaJurosMoraPercent, dataReferencia)
+    }
+
+    /**
      * Validade digital do PIX derivada do [U_pix_due_date]: para data pura usa o fim do
      * dia no fuso do sistema; para datetime (com ou sem offset) converte para OffsetDateTime.
      * Usado como fallback quando [U_pix_consultar_ate] ainda nao foi gravado (registros legados).
