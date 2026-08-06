@@ -27,6 +27,8 @@ WHERE
     AND (C."U_Status"    = :status   OR T0."DocEntry" < :statusIsFilter)
     AND (C."U_Cobrador"  = :cobrador OR T0."DocEntry" < :cobradorIsFilter)
     AND (C."U_Situacao"  = :situacao OR T0."DocEntry" < :situacaoIsFilter)
+    AND (C."Code" IS NULL OR T0."DocEntry" < :semAcompanhamentoIsFilter)
+    AND (C."U_DataPromessa" <= :promessaVencidaAte OR T0."DocEntry" < :promessaVencidaIsFilter)
     AND (T0."BPLId"    = :filial   OR T0."BPLId"    < :filialIsFilter)
     AND (T0."SlpCode"  = :vendedor OR T0."SlpCode"  < :vendedorIsFilter)
     AND (T0."CardCode" = :cliente  OR T0."CardCode" < :clienteIsFilter)

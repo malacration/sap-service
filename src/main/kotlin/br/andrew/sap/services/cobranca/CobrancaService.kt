@@ -13,6 +13,7 @@ import br.andrew.sap.model.cobranca.CobrancaRegistro
 import br.andrew.sap.model.envrioments.SapEnvrioment
 import br.andrew.sap.services.AuthService
 import br.andrew.sap.services.abstracts.EntitiesService
+import org.springframework.cache.annotation.CacheEvict
 import org.springframework.stereotype.Service
 import org.springframework.web.client.RestTemplate
 import java.time.LocalDate
@@ -25,6 +26,9 @@ class CobrancaService(env: SapEnvrioment, restTemplate: RestTemplate, authServic
 
     override fun path(): String = "/b1s/v1/COB_TITULO"
 
+    // O dashboard e cacheado por 5 minutos; sem esse evict o cobrador registraria a acao
+    // e o card de "sem nenhuma acao" continuaria mostrando o numero velho.
+    @CacheEvict("cobranca-dashboard", allEntries = true)
     fun registrarAcao(tipo: String, docEntry: Int, instlmntId: Int, req: CobrancaAcaoRequest, auth: User): CobrancaRegistro {
         validarTipo(tipo)
         validar(req)
@@ -89,6 +93,10 @@ class CobrancaService(env: SapEnvrioment, restTemplate: RestTemplate, authServic
         return buscarPorCode(code) ?: throw CobrancaException("Falha ao reler o registro de cobrança $code")
     }
 
+    // Precisa do evict aqui tambem, e nao so no registrarAcao: a chamada de dentro do map
+    // e auto-invocacao, que nao passa pelo proxy do Spring - o @CacheEvict do registrarAcao
+    // nunca dispararia pelo caminho do lote.
+    @CacheEvict("cobranca-dashboard", allEntries = true)
     fun registrarAcaoEmLote(itens: List<CobrancaAcaoLoteItem>, auth: User): List<CobrancaAcaoResultado> {
         return itens.map { item ->
             try {

@@ -92,6 +92,19 @@ class CobrancaTitulosSqlTest {
     }
 
     @Test
+    fun `filtros do drill-down do dashboard tambem escapam em coluna nao-nula`() {
+        // "Sem nenhuma acao" e presenca/ausencia de registro na UDT, e promessa vencida le uma
+        // coluna do LEFT JOIN - os dois sao nulos pro titulo nunca acompanhado. Se o escape
+        // fosse na propria coluna, ligar QUALQUER outro filtro faria esses titulos sumirem.
+        assertTrue(sql.contains("C.\"Code\" IS NULL OR NS.\"DocEntry\" < :semAcompanhamentoIsFilter"))
+        assertTrue(sql.contains("C.\"U_DataPromessa\" <= :promessaVencidaAte OR NS.\"DocEntry\" < :promessaVencidaIsFilter"))
+        assertFalse(
+            sql.contains("C.\"U_DataPromessa\" < :promessaVencidaIsFilter"),
+            "escape em coluna de LEFT JOIN faria o titulo sem promessa desaparecer"
+        )
+    }
+
+    @Test
     fun `nao usa funcoes que o parser do SQLQueries do SAP B1 nao reconhece nesse contexto`() {
         // Saldo, DiasAtraso e SituacaoSap sao calculados em Kotlin (CobrancaTituloSap.toDto);
         // IFNULL/DAYS_BETWEEN/CASE WHEN aqui ja quebraram o provisionamento em producao
@@ -153,6 +166,13 @@ class CobrancaTitulosAdiantamentoSqlTest {
         assertTrue(sql.contains("C.\"U_Status\"    = :status   OR T0.\"DocEntry\" < :statusIsFilter"))
         assertTrue(sql.contains("C.\"U_Cobrador\"  = :cobrador OR T0.\"DocEntry\" < :cobradorIsFilter"))
         assertTrue(sql.contains("C.\"U_Situacao\"  = :situacao OR T0.\"DocEntry\" < :situacaoIsFilter"))
+    }
+
+    @Test
+    fun `os filtros do drill-down existem aqui tambem, senao a consulta quebra pro adiantamento`() {
+        // As duas views recebem a MESMA lista de parametros em CobrancaConsultaService.
+        assertTrue(sql.contains("C.\"Code\" IS NULL OR T0.\"DocEntry\" < :semAcompanhamentoIsFilter"))
+        assertTrue(sql.contains("C.\"U_DataPromessa\" <= :promessaVencidaAte OR T0.\"DocEntry\" < :promessaVencidaIsFilter"))
     }
 
     @Test

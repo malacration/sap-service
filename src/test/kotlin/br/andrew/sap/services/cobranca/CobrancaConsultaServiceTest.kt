@@ -316,6 +316,47 @@ class CobrancaConsultaServiceTest {
         verify(sqlQueriesService, never()).execute(eq("cobranca-titulos.sql"), any<List<Parameter>>())
     }
 
+    @Test
+    fun `semAcompanhamento ligado e desligado manda so o IsFilter, porque nao tem valor a comparar`() {
+        whenever(sqlQueriesService.execute(eq("cobranca-titulos.sql"), any<List<Parameter>>())).thenReturn(odataVazia())
+
+        service.listar(admin, semAcompanhamento = true)
+
+        assertEquals(-1, capturarParametros()["semAcompanhamentoIsFilter"])
+    }
+
+    @Test
+    fun `sem semAcompanhamento o filtro fica desligado e o titulo acompanhado continua vindo`() {
+        whenever(sqlQueriesService.execute(eq("cobranca-titulos.sql"), any<List<Parameter>>())).thenReturn(odataVazia())
+
+        service.listar(admin)
+
+        assertEquals(Int.MAX_VALUE, capturarParametros()["semAcompanhamentoIsFilter"])
+    }
+
+    @Test
+    fun `promessaVencidaAte informada vira data de corte no SQL`() {
+        whenever(sqlQueriesService.execute(eq("cobranca-titulos.sql"), any<List<Parameter>>())).thenReturn(odataVazia())
+
+        service.listar(admin, promessaVencidaAte = LocalDate.of(2026, 8, 3))
+
+        val parametros = capturarParametros()
+        assertEquals("2026-08-03", parametros["promessaVencidaAte"])
+        assertEquals(-1, parametros["promessaVencidaIsFilter"])
+    }
+
+    @Test
+    fun `sem promessaVencidaAte o parametro de data ainda vai, mas o filtro esta desligado`() {
+        // A view sempre pede os dois parametros; quem desliga a condicao e o IsFilter.
+        whenever(sqlQueriesService.execute(eq("cobranca-titulos.sql"), any<List<Parameter>>())).thenReturn(odataVazia())
+
+        service.listar(admin, data = LocalDate.of(2026, 8, 3))
+
+        val parametros = capturarParametros()
+        assertEquals("2026-08-03", parametros["promessaVencidaAte"])
+        assertEquals(Int.MAX_VALUE, parametros["promessaVencidaIsFilter"])
+    }
+
     private fun capturarParametros(): Map<String, Any> {
         val captor = argumentCaptor<List<Parameter>>()
         verify(sqlQueriesService).execute(eq("cobranca-titulos.sql"), captor.capture())

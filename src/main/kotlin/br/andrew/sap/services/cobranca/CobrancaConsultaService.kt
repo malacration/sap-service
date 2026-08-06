@@ -44,6 +44,10 @@ class CobrancaConsultaService(val sqlQueriesService: SqlQueriesService) {
         situacaoSap: String? = null,
         vencimentoDe: LocalDate? = null,
         vencimentoAte: LocalDate? = null,
+        // Vem do drill-down do dashboard: "sem nenhuma acao" = nunca teve registro em
+        // @COB_TITULO; promessaVencidaAte = tinha data prometida ate essa data e nao pagou.
+        semAcompanhamento: Boolean? = null,
+        promessaVencidaAte: LocalDate? = null,
         tipo: String? = null, // "NF", "AD" ou null (todos)
         pagina: Int = 0,
         tamanhoPagina: Int = 20,
@@ -89,6 +93,14 @@ class CobrancaConsultaService(val sqlQueriesService: SqlQueriesService) {
             Parameter("cobradorIsFilter", if (cobrador == null) Int.MAX_VALUE else -1),
             Parameter("situacao", situacao ?: SEM_FILTRO),
             Parameter("situacaoIsFilter", if (situacao == null) Int.MAX_VALUE else -1),
+            // Os dois filtros que o drill-down do dashboard usa. Diferente dos de cima, nao tem
+            // valor pra comparar - sao presenca/ausencia -, entao quem liga e desliga e so o
+            // IsFilter, no mesmo escape em coluna nao-nula.
+            Parameter("semAcompanhamentoIsFilter", if (semAcompanhamento == true) -1 else Int.MAX_VALUE),
+            // Quando o filtro esta desligado a data nao importa (o IsFilter larga a condicao
+            // inteira), mas o parametro tem que existir - a view sempre pede os dois.
+            Parameter("promessaVencidaAte", (promessaVencidaAte ?: data).toString()),
+            Parameter("promessaVencidaIsFilter", if (promessaVencidaAte == null) Int.MAX_VALUE else -1),
         )
 
         // Adiantamentos (ODPI/DPI6): volume normalmente bem menor que o de faturas, entao
@@ -135,6 +147,12 @@ class CobrancaConsultaService(val sqlQueriesService: SqlQueriesService) {
     // ao .sql do repositorio, o resultado continua correto, so mais lento. Nao adicione filtro
     // NOVO so aqui: filtro que existe apenas em Kotlin custa uma ida e volta ao SAP por linha
     // descartada, porque o laco de paginacao busca pagina nova ate juntar linha aprovada.
+    //
+    // semAcompanhamento e promessaVencidaAte NAO entram aqui de proposito. "Nunca teve
+    // acompanhamento" e a ausencia do registro em @COB_TITULO (C."Code" IS NULL), e o DTO nao
+    // carrega o Code - da pra chutar por "todos os U_* nulos", mas titulo que tem registro so
+    // com observacao preenchida seria classificado como sem acompanhamento e a rede DESCARTARIA
+    // linha que o SQL devolveu certo. Rede de seguranca imprecisa e pior que rede nenhuma.
     private fun passaNosFiltrosLocais(
         titulo: CobrancaTitulo,
         diasAtrasoMin: Int?,

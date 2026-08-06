@@ -4,11 +4,14 @@ import br.andrew.sap.model.authentication.User
 import br.andrew.sap.model.cobranca.CobrancaAcaoLoteItem
 import br.andrew.sap.model.cobranca.CobrancaAcaoRequest
 import br.andrew.sap.model.cobranca.CobrancaAcaoResultado
+import br.andrew.sap.model.cobranca.CobrancaDashboard
 import br.andrew.sap.model.cobranca.CobrancaDominio
 import br.andrew.sap.model.cobranca.CobrancaHistorico
+import br.andrew.sap.model.cobranca.CobrancaMes
 import br.andrew.sap.model.cobranca.CobrancaRegistro
 import br.andrew.sap.model.cobranca.CobrancaTitulo
 import br.andrew.sap.services.cobranca.CobrancaConsultaService
+import br.andrew.sap.services.cobranca.CobrancaDashboardService
 import br.andrew.sap.services.cobranca.CobrancaDominioService
 import br.andrew.sap.services.cobranca.CobrancaService
 import org.springframework.http.ResponseEntity
@@ -28,6 +31,7 @@ class CobrancaController(
     val consultaService: CobrancaConsultaService,
     val service: CobrancaService,
     val dominioService: CobrancaDominioService,
+    val dashboardService: CobrancaDashboardService,
 ) {
 
     @GetMapping("titulos")
@@ -44,6 +48,8 @@ class CobrancaController(
         @RequestParam(required = false) situacaoSap: String?,
         @RequestParam(required = false) vencimentoDe: String?,
         @RequestParam(required = false) vencimentoAte: String?,
+        @RequestParam(required = false) semAcompanhamento: Boolean?,
+        @RequestParam(required = false) promessaVencidaAte: String?,
         @RequestParam(required = false) tipo: String?,
         @RequestParam(defaultValue = "0") pagina: Int,
         @RequestParam(defaultValue = "20") tamanho: Int,
@@ -64,6 +70,8 @@ class CobrancaController(
             situacaoSap = situacaoSap,
             vencimentoDe = vencimentoDe?.let { LocalDate.parse(it) },
             vencimentoAte = vencimentoAte?.let { LocalDate.parse(it) },
+            semAcompanhamento = semAcompanhamento,
+            promessaVencidaAte = promessaVencidaAte?.let { LocalDate.parse(it) },
             tipo = tipo,
             pagina = pagina,
             tamanhoPagina = tamanho,
@@ -101,6 +109,52 @@ class CobrancaController(
         if (auth !is User)
             return ResponseEntity.noContent().build()
         return ResponseEntity.ok(service.registrarAcaoEmLote(itens, auth))
+    }
+
+    // O dashboard vem em duas rotas de proposito: o resumo custa ~16 consultas ao SAP e a
+    // serie mensal custa mais uma paginada, entao separando a tela pinta em duas ondas em
+    // vez de esperar tudo pra mostrar o primeiro numero.
+    @GetMapping("dashboard")
+    fun dashboard(
+        auth: Authentication,
+        @RequestParam(required = false) filial: Int?,
+        @RequestParam(required = false) vendedor: Int?,
+        @RequestParam(required = false) de: String?,
+        @RequestParam(required = false) ate: String?,
+    ): ResponseEntity<CobrancaDashboard> {
+        if (auth !is User)
+            return ResponseEntity.noContent().build()
+        val hoje = LocalDate.now()
+        return ResponseEntity.ok(
+            dashboardService.resumo(
+                auth = auth,
+                filial = filial,
+                vendedor = vendedor,
+                de = de?.let { LocalDate.parse(it) } ?: hoje.withDayOfMonth(1),
+                ate = ate?.let { LocalDate.parse(it) } ?: hoje,
+                hoje = hoje,
+            )
+        )
+    }
+
+    @GetMapping("dashboard/evolucao")
+    fun evolucao(
+        auth: Authentication,
+        @RequestParam(required = false) filial: Int?,
+        @RequestParam(required = false) vendedor: Int?,
+        @RequestParam(defaultValue = "6") meses: Int,
+    ): ResponseEntity<List<CobrancaMes>> {
+        if (auth !is User)
+            return ResponseEntity.noContent().build()
+        return ResponseEntity.ok(
+            dashboardService.evolucao(
+                auth = auth,
+                filial = filial,
+                vendedor = vendedor,
+                meses = meses,
+                hoje = LocalDate.now(),
+            )
+        )
     }
 
     @GetMapping("dominios")

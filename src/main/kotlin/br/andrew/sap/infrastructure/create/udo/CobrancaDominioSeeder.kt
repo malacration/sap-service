@@ -33,7 +33,7 @@ class CobrancaDominioSeeder(
         )
 
         val acao = listOf(
-            "1" to "WATTS",
+            "1" to "WhatsApp",
             "2" to "PROCESSO INTERNO",
             "3" to "EMAIL",
             "4" to "LIGAÇÃO",

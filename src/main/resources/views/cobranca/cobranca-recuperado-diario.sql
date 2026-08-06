@@ -1,0 +1,21 @@
+SELECT
+    r."DocDate",
+    sum(l."SumApplied") AS "Recuperado",
+    count(DISTINCT NS."DocEntry") AS "Documentos"
+FROM RCT2 l
+    INNER JOIN ORCT r ON r."DocEntry" = l."DocNum"
+    INNER JOIN OINV NS ON NS."DocEntry" = l."DocEntry"
+    INNER JOIN "@COB_TITULO" C
+         ON C."U_Tipo" = 'NF' AND C."U_DocEntry" = l."DocEntry" AND C."U_InstlmntID" = l."InstId"
+WHERE
+    (r."Canceled" = 'N' OR r."Canceled" IS NULL)
+    AND l."InvType" = 13
+    AND r."DocDate" >= :de
+    AND r."DocDate" <= :ate
+    AND EXISTS(SELECT 1 FROM "@COB_TITULO_L" H WHERE H."Code" = C."Code" AND H."U_Data" <= r."DocDate")
+    AND (NS."BPLId"   = :filial   OR NS."BPLId"   < :filialIsFilter)
+    AND (NS."SlpCode" = :vendedor OR NS."SlpCode" < :vendedorIsFilter)
+GROUP BY
+    r."DocDate"
+ORDER BY
+    r."DocDate"
