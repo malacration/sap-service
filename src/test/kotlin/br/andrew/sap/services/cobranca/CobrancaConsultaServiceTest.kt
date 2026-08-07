@@ -317,6 +317,52 @@ class CobrancaConsultaServiceTest {
     }
 
     @Test
+    fun `adiantamento para de puxar pagina do SAP assim que ja tem o suficiente pra pagina pedida`() {
+        // Antes o adiantamento vinha de getAll: varria a view ate o fim em toda chamada, mesmo
+        // pra montar so a primeira tela. Com 20 linhas por pagina no SAP, isso era uma ida e
+        // volta a mais a cada 20 adiantamentos em aberto - custo fixo que crescia sozinho.
+        whenever(sqlQueriesService.execute(eq("cobranca-titulos.sql"), any<List<Parameter>>())).thenReturn(odataVazia())
+        whenever(sqlQueriesService.execute(eq("cobranca-titulos-adiantamento.sql"), any<List<Parameter>>()))
+            .thenReturn(
+                odataComAdiantamentos(
+                    adiantamento(diasAtraso = 30, contratoDocNum = null),
+                    adiantamento(diasAtraso = 20, contratoDocNum = null),
+                    proximaPagina = "pagina-2-do-adiantamento",
+                )
+            )
+
+        val resultado = service.listar(admin, pagina = 0, tamanhoPagina = 2)
+
+        assertEquals(2, resultado.size)
+        verify(sqlQueriesService, never()).nextLink("pagina-2-do-adiantamento")
+    }
+
+    @Test
+    fun `adiantamento continua puxando pagina nova enquanto faltar linha pra completar a pagina`() {
+        whenever(sqlQueriesService.execute(eq("cobranca-titulos.sql"), any<List<Parameter>>())).thenReturn(odataVazia())
+        whenever(sqlQueriesService.execute(eq("cobranca-titulos-adiantamento.sql"), any<List<Parameter>>()))
+            .thenReturn(
+                odataComAdiantamentos(
+                    adiantamento(diasAtraso = 30, contratoDocNum = null),
+                    proximaPagina = "pagina-2-do-adiantamento",
+                )
+            )
+        whenever(sqlQueriesService.nextLink("pagina-2-do-adiantamento"))
+            .thenReturn(
+                odataComAdiantamentos(
+                    adiantamento(diasAtraso = 20, contratoDocNum = null),
+                    adiantamento(diasAtraso = 10, contratoDocNum = null),
+                )
+            )
+
+        val resultado = service.listar(admin, pagina = 0, tamanhoPagina = 3)
+
+        assertEquals(3, resultado.size)
+        // Mais antigo primeiro: o corte por pagina nao pode bagunçar a ordem do merge.
+        assertEquals(listOf(30L, 20L, 10L), resultado.map { it.DiasAtraso })
+    }
+
+    @Test
     fun `semAcompanhamento ligado e desligado manda so o IsFilter, porque nao tem valor a comparar`() {
         whenever(sqlQueriesService.execute(eq("cobranca-titulos.sql"), any<List<Parameter>>())).thenReturn(odataVazia())
 
@@ -406,9 +452,13 @@ class CobrancaConsultaServiceTest {
         return OData(backing)
     }
 
-    private fun odataComAdiantamentos(vararg adiantamentos: CobrancaAdiantamentoSap): OData {
+    private fun odataComAdiantamentos(
+        vararg adiantamentos: CobrancaAdiantamentoSap,
+        proximaPagina: String? = null,
+    ): OData {
         val backing = LinkedHashMap<String, Any?>()
         backing["value"] = adiantamentos.toList()
+        proximaPagina?.let { backing["odata.nextLink"] = it }
         return OData(backing)
     }
 }

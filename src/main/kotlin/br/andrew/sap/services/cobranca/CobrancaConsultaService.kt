@@ -103,43 +103,57 @@ class CobrancaConsultaService(val sqlQueriesService: SqlQueriesService) {
             Parameter("promessaVencidaIsFilter", if (promessaVencidaAte == null) Int.MAX_VALUE else -1),
         )
 
-        // Adiantamentos (ODPI/DPI6): volume normalmente bem menor que o de faturas, entao
-        // busca tudo que casa com o filtro de uma vez. Se isso um dia crescer a ponto de
-        // ficar lento, aplicar aqui o mesmo "buscar so o suficiente" usado para as faturas.
-        val adiantamentos = if (tipo == CobrancaRegistro.TIPO_NOTA_FISCAL) emptyList() else
-            sqlQueriesService.getAll<CobrancaAdiantamentoSap>("cobranca-titulos-adiantamento.sql", parametros)
-                .map { it.toDto() }
-                .filter { passaNosFiltrosLocais(it, diasAtrasoMin, status, cobrador, situacao, situacaoSap, vencimentoDe, vencimentoAte) }
+        // As duas fontes buscam so o suficiente pra pagina pedida (ver buscarAte). Cortar as
+        // DUAS em (pagina+1)*tamanho continua devolvendo a pagina certa porque as duas views ja
+        // vem ordenadas por DueDate, DocNum: um titulo que caia dentro das N primeiras posicoes
+        // do merge nao pode estar depois da posicao N na sua propria lista - se estivesse,
+        // haveria N titulos menores que ele so ali dentro, e ele nao estaria entre os N
+        // primeiros do merge. No pior caso sobra linha pra pagina seguinte, que e recalculada
+        // do zero.
+        val alvo = (pagina + 1) * tamanhoPagina
 
-        // O SAP ja pagina a resposta do SQLQueries sozinho (nextLink). Sem filial/vendedor/
-        // cliente escolhidos isso e a empresa inteira - buscar tudo de uma vez (getAll) fazia
-        // dezenas de idas e voltas pro SAP remoto antes de responder, e a tela travava.
-        // Em vez disso, so busca paginas novas do SAP ate acumular linhas suficientes (depois
-        // dos filtros locais) pra cobrir a pagina pedida. Isso sempre basta mesmo somando os
-        // adiantamentos depois: as N faturas mais antigas buscadas aqui + TODOS os
-        // adiantamentos, ordenados e cortados na pagina certa, nunca deixam faltar fatura -
-        // no pior caso alguma sobra pra pagina seguinte, que e recalculada do zero.
-        val faturas = mutableListOf<CobrancaTitulo>()
-        if (tipo != CobrancaRegistro.TIPO_ADIANTAMENTO) {
-            val alvo = (pagina + 1) * tamanhoPagina
-            var paginaSap = sqlQueriesService.execute("cobranca-titulos.sql", parametros)
-
-            while (paginaSap != null) {
-                faturas.addAll(
-                    paginaSap.tryGetValues<CobrancaTituloSap>()
-                        .map { it.toDto() }
-                        .filter { passaNosFiltrosLocais(it, diasAtrasoMin, status, cobrador, situacao, situacaoSap, vencimentoDe, vencimentoAte) }
-                )
-                if (faturas.size >= alvo || !paginaSap.hasNext())
-                    break
-                paginaSap = sqlQueriesService.nextLink(paginaSap.nextLink())
+        val faturas = if (tipo == CobrancaRegistro.TIPO_ADIANTAMENTO) emptyList() else
+            buscarAte<CobrancaTituloSap>("cobranca-titulos.sql", parametros, alvo) { linhas ->
+                linhas.map { it.toDto() }
+                    .filter { passaNosFiltrosLocais(it, diasAtrasoMin, status, cobrador, situacao, situacaoSap, vencimentoDe, vencimentoAte) }
             }
-        }
+
+        // Adiantamentos (ODPI/DPI6) tem volume bem menor que o de faturas, mas ate aqui vinham
+        // de um getAll: varria a view inteira em TODA chamada, mesmo pra montar so as 20
+        // primeiras linhas. Custo fixo que crescia sozinho - a cada 20 adiantamentos novos em
+        // aberto, mais uma ida e volta ao SAP em toda carga da tela.
+        val adiantamentos = if (tipo == CobrancaRegistro.TIPO_NOTA_FISCAL) emptyList() else
+            buscarAte<CobrancaAdiantamentoSap>("cobranca-titulos-adiantamento.sql", parametros, alvo) { linhas ->
+                linhas.map { it.toDto() }
+                    .filter { passaNosFiltrosLocais(it, diasAtrasoMin, status, cobrador, situacao, situacaoSap, vencimentoDe, vencimentoAte) }
+            }
 
         val combinado = (faturas + adiantamentos).sortedWith(compareBy({ it.DueDate }, { it.DocNum }))
         val inicio = (pagina * tamanhoPagina).coerceAtMost(combinado.size)
         val fim = (inicio + tamanhoPagina).coerceAtMost(combinado.size)
         return combinado.subList(inicio, fim)
+    }
+
+    // O SAP ja pagina a resposta do SQLQueries sozinho (nextLink, 20 linhas por vez). Sem
+    // filial/vendedor/cliente escolhidos a view e a empresa inteira - varrer ate o fim fazia
+    // dezenas de idas e voltas pro SAP remoto antes de responder. Aqui so busca pagina nova
+    // enquanto faltar linha (ja depois do filtro local) pra cobrir a pagina pedida.
+    private inline fun <reified T : Any> buscarAte(
+        view: String,
+        parametros: List<Parameter>,
+        alvo: Int,
+        transformar: (List<T>) -> List<CobrancaTitulo>,
+    ): List<CobrancaTitulo> {
+        val acumulado = mutableListOf<CobrancaTitulo>()
+        var paginaSap = sqlQueriesService.execute(view, parametros)
+
+        while (paginaSap != null) {
+            acumulado.addAll(transformar(paginaSap.tryGetValues<T>()))
+            if (acumulado.size >= alvo || !paginaSap.hasNext())
+                break
+            paginaSap = sqlQueriesService.nextLink(paginaSap.nextLink())
+        }
+        return acumulado
     }
 
     // Todos esses filtros ja sao aplicados no SQL (ver a lista de Parameter acima) - isso aqui
