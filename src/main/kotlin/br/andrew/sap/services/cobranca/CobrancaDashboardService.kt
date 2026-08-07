@@ -22,15 +22,6 @@ import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 
-// Agregacoes do dashboard de cobranca. Diferente do CobrancaConsultaService, aqui nao
-// existe paginacao: cada view devolve poucas dezenas de linhas ja somadas pelo SAP.
-//
-// O preco disso e a quantidade de consultas - faixa de aging nao sai de CASE WHEN no
-// parser do SQLQueries, entao cada faixa e uma janela de vencimento separada, e cada
-// familia de numero tem par NF/adiantamento pra o total da carteira fechar com a tela
-// de titulos. Sao ~16 idas ao SAP por resumo(), e e por isso que o resultado e cacheado
-// (ver "cobranca-dashboard" em CacheConfig) e que a serie mensal mora num endpoint
-// proprio, pra tela pintar em duas ondas em vez de esperar tudo.
 @Service
 class CobrancaDashboardService(val sqlQueriesService: SqlQueriesService) {
 
@@ -43,8 +34,6 @@ class CobrancaDashboardService(val sqlQueriesService: SqlQueriesService) {
         )
     }
 
-    // A chave inclui o usuario porque o escopo de vendedor e resolvido aqui dentro:
-    // sem isso a foto de um vendedor poderia ser servida pra outro.
     @Cacheable(
         "cobranca-dashboard",
         key = "'resumo-' + #auth.getIdInt() + '-' + #filial + '-' + #vendedor + '-' + #de + '-' + #ate + '-' + #hoje",
@@ -80,8 +69,6 @@ class CobrancaDashboardService(val sqlQueriesService: SqlQueriesService) {
             escopo + listOf(Parameter("de", de.toString()), Parameter("ate", ate.toString())),
         )
 
-        // Janela anterior de mesma duracao pro delta do card. Reaproveita a mesma view (ela ja
-        // recebe :de/:ate), entao nao ha SQL novo - so duas consultas a mais, dentro do cache.
         val diasDoPeriodo = ChronoUnit.DAYS.between(de, ate) + 1
         val ateAnterior = de.minusDays(1)
         val deAnterior = ateAnterior.minusDays(diasDoPeriodo - 1)
@@ -140,9 +127,6 @@ class CobrancaDashboardService(val sqlQueriesService: SqlQueriesService) {
         val quantidade = meses.coerceIn(1, 24)
         val primeiroMes = YearMonth.from(hoje).minusMonths((quantidade - 1).toLong())
 
-        // Uma consulta cobre a janela inteira: a view agrupa por data crua de pagamento
-        // e o mes e montado aqui, porque nenhuma funcao de data (MONTH, LEFT, TO_CHAR)
-        // tem precedente nas views do projeto.
         val dias = buscarAgregado<CobrancaRecuperadoDiaSap>(
             "cobranca-recuperado-diario.sql", "cobranca-recuperado-diario-adiantamento.sql",
             escopo(auth, filial, vendedor) + listOf(
@@ -153,8 +137,6 @@ class CobrancaDashboardService(val sqlQueriesService: SqlQueriesService) {
 
         val porMes = dias.groupBy { YearMonth.from(LocalDate.parse(it.DocDate, DateTimeFormatter.BASIC_ISO_DATE)) }
 
-        // Mes sem pagamento tem que aparecer como zero, nao desaparecer do grafico -
-        // buraco na serie faz o leitor achar que o mes nao foi medido.
         return (0 until quantidade).map { indice ->
             val mes = primeiroMes.plusMonths(indice.toLong())
             val linhas = porMes[mes] ?: emptyList()
@@ -167,8 +149,6 @@ class CobrancaDashboardService(val sqlQueriesService: SqlQueriesService) {
         }
     }
 
-    // Mesma regra da consulta de titulos (CobrancaConsultaService): quem nao e
-    // super-vendedor so ve a propria carteira, independente do que mandar no parametro.
     private fun escopo(auth: User, filial: Int?, vendedor: Int?): List<Parameter> {
         val vendedorEfetivo = if (auth.superVendedor() == Int.MAX_VALUE) vendedor else auth.getIdInt()
         return listOf(
@@ -189,8 +169,6 @@ class CobrancaDashboardService(val sqlQueriesService: SqlQueriesService) {
         )
     }
 
-    // Nota fiscal e adiantamento vivem em views separadas porque UNION nao passa no
-    // parser do SQLQueries - o resultado das duas e concatenado aqui.
     private inline fun <reified T : Any> buscarAgregado(
         viewNotaFiscal: String,
         viewAdiantamento: String,

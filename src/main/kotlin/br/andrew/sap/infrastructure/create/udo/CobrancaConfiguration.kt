@@ -37,10 +37,6 @@ class CobrancaConfiguration(
         ).forEach { tableService.findOrCreate(it) }
 
         listOf(
-            // "NF" (fatura, OINV) ou "AD" (adiantamento, ODPI) - OBRIGATÓRIO na chave: o
-            // DocEntry de fatura e de adiantamento vêm de contadores independentes no SAP
-            // (ObjType 13 x 203), então sem esse campo uma fatura e um adiantamento com o
-            // mesmo DocEntry+Parcela colidiriam e sobrescreveriam um ao outro.
             FieldMd("Tipo", "Tipo (NF/AD)", "@COB_TITULO", DbType.db_Alpha),
             FieldMd("DocEntry", "Nº Doc.", "@COB_TITULO", DbType.db_Numeric),
             FieldMd("InstlmntID", "Nº Parcela", "@COB_TITULO", DbType.db_Numeric),
@@ -59,9 +55,6 @@ class CobrancaConfiguration(
 
         listOf(
             FieldMd("Data", "Data", "@COB_TITULO_L", DbType.db_Date),
-            // Tabela de linha (bott_MasterDataLines) nao ganha CreateDate/CreateTime do SAP
-            // como a master ganha - confirmado direto no banco (so tem LineId/Object/LogInst
-            // + os campos U_*). Sem um campo proprio pra hora, so da pra saber o dia da acao.
             FieldMd("Hora", "Hora", "@COB_TITULO_L", DbType.db_Alpha),
             FieldMd("Usuario", "Usuário", "@COB_TITULO_L", DbType.db_Alpha),
             FieldMd("Status", "Status", "@COB_TITULO_L", DbType.db_Alpha),
@@ -93,15 +86,8 @@ class CobrancaConfiguration(
         )
         udoService.findOrCreate(cobDominio)
 
-        // A key antiga ("ukCobTit") so tinha (DocEntry, InstlmntID) - sem o Tipo ela
-        // bloquearia uma fatura e um adiantamento genuinamente diferentes que calhem de
-        // ter o mesmo DocEntry+Parcela. O formato certo pra apagar essa key via Service
-        // Layer nao foi encontrado (nem TableName+KeyName nem KeyName sozinho funcionaram),
-        // entao ela fica para trás - se isso incomodar, remova manualmente pelo SAP B1
-        // (Ferramentas > Personalização > Chaves de Tabelas Definidas pelo Usuário).
         listOf(
             UserKeyMD(
-                // KeyName tem limite curto no SAP (visto em produção: 11 chars já é "Value too long")
                 "ukCobTit2", "@COB_TITULO", YesNo.tYES,
                 listOf(Elements("Tipo"), Elements("DocEntry"), Elements("InstlmntID"))
             ),

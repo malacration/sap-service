@@ -52,11 +52,6 @@ class CobrancaDominioService(env: SapEnvrioment, restTemplate: RestTemplate, aut
             salvarComRetentativa(CobrancaDominio(code, tipo, codigo, descricao, ordem, "Y"))
     }
 
-    // Logo apos o boot criar os UDFs de @COB_DOMINIO, o Service Layer pode demorar
-    // alguns segundos pra reconhecer o campo novo e recusa o primeiro POST com
-    // "Property '...' is invalid" (armadilha documentada no CLAUDE.md do backend).
-    // Como o seeder grava 54 linhas em sequencia logo no boot, isso e reproduzivel;
-    // tenta de novo com espera crescente antes de derrubar a aplicacao.
     private fun salvarComRetentativa(dominio: CobrancaDominio) {
         val tentativas = 5
         val esperaBaseMs = 500L

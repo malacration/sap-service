@@ -7,9 +7,6 @@ import com.fasterxml.jackson.databind.PropertyNamingStrategies
 import com.fasterxml.jackson.databind.annotation.JsonNaming
 import java.math.BigDecimal
 
-// DTO de resposta ao front: os campos calculados (Saldo, DiasAtraso, SituacaoSap) ja
-// vem prontos daqui, calculados em Kotlin por CobrancaTituloSap.toDto() - a SQLQueries
-// do SAP so devolve as colunas cruas.
 @JsonNaming(PropertyNamingStrategies.UpperCamelCaseStrategy::class)
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
@@ -19,12 +16,6 @@ class CobrancaTitulo(
     val DocNum: Int,
     val Serial: String?,
     val Series: Int?,
-    // Sem @get:JsonProperty explícito, a serialização de saída (o JSON que vai pro front)
-    // vira "Bplid"/"Bplname" (o UpperCamelCaseStrategy mexe em nomes com 3+ maiúsculas
-    // seguidas no início) e o front, que espera "BPLId"/"BPLName", nunca acha o valor.
-    // "@JsonProperty" sem alvo explícito na property de um construtor Kotlin vai pro
-    // parâmetro (usado na leitura) e não pro getter (usado na escrita) - por isso o
-    // "@get:" é obrigatório aqui, não é só estilo.
     @get:JsonProperty("BPLId") val BPLId: Int,
     @get:JsonProperty("BPLName") val BPLName: String?,
     val CardCode: String,

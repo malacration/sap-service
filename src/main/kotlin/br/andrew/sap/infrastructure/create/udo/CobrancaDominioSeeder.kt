@@ -9,8 +9,6 @@ import org.springframework.context.annotation.Profile
 @Profile("!test")
 @ConditionalOnProperty(value = ["fields.cobranca"], havingValue = "true", matchIfMissing = false)
 class CobrancaDominioSeeder(
-    // dependência não usada diretamente: força o Spring a criar as UDTs/UDFs
-    // do CobrancaConfiguration antes de tentar semear dados nelas
     cobrancaConfiguration: CobrancaConfiguration,
     val service: CobrancaDominioService
 ) {

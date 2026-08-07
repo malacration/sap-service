@@ -10,11 +10,6 @@ import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 
-// Espelha 1:1 as colunas de cobranca-titulos-adiantamento.sql (ODPI/DPI6). O DocEntry do
-// adiantamento vem de um contador independente do DocEntry da fatura (ObjType 203 x 13) -
-// por isso o Tipo entra na chave da UDT (ver CobrancaConfiguration/CobrancaRegistro.code).
-// Sem COALESCE (sem precedente no parser do SQLQueries do SAP B1): o fallback do "NF" pro
-// numero do proprio adiantamento quando nao esta ligado a um contrato e feito aqui.
 @JsonNaming(PropertyNamingStrategies.UpperCamelCaseStrategy::class)
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
@@ -47,8 +42,6 @@ class CobrancaAdiantamentoSap(
     fun toDto(hoje: LocalDate = LocalDate.now()): CobrancaTitulo {
         val saldo = InsTotal.subtract(PaidToDate)
         val diasAtraso = ChronoUnit.DAYS.between(LocalDate.parse(DueDate, DateTimeFormatter.BASIC_ISO_DATE), hoje)
-        // Ver comentario equivalente em CobrancaTituloSap.toDto - situacao vem do status da
-        // parcela no SAP, nao do saldo calculado.
         val situacaoSap = if (StatusParcela == "O") "ABERTO" else "PAGO"
         return CobrancaTitulo(
             Tipo = CobrancaRegistro.TIPO_ADIANTAMENTO,

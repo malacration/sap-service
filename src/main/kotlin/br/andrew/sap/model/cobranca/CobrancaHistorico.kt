@@ -17,9 +17,6 @@ class CobrancaHistorico(
     val U_Situacao: String? = null,
     val U_Ocorrencia: String? = null,
     val U_Observacao: String? = null,
-    // Linha (bott_MasterDataLines) nao ganha CreateDate/CreateTime do SAP como a
-    // master ganha - confirmado direto no banco. Por isso carimbamos a hora nós
-    // mesmos nesse campo, em vez de depender de um campo de sistema.
     val U_Hora: String? = null,
 ) {
     var LineId: Int? = null

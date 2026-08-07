@@ -10,10 +10,6 @@ import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 
-// Espelha 1:1 as colunas de cobranca-titulos.sql. O SQLQueries do SAP B1 usa um parser
-// proprio (mais limitado que o HANA puro) que nao reconhece IFNULL/DAYS_BETWEEN/CASE
-// WHEN nesse contexto - por isso os campos derivados (saldo, dias em atraso, situacao)
-// sao calculados aqui em Kotlin, do mesmo jeito que ParcelasAberto/Installment ja fazem.
 @JsonNaming(PropertyNamingStrategies.UpperCamelCaseStrategy::class)
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
@@ -47,10 +43,6 @@ class CobrancaTituloSap(
     fun toDto(hoje: LocalDate = LocalDate.now()): CobrancaTitulo {
         val saldo = InsTotal.subtract(PaidToDate)
         val diasAtraso = ChronoUnit.DAYS.between(LocalDate.parse(DueDate, DateTimeFormatter.BASIC_ISO_DATE), hoje)
-        // Situacao vem do proprio status da parcela no SAP ('O' aberta / 'C' fechada), nao do
-        // saldo calculado (InsTotal - PaidToDate) - esse saldo pode dar negativo por rateio de
-        // moeda/adiantamento vinculado mesmo com a parcela ainda aberta no SAP, o que classificava
-        // titulo em aberto como "PAGO" errado.
         val situacaoSap = if (StatusParcela == "O") "ABERTO" else "PAGO"
         return CobrancaTitulo(
             Tipo = CobrancaRegistro.TIPO_NOTA_FISCAL,

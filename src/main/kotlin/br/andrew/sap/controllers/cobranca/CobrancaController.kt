@@ -111,9 +111,6 @@ class CobrancaController(
         return ResponseEntity.ok(service.registrarAcaoEmLote(itens, auth))
     }
 
-    // O dashboard vem em duas rotas de proposito: o resumo custa ~16 consultas ao SAP e a
-    // serie mensal custa mais uma paginada, entao separando a tela pinta em duas ondas em
-    // vez de esperar tudo pra mostrar o primeiro numero.
     @GetMapping("dashboard")
     fun dashboard(
         auth: Authentication,
