@@ -14,6 +14,9 @@ uzzipay.contas[0].tokenJwt=jwt
 pix.schedule.enable=false
 pix.schedule.delay-minutes=5
 pix.schedule.consulta-interval-minutes=5
+# Taxa de mora do PIX em % AO DIA, multiplicada pelos dias de atraso. 0.1 = 3% ao mes (pro rata die); 0 = sem juros.
+# Vale para o PIX de titulo (contas a receber) e para o PIX dos boletos de contrato de venda futura.
+pix.juros.mora.percent=0.1
 
 # ----- Autenticacao via Keycloak (toggle) -----
 # Quando habilitado, o backend passa a aceitar tokens do Keycloak (RS256, via
