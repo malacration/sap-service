@@ -15,6 +15,7 @@ WHERE
     AND EXISTS(SELECT 1 FROM "@COB_TITULO_L" H WHERE H."Code" = C."Code" AND H."U_Data" <= r."DocDate")
     AND (NS."BPLId"   = :filial   OR NS."BPLId"   < :filialIsFilter)
     AND (NS."SlpCode" = :vendedor OR NS."SlpCode" < :vendedorIsFilter)
+    AND NS."CardCode" NOT IN (SELECT "DflCust" FROM OBPL WHERE "DflCust" IS NOT NULL)
 GROUP BY
     r."DocDate"
 ORDER BY

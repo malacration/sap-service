@@ -16,5 +16,6 @@ WHERE
     AND P."DueDate" <= :vencimentoAte
     AND (NS."BPLId"   = :filial   OR NS."BPLId"   < :filialIsFilter)
     AND (NS."SlpCode" = :vendedor OR NS."SlpCode" < :vendedorIsFilter)
+    AND NS."CardCode" NOT IN (SELECT "DflCust" FROM OBPL WHERE "DflCust" IS NOT NULL)
 GROUP BY
     NS."BPLId", NS."BPLName", C."U_Status"

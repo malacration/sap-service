@@ -30,4 +30,5 @@ WHERE
     AND (NS."BPLId"    = :filial   OR NS."BPLId"    < :filialIsFilter)
     AND (NS."SlpCode"  = :vendedor OR NS."SlpCode"  < :vendedorIsFilter)
     AND (NS."CardCode" = :cliente  OR NS."CardCode" < :clienteIsFilter)
+    AND NS."CardCode" NOT IN (SELECT "DflCust" FROM OBPL WHERE "DflCust" IS NOT NULL)
 ORDER BY P."DueDate", NS."DocNum"

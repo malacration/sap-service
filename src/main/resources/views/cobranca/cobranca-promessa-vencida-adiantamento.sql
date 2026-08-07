@@ -15,5 +15,6 @@ WHERE
     AND C."U_DataPromessa" <= :data
     AND (T0."BPLId"   = :filial   OR T0."BPLId"   < :filialIsFilter)
     AND (T0."SlpCode" = :vendedor OR T0."SlpCode" < :vendedorIsFilter)
+    AND T0."CardCode" NOT IN (SELECT "DflCust" FROM OBPL WHERE "DflCust" IS NOT NULL)
 GROUP BY
     T0."BPLId", T0."BPLName", C."U_Cobrador"

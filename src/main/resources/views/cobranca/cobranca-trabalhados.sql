@@ -10,5 +10,6 @@ WHERE
     AND H."U_Data" <= :ate
     AND (NS."BPLId"   = :filial   OR NS."BPLId"   < :filialIsFilter)
     AND (NS."SlpCode" = :vendedor OR NS."SlpCode" < :vendedorIsFilter)
+    AND NS."CardCode" NOT IN (SELECT "DflCust" FROM OBPL WHERE "DflCust" IS NOT NULL)
 GROUP BY
     H."U_Usuario"
