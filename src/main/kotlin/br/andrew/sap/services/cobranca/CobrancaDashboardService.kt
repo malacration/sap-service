@@ -150,7 +150,7 @@ class CobrancaDashboardService(val sqlQueriesService: SqlQueriesService) {
     }
 
     private fun escopo(auth: User, filial: Int?, vendedor: Int?): List<Parameter> {
-        val vendedorEfetivo = if (auth.superVendedor() == Int.MAX_VALUE) vendedor else auth.getIdInt()
+        val vendedorEfetivo = CobrancaEscopo.vendedorEfetivo(auth, vendedor)
         return listOf(
             Parameter("filial", filial ?: Int.MAX_VALUE),
             Parameter("filialIsFilter", if (filial == null) Int.MAX_VALUE else -1),

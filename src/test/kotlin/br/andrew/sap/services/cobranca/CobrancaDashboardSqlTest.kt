@@ -82,19 +82,39 @@ class CobrancaDashboardSqlTest {
     }
 
     @Test
-    fun `recuperado so conta pagamento que veio DEPOIS de existir acao de cobranca`() {
+    fun `recuperado diario so conta pagamento que veio DEPOIS de existir acao de cobranca`() {
         // Este EXISTS e o que separa "a cobranca trouxe de volta" de "o cliente pagou
         // sozinho". Sem ele o dashboard credita ao time todo pagamento de titulo que por
         // acaso tem registro - ou seja, mente a favor de quem esta sendo medido.
-        listOf(
-            "cobranca-recuperado.sql", "cobranca-recuperado-adiantamento.sql",
-            "cobranca-recuperado-diario.sql", "cobranca-recuperado-diario-adiantamento.sql",
-        ).forEach { nome ->
+        listOf("cobranca-recuperado-diario.sql", "cobranca-recuperado-diario-adiantamento.sql").forEach { nome ->
             assertTrue(
                 views.getValue(nome).contains(
                     "EXISTS(SELECT 1 FROM \"@COB_TITULO_L\" H WHERE H.\"Code\" = C.\"Code\" AND H.\"U_Data\" <= r.\"DocDate\")"
                 ),
                 "$nome perdeu o EXISTS que exige acao registrada antes do pagamento"
+            )
+        }
+    }
+
+    @Test
+    fun `recuperado por cobrador so conta pagamento que veio DEPOIS de existir acao, e atribui ao cobrador daquela acao`() {
+        // O INNER JOIN em H (em vez de C) exige uma acao registrada antes do pagamento -
+        // sem nenhuma linha de historico anterior, o join nao produz linha nenhuma. E o
+        // NOT EXISTS auto-referenciado pega so a acao MAIS RECENTE antes do pagamento, pra
+        // atribuir a recuperacao a quem era responsavel naquele momento, nao a quem e o
+        // cobrador atual do titulo (C."U_Cobrador" muda se o titulo for reatribuido depois).
+        listOf("cobranca-recuperado.sql", "cobranca-recuperado-adiantamento.sql").forEach { nome ->
+            val sql = views.getValue(nome)
+            assertTrue(sql.contains("INNER JOIN \"@COB_TITULO_L\" H"), "$nome nao junta com o historico")
+            assertTrue(sql.contains("H.\"Code\" = C.\"Code\" AND H.\"U_Data\" <= r.\"DocDate\""), nome)
+            assertTrue(
+                sql.contains("H2.\"U_Data\" > H.\"U_Data\" OR (H2.\"U_Data\" = H.\"U_Data\" AND H2.\"LineId\" > H.\"LineId\")"),
+                "$nome nao restringe a linha de historico mais recente antes do pagamento"
+            )
+            assertTrue(sql.contains("H.\"U_Cobrador\""), "$nome deve agrupar pelo cobrador da linha de historico, nao do mestre")
+            assertFalse(
+                sql.contains("C.\"U_Cobrador\""),
+                "$nome nao pode mais ler o cobrador do registro mestre - ele e mutavel e reflete a acao mais recente"
             )
         }
     }

@@ -201,4 +201,9 @@ class TitulosEmailSqlTest {
             "nao deve mais ler o UDF antigo do INV6"
         )
     }
+
+    @Test
+    fun `usa o Tipo NF ao juntar com a UDT, pra nao colidir com adiantamento de mesmo DocEntry`() {
+        assertTrue(sql.contains("C.\"U_Tipo\" = 'NF'"))
+    }
 }

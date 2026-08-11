@@ -14,15 +14,26 @@ import br.andrew.sap.model.envrioments.SapEnvrioment
 import br.andrew.sap.services.AuthService
 import br.andrew.sap.services.abstracts.EntitiesService
 import org.springframework.cache.annotation.CacheEvict
+import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.web.client.RestTemplate
+import org.springframework.web.server.ResponseStatusException
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
+import java.util.concurrent.ConcurrentHashMap
 
 @Service
-class CobrancaService(env: SapEnvrioment, restTemplate: RestTemplate, authService: AuthService)
-    : EntitiesService<CobrancaRegistro>(env, restTemplate, authService) {
+class CobrancaService(
+    env: SapEnvrioment,
+    restTemplate: RestTemplate,
+    authService: AuthService,
+    val consultaService: CobrancaConsultaService,
+) : EntitiesService<CobrancaRegistro>(env, restTemplate, authService) {
+
+    // Lock em memoria - so protege dentro do mesmo processo. Nao cobre a janela breve de
+    // deploy com 2 instancias simultaneas, aceita como risco residual (ver PR).
+    private val locksPorTitulo = ConcurrentHashMap<String, Any>()
 
     override fun path(): String = "/b1s/v1/COB_TITULO"
 
@@ -46,43 +57,45 @@ class CobrancaService(env: SapEnvrioment, restTemplate: RestTemplate, authServic
             U_Observacao = req.observacao,
         )
 
-        val existente = buscarPorCode(code)
+        synchronized(locksPorTitulo.computeIfAbsent(code) { Any() }) {
+            val existente = buscarPorCode(code)
 
-        if (existente == null) {
-            val registro = CobrancaRegistro(
-                Code = code,
-                U_Tipo = tipo,
-                U_DocEntry = docEntry,
-                U_InstlmntID = instlmntId,
-                U_Status = req.status,
-                U_Acao = req.acao,
-                U_Situacao = req.situacao,
-                U_Ocorrencia = req.ocorrencia,
-                U_Observacao = req.observacao,
-                U_Cobrador = cobrador,
-                U_DataAcao = agora,
-                U_DataPromessa = req.dataPromessa,
-                historico = mutableListOf(novaLinha),
+            if (existente == null) {
+                val registro = CobrancaRegistro(
+                    Code = code,
+                    U_Tipo = tipo,
+                    U_DocEntry = docEntry,
+                    U_InstlmntID = instlmntId,
+                    U_Status = req.status,
+                    U_Acao = req.acao,
+                    U_Situacao = req.situacao,
+                    U_Ocorrencia = req.ocorrencia,
+                    U_Observacao = req.observacao,
+                    U_Cobrador = cobrador,
+                    U_DataAcao = agora,
+                    U_DataPromessa = req.dataPromessa,
+                    historico = mutableListOf(novaLinha),
+                )
+                return save(registro).tryGetValue()
+            }
+
+            existente.historico.add(novaLinha)
+
+            val payload = mutableMapOf<String, Any?>(
+                "U_Cobrador" to cobrador,
+                "U_DataAcao" to agora,
+                "COB_TITULO_LCollection" to existente.historico,
             )
-            return save(registro).tryGetValue()
+            req.status?.let { payload["U_Status"] = it }
+            req.acao?.let { payload["U_Acao"] = it }
+            req.situacao?.let { payload["U_Situacao"] = it }
+            req.ocorrencia?.let { payload["U_Ocorrencia"] = it }
+            req.observacao?.let { payload["U_Observacao"] = it }
+            (req.dataPromessa ?: existente.U_DataPromessa)?.let { payload["U_DataPromessa"] = it }
+
+            update(payload, code)
+            return buscarPorCode(code) ?: throw CobrancaException("Falha ao reler o registro de cobrança $code")
         }
-
-        existente.historico.add(novaLinha)
-
-        val payload = mutableMapOf<String, Any?>(
-            "U_Cobrador" to cobrador,
-            "U_DataAcao" to agora,
-            "COB_TITULO_LCollection" to existente.historico,
-        )
-        req.status?.let { payload["U_Status"] = it }
-        req.acao?.let { payload["U_Acao"] = it }
-        req.situacao?.let { payload["U_Situacao"] = it }
-        req.ocorrencia?.let { payload["U_Ocorrencia"] = it }
-        req.observacao?.let { payload["U_Observacao"] = it }
-        (req.dataPromessa ?: existente.U_DataPromessa)?.let { payload["U_DataPromessa"] = it }
-
-        update(payload, code)
-        return buscarPorCode(code) ?: throw CobrancaException("Falha ao reler o registro de cobrança $code")
     }
 
     @CacheEvict("cobranca-dashboard", allEntries = true)
@@ -97,10 +110,19 @@ class CobrancaService(env: SapEnvrioment, restTemplate: RestTemplate, authServic
         }
     }
 
-    fun historico(tipo: String, docEntry: Int, instlmntId: Int): List<CobrancaHistorico> {
+    fun historico(auth: User, tipo: String, docEntry: Int, instlmntId: Int): List<CobrancaHistorico> {
+        validarEscopo(auth, tipo, docEntry)
         val code = CobrancaRegistro.code(tipo, docEntry, instlmntId)
         val registro = buscarPorCode(code) ?: return emptyList()
         return registro.historico.sortedByDescending { it.LineId }
+    }
+
+    private fun validarEscopo(auth: User, tipo: String, docEntry: Int) {
+        if (CobrancaEscopo.temAcessoTotal(auth))
+            return
+        val slpCode = consultaService.slpCodeDoTitulo(tipo, docEntry)
+        if (slpCode == null || slpCode != auth.getIdInt())
+            throw ResponseStatusException(HttpStatus.FORBIDDEN, "Este título não pertence ao seu escopo de vendedor")
     }
 
     private fun buscarPorCode(code: String): CobrancaRegistro? {

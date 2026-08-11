@@ -6,6 +6,7 @@ import br.andrew.sap.model.cobranca.CobrancaAdiantamentoSap
 import br.andrew.sap.model.cobranca.CobrancaRegistro
 import br.andrew.sap.model.cobranca.CobrancaTitulo
 import br.andrew.sap.model.cobranca.CobrancaTituloSap
+import br.andrew.sap.model.cobranca.CobrancaTituloVendedorSap
 import br.andrew.sap.services.abstracts.SqlQueriesService
 import org.springframework.stereotype.Service
 import java.time.LocalDate
@@ -45,7 +46,7 @@ class CobrancaConsultaService(val sqlQueriesService: SqlQueriesService) {
         pagina: Int = 0,
         tamanhoPagina: Int = 20,
     ): List<CobrancaTitulo> {
-        val vendedorEfetivo = if (auth.superVendedor() == Int.MAX_VALUE) vendedor else auth.getIdInt()
+        val vendedorEfetivo = CobrancaEscopo.vendedorEfetivo(auth, vendedor)
 
         val dataEfetiva = data.minusDays((diasAtrasoMin ?: 0).coerceAtLeast(0).toLong())
         val statusParcela = statusParcelaDe(situacaoSap)
@@ -91,6 +92,15 @@ class CobrancaConsultaService(val sqlQueriesService: SqlQueriesService) {
         val inicio = (pagina * tamanhoPagina).coerceAtMost(combinado.size)
         val fim = (inicio + tamanhoPagina).coerceAtMost(combinado.size)
         return combinado.subList(inicio, fim)
+    }
+
+    fun slpCodeDoTitulo(tipo: String, docEntry: Int): Int? {
+        val view = if (tipo == CobrancaRegistro.TIPO_ADIANTAMENTO)
+            "cobranca-titulo-vendedor-adiantamento.sql"
+        else
+            "cobranca-titulo-vendedor.sql"
+        return sqlQueriesService.getAll<CobrancaTituloVendedorSap>(view, listOf(Parameter("docEntry", docEntry)))
+            .firstOrNull()?.SlpCode
     }
 
     private inline fun <reified T : Any> buscarAte(

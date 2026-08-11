@@ -84,8 +84,11 @@ class CobrancaController(
         @PathVariable tipo: String,
         @PathVariable docEntry: Int,
         @PathVariable instlmntId: Int,
-    ): List<CobrancaHistorico> {
-        return service.historico(tipo, docEntry, instlmntId)
+        auth: Authentication,
+    ): ResponseEntity<List<CobrancaHistorico>> {
+        if (auth !is User)
+            return ResponseEntity.noContent().build()
+        return ResponseEntity.ok(service.historico(auth, tipo, docEntry, instlmntId))
     }
 
     @PostMapping("titulos/{tipo}/{docEntry}/{instlmntId}/acao")

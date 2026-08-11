@@ -27,18 +27,25 @@ import org.springframework.http.HttpMethod
 import org.springframework.http.RequestEntity
 import org.springframework.http.ResponseEntity
 import org.springframework.web.client.RestTemplate
+import org.springframework.web.server.ResponseStatusException
 import java.net.URI
+import java.util.concurrent.atomic.AtomicReference
 
 class CobrancaServiceTest {
 
     private val restTemplate = mock<RestTemplate>()
     private val env = SapEnvrioment("https://sap.local", "manager", "senha", "SBODEMO")
     private val authService = AuthService(env, restTemplate)
-    private val service = CobrancaService(env, restTemplate, authService)
+    private val consultaService = mock<CobrancaConsultaService>()
+    private val service = CobrancaService(env, restTemplate, authService, consultaService)
 
     private val cobradora = User(
         "60", "Fulano de Tal", UserOriginEnum.SalePerson, "fulano",
         bussinesPlace = listOf(), roles = listOf("vendedor")
+    )
+    private val admin = User(
+        "1", "Admin", UserOriginEnum.EmployeesInfo, "admin",
+        bussinesPlace = listOf(), roles = listOf("admin")
     )
 
     @BeforeEach
@@ -201,6 +208,85 @@ class CobrancaServiceTest {
         assertFalse(resultado[1].success)
         assertEquals(2, resultado[1].docEntry)
         assertTrue(resultado[1].error?.isNotBlank() == true)
+    }
+
+    @Test
+    fun `duas acoes concorrentes no mesmo titulo nao perdem nenhuma linha de historico`() {
+        val estadoAtual = AtomicReference(
+            CobrancaRegistro(Code = "NF-500-1", U_Tipo = "NF", U_DocEntry = 500, U_InstlmntID = 1, historico = mutableListOf())
+        )
+
+        whenever(restTemplate.exchange(any<RequestEntity<*>>(), eq(OData::class.java)))
+            .thenAnswer { invocation ->
+                val request = invocation.getArgument<RequestEntity<*>>(0)
+                when (request.method) {
+                    HttpMethod.GET -> {
+                        Thread.sleep(20)
+                        ResponseEntity.ok(odataLista(listOf(estadoAtual.get())))
+                    }
+                    HttpMethod.PATCH -> {
+                        val corpo = request.body as Map<*, *>
+                        @Suppress("UNCHECKED_CAST")
+                        val novoHistorico = corpo["COB_TITULO_LCollection"] as MutableList<CobrancaHistorico>
+                        estadoAtual.set(estadoAtual.get().apply { historico = novoHistorico })
+                        ResponseEntity.ok(OData())
+                    }
+                    else -> throw AssertionError("Metodo inesperado: ${request.method}")
+                }
+            }
+
+        val cobradorA = User("60", "Cobrador A", UserOriginEnum.SalePerson, "a", bussinesPlace = listOf(), roles = listOf("vendedor"))
+        val cobradorB = User("61", "Cobrador B", UserOriginEnum.SalePerson, "b", bussinesPlace = listOf(), roles = listOf("vendedor"))
+
+        val threadA = Thread { service.registrarAcao("NF", 500, 1, CobrancaAcaoRequest(observacao = "acao A"), cobradorA) }
+        val threadB = Thread { service.registrarAcao("NF", 500, 1, CobrancaAcaoRequest(observacao = "acao B"), cobradorB) }
+        threadA.start()
+        threadB.start()
+        threadA.join()
+        threadB.join()
+
+        assertEquals(2, estadoAtual.get().historico.size, "as duas acoes concorrentes devem aparecer no historico final")
+    }
+
+    @Test
+    fun `vendedor comum ve o historico do proprio titulo`() {
+        whenever(consultaService.slpCodeDoTitulo("NF", 500)).thenReturn(60)
+        whenever(restTemplate.exchange(any<RequestEntity<*>>(), eq(OData::class.java)))
+            .thenReturn(ResponseEntity.ok(odataLista(listOf(CobrancaRegistro(Code = "NF-500-1", U_Tipo = "NF", U_DocEntry = 500, U_InstlmntID = 1)))))
+
+        val historico = service.historico(cobradora, "NF", 500, 1)
+
+        assertTrue(historico.isEmpty())
+    }
+
+    @Test
+    fun `vendedor comum nao ve historico de titulo de outro vendedor`() {
+        whenever(consultaService.slpCodeDoTitulo("NF", 500)).thenReturn(99)
+
+        assertThrows(ResponseStatusException::class.java) {
+            service.historico(cobradora, "NF", 500, 1)
+        }
+        verify(restTemplate, never()).exchange(any<RequestEntity<*>>(), eq(OData::class.java))
+    }
+
+    @Test
+    fun `vendedor comum nao ve historico de titulo que nao existe no SAP`() {
+        whenever(consultaService.slpCodeDoTitulo("NF", 500)).thenReturn(null)
+
+        assertThrows(ResponseStatusException::class.java) {
+            service.historico(cobradora, "NF", 500, 1)
+        }
+    }
+
+    @Test
+    fun `admin ve historico de qualquer titulo, sem consultar o SlpCode`() {
+        whenever(restTemplate.exchange(any<RequestEntity<*>>(), eq(OData::class.java)))
+            .thenReturn(ResponseEntity.ok(odataLista(emptyList<CobrancaRegistro>())))
+
+        val historico = service.historico(admin, "NF", 500, 1)
+
+        assertTrue(historico.isEmpty())
+        verify(consultaService, never()).slpCodeDoTitulo(any(), any())
     }
 
     private fun odataLista(value: List<Any?>): OData {
