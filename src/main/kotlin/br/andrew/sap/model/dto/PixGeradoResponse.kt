@@ -7,7 +7,6 @@ import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.PropertyNamingStrategies
 import com.fasterxml.jackson.databind.annotation.JsonNaming
-import java.time.LocalDate
 
 @JsonNaming(PropertyNamingStrategies.UpperCamelCaseStrategy::class)
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -48,21 +47,8 @@ data class PixGeradoResponse(
         U_pix_due_date = installment.U_pix_consultar_ate,
         docEntry = installment.DocEntry,
         taxaJurosMoraPercent = taxaJurosMoraPercent,
-        jurosValor = calcularJuros(installment, taxaJurosMoraPercent),
+        jurosValor = installment.calcularJurosPix(taxaJurosMoraPercent),
         valorTitulo = installment.total,
-        valorTotal = installment.total + calcularJuros(installment, taxaJurosMoraPercent)
+        valorTotal = installment.total + installment.calcularJurosPix(taxaJurosMoraPercent)
     )
-
-    companion object {
-        private fun calcularJuros(installment: Installment, taxaJurosMoraPercent: Double): Double {
-            if (taxaJurosMoraPercent <= 0.0) {
-                return 0.0
-            }
-            val dueDate = installment.dueDate ?: return 0.0
-            val dueDateLocal = LocalDate.parse(dueDate)
-            val now = LocalDate.now()
-            val dataReferencia = if (dueDateLocal.isBefore(now)) now.plusDays(1) else now
-            return installment.calcularJurosSimplesPorDia(taxaJurosMoraPercent, dataReferencia)
-        }
-    }
 }

@@ -127,7 +127,7 @@ class DownPaymentService(env: SapEnvrioment,
         return get(filter,orderBy).tryGetValues()
     }
 
-    fun getByContratoVendaFuturaStatus(id: Int): List<BoletoVf> {
+    fun getByContratoVendaFuturaStatus(id: Int, jurosMoraPercent: Double = 0.0): List<BoletoVf> {
         val parametros = listOf(Parameter("idVendaFutura",id),)
         val statusSql = sqlQueriesService.execute("boletos-status.sql",parametros)
             ?.tryGetValues<BoletoVf>()
@@ -144,9 +144,9 @@ class DownPaymentService(env: SapEnvrioment,
                 val devolucao = devolucaoPorDocNum[downPayment.docNum]
                 val installments = downPayment.documentInstallments.orEmpty()
                 if(installments.isEmpty()) {
-                    listOf(BoletoVf.from(downPayment, devolucao = devolucao))
+                    listOf(BoletoVf.from(downPayment, devolucao = devolucao, jurosMoraPercent = jurosMoraPercent))
                 } else {
-                    installments.map { BoletoVf.from(downPayment, it, devolucao) }
+                    installments.map { BoletoVf.from(downPayment, it, devolucao, jurosMoraPercent) }
                 }
             }
     }
@@ -176,7 +176,7 @@ class DownPaymentService(env: SapEnvrioment,
             .distinct()
     }
 
-    fun createPixByContratoVendaFutura(id: Int): List<BoletoVf> {
+    fun createPixByContratoVendaFutura(id: Int, jurosMoraPercent: Double = 0.0): List<BoletoVf> {
         getByContratoVendaFutura(id)
             .filter {
                 it.DocumentStatus == DocumentStatus.bost_Open &&
@@ -186,9 +186,9 @@ class DownPaymentService(env: SapEnvrioment,
                 val docEntry = document.docEntry
                     ?: throw Exception("Adiantamento do contrato $id sem DocEntry")
                 val downPayment = getById(docEntry).tryGetValue<DownPayment>()
-                createPix(downPayment)
+                createPix(downPayment, listOf(), jurosMoraPercent)
             }
-        return getByContratoVendaFuturaStatus(id)
+        return getByContratoVendaFuturaStatus(id, jurosMoraPercent)
     }
 
     fun createPix(
