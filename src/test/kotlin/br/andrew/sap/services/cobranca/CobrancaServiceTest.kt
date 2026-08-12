@@ -8,6 +8,7 @@ import br.andrew.sap.model.cobranca.CobrancaAcaoRequest
 import br.andrew.sap.model.cobranca.CobrancaException
 import br.andrew.sap.model.cobranca.CobrancaHistorico
 import br.andrew.sap.model.cobranca.CobrancaRegistro
+import br.andrew.sap.model.cobranca.CobrancaTituloVendedorSap
 import br.andrew.sap.model.envrioments.SapEnvrioment
 import br.andrew.sap.model.sap.Session
 import br.andrew.sap.services.AuthService
@@ -52,6 +53,8 @@ class CobrancaServiceTest {
     fun mockLogin() {
         whenever(restTemplate.postForEntity(any<URI>(), any(), eq(Session::class.java)))
             .thenReturn(ResponseEntity.ok(Session("sessao-1", "10.0", 30)))
+        whenever(consultaService.buscarTituloParaEscopo(any(), any(), any()))
+            .thenReturn(CobrancaTituloVendedorSap(SlpCode = null))
     }
 
     @Test
@@ -250,7 +253,7 @@ class CobrancaServiceTest {
 
     @Test
     fun `vendedor comum ve o historico do proprio titulo`() {
-        whenever(consultaService.slpCodeDoTitulo("NF", 500)).thenReturn(60)
+        whenever(consultaService.buscarTituloParaEscopo("NF", 500, 1)).thenReturn(CobrancaTituloVendedorSap(SlpCode = 60))
         whenever(restTemplate.exchange(any<RequestEntity<*>>(), eq(OData::class.java)))
             .thenReturn(ResponseEntity.ok(odataLista(listOf(CobrancaRegistro(Code = "NF-500-1", U_Tipo = "NF", U_DocEntry = 500, U_InstlmntID = 1)))))
 
@@ -261,7 +264,7 @@ class CobrancaServiceTest {
 
     @Test
     fun `vendedor comum nao ve historico de titulo de outro vendedor`() {
-        whenever(consultaService.slpCodeDoTitulo("NF", 500)).thenReturn(99)
+        whenever(consultaService.buscarTituloParaEscopo("NF", 500, 1)).thenReturn(CobrancaTituloVendedorSap(SlpCode = 99))
 
         assertThrows(ResponseStatusException::class.java) {
             service.historico(cobradora, "NF", 500, 1)
@@ -271,7 +274,7 @@ class CobrancaServiceTest {
 
     @Test
     fun `vendedor comum nao ve historico de titulo que nao existe no SAP`() {
-        whenever(consultaService.slpCodeDoTitulo("NF", 500)).thenReturn(null)
+        whenever(consultaService.buscarTituloParaEscopo("NF", 500, 1)).thenReturn(null)
 
         assertThrows(ResponseStatusException::class.java) {
             service.historico(cobradora, "NF", 500, 1)
@@ -286,7 +289,25 @@ class CobrancaServiceTest {
         val historico = service.historico(admin, "NF", 500, 1)
 
         assertTrue(historico.isEmpty())
-        verify(consultaService, never()).slpCodeDoTitulo(any(), any())
+        verify(consultaService, never()).buscarTituloParaEscopo(any(), any(), any())
+    }
+
+    @Test
+    fun `recusa criar registro quando a parcela nao existe no SAP`() {
+        whenever(restTemplate.exchange(any<RequestEntity<*>>(), eq(OData::class.java)))
+            .thenAnswer { invocation ->
+                val request = invocation.getArgument<RequestEntity<*>>(0)
+                when (request.method) {
+                    HttpMethod.GET -> ResponseEntity.ok(odataLista(emptyList<CobrancaRegistro>()))
+                    else -> throw AssertionError("Nao deveria criar nada para uma parcela que nao existe: ${request.method}")
+                }
+            }
+        whenever(consultaService.buscarTituloParaEscopo("NF", 999, 1)).thenReturn(null)
+
+        val req = CobrancaAcaoRequest(observacao = "teste")
+        assertThrows(CobrancaException::class.java) {
+            service.registrarAcao("NF", 999, 1, req, cobradora)
+        }
     }
 
     private fun odataLista(value: List<Any?>): OData {

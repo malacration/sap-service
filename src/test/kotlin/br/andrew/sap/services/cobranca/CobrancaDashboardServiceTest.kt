@@ -215,7 +215,13 @@ class CobrancaDashboardServiceTest {
         // Mes zerado tem que aparecer: buraco na serie faz o leitor achar que o mes nao
         // foi medido, em vez de entender que nao entrou nada.
         whenever(sqlQueriesService.execute(eq("cobranca-recuperado-diario.sql"), any<List<Parameter>>()))
-            .thenReturn(odata(dia("20260715", "100.00"), dia("20260720", "50.00"), dia("20260802", "700.00")))
+            .thenReturn(
+                odata(
+                    dia("20260715", "100.00", docEntry = 500),
+                    dia("20260720", "50.00", docEntry = 501),
+                    dia("20260802", "700.00", docEntry = 502),
+                )
+            )
 
         val meses = service.evolucao(admin, meses = 3, hoje = hoje)
 
@@ -224,6 +230,19 @@ class CobrancaDashboardServiceTest {
         assertEquals(BigDecimal.ZERO, meses[0].Recuperado)
         assertEquals(BigDecimal("150.00"), meses[1].Recuperado)
         assertEquals(BigDecimal("700.00"), meses[2].Recuperado)
+    }
+
+    @Test
+    fun `evolucao conta o mesmo documento uma vez so, mesmo pago em dois dias do mes`() {
+        // Achado do bot: cada linha diaria ja vinha com "Documentos" contado por dia; somar
+        // essas linhas no mes duplicava a nota que recebeu pagamento parcial em dois dias.
+        whenever(sqlQueriesService.execute(eq("cobranca-recuperado-diario.sql"), any<List<Parameter>>()))
+            .thenReturn(odata(dia("20260801", "60.00", docEntry = 500), dia("20260803", "40.00", docEntry = 500)))
+
+        val meses = service.evolucao(admin, meses = 1, hoje = hoje)
+
+        assertEquals(BigDecimal("100.00"), meses.single().Recuperado)
+        assertEquals(1, meses.single().Documentos)
     }
 
     @Test
@@ -321,8 +340,8 @@ class CobrancaDashboardServiceTest {
 
     private fun trabalhados(usuario: String, titulos: Int) = CobrancaTrabalhadosSap(usuario, titulos)
 
-    private fun dia(docDate: String, valor: String) =
-        CobrancaRecuperadoDiaSap(DocDate = docDate, Recuperado = BigDecimal(valor), Documentos = 1)
+    private fun dia(docDate: String, valor: String, docEntry: Int) =
+        CobrancaRecuperadoDiaSap(DocDate = docDate, Recuperado = BigDecimal(valor), DocEntry = docEntry)
 
     private fun odata(vararg linhas: Any): OData {
         val backing = LinkedHashMap<String, Any?>()

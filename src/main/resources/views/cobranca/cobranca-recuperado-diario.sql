@@ -1,7 +1,7 @@
 SELECT
     r."DocDate",
-    sum(l."SumApplied") AS "Recuperado",
-    count(DISTINCT NS."DocEntry") AS "Documentos"
+    l."SumApplied" AS "Recuperado",
+    NS."DocEntry"
 FROM RCT2 l
     INNER JOIN ORCT r ON r."DocEntry" = l."DocNum"
     INNER JOIN OINV NS ON NS."DocEntry" = l."DocEntry"
@@ -16,7 +16,5 @@ WHERE
     AND (NS."BPLId"   = :filial   OR NS."BPLId"   < :filialIsFilter)
     AND (NS."SlpCode" = :vendedor OR NS."SlpCode" < :vendedorIsFilter)
     AND NS."CardCode" NOT IN (SELECT "DflCust" FROM OBPL WHERE "DflCust" IS NOT NULL)
-GROUP BY
-    r."DocDate"
 ORDER BY
     r."DocDate"

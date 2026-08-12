@@ -61,6 +61,9 @@ class CobrancaService(
             val existente = buscarPorCode(code)
 
             if (existente == null) {
+                consultaService.buscarTituloParaEscopo(tipo, docEntry, instlmntId)
+                    ?: throw CobrancaException("Parcela não encontrada no SAP: $tipo $docEntry/$instlmntId")
+
                 val registro = CobrancaRegistro(
                     Code = code,
                     U_Tipo = tipo,
@@ -111,17 +114,17 @@ class CobrancaService(
     }
 
     fun historico(auth: User, tipo: String, docEntry: Int, instlmntId: Int): List<CobrancaHistorico> {
-        validarEscopo(auth, tipo, docEntry)
+        validarEscopo(auth, tipo, docEntry, instlmntId)
         val code = CobrancaRegistro.code(tipo, docEntry, instlmntId)
         val registro = buscarPorCode(code) ?: return emptyList()
         return registro.historico.sortedByDescending { it.LineId }
     }
 
-    private fun validarEscopo(auth: User, tipo: String, docEntry: Int) {
+    private fun validarEscopo(auth: User, tipo: String, docEntry: Int, instlmntId: Int) {
         if (CobrancaEscopo.temAcessoTotal(auth))
             return
-        val slpCode = consultaService.slpCodeDoTitulo(tipo, docEntry)
-        if (slpCode == null || slpCode != auth.getIdInt())
+        val titulo = consultaService.buscarTituloParaEscopo(tipo, docEntry, instlmntId)
+        if (titulo == null || titulo.SlpCode != auth.getIdInt())
             throw ResponseStatusException(HttpStatus.FORBIDDEN, "Este título não pertence ao seu escopo de vendedor")
     }
 

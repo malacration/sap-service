@@ -94,13 +94,15 @@ class CobrancaConsultaService(val sqlQueriesService: SqlQueriesService) {
         return combinado.subList(inicio, fim)
     }
 
-    fun slpCodeDoTitulo(tipo: String, docEntry: Int): Int? {
+    fun buscarTituloParaEscopo(tipo: String, docEntry: Int, instlmntId: Int): CobrancaTituloVendedorSap? {
         val view = if (tipo == CobrancaRegistro.TIPO_ADIANTAMENTO)
             "cobranca-titulo-vendedor-adiantamento.sql"
         else
             "cobranca-titulo-vendedor.sql"
-        return sqlQueriesService.getAll<CobrancaTituloVendedorSap>(view, listOf(Parameter("docEntry", docEntry)))
-            .firstOrNull()?.SlpCode
+        return sqlQueriesService.getAll<CobrancaTituloVendedorSap>(
+            view,
+            listOf(Parameter("docEntry", docEntry), Parameter("instlmntId", instlmntId)),
+        ).firstOrNull()
     }
 
     private inline fun <reified T : Any> buscarAte(

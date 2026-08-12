@@ -53,8 +53,7 @@ class CobrancaTrabalhadosSap(
 class CobrancaRecuperadoDiaSap(
     val DocDate: String,
     val Recuperado: BigDecimal? = null,
-    val Documentos: Int? = null,
+    val DocEntry: Int,
 ) {
     fun recuperado(): BigDecimal = Recuperado ?: BigDecimal.ZERO
-    fun documentos(): Int = Documentos ?: 0
 }

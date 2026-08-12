@@ -144,7 +144,7 @@ class CobrancaDashboardService(val sqlQueriesService: SqlQueriesService) {
                 Mes = mes.toString(),
                 Rotulo = "${MESES[mes.monthValue - 1]}/${mes.year % 100}",
                 Recuperado = linhas.fold(BigDecimal.ZERO) { acc, it -> acc.add(it.recuperado()) },
-                Documentos = linhas.sumOf { it.documentos() },
+                Documentos = linhas.map { it.DocEntry }.distinct().size,
             )
         }
     }
