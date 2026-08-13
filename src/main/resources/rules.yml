@@ -52,6 +52,10 @@ roles:
       actions: ["get"]
     - url: "/down-payment/contrato-venda-futura/*/pix"
       actions: [ "post" ]
+    - url: "/cobranca/titulos"
+      actions: ["get"]
+    - url: "/cobranca/titulos/*/*/*/historico"
+      actions: ["get"]
 
   vendedor_admin:
     - url: "/down-payment/contrato-venda-futura/*/pix"
@@ -109,6 +113,17 @@ roles:
       actions: ["get"]
     - url: "/sysfeed/status"
       actions: ["post"]
+
+  cobranca:
+    - url: "/cobranca/**"
+      actions: ["get", "post"]
+    - url: "/business-partners/search"
+      actions: ["*"]
+    - url: "/branch"
+      actions: ["get"]
+    - url: "/sales-person/search"
+      actions: ["*"]
+
   qualidade:
     - url: "/batch-stock/item-code/**"
       actions: ["get"]

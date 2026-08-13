@@ -44,7 +44,7 @@ class Reprocessamento(
     fun getReverseSaida(accountCode: String, valorTotal: Double) : EntradaSaidaEstoque {
         return EntradaSaidaEstoque(
             BPLId,
-            Produto(itemCode,quantidade,deposito,BigDecimal(valorTotal).divide(BigDecimal(quantidade)).toString())
+            Produto(itemCode,quantidade,deposito,BigDecimal(valorTotal).divide(BigDecimal(quantidade),4, RoundingMode.HALF_DOWN).toString())
                 .also {
                     it.BatchNumbers = lotes.map { BatchStock(it.BatchNumber,it.Quantity) }
                     it.AccountCode = accountCode
