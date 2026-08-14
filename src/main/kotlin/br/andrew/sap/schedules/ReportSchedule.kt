@@ -1,6 +1,6 @@
 package br.andrew.sap.schedules
 
-import br.andrew.sap.controllers.MailController
+import br.andrew.sap.controllers.integracao.MailController
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component

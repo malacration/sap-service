@@ -2,7 +2,10 @@ package br.andrew.sap.controllers.documents
 
 import br.andrew.sap.model.authentication.User
 import br.andrew.sap.model.self.vendafutura.BoletoVf
-import br.andrew.sap.services.document.DownPaymentService
+import br.andrew.sap.model.sap.documents.base.Document
+import br.andrew.sap.services.documents.DownPaymentService
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.Pageable
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.security.core.Authentication
 import org.springframework.web.bind.annotation.GetMapping
@@ -20,6 +23,15 @@ class DownPaymentController(
     @Value("\${pix.juros.mora.percent:0}") val jurosMoraPercent: Double
 ) {
 
+    @GetMapping("")
+    fun get(page : Pageable): Page<Document> {
+        return service.get(page).tryGetPageValues(page)
+    }
+
+    @GetMapping("{id}")
+    fun getById(@PathVariable id : Int): Any {
+        return service.getById(id)
+    }
 
     @GetMapping("contrato-venda-futura/{id}")
     fun getByContrato(@PathVariable id : Int): List<BoletoVf> {

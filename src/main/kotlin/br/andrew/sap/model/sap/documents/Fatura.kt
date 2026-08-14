@@ -10,6 +10,9 @@ class Fatura(private val documento : Document, var boletosIds : List<String> = l
     val nota = documento.SequenceSerial
     val data = documento.docDate
     val valor = documento.DocTotal
+    val status = documento.DocumentStatus
+    val vendedor = documento.salesEmployeeName
+    val vendedorCodigo = documento.salesPersonCode
     val vencimentoUltimaParcela = documento.DocDueDate
     val vencimentoProximaParcela = documento.DocDueDate
     val isBoleto = boletosIds.any { it == documento.paymentMethod }

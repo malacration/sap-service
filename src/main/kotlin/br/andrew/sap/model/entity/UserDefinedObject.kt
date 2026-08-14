@@ -30,8 +30,12 @@ class UserDefinedObject(
     var FormSRF: String? = null
 
     private var _UserObjectMD_ChildTables : MutableList<ChildTables> = mutableListOf()
-    var UserObjectMD_ChildTables : List<ChildTables> = listOf()
+
+    //setter explicito: sem ele o Jackson grava num backing field diferente do que
+    //o getter le, entao um objeto desserializado sempre voltaria com a lista vazia
+    var UserObjectMD_ChildTables : List<ChildTables>
         get() = _UserObjectMD_ChildTables
+        set(value) { _UserObjectMD_ChildTables = value.toMutableList() }
 
     init {
         if(UserObjectMD_ChildTables != null)

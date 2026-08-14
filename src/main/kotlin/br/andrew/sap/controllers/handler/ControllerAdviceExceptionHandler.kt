@@ -1,6 +1,6 @@
 package br.andrew.sap.controllers.handler
 
-import br.andrew.sap.services.TelegramRequestService
+import br.andrew.sap.services.integracao.TelegramRequestService
 import brave.Tracer
 import jakarta.servlet.http.HttpServletRequest
 import org.slf4j.LoggerFactory.getLogger

@@ -1,6 +1,6 @@
-import br.andrew.sap.model.sap.DebOrCredt
-import br.andrew.sap.model.sap.ReconciliationListRows
-import br.andrew.sap.model.sap.ReconciliationRow
+import br.andrew.sap.model.sap.comercial.DebOrCredt
+import br.andrew.sap.model.sap.comercial.ReconciliationListRows
+import br.andrew.sap.model.sap.comercial.ReconciliationRow
 import br.andrew.sap.model.sap.documents.base.Document
 import br.andrew.sap.model.sap.documents.base.DocumentLines
 import com.fasterxml.jackson.annotation.JsonIgnore

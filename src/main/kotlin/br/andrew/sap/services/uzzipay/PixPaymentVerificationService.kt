@@ -6,8 +6,8 @@ import br.andrew.sap.model.sap.documents.base.Document
 import br.andrew.sap.model.sap.documents.base.Installment
 import br.andrew.sap.model.uzzipay.ContaUzziPayPix
 import br.andrew.sap.model.uzzipay.Transaction
-import br.andrew.sap.services.document.AccountsReceivableService
-import br.andrew.sap.services.document.InvoiceService
+import br.andrew.sap.services.documents.AccountsReceivableService
+import br.andrew.sap.services.documents.InvoiceService
 import org.springframework.stereotype.Service
 
 @Service

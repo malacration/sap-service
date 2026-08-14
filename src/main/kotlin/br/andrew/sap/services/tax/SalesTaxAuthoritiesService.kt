@@ -2,8 +2,8 @@ package br.andrew.sap.services.tax
 
 import br.andrew.sap.infrastructure.odata.OData
 import br.andrew.sap.model.sap.tax.SalesTaxCodeLine
-import br.andrew.sap.model.envrioments.SapEnvrioment
-import br.andrew.sap.services.AuthService
+import br.andrew.sap.model.sistema.SapEnvrioment
+import br.andrew.sap.services.security.AuthService
 import org.springframework.http.RequestEntity
 import org.springframework.stereotype.Service
 import org.springframework.web.client.RestTemplate
@@ -22,7 +22,7 @@ class SalesTaxAuthoritiesService(val env: SapEnvrioment,
         val session = authService.getToken(env.getLogin())
         val request = RequestEntity
                 .get(env.host+this.path()+"(Code='$id',Type=$type)")
-                .header("cookie","B1SESSION=${session.sessionId}")
+                .header("cookie", session.cookieHeader())
                 .build()
         return restTemplate.exchange(request, OData::class.java).body!!
     }

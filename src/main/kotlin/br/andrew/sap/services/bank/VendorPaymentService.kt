@@ -5,10 +5,10 @@ import br.andrew.sap.infrastructure.odata.Filter
 import br.andrew.sap.infrastructure.odata.OData
 import br.andrew.sap.infrastructure.odata.Predicate
 import br.andrew.sap.model.enums.Cancelled
-import br.andrew.sap.model.sap.DocEntry
-import br.andrew.sap.model.envrioments.SapEnvrioment
+import br.andrew.sap.model.sap.comercial.DocEntry
+import br.andrew.sap.model.sistema.SapEnvrioment
 import br.andrew.sap.model.bank.Payment
-import br.andrew.sap.services.AuthService
+import br.andrew.sap.services.security.AuthService
 import br.andrew.sap.services.abstracts.EntitiesService
 import org.springframework.http.RequestEntity
 import org.springframework.stereotype.Service
@@ -29,7 +29,7 @@ class VendorPaymentService(env: SapEnvrioment, restTemplate: RestTemplate, authS
         val pagamentos = restT.exchange(
             RequestEntity
             .get("$url('pagamento-by-docEntry.sql')/List?DocEntry=$docEntry")
-            .header("cookie","B1SESSION=${session().sessionId}")
+            .header("cookie", session().cookieHeader())
             .build(), OData::class.java).body!!.tryGetValues<DocEntry>()
         return this.get(Filter(
             Predicate("DocEntry",pagamentos.map { it.DocEntry },Condicao.IN),

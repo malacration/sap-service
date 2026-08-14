@@ -1,26 +1,15 @@
 package br.andrew.sap.schedules.futura
 
 import JournalEntry
-import br.andrew.sap.model.sap.InternalReconciliations
-import br.andrew.sap.model.sap.InternalReconciliationOpenTransRow
 import br.andrew.sap.infrastructure.odata.Condicao
 import br.andrew.sap.infrastructure.odata.Filter
 import br.andrew.sap.infrastructure.odata.Predicate
-import br.andrew.sap.model.sap.InternalReconciliationsBuilder
-import br.andrew.sap.model.sap.documents.DocumentStatus
 import br.andrew.sap.model.sap.documents.Invoice
-import br.andrew.sap.model.sap.documents.base.Document
-import br.andrew.sap.model.sap.documents.base.Product
 import br.andrew.sap.model.sap.documents.base.adiantamento.ApropriacaoAdiantamento
 import br.andrew.sap.model.transaction.TransactionCodeTypes
-import br.andrew.sap.model.transaction.UpdateTransactionCode
-import br.andrew.sap.services.InternalReconciliationsService
-import br.andrew.sap.services.batch.BatchId
-import br.andrew.sap.services.batch.BatchList
-import br.andrew.sap.services.batch.BatchMethod
-import br.andrew.sap.services.batch.BatchService
-import br.andrew.sap.services.document.DownPaymentService
-import br.andrew.sap.services.document.InvoiceService
+import br.andrew.sap.services.comercial.ApropriacaoVendaFuturaService
+import br.andrew.sap.services.documents.DownPaymentService
+import br.andrew.sap.services.documents.InvoiceService
 import br.andrew.sap.services.journal.JournalEntriesService
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -29,9 +18,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.context.annotation.Profile
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
-import java.math.BigDecimal
 import java.util.concurrent.TimeUnit
-import kotlin.concurrent.thread
 
 
 @Component
@@ -42,14 +29,9 @@ import kotlin.concurrent.thread
 class ConciliacaoVendaFuturaSchedule(
     val adiantamentoService : DownPaymentService,
     val journalEntriesService : JournalEntriesService,
-    val internalReconciliationsService: InternalReconciliationsService,
     val inoviceService : InvoiceService,
-    val batchService: BatchService,
-    @Value("\${venda-futura.adiantamento-item}") val itemConciliacaoVendaFutura : String,
-    @Value("\${venda-futura.filiais:-2}") val filiais : List<Int>,
-    @Value("\${venda-futura.sequencia_adiantamento}") val sequenceCode : Int,
-    @Value("\${venda-futura.utilizacao.baixa:9}") val usage : Int,
-    @Value("\${venda-futura.conta-controle}") val contaControle : String) {
+    val apropriacaoVendaFuturaService: ApropriacaoVendaFuturaService,
+    @Value("\${venda-futura.filiais:-2}") val filiais : List<Int>) {
 
     val logger: Logger = LoggerFactory.getLogger(ConciliacaoVendaFuturaSchedule::class.java)
 
@@ -76,85 +58,12 @@ class ConciliacaoVendaFuturaSchedule(
                         val adiantamentos = adiantamentoService.adiantamentosAbertos(invoice)
                         val adiantamentosDisponiveis = ApropriacaoAdiantamento(invoice, adiantamentos).get()
                         if (adiantamentosDisponiveis.isNotEmpty()) {
-                            val invoiceApropiacao = Invoice(
-                                invoice.CardCode, null,
-                                listOf(Product(itemConciliacaoVendaFutura, "1",
-                                    "0",
-                                    usage).also {
-                                    it.U_preco_base = 1.0
-                                }),
-                                invoice.getBPL_IDAssignedToInvoice()
-                            ).also {
-                                it.downPaymentsToDraw = adiantamentosDisponiveis
-                                it.U_venda_futura = invoice.U_venda_futura
-                                it.controlAccount = contaControle
-                                it.SequenceCode = sequenceCode
-                                it.salesPersonCode = invoice.salesPersonCode
-                                it.journalMemo = "Apropriacao adt Com LC ${journalReclassificado.JdtNum} da entrega. NF $ref | Cont ${invoice.U_venda_futura}"
-                                it.U_TX_DocEntryRef = invoice.docEntry
-                                it.paymentGroupCode = -1
-                                //TODO coloocar a referencia da nf de forma estruturada.
-                            }
-
-                            val apropriado = inoviceService
-                                .save(invoiceApropiacao)
-                                .tryGetValue<Document>()
-
-                            val internalRecon = InternalReconciliationsBuilder(
-                                journalReclassificado,
-                                apropriado,
-                            ).build()
-                            try {
-                                val updateTransCode = UpdateTransactionCode(
-                                    journalReclassificado.JdtNum.toString(),
-                                    TransactionCodeTypes.VFEC
-                                )
-
-                                val batchList = BatchList().add(
-                                    Triple(BatchMethod.POST,internalRecon,internalReconciliationsService)
-                                ).add(
-                                    Triple(BatchMethod.PATCH,updateTransCode,journalEntriesService)
-                                )
-                                batchService.run(batchList)
-                            }catch (e : Exception){
-                                logger.error(
-                                    "Erro ao reconciliar apropriacao de adiantamento. {}",
-                                    reconciliationDebug(
-                                        journalReclassificado,
-                                        invoice,
-                                        apropriado,
-                                        internalRecon
-                                    ),
-                                    e
-                                )
-                                inoviceService.cancel(apropriado.docEntry.toString())
-                                throw Exception("Não foi possivel realizar a reconciliação, fazendo o cancelamento da apropriação do adiantamento",e)
-                            }
+                            apropriacaoVendaFuturaService.conciliar(invoice, journalReclassificado, adiantamentosDisponiveis)
                         }
                     }
                 }catch (e : Exception){
                     logger.error("Erro no processamento da conciliação da venda futura! OJDT ${journalReclassificado.JdtNum}",e)
                 }
         }
-    }
-
-    private fun reconciliationDebug(
-        journalReclassificado: JournalEntry,
-        invoice: Invoice,
-        apropriado: Document,
-        internalRecon: InternalReconciliations
-    ): String {
-        val linhas = internalRecon.internalReconciliationOpenTransRows
-            ?.joinToString(" | ") { row -> formatRow(row) }
-            ?: "sem linhas"
-        return "contrato=${invoice.U_venda_futura}, cardCode=${invoice.CardCode}, " +
-            "invoiceEntregaDocEntry=${invoice.docEntry}, invoiceEntregaDocNum=${invoice.docNum}, " +
-            "invoiceApropriacaoDocEntry=${apropriado.docEntry}, invoiceApropriacaoDocNum=${apropriado.docNum}, " +
-            "journalJdtNum=${journalReclassificado.JdtNum}, journalMemo='${journalReclassificado.memo}', linhas=[$linhas]"
-    }
-
-    private fun formatRow(row: InternalReconciliationOpenTransRow): String {
-        return "tipo=${row.creditOrDebit}, transId=${row.transId}, transRowId=${row.transRowId}, " +
-            "valor=${row.reconcileAmount}, parceiro=${row.shortName}"
     }
 }

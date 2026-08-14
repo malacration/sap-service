@@ -1,11 +1,11 @@
 package br.andrew.sap.services.structs
 
-import br.andrew.sap.controllers.IndexController
+import br.andrew.sap.controllers.sistema.IndexController
 import br.andrew.sap.infrastructure.odata.OData
-import br.andrew.sap.model.Query
-import br.andrew.sap.model.envrioments.SapEnvrioment
+import br.andrew.sap.model.sistema.Query
+import br.andrew.sap.model.sistema.SapEnvrioment
 import br.andrew.sap.model.exceptions.NotFoundException
-import br.andrew.sap.services.AuthService
+import br.andrew.sap.services.security.AuthService
 import br.andrew.sap.services.abstracts.EntitiesService
 import org.slf4j.LoggerFactory
 import org.springframework.http.RequestEntity

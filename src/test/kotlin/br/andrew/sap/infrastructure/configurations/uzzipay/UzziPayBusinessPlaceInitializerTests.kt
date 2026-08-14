@@ -1,8 +1,8 @@
 package br.andrew.sap.infrastructure.configurations.uzzipay
 
-import br.andrew.sap.model.sap.BussinessPlace
+import br.andrew.sap.model.sap.cadastro.BussinessPlace
 import br.andrew.sap.model.uzzipay.ContaUzziPayPix
-import br.andrew.sap.services.BussinessPlaceService
+import br.andrew.sap.services.cadastro.BussinessPlaceService
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Test

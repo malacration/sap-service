@@ -5,9 +5,9 @@ import br.andrew.sap.infrastructure.odata.Filter
 import br.andrew.sap.infrastructure.odata.Predicate
 import br.andrew.sap.model.cobranca.CobrancaDominio
 import br.andrew.sap.model.cobranca.CobrancaException
-import br.andrew.sap.model.envrioments.SapEnvrioment
-import br.andrew.sap.services.AuthService
+import br.andrew.sap.model.sistema.SapEnvrioment
 import br.andrew.sap.services.abstracts.EntitiesService
+import br.andrew.sap.services.security.AuthService
 import org.springframework.cache.annotation.CacheEvict
 import org.springframework.cache.annotation.Cacheable
 import org.springframework.stereotype.Service

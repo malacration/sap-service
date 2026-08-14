@@ -1,4 +1,4 @@
-import br.andrew.sap.model.sap.ReconciliationRow
+import br.andrew.sap.model.sap.comercial.ReconciliationRow
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonInclude

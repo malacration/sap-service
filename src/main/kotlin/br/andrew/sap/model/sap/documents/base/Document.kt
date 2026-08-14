@@ -1,13 +1,13 @@
 package br.andrew.sap.model.sap.documents.base
 
 import br.andrew.sap.model.enums.Cancelled
-import br.andrew.sap.model.WarehouseDefault
+import br.andrew.sap.model.sistema.WarehouseDefault
 import br.andrew.sap.model.enums.YesNo
 import br.andrew.sap.model.sap.documents.DocumentStatus
 import br.andrew.sap.model.forca.EnderecoId
-import br.andrew.sap.model.sap.DebOrCredt
-import br.andrew.sap.model.sap.ReconciliationListRows
-import br.andrew.sap.model.sap.ReconciliationRow
+import br.andrew.sap.model.sap.comercial.DebOrCredt
+import br.andrew.sap.model.sap.comercial.ReconciliationListRows
+import br.andrew.sap.model.sap.comercial.ReconciliationRow
 import br.andrew.sap.model.sap.documents.DocumentTypes
 import br.andrew.sap.model.sap.documents.base.adiantamento.DownPaymentsToDraw
 import br.andrew.sap.model.self.vendafutura.ContratoParse.Companion.parse
@@ -43,6 +43,7 @@ open class Document(val CardCode : String,
     var comments: String? = null
     var docDate :String? = null
     var salesPersonCode: Int = -1
+    var salesEmployeeName: String? = null
     var paymentGroupCode: Int? = null
     var docEntry : Int? = null
     var docNum : String? = null

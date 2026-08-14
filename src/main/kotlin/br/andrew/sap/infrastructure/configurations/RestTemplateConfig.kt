@@ -14,6 +14,7 @@ import org.apache.hc.core5.http.config.Registry
 import org.apache.hc.core5.http.config.RegistryBuilder
 import org.apache.hc.core5.ssl.SSLContexts
 import org.apache.hc.core5.ssl.TrustStrategy
+import org.apache.hc.core5.util.TimeValue
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory
@@ -37,6 +38,11 @@ class RestTemplateConfig {
                 .register("http", PlainConnectionSocketFactory())
                 .build()
         val connectionManager = PoolingHttpClientConnectionManager(socketFactoryRegistry)
+        //sem isso, uma conexao do pool que morreu ociosa (ex.: tunel SSH derrubando
+        //silenciosamente) e reusada as cegas. GET e retentado automaticamente pelo
+        //HttpClient5 quando isso da NoHttpResponseException, mas PATCH/POST nao -
+        //a excecao estoura direto pro chamador. Validar apos ociosidade elimina isso.
+        connectionManager.setValidateAfterInactivity(TimeValue.ofSeconds(1))
         val httpClient = HttpClients.custom().setConnectionManager(connectionManager).build()
 
         val requestFactory = HttpComponentsClientHttpRequestFactory()

@@ -53,21 +53,13 @@ class CorsConfig(@Value("\${cors.origins:http://localhost:4200}") val corsAppend
         return configuration
     }
 
-    var customizer : Customizer<CorsConfigurer<HttpSecurity>> = Customizer<CorsConfigurer<HttpSecurity>> {
-        fun customize(httpSecurityCorsConfigurer: CorsConfigurer<HttpSecurity?>) {
-            object : UrlBasedCorsConfigurationSource() {
-                init {
-                    val configuration: CorsConfiguration = getCorsConfig();
-                    this.registerCorsConfiguration("/**", configuration.applyPermitDefaultValues())
-                    this.registerCorsConfiguration("**", configuration)
-                    this.registerCorsConfiguration("*", configuration)
-                    this.registerCorsConfiguration("/*", configuration)
-                    this.registerCorsConfiguration("**/**", configuration)
-                    httpSecurityCorsConfigurer.configurationSource(this)
-                }
-            }
-        }
+    //o corpo do lambda anterior declarava uma funcao aninhada "customize" e nunca
+    //a chamava - o Customizer real ficava vazio e o Spring Security nunca aplicava
+    //essa configuracao (o CORS acabava caindo no default fraco do WebConfig)
+    var customizer : Customizer<CorsConfigurer<HttpSecurity>> = Customizer<CorsConfigurer<HttpSecurity>> { httpSecurityCorsConfigurer ->
+        val source = UrlBasedCorsConfigurationSource()
+        source.registerCorsConfiguration("/**", getCorsConfig())
+        httpSecurityCorsConfigurer.configurationSource(source)
     }
-
 
 }

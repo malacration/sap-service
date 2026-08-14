@@ -2,9 +2,9 @@ package br.andrew.sap.services.bank
 
 import br.andrew.sap.infrastructure.odata.Parameter
 import br.andrew.sap.model.payment.PaymentTermsTypes
-import br.andrew.sap.model.envrioments.SapEnvrioment
+import br.andrew.sap.model.sistema.SapEnvrioment
 import br.andrew.sap.model.payment.PaymentTermsLines
-import br.andrew.sap.services.AuthService
+import br.andrew.sap.services.security.AuthService
 import br.andrew.sap.services.abstracts.EntitiesService
 import br.andrew.sap.services.abstracts.SqlQueriesService
 import org.springframework.stereotype.Service

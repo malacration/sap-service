@@ -2,6 +2,7 @@ package br.andrew.sap.model
 
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
+import br.andrew.sap.model.cadastro.ContactOpaque
 
 class ContactOpaqueTests {
 

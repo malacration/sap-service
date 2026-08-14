@@ -1,7 +1,7 @@
 package br.andrew.sap.infrastructure
 
-import br.andrew.sap.model.sap.SapUser
-import br.andrew.sap.services.UserService
+import br.andrew.sap.model.sap.sistema.SapUser
+import br.andrew.sap.services.security.UserService
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Profile

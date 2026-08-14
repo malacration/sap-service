@@ -1,8 +1,8 @@
 package br.andrew.sap.controllers.handler
 
-import br.andrew.sap.model.sap.SapError
+import br.andrew.sap.model.sap.sistema.SapError
 import br.andrew.sap.model.telegram.TipoMensagem
-import br.andrew.sap.services.TelegramRequestService
+import br.andrew.sap.services.integracao.TelegramRequestService
 import brave.Tracer
 import jakarta.servlet.RequestDispatcher
 import jakarta.servlet.http.HttpServletRequest
@@ -43,10 +43,10 @@ class MyErrorController(val tracer: Tracer, val telegram: TelegramRequestService
             ErroDto(t.message ?: "Pagina Não encontrada",traceId,t)
         else if(t is HttpClientErrorException){
             val msg = t.getResponseBodyAs(SapError::class.java)?.error?.message?.value ?: "Erro inesperado"
-            ErroDto(msg,traceId,t)
+            ErroDto(msg,traceId,t,UzziPayErrorCauseTranslator.causeBy(t))
         }
         else
-            ErroDto(t.message ?: "Erro inesperado",traceId,t)
+            ErroDto(t.message ?: "Erro inesperado",traceId,t,UzziPayErrorCauseTranslator.causeBy(t))
 
         telegram.send(t.message ?: "Sem mensagem",TipoMensagem.erros)
 
@@ -63,4 +63,3 @@ class MyErrorController(val tracer: Tracer, val telegram: TelegramRequestService
         return "false" != parameter.lowercase(Locale.getDefault())
     }
 }
-

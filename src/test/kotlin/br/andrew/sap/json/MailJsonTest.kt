@@ -1,6 +1,6 @@
 package br.andrew.sap.json
 
-import br.andrew.sap.services.EmailAdrres
+import br.andrew.sap.services.integracao.EmailAdrres
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.fasterxml.jackson.module.kotlin.jacksonTypeRef

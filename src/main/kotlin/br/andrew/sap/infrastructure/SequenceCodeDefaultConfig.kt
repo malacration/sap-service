@@ -1,8 +1,8 @@
 //package br.andrew.sap.infrastructure
 //
-//import br.andrew.sap.model.WarehouseDefault
-//import br.andrew.sap.services.BussinessPlaceService
-//import br.andrew.sap.services.TelegramRequestService
+//import br.andrew.sap.model.sistema.WarehouseDefault
+//import br.andrew.sap.services.cadastro.BussinessPlaceService
+//import br.andrew.sap.services.integracao.TelegramRequestService
 //import org.slf4j.Logger
 //import org.slf4j.LoggerFactory
 //import org.springframework.beans.factory.annotation.Value

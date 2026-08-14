@@ -1,7 +1,7 @@
 package br.andrew.sap.model.uzzipay.builder
 
 import br.andrew.sap.infrastructure.configurations.uzzipay.UzziPayEnvrioment
-import br.andrew.sap.model.sap.BussinessPlace
+import br.andrew.sap.model.sap.cadastro.BussinessPlace
 import br.andrew.sap.model.sap.documents.DocumentTypes
 import br.andrew.sap.model.sap.documents.base.Document
 import br.andrew.sap.model.sap.documents.base.Installment
@@ -115,10 +115,33 @@ class RequestPixDueDateSemContaBuilderTests {
         assertEquals("MT", request.payer.state)
     }
 
-    private fun newBusinessPartner(zipCode: String = "78000000"): BusinessPartner {
+    @Order(6)
+    @Test
+    fun buildUsaEmailDaFilialQuandoEmailDoClienteForInvalido() {
+        val contaSelecionada = newConta("12345678000190", "PIX-OK").also {
+            it.businessPlace = newBussinessPlace("12345678000190").also { place ->
+                place.Email = "filial@teste.com"
+            }
+        }
+        val env = UzziPayEnvrioment().also { it.contas = listOf(contaSelecionada) }
+        RequestPixDueDateSemContaBuilder.setUzziPayEnvrioment(env)
+
+        val builder = RequestPixDueDateSemContaBuilder(
+            newBusinessPartner(email = "cliente-invalido"),
+            newDocument(listOf(newInstallment(1)))
+        )
+
+        val request = builder.build().first()
+        assertEquals("filial@teste.com", request.payer.email)
+    }
+
+    private fun newBusinessPartner(
+        zipCode: String = "78000000",
+        email: String = "cliente@teste.com"
+    ): BusinessPartner {
         return BusinessPartner().also { bp ->
             bp.cardName = "Cliente Teste"
-            bp.emailAddress = "cliente@teste.com"
+            bp.emailAddress = email
             bp.setCpfCnpj(CpfCnpj("12345678901"))
             bp.setAddresses(
                 listOf(

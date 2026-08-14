@@ -1,9 +1,9 @@
 package br.andrew.sap.infrastructure
 
-import br.andrew.sap.model.sap.SalePerson
-import br.andrew.sap.services.From
-import br.andrew.sap.services.EmailAdrres
-import br.andrew.sap.services.MailService
+import br.andrew.sap.model.sap.cadastro.SalePerson
+import br.andrew.sap.services.integracao.From
+import br.andrew.sap.services.integracao.EmailAdrres
+import br.andrew.sap.services.integracao.MailService
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.fasterxml.jackson.module.kotlin.jacksonTypeRef

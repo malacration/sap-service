@@ -5,21 +5,21 @@ import JournalEntryLines
 import br.andrew.sap.infrastructure.odata.Condicao
 import br.andrew.sap.infrastructure.odata.Filter
 import br.andrew.sap.infrastructure.odata.Predicate
-import br.andrew.sap.model.sap.InternalReconciliationsBuilder
+import br.andrew.sap.model.sap.comercial.InternalReconciliationsBuilder
 import br.andrew.sap.model.sap.documents.DocumentStatus
 import br.andrew.sap.model.sap.documents.DocumentTypes
 import br.andrew.sap.model.sap.documents.DownPayment
 import br.andrew.sap.model.sap.documents.Invoice
 import br.andrew.sap.model.sap.documents.base.Product
 import br.andrew.sap.model.transaction.TransactionCodeTypes
-import br.andrew.sap.services.AuthService
-import br.andrew.sap.services.InternalReconciliationsService
-import br.andrew.sap.services.futura.EstornoReclassificacaoVendaFuturaService
+import br.andrew.sap.services.security.AuthService
+import br.andrew.sap.services.financeiro.InternalReconciliationsService
+import br.andrew.sap.services.comercial.EstornoReclassificacaoVendaFuturaService
 import br.andrew.sap.services.batch.BatchService
-import br.andrew.sap.services.document.CreditNotesService
-import br.andrew.sap.services.document.DownPaymentService
-import br.andrew.sap.services.document.InvoiceService
-import br.andrew.sap.services.invent.BankPlusService
+import br.andrew.sap.services.documents.CreditNotesService
+import br.andrew.sap.services.documents.DownPaymentService
+import br.andrew.sap.services.documents.InvoiceService
+import br.andrew.sap.services.fiscal.BankPlusService
 import br.andrew.sap.services.journal.JournalEntriesService
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -29,6 +29,7 @@ import org.springframework.context.annotation.Profile
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
 import java.util.concurrent.TimeUnit
+import br.andrew.sap.model.sap.documents.base.DocumentLines
 
 
 @Component

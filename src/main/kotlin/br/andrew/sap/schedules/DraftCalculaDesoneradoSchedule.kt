@@ -3,11 +3,11 @@ package br.andrew.sap.schedules
 import br.andrew.sap.infrastructure.odata.Condicao
 import br.andrew.sap.infrastructure.odata.Filter
 import br.andrew.sap.infrastructure.odata.Predicate
-import br.andrew.sap.model.sap.SapUser
+import br.andrew.sap.model.sap.sistema.SapUser
 import br.andrew.sap.model.sap.documents.base.Document
 import br.andrew.sap.schedules.desonerado.FalhaAoCalcularDesonerado
-import br.andrew.sap.services.DraftsService
-import br.andrew.sap.services.document.DesoneradoService
+import br.andrew.sap.services.financeiro.DraftsService
+import br.andrew.sap.services.documents.DesoneradoService
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value

@@ -2,18 +2,18 @@ package br.andrew.sap.services.document
 
 import br.andrew.sap.infrastructure.odata.OData
 import br.andrew.sap.infrastructure.odata.Parameter
-import br.andrew.sap.model.envrioments.SapEnvrioment
+import br.andrew.sap.model.sistema.SapEnvrioment
 import br.andrew.sap.model.sap.documents.CreditNotes
 import br.andrew.sap.model.sap.documents.DocumentTypes
 import br.andrew.sap.model.sap.documents.DownPayment
 import br.andrew.sap.model.sap.documents.base.Product
-import br.andrew.sap.services.AuthService
-import br.andrew.sap.services.BusinessPartnersService
+import br.andrew.sap.services.security.AuthService
+import br.andrew.sap.services.cadastro.BusinessPartnersService
 import br.andrew.sap.services.abstracts.SqlQueriesService
 import br.andrew.sap.services.bank.IncomingPaymentService
 import br.andrew.sap.services.bank.PaymentTermsTypesService
 import br.andrew.sap.services.batch.BatchService
-import br.andrew.sap.services.invent.BankPlusService
+import br.andrew.sap.services.fiscal.BankPlusService
 import br.andrew.sap.services.journal.JournalEntriesService
 import br.andrew.sap.services.uzzipay.DynamicPixQrCodeService
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -26,6 +26,10 @@ import org.mockito.kotlin.argumentCaptor
 import org.mockito.kotlin.eq
 import org.mockito.kotlin.whenever
 import org.springframework.web.client.RestTemplate
+import br.andrew.sap.services.documents.CreditNotesService
+import br.andrew.sap.services.documents.DownPaymentService
+import br.andrew.sap.services.documents.OrdersService
+import br.andrew.sap.services.documents.AccountsReceivableService
 
 class DownPaymentServiceEstornoTest {
 

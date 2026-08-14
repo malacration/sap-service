@@ -1,7 +1,7 @@
 package br.andrew.sap.infrastructure.create.fields
 
-import br.andrew.sap.model.sap.TableMd
-import br.andrew.sap.model.sap.TbType
+import br.andrew.sap.model.sap.sistema.TableMd
+import br.andrew.sap.model.sap.sistema.TbType
 import br.andrew.sap.model.entity.*
 import br.andrew.sap.services.structs.UserFieldsMDService
 import br.andrew.sap.services.structs.UserObjectsMDService
@@ -39,15 +39,15 @@ class ComissaoConfiguration(val userFieldsMDService: UserFieldsMDService,
                 },
             FieldMd("desconto","Desconto (%)","@condicoesFV", DbType.db_Float),
             FieldMd("juros","Juros (%)","@condicoesFV", DbType.db_Float),
-            //TODO arrumar o prazo
-//            FieldMd("prazo","Prazo","@condicoesFV", DbType.db_Alpha).also {
-//                it.size = 6
-//                it.LinkedSystemObject = "OCTG"
-//            },
+            //SAP nao tem um LinkedSystemObject pra OCTG (condicao de pagamento) - o campo
+            //fica numerico mesmo, guardando o OCTG.GroupNum direto (mesma convencao ja usada
+            //pelo sap-sql: @CONDICOESFV.U_prazo comparado direto com OCTG.GroupNum)
+            FieldMd("prazo","Prazo (GroupNum)","@condicoesFV", DbType.db_Numeric),
             FieldMd("Filial","Filial","@LiberaPara")
                 .also { it.ValidValuesMD = listOf(
                     ValuesMd("0","Nenhuma")
                 ) },
+            FieldMd("vendedor","Vendedor","@LiberaPara", DbType.db_Alpha),
         ).forEach { userFieldsMDService.findOrCreate(it) }
 
 

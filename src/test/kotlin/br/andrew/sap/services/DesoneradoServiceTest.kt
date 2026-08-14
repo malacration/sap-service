@@ -1,7 +1,7 @@
 package br.andrew.sap.services
 
-import br.andrew.sap.model.Comissao
-import br.andrew.sap.services.document.DesoneradoService
+import br.andrew.sap.model.sistema.Comissao
+import br.andrew.sap.services.documents.DesoneradoService
 import br.andrew.sap.services.pricing.ComissaoService
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test

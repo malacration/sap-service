@@ -1,15 +1,15 @@
 package br.andrew.sap.services.approval
 
 import br.andrew.sap.infrastructure.odata.OData
-import br.andrew.sap.model.sap.ApprovalRequests
-import br.andrew.sap.model.envrioments.SapEnvrioment
+import br.andrew.sap.model.sap.comercial.ApprovalRequests
+import br.andrew.sap.model.sistema.SapEnvrioment
 import br.andrew.sap.model.sap.documents.base.Document
 import br.andrew.sap.model.sap.documents.OrderSales
-import br.andrew.sap.services.AuthService
-import br.andrew.sap.services.DraftsService
-import br.andrew.sap.services.TelegramRequestService
+import br.andrew.sap.services.security.AuthService
+import br.andrew.sap.services.financeiro.DraftsService
+import br.andrew.sap.services.integracao.TelegramRequestService
 import br.andrew.sap.services.abstracts.EntitiesService
-import br.andrew.sap.services.document.DesoneradoService
+import br.andrew.sap.services.documents.DesoneradoService
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.http.RequestEntity
@@ -35,7 +35,7 @@ class ApprovalRequestsService(env : SapEnvrioment,
         return restT.exchange(
             RequestEntity
                 .get("$url('autorizacao.sql')/List'")
-                .header("cookie","B1SESSION=${session().sessionId}")
+                .header("cookie", session().cookieHeader())
                 .build(), OData::class.java).body
             ?.tryGetPageValues(Pageable.unpaged()) ?: Page.empty()
     }

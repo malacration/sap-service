@@ -4,10 +4,10 @@ import br.andrew.sap.infrastructure.odata.*
 import br.andrew.sap.model.authentication.User
 import br.andrew.sap.model.sap.documents.Invoice
 import br.andrew.sap.model.sap.documents.base.Document
-import br.andrew.sap.services.document.CreditNotesService
-import br.andrew.sap.services.document.InvoiceService
-import br.andrew.sap.services.document.OrdersService
-import br.andrew.sap.services.document.QuotationsService
+import br.andrew.sap.services.documents.CreditNotesService
+import br.andrew.sap.services.documents.InvoiceService
+import br.andrew.sap.services.documents.OrdersService
+import br.andrew.sap.services.documents.QuotationsService
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.http.ResponseEntity

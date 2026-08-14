@@ -1,0 +1,42 @@
+package br.andrew.sap.controllers.integracao
+import br.andrew.sap.model.sap.cadastro.SalePerson
+import br.andrew.sap.model.sap.documents.base.Document
+import br.andrew.sap.model.sap.partner.BusinessPartner
+import br.andrew.sap.services.cadastro.BusinessPartnersService
+import br.andrew.sap.services.cadastro.SalesPersonsService
+import br.andrew.sap.services.documents.OrdersService
+import br.andrew.sap.services.integracao.EventsService
+import org.springframework.http.ResponseEntity
+import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PathVariable
+import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RestController
+
+
+@RestController
+@RequestMapping("rdstation")
+class RdStationController(
+    private val eventsService: EventsService,
+    private val bussinesPartenerService: BusinessPartnersService,
+    private val slService: SalesPersonsService,
+    private val ordersService: OrdersService
+    ) {
+
+    @GetMapping("/pedido-venda/{id}")
+    fun getByCodParceiro(@PathVariable id: String): Any {
+        val documento: Document = ordersService.getById(id).tryGetValue()
+        return getByCodParceiro(documento)
+    }
+
+    fun getByCodParceiro(documento: Document): Any {
+        val businessPartner: BusinessPartner = bussinesPartenerService.getById("'${documento.CardCode}'").tryGetValue<BusinessPartner>()
+        val salesPersonCode = documento.salesPersonCode
+        val salesPersonCodeAll = slService.getAll(SalePerson::class.java)
+        val salePerson = salesPersonCodeAll.find { it.SalesEmployeeCode == salesPersonCode }
+        if (salePerson == null) {
+            return ResponseEntity.notFound()
+        }
+        return eventsService.conversion(documento, businessPartner, salePerson)
+    }
+
+}

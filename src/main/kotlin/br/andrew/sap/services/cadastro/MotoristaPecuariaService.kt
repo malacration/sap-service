@@ -1,0 +1,29 @@
+package br.andrew.sap.services.cadastro
+import br.andrew.sap.infrastructure.odata.Condicao
+import br.andrew.sap.infrastructure.odata.Filter
+import br.andrew.sap.infrastructure.odata.OData
+import br.andrew.sap.infrastructure.odata.Predicate
+import br.andrew.sap.model.cadastro.MotoristaPecuaria
+import br.andrew.sap.model.sistema.SapEnvrioment
+import br.andrew.sap.services.abstracts.EntitiesService
+import org.springframework.stereotype.Service
+import org.springframework.web.client.RestTemplate
+import br.andrew.sap.services.security.AuthService
+
+@Service
+class MotoristaPecuariaService(env : SapEnvrioment,
+                               restTemplate: RestTemplate,
+                               authService: AuthService)
+    : EntitiesService<MotoristaPecuaria>(env, restTemplate,authService) {
+    override fun path(): String {
+        return "/b1s/v1/PECU_UDO_MTRT"
+    }
+
+    fun getByCnh(cnh : String): OData {
+        return get(Filter(
+                mutableListOf(
+                        Predicate("U_RegistroCNH",cnh.trim().trimStart('0'), Condicao.CONTAINS)
+                )
+        ))
+    }
+}

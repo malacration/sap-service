@@ -4,9 +4,9 @@ import br.andrew.sap.infrastructure.odata.Condicao
 import br.andrew.sap.infrastructure.odata.Filter
 import br.andrew.sap.infrastructure.odata.Predicate
 import br.andrew.sap.model.sap.partner.BusinessPartner
-import br.andrew.sap.services.AtualizacaoCadastralService
-import br.andrew.sap.services.BusinessPartnersService
-import br.andrew.sap.services.TelegramRequestService
+import br.andrew.sap.services.cadastro.AtualizacaoCadastralService
+import br.andrew.sap.services.cadastro.BusinessPartnersService
+import br.andrew.sap.services.integracao.TelegramRequestService
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty

@@ -1,7 +1,7 @@
 package br.andrew.sap.json
 
 import br.andrew.sap.infrastructure.odata.OData
-import br.andrew.sap.model.sap.DocEntry
+import br.andrew.sap.model.sap.comercial.DocEntry
 import br.andrew.sap.model.sap.documents.DocumentStatus
 import br.andrew.sap.model.sap.documents.OrderSales
 import br.andrew.sap.model.sap.documents.base.Product

@@ -1,7 +1,7 @@
 package br.andrew.sap.controllers.invent
 
-import br.andrew.sap.services.invent.BankPlusService
-import br.andrew.sap.services.invent.OrigemBoletoEnum
+import br.andrew.sap.services.fiscal.BankPlusService
+import br.andrew.sap.services.fiscal.OrigemBoletoEnum
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController

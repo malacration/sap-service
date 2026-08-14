@@ -1,6 +1,6 @@
 package br.andrew.sap.infrastructure
 
-import br.andrew.sap.model.Version
+import br.andrew.sap.model.sistema.Version
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration

@@ -2,7 +2,7 @@ package br.andrew.sap.schedules
 
 import JournalEntry
 import br.andrew.sap.infrastructure.odata.*
-import br.andrew.sap.model.sap.SapUser
+import br.andrew.sap.model.sap.sistema.SapUser
 import br.andrew.sap.services.journal.JournalEntriesService
 import br.andrew.sap.services.journal.JournalMemoHandle
 import org.slf4j.Logger

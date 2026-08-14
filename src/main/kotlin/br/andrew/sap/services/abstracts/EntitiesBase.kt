@@ -1,6 +1,6 @@
 package br.andrew.sap.services.abstracts
 
-import br.andrew.sap.model.sap.Session
+import br.andrew.sap.model.sap.sistema.Session
 import org.springframework.web.client.RestTemplate
 
 

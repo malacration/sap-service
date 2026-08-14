@@ -5,8 +5,8 @@ import br.andrew.sap.infrastructure.odata.Filter
 import br.andrew.sap.infrastructure.odata.OData
 import br.andrew.sap.infrastructure.odata.Predicate
 import br.andrew.sap.model.sap.documents.PurchaseInvoice
-import br.andrew.sap.services.document.PurchaseInvoiceService
-import br.andrew.sap.services.document.PurchaseInvoiceforSoftExpert
+import br.andrew.sap.services.documents.PurchaseInvoiceService
+import br.andrew.sap.services.documents.PurchaseInvoiceforSoftExpert
 import br.andrew.sap.services.stock.ItemsService
 import org.slf4j.LoggerFactory
 import org.springframework.http.ResponseEntity

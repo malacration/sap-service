@@ -1,12 +1,12 @@
 package br.andrew.sap.schedules.futura
 
-import br.andrew.sap.controllers.ContratoVendaFuturaController
+import br.andrew.sap.controllers.comercial.ContratoVendaFuturaController
 import br.andrew.sap.infrastructure.odata.NextLink
-import br.andrew.sap.model.sap.DocEntry
+import br.andrew.sap.model.sap.comercial.DocEntry
 import br.andrew.sap.model.dto.ContratoParaFinalizar
 import br.andrew.sap.model.self.vendafutura.Contrato
 import br.andrew.sap.model.self.vendafutura.Status
-import br.andrew.sap.services.ContratoVendaFuturaService
+import br.andrew.sap.services.comercial.ContratoVendaFuturaService
 import br.andrew.sap.services.abstracts.SqlQueriesService
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory

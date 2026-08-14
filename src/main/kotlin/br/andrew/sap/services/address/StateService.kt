@@ -2,9 +2,9 @@ package br.andrew.sap.services.address
 
 import br.andrew.sap.infrastructure.odata.Filter
 import br.andrew.sap.model.sap.address.State
-import br.andrew.sap.model.envrioments.SapEnvrioment
+import br.andrew.sap.model.sistema.SapEnvrioment
 import br.andrew.sap.model.romaneio.TipoAnalise
-import br.andrew.sap.services.AuthService
+import br.andrew.sap.services.security.AuthService
 import br.andrew.sap.services.abstracts.EntitiesService
 import org.springframework.cache.annotation.Cacheable
 import org.springframework.cache.annotation.Caching

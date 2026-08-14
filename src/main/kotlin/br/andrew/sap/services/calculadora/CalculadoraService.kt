@@ -2,10 +2,10 @@ package br.andrew.sap.services.calculadora
 
 import br.andrew.sap.infrastructure.odata.Parameter
 import br.andrew.sap.model.calculadora.CalculadoraPreco
-import br.andrew.sap.model.sap.BussinessPlace
-import br.andrew.sap.model.envrioments.SapEnvrioment
-import br.andrew.sap.model.sap.Branch
-import br.andrew.sap.services.AuthService
+import br.andrew.sap.model.sap.cadastro.BussinessPlace
+import br.andrew.sap.model.sistema.SapEnvrioment
+import br.andrew.sap.model.sap.cadastro.Branch
+import br.andrew.sap.services.security.AuthService
 import br.andrew.sap.services.abstracts.EntitiesService
 import br.andrew.sap.services.abstracts.SqlQueriesService
 import org.springframework.stereotype.Service

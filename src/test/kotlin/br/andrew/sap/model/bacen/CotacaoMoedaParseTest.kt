@@ -4,6 +4,7 @@ import br.andrew.sap.services.bacen.CotacaoMoedaParse
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import java.text.SimpleDateFormat
+import br.andrew.sap.model.integracao.CotacaoMoeda
 
 class CotacaoMoedaParseTest {
 

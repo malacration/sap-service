@@ -1,6 +1,6 @@
 package br.andrew.sap.model.exceptions
 
-import br.andrew.sap.model.sap.SapError
+import br.andrew.sap.model.sap.sistema.SapError
 import br.andrew.sap.model.sap.documents.OrderSales
 import br.andrew.sap.model.sap.documents.base.Document
 

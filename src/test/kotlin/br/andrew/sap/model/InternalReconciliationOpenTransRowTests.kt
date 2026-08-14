@@ -1,6 +1,6 @@
 package br.andrew.sap.model
 
-import br.andrew.sap.model.sap.InternalReconciliationOpenTransRow
+import br.andrew.sap.model.sap.comercial.InternalReconciliationOpenTransRow
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 

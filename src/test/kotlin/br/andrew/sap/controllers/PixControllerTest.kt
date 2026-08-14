@@ -3,7 +3,7 @@ package br.andrew.sap.controllers
 import br.andrew.sap.infrastructure.configurations.uzzipay.UzziPayEnvrioment
 import br.andrew.sap.infrastructure.odata.Filter
 import br.andrew.sap.infrastructure.odata.OData
-import br.andrew.sap.model.PixRequestAdiantamento
+import br.andrew.sap.model.comercial.PixRequestAdiantamento
 import br.andrew.sap.model.authentication.User
 import br.andrew.sap.model.authentication.UserOriginEnum
 import br.andrew.sap.model.sap.documents.DocumentTypes
@@ -11,8 +11,8 @@ import br.andrew.sap.model.uzzipay.ContaUzziPayPix
 import br.andrew.sap.model.uzzipay.DataRetonroPixQrCode
 import br.andrew.sap.model.uzzipay.RequestPixImmediate
 import br.andrew.sap.model.uzzipay.RetonroPixQrCode
-import br.andrew.sap.services.document.DownPaymentService
-import br.andrew.sap.services.document.InvoiceService
+import br.andrew.sap.services.documents.DownPaymentService
+import br.andrew.sap.services.documents.InvoiceService
 import br.andrew.sap.services.uzzipay.DynamicPixQrCodeService
 import br.andrew.sap.services.uzzipay.PixPaymentVerificationService
 import br.andrew.sap.services.uzzipay.TransactionsPixService
@@ -30,6 +30,7 @@ import org.mockito.kotlin.doThrow
 import org.mockito.kotlin.eq
 import org.mockito.kotlin.whenever
 import java.math.BigDecimal
+import br.andrew.sap.controllers.financeiro.PixController
 
 class PixControllerTest {
 

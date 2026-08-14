@@ -1,6 +1,7 @@
 package br.andrew.sap.model
 
 import org.junit.jupiter.api.Test
+import br.andrew.sap.model.sistema.Query
 
 class QueryTest {
 
