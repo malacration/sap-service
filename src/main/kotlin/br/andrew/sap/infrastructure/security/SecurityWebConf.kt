@@ -44,7 +44,8 @@ class SecurityWebConf(
     private val otpService : OneTimePasswordService,
     private val keycloakProperties : KeycloakProperties,
     private val keycloakJwtService : KeycloakJwtService,
-    private val keycloakUserMapper : KeycloakUserMapper
+    private val keycloakUserMapper : KeycloakUserMapper,
+    private val corsConfig : CorsConfig
 )  {
 
     private val jwtHandler = JwtHandler(jwtSecretBean)
@@ -62,7 +63,7 @@ class SecurityWebConf(
                     it.anyRequest().permitAll()
                 }.addFilterBefore(DisableOneTimePasswordAuthenticationFilter(authManager,jwtHandler),UsernamePasswordAuthenticationFilter::class.java)
                 .addFilterBefore(JwtAuthenticationFilter(jwtHandler,disable), DisableOneTimePasswordAuthenticationFilter::class.java)
-                .cors(CorsConfig().customizer)
+                .cors(corsConfig.customizer)
                 .build()
         }
         else{
@@ -115,7 +116,7 @@ class SecurityWebConf(
                 }
                 .exceptionHandling { it.authenticationEntryPoint(KeycloakProvisioningEntryPoint()) }
                 .csrf { it.disable() }
-                .cors(CorsConfig().customizer)
+                .cors(corsConfig.customizer)
                 .build()
         }
     }

@@ -28,7 +28,9 @@ class AuthenticationHandler(
         response: HttpServletResponse,
         user: Authentication
     ) {
-        response.setHeader("Access-Control-Allow-Origin","*")
+        //nao setar Access-Control-Allow-Origin aqui: o CorsFilter ja respondeu com
+        //a origem concreta + Allow-Credentials, e sobrescrever com "*" faz o
+        //navegador recusar a resposta do login
         response.contentType = "text/plain"
         response.characterEncoding = "UTF-8"
         if(user is User) {
@@ -46,7 +48,6 @@ class AuthenticationHandler(
         exception: AuthenticationException
     ) {
         logger.error("onAuthenticationFailure",exception)
-        response.setHeader("Access-Control-Allow-Origin","*")
         val msg = when(exception::class) {
             PasswordEmptyException()::class -> exception.message
             UsernameNotFoundException::class -> "Usuario ou Senha Invalido"
