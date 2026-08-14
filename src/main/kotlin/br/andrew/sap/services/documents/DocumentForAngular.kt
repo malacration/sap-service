@@ -4,6 +4,7 @@ import br.andrew.sap.infrastructure.WarehouseDefaultConfig
 import br.andrew.sap.infrastructure.configurations.DistribuicaoCustoByBranchConfig
 import br.andrew.sap.model.sap.documents.base.Document
 import br.andrew.sap.model.sap.partner.AddresType
+import br.andrew.sap.model.sap.partner.Address
 import br.andrew.sap.model.sap.partner.BusinessPartner
 import br.andrew.sap.services.cadastro.BusinessPartnersService
 import br.andrew.sap.services.logistica.RegiaoService
@@ -41,7 +42,7 @@ class DocumentForAngular {
             return
 
         val bp = businessPartnersService.getById("'${pedido.CardCode}'").tryGetValue<BusinessPartner>()
-        val enderecoEntrega = bp.getAddresses().firstOrNull { it.addressType == AddresType.bo_ShipTo }
+        val enderecoEntrega = enderecoEntregaSelecionado(pedido, bp)
         val codLocalidade = enderecoEntrega?.U_Localidade
             ?: throw Exception("O cliente ${pedido.CardCode} nao possui localidade cadastrada no endereco de entrega - cadastre a localidade antes de finalizar a venda")
 
@@ -63,5 +64,17 @@ class DocumentForAngular {
                 "Valor do frete divergente do calculado pelo sistema " +
                 "(enviado: R$ ${"%.2f".format(freteEnviado)}, esperado: R$ ${"%.2f".format(freteEsperado)})"
             )
+    }
+
+    private fun enderecoEntregaSelecionado(pedido: Document, bp: BusinessPartner): Address? {
+        val enderecosEntrega = bp.getAddresses()
+            .filter { it.addressType == AddresType.bo_ShipTo }
+        val shipToCode = pedido.shipToCode?.trim()
+
+        if(shipToCode.isNullOrBlank())
+            return enderecosEntrega.firstOrNull()
+
+        return enderecosEntrega.firstOrNull { it.addressName?.trim().equals(shipToCode, ignoreCase = true) }
+            ?: throw Exception("Endereco de entrega $shipToCode nao encontrado no cliente ${pedido.CardCode}")
     }
 }

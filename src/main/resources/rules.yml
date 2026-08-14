@@ -55,6 +55,7 @@ roles:
     - url: "/down-payment/contrato-venda-futura/*/pix"
       actions: [ "post" ]
     - url: "/painel-vendas/**"
+      actions: ["*"]
     - url: "/cobranca/titulos"
       actions: ["get"]
     - url: "/cobranca/titulos/*/*/*/historico"

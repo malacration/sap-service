@@ -2,7 +2,7 @@ package br.andrew.sap.controllers.documents
 
 import br.andrew.sap.model.authentication.User
 import br.andrew.sap.model.authentication.UserOriginEnum
-import br.andrew.sap.services.document.DownPaymentService
+import br.andrew.sap.services.documents.DownPaymentService
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test

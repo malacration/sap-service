@@ -9,9 +9,9 @@ import br.andrew.sap.model.cobranca.CobrancaException
 import br.andrew.sap.model.cobranca.CobrancaHistorico
 import br.andrew.sap.model.cobranca.CobrancaRegistro
 import br.andrew.sap.model.cobranca.CobrancaTituloVendedorSap
-import br.andrew.sap.model.envrioments.SapEnvrioment
-import br.andrew.sap.model.sap.Session
-import br.andrew.sap.services.AuthService
+import br.andrew.sap.model.sistema.SapEnvrioment
+import br.andrew.sap.model.sap.sistema.Session
+import br.andrew.sap.services.security.AuthService
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertThrows
