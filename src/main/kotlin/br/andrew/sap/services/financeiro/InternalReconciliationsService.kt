@@ -83,6 +83,24 @@ class InternalReconciliationsService(
                 Parameter("docEntry",docEntry))
         )?.tryGetValues<ContrapartidaReconciliacao>()?.map { it.SrcObjTyp } ?: listOf()
     }
+
+    /**
+     * Igual contrapartidasReconciliacao, mas devolve os pares (SrcObjTyp, SrcObjAbs) das
+     * contrapartidas em vez de so os tipos distintos - usado pelo Mapa de Relacoes pra
+     * conseguir buscar os documentos de verdade, nao so saber que tipo existe.
+     */
+    fun contrapartidasDocumentos(document : Document): List<ContrapartidaDocumento> {
+        return contrapartidasDocumentos(document.docEntry ?: -1, document.docObjectCode?.value ?: 13)
+    }
+
+    fun contrapartidasDocumentos(docEntry : Int, objType : Int): List<ContrapartidaDocumento> {
+        return sqlQueriesService.execute(
+            "reconciliacao-interna-contrapartidas-docs.sql",
+            listOf(
+                Parameter("objType",objType),
+                Parameter("docEntry",docEntry))
+        )?.tryGetValues<ContrapartidaDocumento>() ?: listOf()
+    }
 }
 
 
@@ -95,3 +113,8 @@ class RecomNum(val ReconNum : Int)
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 class ContrapartidaReconciliacao(val SrcObjTyp : Int)
+
+@JsonNaming(PropertyNamingStrategies.UpperCamelCaseStrategy::class)
+@JsonIgnoreProperties(ignoreUnknown = true)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
+class ContrapartidaDocumento(val SrcObjTyp : Int, val SrcObjAbs : Int)

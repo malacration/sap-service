@@ -9,16 +9,21 @@ import br.andrew.sap.model.authentication.User
 import br.andrew.sap.model.dto.ContasReceberDto
 import br.andrew.sap.model.enums.YesNo
 import br.andrew.sap.model.forca.Cliente
+import br.andrew.sap.model.enums.Cancelled
+import br.andrew.sap.model.sap.documents.DocumentStatus
 import br.andrew.sap.model.sap.documents.OrderSales
+import br.andrew.sap.model.sap.documents.base.Document
 import br.andrew.sap.model.sap.partner.BusinessPartner
 import br.andrew.sap.model.sap.partner.BusinessPartnerCrossJoin
 import br.andrew.sap.model.sap.partner.BusinessPartnerSlin
 import br.andrew.sap.model.sap.partner.BusinessPartnerType
+import br.andrew.sap.model.sap.partner.BPFiscalTaxID
 import br.andrew.sap.model.sap.partner.CpfCnpj
 import br.andrew.sap.model.sap.partner.ReferenciaComercial
 import br.andrew.sap.services.*
 import br.andrew.sap.services.abstracts.Entidade
 import br.andrew.sap.services.documents.OrdersService
+import br.andrew.sap.services.documents.QuotationsService
 import br.andrew.sap.services.security.OneTimePasswordService
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
@@ -37,6 +42,7 @@ import org.springframework.web.multipart.MultipartFile
 import br.andrew.sap.services.cadastro.BusinessPartnersService
 import br.andrew.sap.services.cadastro.ReferenciaComercialService
 import br.andrew.sap.services.cadastro.AtualizacaoCadastralService
+import br.andrew.sap.services.cadastro.SalesPersonsService
 import br.andrew.sap.controllers.sistema.AttachmentController
 
 @RestController
@@ -44,10 +50,12 @@ import br.andrew.sap.controllers.sistema.AttachmentController
 class BusinessPartnersController(
     val service : BusinessPartnersService,
     val orderService : OrdersService,
+    val quotationsService: QuotationsService,
     val refService : ReferenciaComercialService,
     val atualizacao: AtualizacaoCadastralService,
     val anexoController : AttachmentController,
-    val otpService: OneTimePasswordService
+    val otpService: OneTimePasswordService,
+    val salesPersonsService: SalesPersonsService
 ) {
 
     @GetMapping()
@@ -156,12 +164,13 @@ class BusinessPartnersController(
             @RequestParam(required = false) cardCode: String?,
             @RequestParam(required = false) cardName: String?,
             @RequestParam(required = false) cpfCnpj: String?,
+            @RequestParam(required = false) salesPersonCode: Int?,
             page: Pageable): ResponseEntity<Page<BusinessPartner>> {
         if (auth !is User)
             return ResponseEntity.noContent().build()
 
         val entidades = mutableListOf(
-            Entidade("BusinessPartners",listOf("CardCode","CardName","SalesPersonCode","Phone1","Phone2","CardType","Valid")),
+            Entidade("BusinessPartners",listOf("CardCode","CardName","SalesPersonCode","Phone1","Phone2","CardType","Valid","CreditLine")),
         )
         val filter = Filter(listOf(
             Predicate("BusinessPartners/CardType", "C", Condicao.EQUAL),
@@ -170,6 +179,8 @@ class BusinessPartnersController(
 
         if(!auth.isListAllBusinessPartner()){
             filter.add(Predicate("BusinessPartners/SalesPersonCode", auth.getIdInt(), Condicao.EQUAL))
+        } else if(salesPersonCode != null) {
+            filter.add(Predicate("BusinessPartners/SalesPersonCode", salesPersonCode, Condicao.EQUAL))
         }
         if (!cardName?.trim().isNullOrEmpty()) {
             filter.add(Predicate("BusinessPartners/CardName", cardName.trim(), Condicao.CONTAINS))
@@ -186,34 +197,158 @@ class BusinessPartnersController(
                 filter.add(Predicate("BusinessPartners/BPFiscalTaxIDCollection/TaxId0", cpfCnpjObj.toString(), Condicao.EQUAL))
             else
                 filter.add(Predicate("BusinessPartners/BPFiscalTaxIDCollection/TaxId4", cpfCnpjObj.toString(), Condicao.EQUAL))
-            ResponseEntity.ok(
-                service.crossJoin(entidades, filter, OrderBy(),page)
+            val resultado = service.crossJoin(entidades, filter, OrderBy(),page)
                     .tryGetPageValues<BusinessPartnerCrossJoin>(page).map {
                         if(it.BPFiscalTaxIDCollection != null)
                             it.BusinessPartners.setBPFiscalTaxIDCollection(listOf(it.BPFiscalTaxIDCollection!!))
                         it.BusinessPartners
                     }
-            )
+            ResponseEntity.ok(enriqueceListagem(resultado))
         }else{
-            return ResponseEntity.ok(service.get(
+            val resultado = service.get(
                 filter.withStripPrefix("BusinessPartners/"),
                 OrderBy(mapOf("CardName" to Order.ASC)),
                 page
-            ).tryGetPageValues<BusinessPartner>(page))
+            ).tryGetPageValues<BusinessPartner>(page)
+            return ResponseEntity.ok(enriqueceListagem(resultado))
         }
     }
 
+    private fun enriqueceListagem(page: Page<BusinessPartner>): Page<BusinessPartner> {
+        val fiscais = buscaFiscais(page.content)
+        val vendedores = page.content
+            .mapNotNull { it.salesPersonCode }
+            .distinct()
+            .takeIf { it.isNotEmpty() }
+            ?.let {
+                salesPersonsService.get(Filter(Predicate("SalesEmployeeCode", it, Condicao.IN)))
+                    .tryGetValues<br.andrew.sap.model.sap.cadastro.SalePerson>()
+                    .associateBy { vendedor -> vendedor.SalesEmployeeCode }
+            } ?: emptyMap<Int, br.andrew.sap.model.sap.cadastro.SalePerson>()
+
+        page.content.forEach { parceiro ->
+            if(parceiro.TaxId0.isNullOrBlank() && parceiro.TaxId4.isNullOrBlank()){
+                val fiscal = parceiro.getBPFiscalTaxIDCollection()?.firstOrNull()
+                    ?: parceiro.cardCode?.let { fiscais[it] }
+                    ?: runCatching {
+                        service.getById("'${parceiro.cardCode}'")
+                            .tryGetValue<BusinessPartner>()
+                            .getBPFiscalTaxIDCollection()
+                            ?.firstOrNull()
+                    }.getOrNull()
+                parceiro.TaxId0 = fiscal?.TaxId0
+                parceiro.TaxId4 = fiscal?.TaxId4
+            }
+            parceiro.salesEmployeeName = parceiro.salesPersonCode?.let { vendedores[it]?.SalesEmployeeName }
+        }
+        return page
+    }
+
+    private fun buscaFiscais(parceiros: List<BusinessPartner>): Map<String, BPFiscalTaxID> {
+        val codigos = parceiros.mapNotNull { it.cardCode }.distinct()
+        if(codigos.isEmpty())
+            return emptyMap()
+
+        return runCatching<Map<String, BPFiscalTaxID>> {
+            val entidades = listOf(
+                Entidade("BusinessPartners", listOf("CardCode")),
+                Entidade("BusinessPartners/BPFiscalTaxIDCollection", listOf("TaxId4", "TaxId0", "BPCode"))
+            )
+            val filter = Filter(listOf(
+                Predicate("BusinessPartners/CardCode", "BusinessPartners/BPFiscalTaxIDCollection/BPCode", Condicao.EQUAL, true),
+                Predicate("BusinessPartners/CardCode", codigos, Condicao.IN)
+            ))
+
+            service.crossJoin(entidades, filter, OrderBy(), Pageable.ofSize(codigos.size * 2))
+                .tryGetValues<BusinessPartnerCrossJoin>()
+                .mapNotNull { it.BPFiscalTaxIDCollection }
+                .filter { !it.TaxId0.isNullOrBlank() || !it.TaxId4.isNullOrBlank() }
+                .distinctBy { it.TaxId0 ?: it.TaxId4 }
+                .associateBy { it.BPCode ?: "" }
+                .filterKeys { it.isNotBlank() }
+        }.getOrElse { emptyMap() }
+    }
+
     @GetMapping("pedido-venda-parceiro")
-    fun get(auth : Authentication, @RequestParam CardCode: String): ResponseEntity<List<OrderSales>> {
+    fun get(auth : Authentication,
+            @RequestParam CardCode: String,
+            @RequestParam(required = false) status: DocumentStatus?,
+            @RequestParam(required = false) docNum: Int?,
+            @RequestParam(required = false) dataInicial: String?,
+            @RequestParam(required = false) dataFinal: String?,
+            @RequestParam(required = false) salesPersonCode: Int?,
+            page: Pageable): ResponseEntity<Page<OrderSales>> {
         if(!(auth is User))
             return ResponseEntity.noContent().build()
-        val predicados = mutableListOf(
-            Predicate("CardCode", "${CardCode}", Condicao.EQUAL),
-        )
-        return ResponseEntity.ok(orderService
-            .get(Filter(predicados), OrderBy(mapOf("DocEntry" to Order.DESC)))
-            .tryGetValues<OrderSales>()
-        )
+        val documentos = orderService
+            .get(
+                filtroDocumentosParceiro(CardCode, status, docNum, dataInicial, dataFinal, salesPersonCode),
+                OrderBy(mapOf("DocDate" to Order.DESC, "DocEntry" to Order.DESC)),
+                page
+            )
+            .tryGetPageValues<OrderSales>(page)
+        return ResponseEntity.ok(enriqueceVendedores(documentos))
+    }
+
+    @GetMapping("cotacoes-parceiro")
+    fun getCotacoes(auth : Authentication,
+                    @RequestParam CardCode: String,
+                    @RequestParam(required = false) status: DocumentStatus?,
+                    @RequestParam(required = false) docNum: Int?,
+                    @RequestParam(required = false) dataInicial: String?,
+                    @RequestParam(required = false) dataFinal: String?,
+                    @RequestParam(required = false) salesPersonCode: Int?,
+                    page: Pageable): ResponseEntity<Page<OrderSales>> {
+        if(!(auth is User))
+            return ResponseEntity.noContent().build()
+        val documentos = quotationsService
+            .get(
+                filtroDocumentosParceiro(CardCode, status, docNum, dataInicial, dataFinal, salesPersonCode),
+                OrderBy(mapOf("DocDate" to Order.DESC, "DocEntry" to Order.DESC)),
+                page
+            )
+            .tryGetPageValues<OrderSales>(page)
+        return ResponseEntity.ok(enriqueceVendedores(documentos))
+    }
+
+    private fun filtroDocumentosParceiro(cardCode: String,
+                                         status: DocumentStatus?,
+                                         docNum: Int?,
+                                         dataInicial: String?,
+                                         dataFinal: String?,
+                                         salesPersonCode: Int?): Filter {
+        return Filter(
+            Predicate("CardCode", cardCode, Condicao.EQUAL),
+            Predicate(Cancelled.tNO, Condicao.EQUAL),
+        ).also {
+            if(status != null)
+                it.add(Predicate("DocumentStatus", status.typeName, Condicao.EQUAL))
+            if(docNum != null)
+                it.add(Predicate("DocNum", docNum, Condicao.EQUAL))
+            if(!dataInicial.isNullOrBlank())
+                it.add(Predicate("DocDate", dataInicial, Condicao.GREAT_EQUAL))
+            if(!dataFinal.isNullOrBlank())
+                it.add(Predicate("DocDate", dataFinal, Condicao.LESS_EQUAL))
+            if(salesPersonCode != null)
+                it.add(Predicate("SalesPersonCode", salesPersonCode, Condicao.EQUAL))
+        }
+    }
+
+    private fun <T : Document> enriqueceVendedores(page: Page<T>): Page<T> {
+        val vendedores = page.content
+            .map { it.salesPersonCode }
+            .filter { it != -1 }
+            .distinct()
+            .takeIf { it.isNotEmpty() }
+            ?.let {
+                salesPersonsService.get(Filter(Predicate("SalesEmployeeCode", it, Condicao.IN)))
+                    .tryGetValues<br.andrew.sap.model.sap.cadastro.SalePerson>()
+                    .associateBy { vendedor -> vendedor.SalesEmployeeCode }
+            } ?: emptyMap()
+        page.content.forEach { documento ->
+            documento.salesEmployeeName = vendedores[documento.salesPersonCode]?.SalesEmployeeName
+        }
+        return page
     }
 
     @GetMapping("/cpf-cnpj/teste/{cpfCnpj}")

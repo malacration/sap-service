@@ -15,6 +15,10 @@ class TableMd(tableName : String,
     init {
         if(tableName.length > 19)
             throw Exception("Nome da tabela é muito grande")
+        //TableDescription do SAP (UserTablesMD) tem limite de 30 caracteres -
+        //passar disso da erro "Value too long in property 'TableDescription'"
+        if(tableDescription.length > 30)
+            throw Exception("Descrição da tabela é muito grande (máximo 30 caracteres): '$tableDescription'")
     }
 
     val archivable : YesNo = YesNo.tNO

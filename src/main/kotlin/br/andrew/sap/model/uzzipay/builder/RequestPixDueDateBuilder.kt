@@ -7,7 +7,6 @@ import br.andrew.sap.model.sap.partner.BusinessPartner
 import br.andrew.sap.model.uzzipay.ContaUzziPayPix
 import br.andrew.sap.model.uzzipay.Payer
 import br.andrew.sap.model.uzzipay.RequestPixDueDate
-import okhttp3.internal.parseCookie
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.time.LocalDate
@@ -56,12 +55,28 @@ class RequestPixDueDateBuilder(
         return Payer(
             bp.getCpfCnpj().value,
             bp.cardName?:"Sem Nome",
-            bp.emailAddress?:"sememail@windson.com",
+            resolveEmail(),
             addressLine,
             city,
             addresse.State ?: "",
             addresse.ZipCode ?: "",
             conta.businessPlace
         )
+    }
+
+    private fun resolveEmail(): String {
+        return firstValidEmail(bp.emailAddress, conta.businessPlace?.Email, FALLBACK_EMAIL)
+            ?: FALLBACK_EMAIL
+    }
+
+    companion object {
+        private const val FALLBACK_EMAIL = "sememail@windson.com"
+        private val EMAIL_REGEX = Regex("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")
+
+        private fun firstValidEmail(vararg emails: String?): String? {
+            return emails
+                .mapNotNull { it?.trim() }
+                .firstOrNull { EMAIL_REGEX.matches(it) }
+        }
     }
 }

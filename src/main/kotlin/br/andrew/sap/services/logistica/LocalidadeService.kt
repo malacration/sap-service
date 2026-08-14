@@ -1,39 +1,114 @@
 package br.andrew.sap.services.logistica
 import br.andrew.sap.infrastructure.odata.NextLink
 import br.andrew.sap.infrastructure.odata.Parameter
-import br.andrew.sap.model.cadastro.MotoristaContrato
 import br.andrew.sap.model.authentication.User
 import br.andrew.sap.model.sistema.SapEnvrioment
 import br.andrew.sap.model.sap.cadastro.Localidade
-import br.andrew.sap.model.sap.partner.BusinessPartnerSlin
 import br.andrew.sap.model.sap.partner.CpfCnpj
 import br.andrew.sap.services.abstracts.EntitiesService
 import br.andrew.sap.services.abstracts.SqlQueriesService
 import org.springframework.stereotype.Service
 import org.springframework.web.client.RestTemplate
 import br.andrew.sap.services.security.AuthService
+import br.andrew.sap.infrastructure.odata.Condicao
+import br.andrew.sap.infrastructure.odata.Filter
+import java.text.Normalizer
+import java.util.Locale
 
 @Service
 class LocalidadeService(val sqlQueriesService : SqlQueriesService, env : SapEnvrioment,
                         restTemplate: RestTemplate,
                         authService: AuthService)
     : EntitiesService<Localidade>(env, restTemplate,authService) {
+    //UDO "Locais", que aponta pra @RO_LOCAIS (mesma tabela usada pela busca
+    //full-text abaixo). NAO trocar pra AR_Localidade sem antes criar essa
+    //tabela de verdade (ver RegiaoFreteConfiguration.kt como referencia do
+    //padrao de migracao RO_* -> AR_* usado no Regiao) - AR_Localidade nunca
+    //foi provisionada no SAP, so referenciada aqui por engano.
     override fun path(): String {
         return "/b1s/v1/Locais"
     }
 
+    fun criar(localidade: Localidade): Localidade {
+        val normalizada = normaliza(localidade)
+        valida(normalizada)
+        validaNomeDuplicado(normalizada)
+        return save(normalizada).tryGetValue()
+    }
+
+    private fun valida(localidade: Localidade) {
+        if(localidade.Code.isNullOrBlank())
+            throw Exception("O codigo da localidade deve ser informado")
+        if(localidade.Name.isNullOrBlank())
+            throw Exception("O nome da localidade deve ser informado")
+        if(!CODIGO_VALIDO.matches(localidade.Code))
+            throw Exception("O codigo da localidade deve conter apenas letras e numeros, sem acentos ou caracteres especiais")
+        if(!NOME_VALIDO.matches(localidade.Name))
+            throw Exception("O nome da localidade deve conter apenas letras, numeros e espacos, sem acentos ou caracteres especiais")
+    }
+
+    private fun validaNomeDuplicado(localidade: Localidade) {
+        val existentes = get(Filter("Name", localidade.Name!!, Condicao.EQUAL))
+            .tryGetValues<Localidade>()
+        if(existentes.any { it.Code != localidade.Code })
+            throw Exception("Ja existe uma localidade cadastrada com o nome ${localidade.Name}")
+    }
+
+    private fun normaliza(localidade: Localidade): Localidade {
+        return Localidade(
+            Code = normalizaCodigo(localidade.Code),
+            Name = normalizaNome(localidade.Name),
+        )
+    }
+
     fun fullSearchTextFallBack(fullText: String, user: User): NextLink<Localidade> {
-        if(fullText.startsWith("SQLQueries('localidade-search.sql')"))
+        if((fullText.startsWith("SQLQueries('localidade-search.sql')") || fullText.startsWith("SQLQueries('search-locality.sql')"))
+            && fullText.contains("?"))
             return sqlQueriesService.nextLink(fullText)!!.tryGetNextValues()
+        if(fullText.startsWith("SQLQueries('localidade-search.sql')") || fullText.startsWith("SQLQueries('search-locality.sql')"))
+            return NextLink(listOf(), "")
         val busca = if(fullText.toDoubleOrNull() == null)
-            fullText.split(" ").joinToString(" ") { it.lowercase().replaceFirstChar { c -> c.uppercase() } }.replace("*", "%")
+            normalizaBusca(fullText).replace("*", "%")
         else
             CpfCnpj(fullText).getWithMask()
         val parametros = listOf(
-            Parameter("valor","'%${busca}%'"),
+            Parameter("search","'%${busca}%'"),
         )
         return sqlQueriesService
-            .execute("localidade-search.sql", parametros)!!
+            .execute("search-locality.sql", parametros)!!
             .tryGetNextValues()
+    }
+
+    private fun normalizaCodigo(value: String?): String {
+        return removeAcentos(value.orEmpty())
+            .uppercase(Locale.ROOT)
+            .replace(Regex("[^A-Z0-9]"), "")
+            .trim()
+    }
+
+    private fun normalizaNome(value: String?): String {
+        return removeAcentos(value.orEmpty())
+            .uppercase(Locale.ROOT)
+            .replace(Regex("[^A-Z0-9 ]"), "")
+            .replace(Regex("\\s+"), " ")
+            .trim()
+    }
+
+    private fun normalizaBusca(value: String): String {
+        return removeAcentos(value)
+            .uppercase(Locale.ROOT)
+            .replace(Regex("[^A-Z0-9 *]"), "")
+            .replace(Regex("\\s+"), " ")
+            .trim()
+    }
+
+    private fun removeAcentos(value: String): String {
+        return Normalizer.normalize(value, Normalizer.Form.NFD)
+            .replace(Regex("\\p{M}+"), "")
+    }
+
+    companion object {
+        private val CODIGO_VALIDO = Regex("^[A-Z0-9]+$")
+        private val NOME_VALIDO = Regex("^[A-Z0-9 ]+$")
     }
 }

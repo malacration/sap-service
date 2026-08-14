@@ -19,6 +19,7 @@ class BPFiscalTaxID() {
     var TaxId1 : String? = null
     var TaxId0 : String? = null
     var TaxId4 : String? = null
+    var BPCode : String? = null
 
     override fun toString(): String {
         return "$TaxId4 $TaxId0"

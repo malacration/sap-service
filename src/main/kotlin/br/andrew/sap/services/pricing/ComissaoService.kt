@@ -29,4 +29,17 @@ class ComissaoService(env : SapEnvrioment,
     fun getByIdTabela(idTabela: Int): Comissao {
         return get(priceList.getById(idTabela).tryGetValue<PriceList>().U_tipoComissao ?: throw Exception("Tabela sem tipo de comissão"))
     }
+
+    fun getTodas(): List<Comissao> {
+        return getAll(Comissao::class.java)
+    }
+
+    fun criar(comissao: Comissao): Comissao {
+        return save(comissao).tryGetValue()
+    }
+
+    fun atualizar(id: Int, comissao: Comissao): Comissao {
+        update(comissao, "'$id'")
+        return get(id)
+    }
 }

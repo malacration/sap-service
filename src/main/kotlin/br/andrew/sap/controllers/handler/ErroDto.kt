@@ -6,8 +6,8 @@ import com.fasterxml.jackson.annotation.JsonInclude
 class ErroDto(val mensagem : String, val traceId : String) {
 
     var stackTrace : String? = null
-    constructor(mensagem: String, traceId: String, t: Throwable) : this(mensagem, traceId){
-        this.stackTrace = t.stackTraceToString()
+    var causeBy : String? = null
+    constructor(mensagem: String, traceId: String, t: Throwable, causeBy: String? = t.cause?.message) : this(mensagem, traceId){
+        this.causeBy = causeBy?.lineSequence()?.firstOrNull { it.isNotBlank() }?.trim()
     }
 }
-

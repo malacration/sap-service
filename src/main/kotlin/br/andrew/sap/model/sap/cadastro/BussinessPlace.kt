@@ -20,6 +20,7 @@ class BussinessPlace {
     var City: String? = null
     var County: String? = null
     var State: String? = null
+    var Email: String? = null
 
     var DefaultCustomerID: String? = null
     var DefaultVendorID: String? = null

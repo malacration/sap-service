@@ -43,6 +43,7 @@ open class Document(val CardCode : String,
     var comments: String? = null
     var docDate :String? = null
     var salesPersonCode: Int = -1
+    var salesEmployeeName: String? = null
     var paymentGroupCode: Int? = null
     var docEntry : Int? = null
     var docNum : String? = null

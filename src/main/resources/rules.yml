@@ -16,6 +16,8 @@ roles:
       actions: ["get"]
     - url: "/business-partners/search"
       actions: ["*"]
+    - url: "/sales-person/*"
+      actions: ["get"]
     - url: "/item/search/branch/**"
       actions: ["*"]
     - url: "/prazo/tabela/**"
@@ -52,6 +54,8 @@ roles:
       actions: ["get"]
     - url: "/down-payment/contrato-venda-futura/*/pix"
       actions: [ "post" ]
+    - url: "/painel-vendas/**"
+      actions: ["get"]
 
   vendedor_admin:
     - url: "/down-payment/contrato-venda-futura/*/pix"
@@ -64,10 +68,14 @@ roles:
       actions: ["*"]
     - url: "/painel/**"
       actions: ["*"]
+    - url: "/painel-vendas/**"
+      actions: ["*"]
     - url: "/branch"
       actions: ["get"]
     - url: "/sales-person/search"
       actions: ["*"]
+    - url: "/sales-person/*"
+      actions: ["get"]
     - url: "/sales-person/*/business-partners"
       actions: ["*"]
     - url: "/sales-person/replace/*/por/*"

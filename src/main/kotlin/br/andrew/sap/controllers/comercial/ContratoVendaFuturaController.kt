@@ -19,6 +19,9 @@ import br.andrew.sap.model.self.vendafutura.PedidoTroca
 import br.andrew.sap.model.self.vendafutura.Status
 import br.andrew.sap.model.self.vendafutura.VincularDevolucao
 import br.andrew.sap.model.sap.comercial.InternalReconciliationsBuilder
+import br.andrew.sap.services.comercial.BaixaSpreadResultado
+import br.andrew.sap.services.comercial.BaixaSpreadVendaFuturaService
+import br.andrew.sap.services.comercial.EntregaPendenteBaixa
 import br.andrew.sap.services.comercial.ContratoVendaFuturaService
 import br.andrew.sap.services.financeiro.InternalReconciliationsService
 import br.andrew.sap.services.financeiro.RecomNum
@@ -62,6 +65,7 @@ class ContratoVendaFuturaController(
     val batchService: BatchService,
     val estornoReclassificacaoService : EstornoReclassificacaoVendaFuturaService,
     val journalEntriesService : JournalEntriesService,
+    val baixaSpreadService : BaixaSpreadVendaFuturaService,
     @Value("\${venda-futura.entrega:9}") val utilizacaoEntregaVendaFutura : Int,
     val cotacaoController : QuotationsController,
     val impostosDesonerados : ImpostosDesonerados){
@@ -125,7 +129,7 @@ class ContratoVendaFuturaController(
     }
 
     @PostMapping("pedido-retirada")
-    fun pedidoRetirada(@RequestBody pedidoRetirada : PedidoRetirada, auth : Authentication) : ResponseEntity<Document?> {
+    fun pedidoRetirada(@RequestBody pedidoRetirada : PedidoRetirada, auth : Authentication) : ResponseEntity<Any> {
         val contrato = service.get(Filter(
             Predicate("DocEntry",pedidoRetirada.docEntryVendaFutura,Condicao.EQUAL)
         )).tryGetValues<Contrato>().firstOrNull() ?: throw  Exception("O contrato nao foi encontrado")
@@ -136,7 +140,7 @@ class ContratoVendaFuturaController(
         val numerosBoletos = adiantamentoService.getOurNumbersByContratoVendaFutura(contrato.DocEntry!!)
         val orderSales = orderService.getById(contrato.U_orderDocEntry).tryGetValue<OrderSales>()
         val cotacao = pedidoRetirada.parse(contrato,utilizacaoEntregaVendaFutura,boleto.DocDueDate,orderSales,numerosBoletos)
-        return ResponseEntity.ok(cotacaoController.saveForAngular(cotacao,auth))
+        return cotacaoController.saveForAngular(cotacao,auth)
     }
 
     @GetMapping("/encerrar/{docEntryVendaFutura}")
@@ -176,6 +180,41 @@ class ContratoVendaFuturaController(
         internalReconciliationsService
             .serviceCancel("{ \"InternalReconciliationParams\": { \"ReconNum\": \"${recomNums.first().ReconNum}\"} }")
         return recomNums
+    }
+
+    data class BaixaComSpreadRequest(val spread: Double)
+
+    // A regra em rules.yml (/contrato-venda-futura/** GET) e ampla demais pra restringir só
+    // esses dois endpoints sem reescrever tudo que vendedor/vendedor_admin já usam por ali - por
+    // isso a baixa com spread se protege aqui dentro, independente do rules.yml. É a mesma
+    // mensagem que RoleBasedAuthorizationFilter usa quando barra por ali.
+    private fun exigirAdmin(auth: Authentication) {
+        if (auth !is User || "admin" !in auth.roles)
+            throw Exception("Você não tem permissão para acessar este recurso.")
+    }
+
+    /**
+     * Lista, para um contrato, as entregas já reclassificadas (VFET) mas ainda não conciliadas
+     * (nunca viraram VFEC) — o que de fato precisa de baixa manual, com a diferença já calculada
+     * para o usuário decidir o spread antes de confirmar. Não lança nada no SAP (somente leitura).
+     */
+    @GetMapping("/pendentes-baixa/{docEntryContrato}")
+    fun pendentesBaixa(@PathVariable docEntryContrato : Int, auth : Authentication): List<EntregaPendenteBaixa> {
+        exigirAdmin(auth)
+        return baixaSpreadService.listarPendentes(docEntryContrato)
+    }
+
+    /**
+     * Baixa manual de uma entrega já reclassificada (VFET) cujo total ficou alguns centavos acima
+     * dos adiantamentos disponíveis (arredondamento de impostos no faturamento). Aceita uma
+     * tolerância em R$ (spread) e lança a diferença, quando existir, na conta de perda configurada
+     * em venda-futura.conta-perda-spread. Ver plano em `venda-futura`.
+     */
+    @PostMapping("/baixar-com-spread/{docEntry}")
+    fun baixarComSpread(@PathVariable docEntry : Int, @RequestBody body : BaixaComSpreadRequest, auth : Authentication): BaixaSpreadResultado {
+        exigirAdmin(auth)
+        val spread = BigDecimal.valueOf(body.spread).setScale(2, RoundingMode.HALF_UP)
+        return baixaSpreadService.baixarComSpread(docEntry, spread, auth.name)
     }
 
     /**

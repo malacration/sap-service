@@ -18,6 +18,11 @@ class SalesPersonController(
     fun get(page : Pageable): Page<SalePerson> {
         return salesPersonsService.get(page).tryGetPageValues(page)
     }
+
+    @GetMapping("/{salesEmployeeCode}")
+    fun getById(@PathVariable salesEmployeeCode: Int): SalePerson {
+        return salesPersonsService.getById(salesEmployeeCode).tryGetValue()
+    }
     
     @PostMapping("search")
     fun search(@RequestBody salesPerson1: String, page : Pageable): Page<SalePerson>? {
@@ -53,5 +58,4 @@ class SalesPersonController(
         return businessPartnersService.findBusinessPartnersBySalesPersonCode(salesEmployeeCode, page)
     }
 }
-
 

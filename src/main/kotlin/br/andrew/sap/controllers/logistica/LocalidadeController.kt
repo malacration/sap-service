@@ -31,6 +31,11 @@ class LocalidadeController(
         return service.getById("'$id'").tryGetValue()
     }
 
+    @PostMapping()
+    fun save(@RequestBody localidade : Localidade): Localidade {
+        return service.criar(localidade)
+    }
+
     @PostMapping("search")
     fun search(@RequestBody keyWord : String, auth : Authentication): NextLink<Localidade> {
         if(auth is User)

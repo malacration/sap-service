@@ -1,53 +1,59 @@
 package br.andrew.sap.model.sistema
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import com.fasterxml.jackson.annotation.JsonInclude
+import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.PropertyNamingStrategies
 import com.fasterxml.jackson.databind.annotation.JsonNaming
-import br.andrew.sap.model.comercial.PrazoPagamentoDto
-
 
 @JsonNaming(PropertyNamingStrategies.UpperCamelCaseStrategy::class)
 @JsonIgnoreProperties(ignoreUnknown = true)
-class Comissao(val Code : Int, val U_porcentagem : Double) {
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
+class Comissao(val Code : Int, var U_porcentagem : Double) {
 
-    var descontoMaximo : Double? = null
-    var descontoRegressivo : List<DescontoRegressivo> = listOf()
-    var liberadoPara : List<LiberadoPara> = listOf() // Se vazio libera para geral
-    var prazoPagamento : List<PrazoPagamentoDto> = listOf()
+    var Name : String? = null
 
-    fun getTipoDesconto() : TipoDesconto{
-        return if(descontoRegressivo.size == 0){
-            TipoDesconto.DescontoAbsoluto
-        }else{
-            TipoDesconto.DescontoRegressivo
-        }
-    }
+    //"0"/"1" (padrao do UDF de checkbox no service layer, ver Regiao.U_Ativa)
+    @JsonProperty("U_regressiva")
+    var U_regressiva : String? = null
+
+    //desconto maximo (%) que o vendedor pode dar numa venda vinculada a essa comissao
+    @JsonProperty("U_desconto")
+    var U_desconto : Double? = null
+
+    @JsonProperty("CONDICOESFVCollection")
+    @JsonInclude(JsonInclude.Include.ALWAYS)
+    var condicoesFV : MutableList<CondicaoComissao> = mutableListOf()
+
+    @JsonProperty("LIBERAPARACollection")
+    @JsonInclude(JsonInclude.Include.ALWAYS)
+    var liberadoPara : MutableList<LiberadoPara> = mutableListOf()
 }
 
-
-//TODO nao pode existir comissao sem Prazo Pagamento
-
+//linha de condicoesFV: ajuste de desconto/juros por condicao de pagamento (U_prazo -> OCTG.GroupNum),
+//especifico dessa comissao
 @JsonNaming(PropertyNamingStrategies.UpperCamelCaseStrategy::class)
 @JsonIgnoreProperties(ignoreUnknown = true)
-class PrazoPagamento(){
-    // idPrazoReal-idTabela
-    val prazoPagamento = "LinkObjetoSAP"
-    val desconto = ""
-    val juros = ""
-}
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
+class CondicaoComissao(
+    var Code : Int? = null,
+    var LineId : Int? = null,
+    @JsonProperty("U_prazo")
+    var U_prazo : Int? = null,
+    @JsonProperty("U_desconto")
+    var U_desconto : Double? = null,
+    @JsonProperty("U_juros")
+    var U_juros : Double? = null,
+)
 
+//linha de LiberaPara: quem (filial/vendedor) pode usar essa comissao/tabela de preco
 @JsonNaming(PropertyNamingStrategies.UpperCamelCaseStrategy::class)
 @JsonIgnoreProperties(ignoreUnknown = true)
-class LiberadoPara(){
-    var filial : String = "";
-    var vendedor : String = "";
-}
-
-@JsonNaming(PropertyNamingStrategies.UpperCamelCaseStrategy::class)
-@JsonIgnoreProperties(ignoreUnknown = true)
-class DescontoRegressivo(val U_porcentagemDesconto : Double, val U_porcentagemComissao : Double)
-
-enum class TipoDesconto(){
-    DescontoRegressivo,
-    DescontoAbsoluto //Esse desconto reduz o valor da comissao paga em razao do valor negociado
-
-}
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
+class LiberadoPara(
+    var Code : Int? = null,
+    var LineId : Int? = null,
+    @JsonProperty("U_Filial")
+    var U_Filial : String? = null,
+    @JsonProperty("U_vendedor")
+    var U_vendedor : String? = null,
+)

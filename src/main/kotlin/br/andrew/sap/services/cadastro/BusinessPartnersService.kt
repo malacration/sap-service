@@ -4,6 +4,7 @@ import br.andrew.sap.infrastructure.toInt
 import br.andrew.sap.model.authentication.User
 import br.andrew.sap.model.bank.PaymentMethod
 import br.andrew.sap.model.dto.ContasReceberDto
+import br.andrew.sap.model.dto.TituloVencidoDto
 import br.andrew.sap.model.enums.Cancelled
 import br.andrew.sap.model.sistema.SapEnvrioment
 import br.andrew.sap.model.sap.partner.*
@@ -16,6 +17,7 @@ import org.springframework.security.core.Authentication
 import org.springframework.stereotype.Service
 import org.springframework.web.client.RestTemplate
 import java.text.SimpleDateFormat
+import java.time.LocalDate
 import java.util.*
 import br.andrew.sap.services.security.AuthService
 
@@ -186,5 +188,28 @@ class BusinessPartnersService(
             .tryGetNextValues()
 
         return result
+    }
+
+    //cliente com titulo vencido ha mais de 3 dias e nao reconciliado (mesma regra
+    //de ClienteInadimplentesByContabilidade do sap-sql) - usado pelo motor de
+    //regras de autorizacao (ClienteEmAtrasoRegra)
+    fun temTituloVencido(cardCode: String): Boolean {
+        if (cardCode.isBlank())
+            return false
+
+        //SQLQueries do service layer nao suporta ADD_DAYS/NOW() (erro 701 "Cannot
+        //support this function or expression") - a data limite e calculada aqui e
+        //passada como parametro, mesmo padrao ja usado em ParcelasAbertoService/titulos.sql
+        val dataLimite = LocalDate.now().minusDays(3)
+        val parametros = listOf(
+            Parameter("cardCode", "'$cardCode'"),
+            Parameter("dataLimite", "'$dataLimite'")
+        )
+
+        val result: NextLink<TituloVencidoDto> = sqlQueriesService
+            .execute("cliente-em-atraso.sql", parametros)!!
+            .tryGetNextValues()
+
+        return result.content.isNotEmpty()
     }
 }

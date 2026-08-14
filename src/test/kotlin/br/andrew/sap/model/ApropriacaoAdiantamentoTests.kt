@@ -80,4 +80,56 @@ class ApropriacaoAdiantamentoTests {
 
         Assertions.assertEquals(2,resultado.size)
     }
+
+    @Test
+    fun `calcular retorna diferenca dentro do spread`(){
+        val adiantamento1 = DownPayment("","", listOf(),"").also {
+            it.docEntry = 1
+            it.docNum = "1"
+            it.apropriado = BigDecimal.ZERO
+            it.DocTotal = "100.00"
+        }
+        val invoice = Invoice("","", listOf(),"").also {
+            it.DocTotal = "100.05"
+        }
+        val resultado = ApropriacaoAdiantamento(invoice, listOf(adiantamento1)).calcular()
+
+        Assertions.assertEquals(1, resultado.downPayments.size)
+        Assertions.assertEquals(0, BigDecimal("0.05").compareTo(resultado.diferenca))
+    }
+
+    @Test
+    fun `calcular retorna diferenca fora do spread mesmo com adiantamento parcial`(){
+        val adiantamento1 = DownPayment("","", listOf(),"").also {
+            it.docEntry = 1
+            it.docNum = "1"
+            it.apropriado = BigDecimal.ZERO
+            it.DocTotal = "100.00"
+        }
+        val invoice = Invoice("","", listOf(),"").also {
+            it.DocTotal = "100.50"
+        }
+        val resultado = ApropriacaoAdiantamento(invoice, listOf(adiantamento1)).calcular()
+
+        Assertions.assertEquals(1, resultado.downPayments.size)
+        Assertions.assertEquals(0, BigDecimal("0.50").compareTo(resultado.diferenca))
+        Assertions.assertTrue(resultado.diferenca.compareTo(BigDecimal("0.10")) > 0)
+    }
+
+    @Test
+    fun `calcular sem nenhum adiantamento disponivel retorna lista vazia e diferenca total`(){
+        val adiantamento1 = DownPayment("","", listOf(),"").also {
+            it.docEntry = 1
+            it.docNum = "1"
+            it.apropriado = BigDecimal(100)
+            it.DocTotal = "100.00"
+        }
+        val invoice = Invoice("","", listOf(),"").also {
+            it.DocTotal = "120"
+        }
+        val resultado = ApropriacaoAdiantamento(invoice, listOf(adiantamento1)).calcular()
+
+        Assertions.assertEquals(0, resultado.downPayments.size)
+        Assertions.assertEquals(0, BigDecimal("120").compareTo(resultado.diferenca))
+    }
 }

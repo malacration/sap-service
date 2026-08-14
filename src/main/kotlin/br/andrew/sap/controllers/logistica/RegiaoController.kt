@@ -19,8 +19,11 @@ import org.springframework.web.bind.annotation.RestController
 class RegiaoController(val service : RegiaoService) {
 
     @GetMapping()
-    fun get(@RequestParam(name = "search", required = false) search : String?, page : Pageable): Page<Regiao> {
-        return service.getPage(search, page)
+    fun get(@RequestParam(name = "search", required = false) search : String?,
+            @RequestParam(name = "ativa", required = false) ativa : Boolean?,
+            @RequestParam(name = "filial", required = false) filial : Int?,
+            page : Pageable): Page<Regiao> {
+        return service.getPage(search, ativa, filial, page)
     }
 
     @GetMapping("todas")
@@ -56,9 +59,24 @@ class RegiaoController(val service : RegiaoService) {
         return service.atualizaFilial(code, filial)
     }
 
+    @PutMapping("{code}/ativar")
+    fun ativar(@PathVariable code : String): Regiao {
+        return service.ativar(code)
+    }
+
+    @PutMapping("{code}/desativar")
+    fun desativar(@PathVariable code : String): Regiao {
+        return service.desativar(code)
+    }
+
+    @PutMapping("{code}/substituir/{novoCode}")
+    fun substituir(@PathVariable code : String, @PathVariable novoCode : String): Regiao {
+        return service.substituir(code, novoCode)
+    }
+
     @PostMapping("{code}/localidades/{codLocal}")
     fun addLocalidade(@PathVariable code : String, @PathVariable codLocal : String,
-                      @RequestParam(required = false) distancia : Double?): Regiao {
+                      @RequestParam distancia : Double): Regiao {
         return service.addLocalidade(code, codLocal, distancia)
     }
 
@@ -74,8 +92,8 @@ class RegiaoController(val service : RegiaoService) {
     }
 
     @GetMapping("localidade/{codLocal}")
-    fun getByLocalidade(@PathVariable codLocal : String): Regiao? {
-        return service.getRegiaoByLocalidade(codLocal)
+    fun getByLocalidade(@PathVariable codLocal : String): List<Regiao> {
+        return service.getRegioesByLocalidade(codLocal)
     }
 
     @PostMapping("{code}/faixas")
@@ -95,11 +113,5 @@ class RegiaoController(val service : RegiaoService) {
     @DeleteMapping("{code}/faixas/{lineId}")
     fun removeFaixa(@PathVariable code : String, @PathVariable lineId : Int): Regiao {
         return service.removeFaixa(code, lineId)
-    }
-
-    //TESTE REGIAO2 (diagnostico, remover junto com o resto)
-    @DeleteMapping("{code}/localidades/{codLocal}/teste-explicito")
-    fun removeLocalidadeTesteExplicito(@PathVariable code : String, @PathVariable codLocal : String): String {
-        return service.removeLocalidadeTesteExplicito(code, codLocal)
     }
 }

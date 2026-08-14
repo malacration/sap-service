@@ -45,6 +45,9 @@ class BusinessPartner() {
     var cardType : BusinessPartnerType? = null
     var cardCode : String? = null
     var salesPersonCode : Int? = null
+    var salesEmployeeName : String? = null
+    var TaxId0 : String? = null
+    var TaxId4 : String? = null
     var U_fazer_fluxo_prazo : String? = "0"
     var attachmentEntry : Int? = null
     var CreateDate : String? = null
@@ -61,7 +64,10 @@ class BusinessPartner() {
     var U_keyUpdate : String? = null
     var U_sysfeed_status : String? = null
     var U_dataSerasa : Date? = null
-    var CreditLimit : Double? = null
+    //nome real do campo no SAP (OCRD.CreditLine / BusinessPartners.CreditLine) - o
+    //nome anterior "CreditLimit" nao existe no SAP, entao esse campo sempre voltava
+    //nulo (nunca foi usado em lugar nenhum ate agora, por isso passou despercebido)
+    var CreditLine : Double? = null
     var CurrentAccountBalance : Double? = null
 
 

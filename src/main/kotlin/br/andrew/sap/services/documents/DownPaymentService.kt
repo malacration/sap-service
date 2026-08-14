@@ -316,6 +316,30 @@ class DownPaymentService(env: SapEnvrioment,
         }
     }
 
+    /**
+     * Total ja sacado (apropriado) desse adiantamento - soma de INV9.DrawnSum das notas
+     * nao canceladas. Mesma consulta usada dentro de adiantamentosAbertos, exposta aqui
+     * pra quem precisa so do valor (ex.: Mapa de Relacoes, pra saber se sobrou saldo).
+     */
+    fun valorApropriado(docEntry : Int): BigDecimal {
+        return (sqlQueriesService
+            .execute("adiantamento-apropriado.sql", Parameter("docEntry", docEntry))
+            ?.tryGetValues<Soma>() ?: listOf())
+            .firstOrNull()?.soma ?: BigDecimal.ZERO
+    }
+
+    /**
+     * DocEntry das notas fiscais que sacaram (apropriaram) desse adiantamento - igual
+     * a soma calculada em adiantamentosAbertos, mas devolvendo os documentos em vez do
+     * total. Usado pelo Mapa de Relacoes.
+     */
+    fun invoicesApropriados(docEntry : Int): List<Int> {
+        return sqlQueriesService
+            .execute("adiantamento-apropriado-notas.sql", Parameter("docEntry", docEntry))
+            ?.tryGetValues<DocEntry>()
+            ?.mapNotNull { it.DocEntry } ?: listOf()
+    }
+
     fun createAdiantamentoBycontrato(contrato : Contrato, carenciaDias : Int){
         val boletos = this.getByContratoVendaFutura(contrato.DocEntry?.toInt() ?: throw Exception("Contrato sem DocEntry"))
         if(boletos.size > 0)

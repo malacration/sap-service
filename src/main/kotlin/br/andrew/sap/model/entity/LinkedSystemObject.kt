@@ -41,5 +41,9 @@ enum class LinkedSystemObject {
     ulProjectManagementService,
     ulReturnRequest,
     ulGoodsReturnRequest,
-    ulSalesEmployee
+    ulSalesEmployee,
+    //faltava no enum - o campo "prazo" de @CONDICOESFV ja existe no SAP com esse
+    //link (criado antes dessa sessao) e o findOrCreate quebrava ao tentar
+    //desserializar o campo existente pra checar se precisa criar
+    ulPaymentTerms
 }

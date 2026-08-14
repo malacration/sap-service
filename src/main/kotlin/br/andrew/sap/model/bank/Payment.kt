@@ -50,6 +50,13 @@ class Payment() {
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "YYY-MM-dd")
     var dueDate : String? = null
     var cashSum : Double? = null
+
+    //total do recebimento independente da forma de pagamento - cashSum cobre so
+    //dinheiro em especie, entao recebimento por transferencia/boleto/PIX vinha 0.
+    //Campo usado por todas as views do sap-sql que leem ORCT. So leitura: nunca e
+    //setado ao criar um Payment, e o NON_EMPTY da classe mantem ele fora do POST.
+    var DocTotal : Double? = null
+
     var paymentInvoices : List<PaymentInvoice> = listOf()
     var docType : PaymentsTypeEnum? = null
     var journalRemarks : String? = null

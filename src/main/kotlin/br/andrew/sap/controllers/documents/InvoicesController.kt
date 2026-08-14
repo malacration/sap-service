@@ -12,6 +12,7 @@ import br.andrew.sap.model.sap.comercial.DocEntry
 import br.andrew.sap.model.sap.documents.Fatura
 import br.andrew.sap.model.sap.documents.Invoice
 import br.andrew.sap.model.sap.documents.OrderSales
+import br.andrew.sap.model.sap.documents.DocumentStatus
 import br.andrew.sap.model.sap.documents.base.Document
 import br.andrew.sap.model.sap.documents.base.Installment
 import br.andrew.sap.services.batch.BatchList
@@ -19,6 +20,7 @@ import br.andrew.sap.services.documents.DocumentForAngular
 import br.andrew.sap.services.documents.InvoiceService
 import br.andrew.sap.services.documents.OrdersService
 import br.andrew.sap.services.fiscal.BankPlusService
+import br.andrew.sap.services.cadastro.SalesPersonsService
 import org.slf4j.LoggerFactory
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
@@ -34,6 +36,7 @@ class InvoicesController(
     val invoice: InvoiceService,
     val bankPlusService : BankPlusService,
     val pedidoVenda: OrdersService,
+    val salesPersonsService: SalesPersonsService,
     @Value("\${pix.juros.mora.percent:0}") val jurosMoraPercent: Double
 ) {
 
@@ -60,6 +63,8 @@ class InvoicesController(
                       @RequestParam(required = false) numeroNf : Int? = null,
                       @RequestParam(required = false) dataInicial : String? = null,
                       @RequestParam(required = false) dataFinal : String? = null,
+                      @RequestParam(required = false) status : DocumentStatus? = null,
+                      @RequestParam(required = false) salesPersonCode : Int? = null,
                       page : Pageable) : Page<Fatura> {
         val filter = Filter(
             Predicate("CardCode","$cardcode",Condicao.EQUAL),
@@ -72,9 +77,30 @@ class InvoicesController(
                 it.add(Predicate("DocDate",dataInicial,Condicao.GREAT_EQUAL))
             if(dataFinal !=null )
                 it.add(Predicate("DocDate",dataFinal,Condicao.LESS_EQUAL))
+            if(status != null)
+                it.add(Predicate("DocumentStatus",status.typeName,Condicao.EQUAL))
+            if(salesPersonCode != null)
+                it.add(Predicate("SalesPersonCode",salesPersonCode,Condicao.EQUAL))
         }
-        return invoice.get(filter, OrderBy("DocDate",Order.DESC),page)
-            .tryGetPageValues<Document>(page).map { Fatura(it,BoletoIdsConfig.ids) }
+        return enriqueceVendedores(invoice.get(filter, OrderBy("DocDate",Order.DESC),page)
+            .tryGetPageValues<Document>(page)).map { Fatura(it,BoletoIdsConfig.ids) }
+    }
+
+    private fun <T : Document> enriqueceVendedores(page: Page<T>): Page<T> {
+        val vendedores = page.content
+            .map { it.salesPersonCode }
+            .filter { it != -1 }
+            .distinct()
+            .takeIf { it.isNotEmpty() }
+            ?.let {
+                salesPersonsService.get(Filter(Predicate("SalesEmployeeCode", it, Condicao.IN)))
+                    .tryGetValues<br.andrew.sap.model.sap.cadastro.SalePerson>()
+                    .associateBy { vendedor -> vendedor.SalesEmployeeCode }
+            } ?: emptyMap()
+        page.content.forEach { documento ->
+            documento.salesEmployeeName = vendedores[documento.salesPersonCode]?.SalesEmployeeName
+        }
+        return page
     }
 
     @GetMapping("{id}/create-pix")

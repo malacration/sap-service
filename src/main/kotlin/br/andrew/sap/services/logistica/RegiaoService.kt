@@ -6,7 +6,11 @@ import br.andrew.sap.infrastructure.odata.OData
 import br.andrew.sap.model.sistema.SapEnvrioment
 import br.andrew.sap.model.sap.cadastro.Regiao
 import br.andrew.sap.services.abstracts.EntitiesService
+import br.andrew.sap.services.batch.BatchList
+import br.andrew.sap.services.batch.BatchMethod
+import br.andrew.sap.services.batch.BatchService
 import org.springframework.data.domain.Page
+import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.Pageable
 import org.springframework.http.RequestEntity
 import org.springframework.stereotype.Service
@@ -14,32 +18,32 @@ import org.springframework.web.client.RestTemplate
 import br.andrew.sap.services.security.AuthService
 
 @Service
-class RegiaoService(env : SapEnvrioment,
+class RegiaoService(val batchService : BatchService,
+                    env : SapEnvrioment,
                     restTemplate: RestTemplate,
                     authService: AuthService)
     : EntitiesService<Regiao>(env, restTemplate, authService) {
 
-    //TESTE REGIAO2: apontado temporariamente pro clone "Regiao2" (criado certo,
-    //com CanCreateDefaultForm/CanLog) pra diagnosticar o bug de remocao de
-    //linha reaproveitando a tela em Angular ja existente. Reverter pra
-    //"/b1s/v1/Regiao" quando terminar (ver Regiao2TesteConfiguration.kt).
     override fun path(): String {
-        return "/b1s/v1/Regiao2"
+        return "/b1s/v1/Regiao"
     }
 
     /**
-     * O GET da colecao de um UDO ja retorna as colecoes filhas (linhas e faixas)
-     * junto de cada linha, entao uma unica chamada paginada e suficiente. A descricao
-     * (Name) de cada localidade e resolvida pelo front, nao aqui.
+     * Paginacao em memoria (sobre getTodas) em vez de $top/$skip no service
+     * layer: os filtros de "ativa"/"filial" precisam ser combinados com "and"
+     * junto de um filtro de busca que ja usa "or" (Code/NomeRegiao), e o
+     * Filter/Predicate atual so suporta um unico conector pra todos os
+     * predicados - misturar os dois num $filter so daria uma condicao errada.
+     * Como regiao e cadastro de baixo volume (poucas dezenas), paginar em
+     * memoria e seguro.
      */
-    fun getPage(search : String?, page : Pageable) : Page<Regiao> {
-        val filter = if(search.isNullOrBlank()) Filter() else Filter(
-            propertieImmutable = listOf(
-                Predicate("Code", search, Condicao.CONTAINS),
-                Predicate("U_NomeRegiao", search, Condicao.CONTAINS),
-            ),
-            defaultConector = "or")
-        return get(filter, page).tryGetPageValues<Regiao>(page)
+    fun getPage(search : String?, ativa : Boolean?, filial : Int?, page : Pageable) : Page<Regiao> {
+        val todas = getTodas(search)
+            .filter { ativa == null || it.ativa == ativa }
+            .filter { filial == null || it.U_Filial == filial }
+        val inicio = (page.pageNumber * page.pageSize).coerceIn(0, todas.size)
+        val fim = (inicio + page.pageSize).coerceIn(inicio, todas.size)
+        return PageImpl(todas.subList(inicio, fim), page, todas.size.toLong())
     }
 
     fun getRegiao(code : String) : Regiao {
@@ -68,11 +72,12 @@ class RegiaoService(env : SapEnvrioment,
             throw Exception("O nome da regiao e obrigatorio")
         if(existe(code))
             throw Exception("Ja existe uma regiao com o codigo $code")
-        if(regiao.U_Filial != null)
-            validaFilialDisponivel(regiao.U_Filial!!, code)
         regiao.Code = code
         if(regiao.Name.isNullOrBlank())
             regiao.Name = regiao.U_NomeRegiao
+        //toda regiao nova comeca desativada - so passa a valer quando o
+        //usuario ativa (ver ativar())
+        regiao.U_Ativa = "0"
         save(regiao)
         return getRegiao(code)
     }
@@ -84,11 +89,11 @@ class RegiaoService(env : SapEnvrioment,
     }
 
     /**
-     * Uma filial so pode estar vinculada a uma unica regiao por vez.
+     * Varias regioes podem compartilhar a mesma filial (ex.: regiao normal e
+     * uma promocional) - a exclusividade e so entre regioes ATIVAS da mesma
+     * filial, garantida em ativar().
      */
     fun atualizaFilial(code : String, filial : Int?) : Regiao {
-        if(filial != null)
-            validaFilialDisponivel(filial, code)
         //envia o objeto completo (com linhas/faixas ja carregadas) - agora que
         //essas colecoes sao sempre serializadas (mesmo vazias), um patch parcial
         //apagaria as linhas/faixas existentes
@@ -99,91 +104,116 @@ class RegiaoService(env : SapEnvrioment,
         return getRegiao(code)
     }
 
-    private fun validaFilialDisponivel(filial : Int, codeIgnorado : String) {
-        val regiaoAtual = getRegiaoByFilial(filial)
-        if(regiaoAtual != null && regiaoAtual.Code != codeIgnorado)
-            throw Exception("A filial $filial ja esta vinculada a regiao ${regiaoAtual.Code} - ${regiaoAtual.U_NomeRegiao}")
+    /**
+     * So uma regiao pode estar ativa por filial ao mesmo tempo - ativar uma
+     * regiao quando ja existe outra ativa na mesma filial e um erro (o
+     * usuario precisa decidir explicitamente qual troca, ver substituir()).
+     * Regioes sem filial vinculada nao disputam essa exclusividade entre si.
+     */
+    fun ativar(code : String) : Regiao {
+        val regiao = getRegiao(code)
+        val filial = regiao.U_Filial
+        if(filial != null && filial != 0){
+            val outraAtiva = getAll(Regiao::class.java)
+                .firstOrNull { it.Code != code && it.U_Filial == filial && it.ativa }
+            if(outraAtiva != null)
+                throw Exception("A regiao ${outraAtiva.Code} ja esta ativa para essa filial - use Substituir Regiao para trocar")
+        }
+        regiao.U_Ativa = "1"
+        update(regiao, "'$code'")
+        return getRegiao(code)
     }
 
-    fun getRegiaoByFilial(filial : Int) : Regiao? {
-        return getAll(Regiao::class.java)
-            .firstOrNull { it.U_Filial == filial }
+    fun desativar(code : String) : Regiao {
+        val regiao = getRegiao(code)
+        regiao.U_Ativa = "0"
+        update(regiao, "'$code'")
+        return getRegiao(code)
     }
 
     /**
-     * A localidade so pode pertencer a uma regiao, entao antes de vincular
-     * verificamos se ela ja esta em uso em outra regiao.
+     * Troca explicita da regiao ativa de uma filial: desativa `code` (que
+     * precisa estar ativa) e ativa `novoCode` (que precisa estar inativa e
+     * vinculada a mesma filial). As duas operacoes vao num unico changeset
+     * batch - se uma falhar no SAP, a outra tambem nao e aplicada, evitando
+     * ficar sem nenhuma regiao ativa (ou com duas) por causa de uma falha
+     * no meio do caminho.
      */
-    fun addLocalidade(code : String, codLocal : String, distanciaKm : Double?) : Regiao {
-        val regiaoAtual = getRegiaoByLocalidade(codLocal)
-        if(regiaoAtual != null && regiaoAtual.Code != code)
-            throw Exception("A localidade $codLocal ja pertence a regiao ${regiaoAtual.Code} - ${regiaoAtual.U_NomeRegiao}")
-        return salvarLinhas(getRegiao(code).addLocalidade(codLocal, distanciaKm))
+    fun substituir(code : String, novoCode : String) : Regiao {
+        if(code == novoCode)
+            throw Exception("A regiao a substituir nao pode ser a mesma que sera ativada")
+        val atual = getRegiao(code)
+        if(!atual.ativa)
+            throw Exception("A regiao $code nao esta ativa")
+        val filial = atual.U_Filial
+        if(filial == null || filial == 0)
+            throw Exception("A regiao $code nao tem filial vinculada")
+        val nova = getRegiao(novoCode)
+        if(nova.ativa)
+            throw Exception("A regiao $novoCode ja esta ativa")
+        if(nova.U_Filial != filial)
+            throw Exception("A regiao $novoCode nao esta vinculada a mesma filial que $code")
+
+        atual.U_Ativa = "0"
+        nova.U_Ativa = "1"
+        batchService.run(BatchList()
+            .add(BatchMethod.PATCH, atual, this)
+            .add(BatchMethod.PATCH, nova, this))
+        return getRegiao(novoCode)
+    }
+
+    /**
+     * Uma localidade pode pertencer a varias regioes (ex.: regioes de vendedores
+     * ou linhas de entrega diferentes cobrindo a mesma localidade). A distancia
+     * e obrigatoria no vinculo (usada pelo calculo de frete) e e especifica de
+     * cada regiao - a mesma localidade pode ter distancias diferentes em
+     * regioes diferentes.
+     */
+    fun addLocalidade(code : String, codLocal : String, distanciaKm : Double) : Regiao {
+        return salvarComColecoesSubstituidas(getRegiao(code).addLocalidade(codLocal, distanciaKm))
     }
 
     fun removeLocalidade(code : String, codLocal : String) : Regiao {
-        return salvarLinhas(getRegiao(code).removeLocalidade(codLocal))
+        return salvarComColecoesSubstituidas(getRegiao(code).removeLocalidade(codLocal))
     }
 
     fun atualizaDistancia(code : String, codLocal : String, distanciaKm : Double) : Regiao {
-        return salvarLinhas(getRegiao(code).atualizaDistancia(codLocal, distanciaKm))
+        return salvarComColecoesSubstituidas(getRegiao(code).atualizaDistancia(codLocal, distanciaKm))
     }
 
-    fun getRegiaoByLocalidade(codLocal : String) : Regiao? {
+    fun getRegioesByLocalidade(codLocal : String) : List<Regiao> {
         return getAll(Regiao::class.java)
-            .firstOrNull { it.temLocalidade(codLocal) }
+            .filter { it.temLocalidade(codLocal) }
     }
 
     /**
-     * O service layer substitui a colecao filha inteira quando ela vem no patch,
-     * por isso enviamos sempre todas as linhas ja com os seus LineId.
-     * TESTE: envia o objeto Regiao completo (nao so a colecao isolada), ja que
-     * ele sempre vem carregado junto no GET - talvez o service layer precise
-     * do contexto completo do pai pra processar a remocao de linha certo.
+     * Envia o objeto Regiao completo (linhas/faixas ja carregadas do GET) com o
+     * header "B1S-ReplaceCollectionsOnPatch: true", que instrui o Service Layer a
+     * SUBSTITUIR a colecao filha pelo array enviado em vez de fazer merge com o
+     * que ja existe - sem ele, remover uma linha so por omissao no array nao
+     * era suficiente pra removê-la de fato. Usado tanto pras linhas (localidades)
+     * quanto pras faixas (preco).
      */
-    private fun salvarLinhas(regiao : Regiao) : Regiao {
-        update(regiao, "'${regiao.Code}'")
+    private fun salvarComColecoesSubstituidas(regiao : Regiao) : Regiao {
+        exchangeWithValidSession(OData::class.java) { session ->
+            RequestEntity
+                .patch(env.host + this.path() + "('${regiao.Code}')")
+                .header("cookie", session.cookieHeader())
+                .header("B1S-ReplaceCollectionsOnPatch", "true")
+                .body(regiao)
+        }
         return getRegiao(regiao.Code!!)
     }
 
     fun addFaixa(code : String, qtdeMinima : Int, valorKm : Double) : Regiao {
-        return salvarFaixas(getRegiao(code).addFaixa(qtdeMinima, valorKm))
+        return salvarComColecoesSubstituidas(getRegiao(code).addFaixa(qtdeMinima, valorKm))
     }
 
     fun atualizaFaixa(code : String, lineId : Int, qtdeMinima : Int, valorKm : Double) : Regiao {
-        return salvarFaixas(getRegiao(code).atualizaFaixa(lineId, qtdeMinima, valorKm))
+        return salvarComColecoesSubstituidas(getRegiao(code).atualizaFaixa(lineId, qtdeMinima, valorKm))
     }
 
     fun removeFaixa(code : String, lineId : Int) : Regiao {
-        return salvarFaixas(getRegiao(code).removeFaixa(lineId))
-    }
-
-    private fun salvarFaixas(regiao : Regiao) : Regiao {
-        update(regiao, "'${regiao.Code}'")
-        return getRegiao(regiao.Code!!)
-    }
-
-    /**
-     * TESTE REGIAO2 (diagnostico, remover junto com o resto): tenta remover a
-     * linha via DELETE explicito por chave composta na colecao filha, em vez
-     * do PATCH por omissao usado em salvarLinhas. No objeto "Regiao" original
-     * isso apagava a regiao inteira ao inves de so a linha - testando aqui se
-     * o mesmo acontece no "Regiao2", criado do jeito certo.
-     */
-    fun removeLocalidadeTesteExplicito(code : String, codLocal : String) : String {
-        val linha = getRegiao(code).linhas.firstOrNull { it.U_Locais == codLocal }
-            ?: throw Exception("Localidade $codLocal nao encontrada na regiao $code")
-        exchangeWithValidSession(OData::class.java) { session ->
-            RequestEntity
-                .delete(env.host + this.path() + "('$code')/RO_REGIAO2_LINHASCollection(LineId=${linha.LineId})")
-                .header("cookie", session.cookieHeader())
-                .build()
-        }
-        return try {
-            val depois = getRegiao(code)
-            "Parent sobreviveu. Localidades restantes: ${depois.linhas.map { it.U_Locais }}"
-        } catch (e : Exception) {
-            "Parent SUMIU apos o delete explicito: ${e.message}"
-        }
+        return salvarComColecoesSubstituidas(getRegiao(code).removeFaixa(lineId))
     }
 }
