@@ -29,10 +29,7 @@ class RequestPixDueDateBuilder(
             val dueDateLocal = LocalDate.parse(dueDate)
             val now = LocalDate.now()
             val effectiveDueDate = if (dueDateLocal.isBefore(now)) now.plusDays(1) else dueDateLocal
-            val dataReferencia = if (dueDateLocal.isBefore(now)) effectiveDueDate else now
-            val juros = if(jurosMoraPercent > 0.0)
-                it.calcularJurosSimplesPorDia(jurosMoraPercent, dataReferencia)
-            else 0.0
+            val juros = it.calcularJurosPix(jurosMoraPercent)
             RequestPixDueDate(
                 it.createExternalIdentifier(document),
                 conta,

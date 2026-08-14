@@ -26,9 +26,18 @@ class BoletoVf {
     var U_pix_due_date : String? = null
     var U_pix_proxima_consulta_em : String? = null
     var U_pix_consultar_ate : String? = null
+    var TaxaJurosMoraPercent : Double = 0.0
+    var JurosValor : Double = 0.0
+    var ValorTitulo : Double = 0.0
+    var ValorTotal : Double = 0.0
 
     companion object {
-        fun from(document: Document, installment: Installment? = null, devolucao: String? = null): BoletoVf {
+        fun from(
+            document: Document,
+            installment: Installment? = null,
+            devolucao: String? = null,
+            jurosMoraPercent: Double = 0.0
+        ): BoletoVf {
             return BoletoVf().also {
                 it.DocEntry = document.docEntry
                 it.DocNum = document.docNum
@@ -49,6 +58,17 @@ class BoletoVf {
                 it.U_pix_due_date = installment?.U_pix_consultar_ate
                 it.U_pix_proxima_consulta_em = installment?.U_pix_proxima_consulta_em
                 it.U_pix_consultar_ate = installment?.U_pix_consultar_ate
+                // O juros nao e gravado no SAP: so existe no valor do QR Code gerado na UzziPay.
+                // Por isso o detalhamento so vem preenchido na resposta da geracao, quando a taxa
+                // aplicada e conhecida. Num GET posterior a taxa e 0.0 e o breakdown fica zerado.
+                val juros = installment?.calcularJurosPix(jurosMoraPercent) ?: 0.0
+                val valorTitulo = installment?.total
+                    ?: document.DocTotal?.toDoubleOrNull()
+                    ?: 0.0
+                it.TaxaJurosMoraPercent = jurosMoraPercent
+                it.JurosValor = juros
+                it.ValorTitulo = valorTitulo
+                it.ValorTotal = valorTitulo + juros
             }
         }
     }

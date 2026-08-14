@@ -64,6 +64,11 @@ class CacheConfigurationProperties(@Value("\${otp.ttl:300}") val otpTTL : Long) 
         cacheExpirations["produtos"] = timeoutSeconds
         cacheExpirations["unidade-grupo"] = timeoutSeconds
         cacheExpirations["employee-salesperson"] = timeoutSeconds
+        cacheExpirations["cobranca-dominio"] = timeoutSeconds
+        // Nao usa timeoutSeconds (1h) de proposito: o cobrador registra uma acao e espera
+        // ver o numero mexer. 5 minutos ainda poupa as ~16 consultas que cada resumo faz
+        // no SAP, e o registrarAcao faz evict pra a mudanca aparecer na hora.
+        cacheExpirations["cobranca-dashboard"] = 5 * 60
     }
 
     fun getCacheExpirations(): Map<String, Long> {
