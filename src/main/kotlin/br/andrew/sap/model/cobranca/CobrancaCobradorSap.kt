@@ -6,7 +6,6 @@ import com.fasterxml.jackson.databind.annotation.JsonNaming
 
 @JsonNaming(PropertyNamingStrategies.UpperCamelCaseStrategy::class)
 @JsonIgnoreProperties(ignoreUnknown = true)
-class CobrancaTituloVendedorSap(
-    val SlpCode: Int?,
-    val CardCode: String? = null,
+class CobrancaCobradorSap(
+    val Cobrador: String?,
 )

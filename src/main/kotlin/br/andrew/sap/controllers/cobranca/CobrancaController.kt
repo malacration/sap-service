@@ -37,12 +37,17 @@ class CobrancaController(
     @GetMapping("titulos")
     fun titulos(
         auth: Authentication,
-        @RequestParam(required = false) filial: Int?,
+        // Multi-selecao na tela: filial=6&filial=7. Um valor unico continua chegando aqui
+        // como lista de um elemento, entao o link antigo do drill-down segue valendo.
+        @RequestParam(required = false) filial: List<Int>?,
         @RequestParam(required = false) vendedor: Int?,
         @RequestParam(required = false) cliente: String?,
         @RequestParam(required = false) data: String?,
         @RequestParam(required = false) diasAtrasoMin: Int?,
         @RequestParam(required = false) status: String?,
+        // "1 - NAO INICIADO" e rotulo que a tela usa pra U_Status vazio (o titulo que ninguem
+        // trabalhou ainda nao tem registro na UDT). Sem isso, filtrar por ele nao devolve nada.
+        @RequestParam(required = false) incluirSemStatus: Boolean?,
         @RequestParam(required = false) cobrador: String?,
         @RequestParam(required = false) situacao: String?,
         @RequestParam(required = false) situacaoSap: String?,
@@ -59,12 +64,13 @@ class CobrancaController(
 
         val resultado = consultaService.listar(
             auth = auth,
-            filial = filial,
+            filiais = filial,
             vendedor = vendedor,
             cliente = cliente,
             data = data?.let { LocalDate.parse(it) } ?: LocalDate.now(),
             diasAtrasoMin = diasAtrasoMin,
             status = status,
+            incluirSemStatus = incluirSemStatus,
             cobrador = cobrador,
             situacao = situacao,
             situacaoSap = situacaoSap,
@@ -160,6 +166,13 @@ class CobrancaController(
     @GetMapping("dominios")
     fun dominios(@RequestParam(required = false) tipo: String?): List<CobrancaDominio> {
         return dominioService.listar(tipo)
+    }
+
+    @GetMapping("cobradores")
+    fun cobradores(auth: Authentication): ResponseEntity<List<String>> {
+        if (auth !is User)
+            return ResponseEntity.noContent().build()
+        return ResponseEntity.ok(consultaService.cobradores())
     }
 
     @PostMapping("dominios")

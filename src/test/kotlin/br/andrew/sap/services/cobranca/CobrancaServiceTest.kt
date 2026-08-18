@@ -54,7 +54,7 @@ class CobrancaServiceTest {
         whenever(restTemplate.postForEntity(any<URI>(), any(), eq(Session::class.java)))
             .thenReturn(ResponseEntity.ok(Session("sessao-1", "10.0", 30)))
         whenever(consultaService.buscarTituloParaEscopo(any(), any(), any()))
-            .thenReturn(CobrancaTituloVendedorSap(SlpCode = null))
+            .thenReturn(CobrancaTituloVendedorSap(SlpCode = null, CardCode = "CLI0007196"))
     }
 
     @Test
@@ -104,8 +104,58 @@ class CobrancaServiceTest {
         val corpoCriado = captor.allValues.first { it.method == HttpMethod.POST }.body as CobrancaRegistro
 
         assertEquals("Fulano de Tal", corpoCriado.U_Cobrador)
+        assertEquals("CLI0007196", corpoCriado.U_CardCode)
         assertEquals(1, corpoCriado.historico.size)
         assertEquals("Fulano de Tal", corpoCriado.historico.first().U_Usuario)
+    }
+
+    @Test
+    fun `grava o CardCode do titulo ao criar o registro pela primeira vez`() {
+        // U_CardCode e um campo declarado no schema (CobrancaConfiguration, ligado a
+        // BusinessPartners) mas nunca era preenchido aqui - achado investigando um caso real
+        // onde a linha ficava com Status/Acao certos no historico mas o cabecalho incompleto.
+        whenever(consultaService.buscarTituloParaEscopo("NF", 500, 1))
+            .thenReturn(CobrancaTituloVendedorSap(SlpCode = 60, CardCode = "CLI0009999"))
+        whenever(restTemplate.exchange(any<RequestEntity<*>>(), eq(OData::class.java)))
+            .thenAnswer { invocation ->
+                val request = invocation.getArgument<RequestEntity<*>>(0)
+                when (request.method) {
+                    HttpMethod.GET -> ResponseEntity.ok(odataLista(emptyList<CobrancaRegistro>()))
+                    HttpMethod.POST -> ResponseEntity.ok(odataFlat("Code" to "NF-500-1"))
+                    else -> throw AssertionError("Metodo inesperado: ${request.method}")
+                }
+            }
+
+        val req = CobrancaAcaoRequest(observacao = "cliente prometeu pagar")
+        service.registrarAcao("NF", 500, 1, req, cobradora)
+
+        val captor = org.mockito.kotlin.argumentCaptor<RequestEntity<*>>()
+        verify(restTemplate, org.mockito.Mockito.times(2)).exchange(captor.capture(), eq(OData::class.java))
+        val corpoCriado = captor.allValues.first { it.method == HttpMethod.POST }.body as CobrancaRegistro
+
+        assertEquals("CLI0009999", corpoCriado.U_CardCode)
+    }
+
+    @Test
+    fun `SAP devolvendo U_DocEntry nulo nao derruba a acao do cobrador`() {
+        // U_DocEntry e SMALLINT no HANA (teto 32767) e DocEntry de OINV ja passa de 150 mil: o
+        // Service Layer aceita o POST e devolve 200 com o campo nulo, sem erro. Quem registrou a
+        // cobranca nao tem culpa nem o que fazer a respeito - a acao vale, o alerta fica no log.
+        whenever(restTemplate.exchange(any<RequestEntity<*>>(), eq(OData::class.java)))
+            .thenAnswer { invocation ->
+                val request = invocation.getArgument<RequestEntity<*>>(0)
+                when (request.method) {
+                    HttpMethod.GET -> ResponseEntity.ok(odataLista(emptyList<CobrancaRegistro>()))
+                    // resposta do SAP sem U_DocEntry, exatamente como em producao
+                    HttpMethod.POST -> ResponseEntity.ok(odataFlat("Code" to "NF-141516-1", "U_Tipo" to "NF"))
+                    else -> throw AssertionError("Metodo inesperado: ${request.method}")
+                }
+            }
+
+        val req = CobrancaAcaoRequest(observacao = "cobrado via whatsapp")
+        val registro = service.registrarAcao("NF", 141516, 1, req, cobradora)
+
+        assertEquals("NF-141516-1", registro.Code)
     }
 
     @Test
@@ -154,6 +204,65 @@ class CobrancaServiceTest {
 
         val historicoEnviado = corpoPatch!!["COB_TITULO_LCollection"] as List<*>
         assertEquals(2, historicoEnviado.size, "a linha antiga precisa ser reenviada, senao o PATCH apaga o historico")
+    }
+
+    @Test
+    fun `registro legado com U_DocEntry nulo e reposto na proxima acao, nao fica preso pra sempre`() {
+        // Caso real (NF-141597-1): registro criado quando a coluna ainda era SMALLINT ficou com
+        // U_DocEntry nulo. Como o Code esta certo, toda acao nova cai no caminho de atualizacao,
+        // que so mandava os campos mexidos - o titulo nunca voltava a casar com a view.
+        val existente = CobrancaRegistro(
+            Code = "NF-141597-1", U_Tipo = "NF", U_DocEntry = null, U_InstlmntID = 1,
+            U_CardCode = null, U_Status = "8 - EM NEGOCIAÇÃO", historico = mutableListOf(),
+        )
+        whenever(consultaService.buscarTituloParaEscopo("NF", 141597, 1))
+            .thenReturn(CobrancaTituloVendedorSap(SlpCode = 60, CardCode = "CLI0007777"))
+
+        var corpoPatch: Map<*, *>? = null
+        whenever(restTemplate.exchange(any<RequestEntity<*>>(), eq(OData::class.java)))
+            .thenAnswer { invocation ->
+                val request = invocation.getArgument<RequestEntity<*>>(0)
+                when (request.method) {
+                    HttpMethod.GET -> ResponseEntity.ok(odataLista(listOf(existente)))
+                    HttpMethod.PATCH -> {
+                        corpoPatch = request.body as Map<*, *>
+                        ResponseEntity.ok(OData())
+                    }
+                    else -> throw AssertionError("Metodo inesperado: ${request.method}")
+                }
+            }
+
+        service.registrarAcao("NF", 141597, 1, CobrancaAcaoRequest(observacao = "novo contato"), cobradora)
+
+        assertEquals(141597, corpoPatch!!["U_DocEntry"])
+        assertEquals("CLI0007777", corpoPatch!!["U_CardCode"])
+    }
+
+    @Test
+    fun `registro integro nao paga consulta extra ao SAP so pra conferir campo`() {
+        val existente = CobrancaRegistro(
+            Code = "NF-500-1", U_Tipo = "NF", U_DocEntry = 500, U_InstlmntID = 1,
+            U_CardCode = "CLI0007196", historico = mutableListOf(),
+        )
+        var corpoPatch: Map<*, *>? = null
+        whenever(restTemplate.exchange(any<RequestEntity<*>>(), eq(OData::class.java)))
+            .thenAnswer { invocation ->
+                val request = invocation.getArgument<RequestEntity<*>>(0)
+                when (request.method) {
+                    HttpMethod.GET -> ResponseEntity.ok(odataLista(listOf(existente)))
+                    HttpMethod.PATCH -> {
+                        corpoPatch = request.body as Map<*, *>
+                        ResponseEntity.ok(OData())
+                    }
+                    else -> throw AssertionError("Metodo inesperado: ${request.method}")
+                }
+            }
+
+        service.registrarAcao("NF", 500, 1, CobrancaAcaoRequest(observacao = "contato"), cobradora)
+
+        assertFalse(corpoPatch!!.containsKey("U_DocEntry"), "nao deve reenviar campo que ja esta certo")
+        assertFalse(corpoPatch!!.containsKey("U_CardCode"))
+        verify(consultaService, never()).buscarTituloParaEscopo(any(), any(), any())
     }
 
     @Test

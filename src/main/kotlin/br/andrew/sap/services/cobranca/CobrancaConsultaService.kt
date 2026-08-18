@@ -3,6 +3,7 @@ package br.andrew.sap.services.cobranca
 import br.andrew.sap.infrastructure.odata.Parameter
 import br.andrew.sap.model.authentication.User
 import br.andrew.sap.model.cobranca.CobrancaAdiantamentoSap
+import br.andrew.sap.model.cobranca.CobrancaCobradorSap
 import br.andrew.sap.model.cobranca.CobrancaRegistro
 import br.andrew.sap.model.cobranca.CobrancaTitulo
 import br.andrew.sap.model.cobranca.CobrancaTituloSap
@@ -27,14 +28,30 @@ class CobrancaConsultaService(val sqlQueriesService: SqlQueriesService) {
         else -> SEM_FILTRO
     }
 
+    /**
+     * O parser de parametros do SQLQueries do SAP B1 recusa qualquer caractere nao-ASCII:
+     * status='8 - EM NEGOCIACAO' responde 200, status='8 - EM NEGOCIAÇÃO' responde
+     * 400 code 704 "Parameter error.". Testado contra o Service Layer - vale pra UTF-8 e pra
+     * Latin-1, nao existe encoding que passe. Espaco nao e problema, so o acento.
+     *
+     * Rotulo de dominio ("8 - EM NEGOCIAÇÃO", "4 - LIGAÇÃO") e nome de cobrador tem acento o
+     * tempo todo, entao esses filtros nao podem ir crus. Quando o valor tem acento a comparacao
+     * sai do SQL e fica so em passaNosFiltrosLocais, que ja aplica exatamente o mesmo criterio -
+     * custa mais paginas do SAP ate juntar o resultado, mas devolve a lista certa em vez de
+     * estourar erro na cara do cobrador.
+     */
+    private fun soAscii(valor: String?): String? =
+        valor?.takeIf { texto -> texto.all { it.code in 32..126 } }
+
     fun listar(
         auth: User,
-        filial: Int? = null,
+        filiais: List<Int>? = null,
         vendedor: Int? = null,
         cliente: String? = null,
         data: LocalDate = LocalDate.now(),
         diasAtrasoMin: Int? = null,
         status: String? = null,
+        incluirSemStatus: Boolean? = null,
         cobrador: String? = null,
         situacao: String? = null,
         situacaoSap: String? = null,
@@ -51,10 +68,16 @@ class CobrancaConsultaService(val sqlQueriesService: SqlQueriesService) {
         val dataEfetiva = data.minusDays((diasAtrasoMin ?: 0).coerceAtLeast(0).toLong())
         val statusParcela = statusParcelaDe(situacaoSap)
 
-        val parametros = listOf(
+        // Valor com acento nao pode ir pro SQLQueries (ver soAscii) - vira "sem filtro" aqui e
+        // passaNosFiltrosLocais faz a comparacao exata depois, com o valor original.
+        // incluirSemStatus tambem desliga o filtro no SQL: la a comparacao e U_Status = :status,
+        // que descartaria justamente as linhas de U_Status nulo que esse filtro quer trazer.
+        val statusSql = if (incluirSemStatus == true) null else soAscii(status)
+        val cobradorSql = soAscii(cobrador)
+        val situacaoSql = soAscii(situacao)
+
+        val parametrosBase = listOf(
             Parameter("data", dataEfetiva.toString()),
-            Parameter("filial", filial ?: Int.MAX_VALUE),
-            Parameter("filialIsFilter", if (filial == null) Int.MAX_VALUE else -1),
             Parameter("vendedor", vendedorEfetivo ?: Int.MAX_VALUE),
             Parameter("vendedorIsFilter", if (vendedorEfetivo == null) Int.MAX_VALUE else -1),
             Parameter("cliente", cliente ?: SEM_FILTRO),
@@ -63,12 +86,12 @@ class CobrancaConsultaService(val sqlQueriesService: SqlQueriesService) {
             Parameter("statusParcelaIsFilter", if (statusParcela == SEM_FILTRO) SEM_FILTRO else ""),
             Parameter("vencimentoDe", vencimentoDe?.toString() ?: "1900-01-01"),
             Parameter("vencimentoAte", vencimentoAte?.toString() ?: "9999-12-31"),
-            Parameter("status", status ?: SEM_FILTRO),
-            Parameter("statusIsFilter", if (status == null) Int.MAX_VALUE else -1),
-            Parameter("cobrador", cobrador ?: SEM_FILTRO),
-            Parameter("cobradorIsFilter", if (cobrador == null) Int.MAX_VALUE else -1),
-            Parameter("situacao", situacao ?: SEM_FILTRO),
-            Parameter("situacaoIsFilter", if (situacao == null) Int.MAX_VALUE else -1),
+            Parameter("status", statusSql ?: SEM_FILTRO),
+            Parameter("statusIsFilter", if (statusSql == null) Int.MAX_VALUE else -1),
+            Parameter("cobrador", cobradorSql ?: SEM_FILTRO),
+            Parameter("cobradorIsFilter", if (cobradorSql == null) Int.MAX_VALUE else -1),
+            Parameter("situacao", situacaoSql ?: SEM_FILTRO),
+            Parameter("situacaoIsFilter", if (situacaoSql == null) Int.MAX_VALUE else -1),
             Parameter("semAcompanhamentoIsFilter", if (semAcompanhamento == true) -1 else Int.MAX_VALUE),
             Parameter("promessaVencidaAte", (promessaVencidaAte ?: data).toString()),
             Parameter("promessaVencidaIsFilter", if (promessaVencidaAte == null) Int.MAX_VALUE else -1),
@@ -76,23 +99,53 @@ class CobrancaConsultaService(val sqlQueriesService: SqlQueriesService) {
 
         val alvo = (pagina + 1) * tamanhoPagina
 
-        val faturas = if (tipo == CobrancaRegistro.TIPO_ADIANTAMENTO) emptyList() else
-            buscarAte<CobrancaTituloSap>("cobranca-titulos.sql", parametros, alvo) { linhas ->
-                linhas.map { it.toDto() }
-                    .filter { passaNosFiltrosLocais(it, diasAtrasoMin, status, cobrador, situacao, situacaoSap, vencimentoDe, vencimentoAte) }
-            }
+        // Uma consulta por filial escolhida. A view mantem o idioma ":filial ou :filialIsFilter"
+        // (um valor so) porque lista fixa de BPLId no SQL nao tem precedente no parser do
+        // SQLQueries do SAP B1 - ver o guarda em CobrancaTitulosSqlTest. Filtrar em Kotlin
+        // seria pior: o laco de paginacao varreria a base toda de 20 em 20 pra descartar filial.
+        val combinado = filiaisEfetivas(filiais).flatMap { filial ->
+            val parametros = parametrosBase + parametrosDeFilial(filial)
 
-        val adiantamentos = if (tipo == CobrancaRegistro.TIPO_NOTA_FISCAL) emptyList() else
-            buscarAte<CobrancaAdiantamentoSap>("cobranca-titulos-adiantamento.sql", parametros, alvo) { linhas ->
-                linhas.map { it.toDto() }
-                    .filter { passaNosFiltrosLocais(it, diasAtrasoMin, status, cobrador, situacao, situacaoSap, vencimentoDe, vencimentoAte) }
-            }
+            val faturas = if (tipo == CobrancaRegistro.TIPO_ADIANTAMENTO) emptyList() else
+                buscarAte<CobrancaTituloSap>("cobranca-titulos.sql", parametros, alvo) { linhas ->
+                    linhas.map { it.toDto() }
+                        .filter { passaNosFiltrosLocais(it, diasAtrasoMin, status, incluirSemStatus, cobrador, situacao, situacaoSap, vencimentoDe, vencimentoAte) }
+                }
 
-        val combinado = (faturas + adiantamentos).sortedWith(compareBy({ it.DueDate }, { it.DocNum }))
+            val adiantamentos = if (tipo == CobrancaRegistro.TIPO_NOTA_FISCAL) emptyList() else
+                buscarAte<CobrancaAdiantamentoSap>("cobranca-titulos-adiantamento.sql", parametros, alvo) { linhas ->
+                    linhas.map { it.toDto() }
+                        .filter { passaNosFiltrosLocais(it, diasAtrasoMin, status, incluirSemStatus, cobrador, situacao, situacaoSap, vencimentoDe, vencimentoAte) }
+                }
+
+            faturas + adiantamentos
+        }.sortedWith(compareBy({ it.DueDate }, { it.DocNum }))
+
         val inicio = (pagina * tamanhoPagina).coerceAtMost(combinado.size)
         val fim = (inicio + tamanhoPagina).coerceAtMost(combinado.size)
         return combinado.subList(inicio, fim)
     }
+
+    // Nenhuma filial escolhida = uma consulta com o filtro desligado (null), nao consulta nenhuma.
+    private fun filiaisEfetivas(filiais: List<Int>?): List<Int?> =
+        filiais?.distinct()?.takeIf { it.isNotEmpty() } ?: listOf(null)
+
+    private fun parametrosDeFilial(filial: Int?) = listOf(
+        Parameter("filial", filial ?: Int.MAX_VALUE),
+        Parameter("filialIsFilter", if (filial == null) Int.MAX_VALUE else -1),
+    )
+
+    /**
+     * A tela montava esse combo a partir das linhas ja carregadas, o que e circular: pra filtrar
+     * por um cobrador, os titulos dele precisavam ja estar entre as 20 linhas da pagina atual.
+     * Quem nao estivesse simplesmente nao existia no filtro.
+     */
+    fun cobradores(): List<String> =
+        sqlQueriesService.getAll<CobrancaCobradorSap>("cobranca-cobradores.sql")
+            .mapNotNull { it.Cobrador?.trim() }
+            .filter { it.isNotEmpty() }
+            .distinct()
+            .sorted()
 
     fun buscarTituloParaEscopo(tipo: String, docEntry: Int, instlmntId: Int): CobrancaTituloVendedorSap? {
         val view = if (tipo == CobrancaRegistro.TIPO_ADIANTAMENTO)
@@ -127,6 +180,7 @@ class CobrancaConsultaService(val sqlQueriesService: SqlQueriesService) {
         titulo: CobrancaTitulo,
         diasAtrasoMin: Int?,
         status: String?,
+        incluirSemStatus: Boolean?,
         cobrador: String?,
         situacao: String?,
         situacaoSap: String?,
@@ -134,7 +188,7 @@ class CobrancaConsultaService(val sqlQueriesService: SqlQueriesService) {
         vencimentoAte: LocalDate?,
     ): Boolean {
         return (diasAtrasoMin == null || titulo.DiasAtraso >= diasAtrasoMin) &&
-            (status == null || titulo.U_Status == status) &&
+            (status == null || titulo.U_Status == status || (incluirSemStatus == true && titulo.U_Status.isNullOrBlank())) &&
             (cobrador == null || titulo.U_Cobrador == cobrador) &&
             (situacao == null || titulo.U_Situacao == situacao) &&
             (situacaoSap == null || titulo.SituacaoSap == situacaoSap) &&

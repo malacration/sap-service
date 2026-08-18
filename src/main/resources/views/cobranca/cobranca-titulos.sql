@@ -1,6 +1,7 @@
 SELECT
     NS."DocEntry", NS."DocNum", NS."Serial", NS."Series",
     NS."BPLId", NS."BPLName", NS."CardCode", NS."CardName",
+    CL."Phone1" AS "Telefone", CL."Cellular" AS "Celular",
     NS."DocDate", NS."DocTotal",
     V."SlpCode", V."SlpName",
     P."InstlmntID", P."InsTotal", P."PaidToDate", P."DueDate", P."Status" AS "StatusParcela",
@@ -9,6 +10,7 @@ SELECT
 FROM OINV NS
     INNER JOIN INV6 P ON P."DocEntry" = NS."DocEntry"
     LEFT JOIN OSLP V ON V."SlpCode" = NS."SlpCode"
+    LEFT JOIN OCRD CL ON CL."CardCode" = NS."CardCode"
     LEFT JOIN "@COB_TITULO" C
          ON C."U_Tipo" = 'NF' AND C."U_DocEntry" = NS."DocEntry" AND C."U_InstlmntID" = P."InstlmntID"
 WHERE

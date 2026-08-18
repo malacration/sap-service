@@ -105,6 +105,15 @@ class CobrancaTitulosSqlTest {
     }
 
     @Test
+    fun `traz o telefone do cliente pra tela de cobranca sem poder derrubar linha`() {
+        // O join com OCRD e so pra exibir contato - se fosse INNER, titulo cujo parceiro nao
+        // casa (codigo migrado, cliente inativado) sairia da lista de cobranca.
+        assertTrue(sql.contains("LEFT JOIN OCRD CL ON CL.\"CardCode\" = NS.\"CardCode\""))
+        assertTrue(sql.contains("CL.\"Phone1\" AS \"Telefone\""))
+        assertTrue(sql.contains("CL.\"Cellular\" AS \"Celular\""))
+    }
+
+    @Test
     fun `nao usa funcoes que o parser do SQLQueries do SAP B1 nao reconhece nesse contexto`() {
         // Saldo, DiasAtraso e SituacaoSap sao calculados em Kotlin (CobrancaTituloSap.toDto);
         // IFNULL/DAYS_BETWEEN/CASE WHEN aqui ja quebraram o provisionamento em producao
@@ -176,6 +185,13 @@ class CobrancaTitulosAdiantamentoSqlTest {
     }
 
     @Test
+    fun `traz o telefone do cliente aqui tambem, senao a coluna fica vazia so pro adiantamento`() {
+        assertTrue(sql.contains("LEFT JOIN OCRD CL ON CL.\"CardCode\" = T0.\"CardCode\""))
+        assertTrue(sql.contains("CL.\"Phone1\" AS \"Telefone\""))
+        assertTrue(sql.contains("CL.\"Cellular\" AS \"Celular\""))
+    }
+
+    @Test
     fun `nao usa UNION, COALESCE ou CAST - sem precedente no parser do SQLQueries do SAP B1`() {
         assertFalse(sql.contains("UNION"))
         assertFalse(sql.contains("COALESCE"))
@@ -205,5 +221,46 @@ class TitulosEmailSqlTest {
     @Test
     fun `usa o Tipo NF ao juntar com a UDT, pra nao colidir com adiantamento de mesmo DocEntry`() {
         assertTrue(sql.contains("C.\"U_Tipo\" = 'NF'"))
+    }
+}
+
+class CobrancaCobradoresSqlTest {
+
+    private val sql = Files.readString(
+        Path.of("src/main/resources/views/cobranca/cobranca-cobradores.sql")
+    )
+
+    @Test
+    fun `lista os cobradores da UDT, nao das linhas que a tela carregou`() {
+        assertTrue(sql.contains("DISTINCT"))
+        assertTrue(sql.contains("\"@COB_TITULO\""))
+    }
+
+    @Test
+    fun `descarta cobrador vazio - a UDT guarda string vazia, nao so null`() {
+        assertTrue(sql.contains("IS NOT NULL"))
+        assertTrue(sql.contains("<> ''"))
+    }
+
+    @Test
+    fun `nao usa funcao sem precedente no parser do SQLQueries`() {
+        assertFalse(sql.contains("COALESCE"))
+        assertFalse(sql.contains("IFNULL"))
+        assertFalse(sql.contains("CAST("))
+    }
+}
+
+class CobrancaTituloVendedorSqlTest {
+
+    @Test
+    fun `view da fatura traz o CardCode, senao registrarAcao nao tem de onde gravar U_CardCode`() {
+        val sql = Files.readString(Path.of("src/main/resources/views/cobranca/cobranca-titulo-vendedor.sql"))
+        assertTrue(sql.contains("\"CardCode\""))
+    }
+
+    @Test
+    fun `view do adiantamento tambem traz o CardCode, pelo mesmo motivo`() {
+        val sql = Files.readString(Path.of("src/main/resources/views/cobranca/cobranca-titulo-vendedor-adiantamento.sql"))
+        assertTrue(sql.contains("\"CardCode\""))
     }
 }

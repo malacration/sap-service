@@ -1,5 +1,5 @@
 SELECT
-    NS."SlpCode"
+    NS."SlpCode", NS."CardCode"
 FROM OINV NS
     INNER JOIN INV6 P ON P."DocEntry" = NS."DocEntry"
 WHERE

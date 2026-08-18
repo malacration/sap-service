@@ -13,6 +13,7 @@ import br.andrew.sap.model.cobranca.CobrancaRegistro
 import br.andrew.sap.model.sistema.SapEnvrioment
 import br.andrew.sap.services.abstracts.EntitiesService
 import br.andrew.sap.services.security.AuthService
+import org.slf4j.LoggerFactory
 import org.springframework.cache.annotation.CacheEvict
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
@@ -30,6 +31,8 @@ class CobrancaService(
     authService: AuthService,
     val consultaService: CobrancaConsultaService,
 ) : EntitiesService<CobrancaRegistro>(env, restTemplate, authService) {
+
+    private val logger = LoggerFactory.getLogger(CobrancaService::class.java)
 
     // Lock em memoria - so protege dentro do mesmo processo. Nao cobre a janela breve de
     // deploy com 2 instancias simultaneas, aceita como risco residual (ver PR).
@@ -61,7 +64,7 @@ class CobrancaService(
             val existente = buscarPorCode(code)
 
             if (existente == null) {
-                consultaService.buscarTituloParaEscopo(tipo, docEntry, instlmntId)
+                val titulo = consultaService.buscarTituloParaEscopo(tipo, docEntry, instlmntId)
                     ?: throw CobrancaException("Parcela não encontrada no SAP: $tipo $docEntry/$instlmntId")
 
                 val registro = CobrancaRegistro(
@@ -69,6 +72,7 @@ class CobrancaService(
                     U_Tipo = tipo,
                     U_DocEntry = docEntry,
                     U_InstlmntID = instlmntId,
+                    U_CardCode = titulo.CardCode,
                     U_Status = req.status,
                     U_Acao = req.acao,
                     U_Situacao = req.situacao,
@@ -79,7 +83,9 @@ class CobrancaService(
                     U_DataPromessa = req.dataPromessa,
                     historico = mutableListOf(novaLinha),
                 )
-                return save(registro).tryGetValue()
+                val criado = save(registro).tryGetValue<CobrancaRegistro>()
+                alertarSeODocEntryNaoPersistiu(criado, docEntry)
+                return criado
             }
 
             existente.historico.add(novaLinha)
@@ -95,6 +101,7 @@ class CobrancaService(
             req.ocorrencia?.let { payload["U_Ocorrencia"] = it }
             req.observacao?.let { payload["U_Observacao"] = it }
             (req.dataPromessa ?: existente.U_DataPromessa)?.let { payload["U_DataPromessa"] = it }
+            repoeCamposDeRegistroLegado(existente, payload, tipo, docEntry, instlmntId)
 
             update(payload, code)
             return buscarPorCode(code) ?: throw CobrancaException("Falha ao reler o registro de cobrança $code")
@@ -126,6 +133,55 @@ class CobrancaService(
         val titulo = consultaService.buscarTituloParaEscopo(tipo, docEntry, instlmntId)
         if (titulo == null || titulo.SlpCode != auth.getIdInt())
             throw ResponseStatusException(HttpStatus.FORBIDDEN, "Este título não pertence ao seu escopo de vendedor")
+    }
+
+    /**
+     * Registro criado antes das correcoes pode ter U_DocEntry nulo (a coluna era SMALLINT e o
+     * DocEntry da NF nao cabia) ou U_CardCode nulo (nunca era escrito). O caminho de atualizacao
+     * so mandava os campos que o cobrador mexeu, entao esses registros ficavam presos: cada nova
+     * acao engordava o historico e o titulo continuava sem casar com a view - que junta por
+     * U_DocEntry - e sumido da tela pra sempre.
+     *
+     * Repoe na primeira acao seguinte, em vez de exigir UPDATE manual no banco por registro.
+     * A consulta extra ao SAP so acontece quando falta algum dos dois, o que e raro.
+     */
+    private fun repoeCamposDeRegistroLegado(
+        existente: CobrancaRegistro,
+        payload: MutableMap<String, Any?>,
+        tipo: String,
+        docEntry: Int,
+        instlmntId: Int,
+    ) {
+        if (existente.U_DocEntry != null && existente.U_CardCode != null)
+            return
+
+        if (existente.U_DocEntry == null) {
+            payload["U_DocEntry"] = docEntry
+            logger.warn("Repondo U_DocEntry={} no registro de cobranca {}", docEntry, existente.Code)
+        }
+        if (existente.U_CardCode == null)
+            consultaService.buscarTituloParaEscopo(tipo, docEntry, instlmntId)?.CardCode
+                ?.let { payload["U_CardCode"] = it }
+    }
+
+    /**
+     * O UDF U_DocEntry nasceu SMALLINT no HANA (teto 32767) enquanto o DocEntry de OINV nesta
+     * base ja passa de 150 mil. O Service Layer nao reclama: aceita o POST, grava todo o resto
+     * e devolve 200 com o campo nulo. Como a view de titulos junta a UDT justamente por
+     * U_DocEntry, a linha fica orfa e a tela mostra a parcela como "1 - NAO INICIADO" mesmo com
+     * o historico gravado - foi assim que o bug passou semanas invisivel.
+     *
+     * Nao derruba a acao do cobrador de proposito: o registro em si esta correto e a culpa e
+     * nossa, entao o certo e deixar rastro em vez de punir quem so registrou a cobranca.
+     */
+    private fun alertarSeODocEntryNaoPersistiu(criado: CobrancaRegistro, docEntry: Int) {
+        if (criado.U_DocEntry == null)
+            logger.error(
+                "Cobranca {} criada com U_DocEntry nulo (enviamos {}). A parcela nao vai aparecer " +
+                    "acompanhada na tela de cobranca enquanto a coluna U_DocEntry de @COB_TITULO " +
+                    "nao for alargada para INTEGER no HANA.",
+                criado.Code, docEntry,
+            )
     }
 
     private fun buscarPorCode(code: String): CobrancaRegistro? {

@@ -15,6 +15,7 @@ import org.mockito.kotlin.argumentCaptor
 import org.mockito.kotlin.eq
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.never
+import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 import java.math.BigDecimal
@@ -68,13 +69,169 @@ class CobrancaConsultaServiceTest {
     fun `filial e cliente informados viram filtro obrigatorio`() {
         whenever(sqlQueriesService.execute(eq("cobranca-titulos.sql"), any<List<Parameter>>())).thenReturn(odataVazia())
 
-        service.listar(admin, filial = 6, cliente = "CLI0007196")
+        service.listar(admin, filiais = listOf(6), cliente = "CLI0007196")
 
         val parametros = capturarParametros()
         assertEquals(6, parametros["filial"])
         assertEquals(-1, parametros["filialIsFilter"])
         assertEquals("CLI0007196", parametros["cliente"])
         assertEquals("", parametros["clienteIsFilter"])
+    }
+
+    @Test
+    fun `mais de uma filial vira uma consulta por filial, cada uma com o filtro ligado`() {
+        // A view aceita um :filial so (lista fixa de BPLId nao tem precedente no parser do
+        // SQLQueries) - multi-selecao na tela virou consulta repetida, e o resultado e a uniao.
+        whenever(sqlQueriesService.execute(eq("cobranca-titulos.sql"), any<List<Parameter>>())).thenReturn(odataVazia())
+
+        service.listar(admin, filiais = listOf(6, 7))
+
+        val captor = argumentCaptor<List<Parameter>>()
+        verify(sqlQueriesService, times(2)).execute(eq("cobranca-titulos.sql"), captor.capture())
+        val filiaisConsultadas = captor.allValues.map { parametros -> parametros.first { it.key == "filial" }.value }
+        assertEquals(listOf(6, 7), filiaisConsultadas)
+        captor.allValues.forEach { parametros ->
+            assertEquals(-1, parametros.first { it.key == "filialIsFilter" }.value)
+        }
+    }
+
+    @Test
+    fun `filial repetida na selecao nao vira consulta repetida no SAP`() {
+        whenever(sqlQueriesService.execute(eq("cobranca-titulos.sql"), any<List<Parameter>>())).thenReturn(odataVazia())
+
+        service.listar(admin, filiais = listOf(6, 6))
+
+        verify(sqlQueriesService, times(1)).execute(eq("cobranca-titulos.sql"), any<List<Parameter>>())
+    }
+
+    @Test
+    fun `valor com acento nao vai pro SQLQueries - o SAP responde Parameter error`() {
+        // Testado contra o Service Layer: status='8 - EM NEGOCIACAO' devolve 200, mas
+        // status='8 - EM NEGOCIAÇÃO' devolve 400 code 704 "Parameter error." - e nao existe
+        // encoding que resolva (UTF-8 e Latin-1 falham igual). O filtro entao sai do SQL e fica
+        // so em passaNosFiltrosLocais, que compara o valor original.
+        whenever(sqlQueriesService.execute(eq("cobranca-titulos.sql"), any<List<Parameter>>())).thenReturn(odataVazia())
+
+        service.listar(admin, status = "8 - EM NEGOCIAÇÃO")
+
+        val parametros = capturarParametros()
+        assertEquals("~", parametros["status"])
+        assertEquals(Int.MAX_VALUE, parametros["statusIsFilter"])
+    }
+
+    @Test
+    fun `valor sem acento continua filtrando no SQL, com espaco e tudo`() {
+        // Espaco o SAP aceita numa boa - so o nao-ASCII quebra. Nao pode virar filtro-em-Kotlin
+        // no atacado, senao o laco de paginacao varre a base de 20 em 20 sem necessidade.
+        whenever(sqlQueriesService.execute(eq("cobranca-titulos.sql"), any<List<Parameter>>())).thenReturn(odataVazia())
+
+        service.listar(admin, status = "3 - SEM CONTATO", cobrador = "Pedro Colombo")
+
+        val parametros = capturarParametros()
+        assertEquals("3 - SEM CONTATO", parametros["status"])
+        assertEquals(-1, parametros["statusIsFilter"])
+        assertEquals("Pedro Colombo", parametros["cobrador"])
+        assertEquals(-1, parametros["cobradorIsFilter"])
+    }
+
+    @Test
+    fun `cobrador com acento no nome tambem sai do SQL em vez de estourar`() {
+        whenever(sqlQueriesService.execute(eq("cobranca-titulos.sql"), any<List<Parameter>>())).thenReturn(odataVazia())
+
+        service.listar(admin, cobrador = "Nilvia Conceição", situacao = "2 - A RECEBER")
+
+        val parametros = capturarParametros()
+        assertEquals("~", parametros["cobrador"])
+        assertEquals(Int.MAX_VALUE, parametros["cobradorIsFilter"])
+        // situacao sem acento segue no SQL
+        assertEquals("2 - A RECEBER", parametros["situacao"])
+        assertEquals(-1, parametros["situacaoIsFilter"])
+    }
+
+    @Test
+    fun `filtro com acento ainda e aplicado - so muda o lugar onde a comparacao acontece`() {
+        // O que nao pode acontecer e "saiu do SQL" virar "nao filtra nada" e a tela mostrar
+        // titulo que nao casa com o status escolhido.
+        whenever(sqlQueriesService.execute(eq("cobranca-titulos.sql"), any<List<Parameter>>()))
+            .thenReturn(odataComTitulos(
+                titulo(diasAtraso = 30, status = "8 - EM NEGOCIAÇÃO"),
+                titulo(diasAtraso = 30, status = "3 - SEM CONTATO"),
+            ))
+
+        val resultado = service.listar(admin, status = "8 - EM NEGOCIAÇÃO")
+
+        assertEquals(1, resultado.size)
+        assertEquals("8 - EM NEGOCIAÇÃO", resultado.first().U_Status)
+    }
+
+    @Test
+    fun `filtrar por NAO INICIADO traz o titulo que ninguem trabalhou ainda`() {
+        // "1 - NAO INICIADO" e rotulo que a tela exibe quando U_Status esta vazio - o titulo nunca
+        // trabalhado nem tem registro na UDT. Comparar o texto literal nao acha nada, e era isso
+        // que fazia o filtro voltar vazio.
+        whenever(sqlQueriesService.execute(eq("cobranca-titulos.sql"), any<List<Parameter>>()))
+            .thenReturn(odataComTitulos(
+                titulo(diasAtraso = 30, status = null),
+                titulo(diasAtraso = 30, status = "8 - EM NEGOCIAÇÃO"),
+            ))
+
+        val resultado = service.listar(admin, status = "1 - NÃO INICIADO", incluirSemStatus = true)
+
+        assertEquals(1, resultado.size)
+        assertEquals(null, resultado.first().U_Status)
+    }
+
+    @Test
+    fun `NAO INICIADO tambem casa com quem tem esse status gravado de verdade`() {
+        // O valor existe no dominio (o seeder cria "1 - NAO INICIADO"), entao alguem pode ter
+        // escolhido ele no modal. Os dois casos aparecem iguais na tela e devem vir juntos.
+        whenever(sqlQueriesService.execute(eq("cobranca-titulos.sql"), any<List<Parameter>>()))
+            .thenReturn(odataComTitulos(
+                titulo(diasAtraso = 30, status = null),
+                titulo(diasAtraso = 30, status = "1 - NÃO INICIADO"),
+                titulo(diasAtraso = 30, status = "3 - SEM CONTATO"),
+            ))
+
+        val resultado = service.listar(admin, status = "1 - NÃO INICIADO", incluirSemStatus = true)
+
+        assertEquals(2, resultado.size)
+    }
+
+    @Test
+    fun `incluirSemStatus desliga o filtro de status no SQL, senao o SAP descarta o U_Status nulo`() {
+        // A view compara C."U_Status" = :status; com LEFT JOIN, U_Status nulo nunca casa - o SAP
+        // ja teria jogado fora as linhas que esse filtro quer antes do Kotlin ver.
+        whenever(sqlQueriesService.execute(eq("cobranca-titulos.sql"), any<List<Parameter>>())).thenReturn(odataVazia())
+
+        service.listar(admin, status = "1 - NAO INICIADO SEM ACENTO", incluirSemStatus = true)
+
+        val parametros = capturarParametros()
+        assertEquals("~", parametros["status"])
+        assertEquals(Int.MAX_VALUE, parametros["statusIsFilter"])
+    }
+
+    @Test
+    fun `sem incluirSemStatus o status vazio nao entra no resultado`() {
+        whenever(sqlQueriesService.execute(eq("cobranca-titulos.sql"), any<List<Parameter>>()))
+            .thenReturn(odataComTitulos(
+                titulo(diasAtraso = 30, status = null),
+                titulo(diasAtraso = 30, status = "3 - SEM CONTATO"),
+            ))
+
+        val resultado = service.listar(admin, status = "3 - SEM CONTATO")
+
+        assertEquals(1, resultado.size)
+        assertEquals("3 - SEM CONTATO", resultado.first().U_Status)
+    }
+
+    @Test
+    fun `lista de filiais vazia e o mesmo que nao filtrar filial`() {
+        whenever(sqlQueriesService.execute(eq("cobranca-titulos.sql"), any<List<Parameter>>())).thenReturn(odataVazia())
+
+        service.listar(admin, filiais = emptyList())
+
+        val parametros = capturarParametros()
+        assertEquals(Int.MAX_VALUE, parametros["filialIsFilter"])
     }
 
     @Test
@@ -421,6 +578,7 @@ class CobrancaConsultaServiceTest {
         return CobrancaTituloSap(
             DocEntry = 1, DocNum = 1, Serial = "1", Series = 1,
             BPLId = 6, BPLName = "Fazenda Serra Verde", CardCode = "CLI001", CardName = "Cliente Teste",
+            Telefone = "6699998888", Celular = null,
             DocDate = "20260701", DocTotal = BigDecimal("100.00"),
             SlpCode = 60, SlpName = "Vendedor Teste",
             InstlmntID = 1, InsTotal = BigDecimal("100.00"), PaidToDate = paidToDate,
@@ -435,6 +593,7 @@ class CobrancaConsultaServiceTest {
         return CobrancaAdiantamentoSap(
             DocEntry = 1, DocNumAdiantamento = 501, ContratoDocNum = contratoDocNum,
             BPLId = 6, BPLName = "Fazenda Serra Verde", CardCode = "CLI001", CardName = "Cliente Teste",
+            Telefone = "6699998888", Celular = null,
             DocDate = "20260701", DocTotal = BigDecimal("50.00"),
             SlpCode = 60, SlpName = "Vendedor Teste",
             InstlmntID = 1, InsTotal = BigDecimal("50.00"), PaidToDate = BigDecimal.ZERO,

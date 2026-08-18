@@ -29,6 +29,12 @@ class CobrancaConfiguration(
     val tableService: UserTablesMDService
 ) {
 
+    companion object {
+        // Campo numerico que guarda DocEntry precisa desse tamanho pra o SAP criar INTEGER em vez
+        // de SMALLINT. Ver o comentario no FieldMd("DocEntry") abaixo.
+        const val TAMANHO_DOC_ENTRY = 11
+    }
+
     init {
         listOf(
             TableMd("COB_TITULO", "Cobrança - Título", TbType.bott_MasterData),
@@ -38,7 +44,18 @@ class CobrancaConfiguration(
 
         listOf(
             FieldMd("Tipo", "Tipo (NF/AD)", "@COB_TITULO", DbType.db_Alpha),
-            FieldMd("DocEntry", "Nº Doc.", "@COB_TITULO", DbType.db_Numeric),
+            // Size explicito porque db_Numeric nasce com size null (DbType.db_Numeric), o
+            // @JsonInclude(NON_EMPTY) do FieldMd omite o campo do JSON e o SAP aplica o default
+            // dele: SizeID 6, que no HANA vira SMALLINT (teto 32767). DocEntry de OINV nesta base
+            // ja passa de 150 mil - e a Service Layer NAO reclama, aceita o POST e grava o campo
+            // nulo. Como a view de titulos junta a UDT por U_DocEntry, o titulo virava orfao e a
+            // tela mostrava "1 - NAO INICIADO" mesmo com o historico gravado.
+            // 11 e o tamanho que produz INTEGER: medido no CUFD depois de corrigir o campo em
+            // producao pelo cliente do SAP (SizeID/EditSize 11 -> INTEGER(10)).
+            FieldMd("DocEntry", "Nº Doc.", "@COB_TITULO", DbType.db_Numeric).also {
+                it.size = TAMANHO_DOC_ENTRY
+                it.editSize = TAMANHO_DOC_ENTRY
+            },
             FieldMd("InstlmntID", "Nº Parcela", "@COB_TITULO", DbType.db_Numeric),
             FieldMd("CardCode", "Cliente", "@COB_TITULO", DbType.db_Alpha).also {
                 it.LinkedSystemObject = LinkedSystemObject.ulBusinessPartners
