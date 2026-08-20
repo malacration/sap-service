@@ -2,6 +2,7 @@ SELECT
     T0."DocEntry", T0."DocNum",
     VF."DocNum" AS "ContratoDocNum",
     T0."BPLId", T0."BPLName", T0."CardCode", T0."CardName",
+    CL."Phone1" AS "Telefone", CL."Cellular" AS "Celular",
     T0."DocDate", T0."DocTotal",
     V."SlpCode", V."SlpName",
     P."InstlmntID", P."InsTotal", P."PaidToDate", P."DueDate", P."Status" AS "StatusParcela",
@@ -10,6 +11,7 @@ SELECT
 FROM ODPI T0
     INNER JOIN DPI6 P ON P."DocEntry" = T0."DocEntry"
     LEFT JOIN OSLP V ON V."SlpCode" = T0."SlpCode"
+    LEFT JOIN OCRD CL ON CL."CardCode" = T0."CardCode"
     LEFT JOIN "@AR_CONTRATO_FUTURO" VF ON VF."DocEntry" = T0."U_venda_futura"
     LEFT JOIN "@COB_TITULO" C
          ON C."U_Tipo" = 'AD' AND C."U_DocEntry" = T0."DocEntry" AND C."U_InstlmntID" = P."InstlmntID"
@@ -24,6 +26,8 @@ WHERE
     AND (P."Status"    = :statusParcela OR P."Status" < :statusParcelaIsFilter)
     AND P."DueDate" >= :vencimentoDe
     AND P."DueDate" <= :vencimentoAte
+    AND T0."DocDate" >= :lancamentoDe
+    AND T0."DocDate" <= :lancamentoAte
     AND (C."U_Status"    = :status   OR T0."DocEntry" < :statusIsFilter)
     AND (C."U_Cobrador"  = :cobrador OR T0."DocEntry" < :cobradorIsFilter)
     AND (C."U_Situacao"  = :situacao OR T0."DocEntry" < :situacaoIsFilter)

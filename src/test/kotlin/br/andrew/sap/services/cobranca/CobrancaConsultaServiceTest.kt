@@ -15,10 +15,12 @@ import org.mockito.kotlin.argumentCaptor
 import org.mockito.kotlin.eq
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.never
+import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 import java.math.BigDecimal
 import java.time.LocalDate
+import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 
 class CobrancaConsultaServiceTest {
@@ -68,13 +70,169 @@ class CobrancaConsultaServiceTest {
     fun `filial e cliente informados viram filtro obrigatorio`() {
         whenever(sqlQueriesService.execute(eq("cobranca-titulos.sql"), any<List<Parameter>>())).thenReturn(odataVazia())
 
-        service.listar(admin, filial = 6, cliente = "CLI0007196")
+        service.listar(admin, filiais = listOf(6), cliente = "CLI0007196")
 
         val parametros = capturarParametros()
         assertEquals(6, parametros["filial"])
         assertEquals(-1, parametros["filialIsFilter"])
         assertEquals("CLI0007196", parametros["cliente"])
         assertEquals("", parametros["clienteIsFilter"])
+    }
+
+    @Test
+    fun `mais de uma filial vira uma consulta por filial, cada uma com o filtro ligado`() {
+        // A view aceita um :filial so (lista fixa de BPLId nao tem precedente no parser do
+        // SQLQueries) - multi-selecao na tela virou consulta repetida, e o resultado e a uniao.
+        whenever(sqlQueriesService.execute(eq("cobranca-titulos.sql"), any<List<Parameter>>())).thenReturn(odataVazia())
+
+        service.listar(admin, filiais = listOf(6, 7))
+
+        val captor = argumentCaptor<List<Parameter>>()
+        verify(sqlQueriesService, times(2)).execute(eq("cobranca-titulos.sql"), captor.capture())
+        val filiaisConsultadas = captor.allValues.map { parametros -> parametros.first { it.key == "filial" }.value }
+        assertEquals(listOf(6, 7), filiaisConsultadas)
+        captor.allValues.forEach { parametros ->
+            assertEquals(-1, parametros.first { it.key == "filialIsFilter" }.value)
+        }
+    }
+
+    @Test
+    fun `filial repetida na selecao nao vira consulta repetida no SAP`() {
+        whenever(sqlQueriesService.execute(eq("cobranca-titulos.sql"), any<List<Parameter>>())).thenReturn(odataVazia())
+
+        service.listar(admin, filiais = listOf(6, 6))
+
+        verify(sqlQueriesService, times(1)).execute(eq("cobranca-titulos.sql"), any<List<Parameter>>())
+    }
+
+    @Test
+    fun `valor com acento nao vai pro SQLQueries - o SAP responde Parameter error`() {
+        // Testado contra o Service Layer: status='8 - EM NEGOCIACAO' devolve 200, mas
+        // status='8 - EM NEGOCIAÇÃO' devolve 400 code 704 "Parameter error." - e nao existe
+        // encoding que resolva (UTF-8 e Latin-1 falham igual). O filtro entao sai do SQL e fica
+        // so em passaNosFiltrosLocais, que compara o valor original.
+        whenever(sqlQueriesService.execute(eq("cobranca-titulos.sql"), any<List<Parameter>>())).thenReturn(odataVazia())
+
+        service.listar(admin, status = "8 - EM NEGOCIAÇÃO")
+
+        val parametros = capturarParametros()
+        assertEquals("~", parametros["status"])
+        assertEquals(Int.MAX_VALUE, parametros["statusIsFilter"])
+    }
+
+    @Test
+    fun `valor sem acento continua filtrando no SQL, com espaco e tudo`() {
+        // Espaco o SAP aceita numa boa - so o nao-ASCII quebra. Nao pode virar filtro-em-Kotlin
+        // no atacado, senao o laco de paginacao varre a base de 20 em 20 sem necessidade.
+        whenever(sqlQueriesService.execute(eq("cobranca-titulos.sql"), any<List<Parameter>>())).thenReturn(odataVazia())
+
+        service.listar(admin, status = "3 - SEM CONTATO", cobrador = "Pedro Colombo")
+
+        val parametros = capturarParametros()
+        assertEquals("3 - SEM CONTATO", parametros["status"])
+        assertEquals(-1, parametros["statusIsFilter"])
+        assertEquals("Pedro Colombo", parametros["cobrador"])
+        assertEquals(-1, parametros["cobradorIsFilter"])
+    }
+
+    @Test
+    fun `cobrador com acento no nome tambem sai do SQL em vez de estourar`() {
+        whenever(sqlQueriesService.execute(eq("cobranca-titulos.sql"), any<List<Parameter>>())).thenReturn(odataVazia())
+
+        service.listar(admin, cobrador = "Nilvia Conceição", situacao = "2 - A RECEBER")
+
+        val parametros = capturarParametros()
+        assertEquals("~", parametros["cobrador"])
+        assertEquals(Int.MAX_VALUE, parametros["cobradorIsFilter"])
+        // situacao sem acento segue no SQL
+        assertEquals("2 - A RECEBER", parametros["situacao"])
+        assertEquals(-1, parametros["situacaoIsFilter"])
+    }
+
+    @Test
+    fun `filtro com acento ainda e aplicado - so muda o lugar onde a comparacao acontece`() {
+        // O que nao pode acontecer e "saiu do SQL" virar "nao filtra nada" e a tela mostrar
+        // titulo que nao casa com o status escolhido.
+        whenever(sqlQueriesService.execute(eq("cobranca-titulos.sql"), any<List<Parameter>>()))
+            .thenReturn(odataComTitulos(
+                titulo(diasAtraso = 30, status = "8 - EM NEGOCIAÇÃO"),
+                titulo(diasAtraso = 30, status = "3 - SEM CONTATO"),
+            ))
+
+        val resultado = service.listar(admin, status = "8 - EM NEGOCIAÇÃO")
+
+        assertEquals(1, resultado.size)
+        assertEquals("8 - EM NEGOCIAÇÃO", resultado.first().U_Status)
+    }
+
+    @Test
+    fun `filtrar por NAO INICIADO traz o titulo que ninguem trabalhou ainda`() {
+        // "1 - NAO INICIADO" e rotulo que a tela exibe quando U_Status esta vazio - o titulo nunca
+        // trabalhado nem tem registro na UDT. Comparar o texto literal nao acha nada, e era isso
+        // que fazia o filtro voltar vazio.
+        whenever(sqlQueriesService.execute(eq("cobranca-titulos.sql"), any<List<Parameter>>()))
+            .thenReturn(odataComTitulos(
+                titulo(diasAtraso = 30, status = null),
+                titulo(diasAtraso = 30, status = "8 - EM NEGOCIAÇÃO"),
+            ))
+
+        val resultado = service.listar(admin, status = "1 - NÃO INICIADO", incluirSemStatus = true)
+
+        assertEquals(1, resultado.size)
+        assertEquals(null, resultado.first().U_Status)
+    }
+
+    @Test
+    fun `NAO INICIADO tambem casa com quem tem esse status gravado de verdade`() {
+        // O valor existe no dominio (o seeder cria "1 - NAO INICIADO"), entao alguem pode ter
+        // escolhido ele no modal. Os dois casos aparecem iguais na tela e devem vir juntos.
+        whenever(sqlQueriesService.execute(eq("cobranca-titulos.sql"), any<List<Parameter>>()))
+            .thenReturn(odataComTitulos(
+                titulo(diasAtraso = 30, status = null),
+                titulo(diasAtraso = 30, status = "1 - NÃO INICIADO"),
+                titulo(diasAtraso = 30, status = "3 - SEM CONTATO"),
+            ))
+
+        val resultado = service.listar(admin, status = "1 - NÃO INICIADO", incluirSemStatus = true)
+
+        assertEquals(2, resultado.size)
+    }
+
+    @Test
+    fun `incluirSemStatus desliga o filtro de status no SQL, senao o SAP descarta o U_Status nulo`() {
+        // A view compara C."U_Status" = :status; com LEFT JOIN, U_Status nulo nunca casa - o SAP
+        // ja teria jogado fora as linhas que esse filtro quer antes do Kotlin ver.
+        whenever(sqlQueriesService.execute(eq("cobranca-titulos.sql"), any<List<Parameter>>())).thenReturn(odataVazia())
+
+        service.listar(admin, status = "1 - NAO INICIADO SEM ACENTO", incluirSemStatus = true)
+
+        val parametros = capturarParametros()
+        assertEquals("~", parametros["status"])
+        assertEquals(Int.MAX_VALUE, parametros["statusIsFilter"])
+    }
+
+    @Test
+    fun `sem incluirSemStatus o status vazio nao entra no resultado`() {
+        whenever(sqlQueriesService.execute(eq("cobranca-titulos.sql"), any<List<Parameter>>()))
+            .thenReturn(odataComTitulos(
+                titulo(diasAtraso = 30, status = null),
+                titulo(diasAtraso = 30, status = "3 - SEM CONTATO"),
+            ))
+
+        val resultado = service.listar(admin, status = "3 - SEM CONTATO")
+
+        assertEquals(1, resultado.size)
+        assertEquals("3 - SEM CONTATO", resultado.first().U_Status)
+    }
+
+    @Test
+    fun `lista de filiais vazia e o mesmo que nao filtrar filial`() {
+        whenever(sqlQueriesService.execute(eq("cobranca-titulos.sql"), any<List<Parameter>>())).thenReturn(odataVazia())
+
+        service.listar(admin, filiais = emptyList())
+
+        val parametros = capturarParametros()
+        assertEquals(Int.MAX_VALUE, parametros["filialIsFilter"])
     }
 
     @Test
@@ -89,23 +247,71 @@ class CobrancaConsultaServiceTest {
     }
 
     @Test
-    fun `diasAtrasoMin desloca o corte de vencimento no proprio SQL, sem parametro novo`() {
-        // Atraso >= N e o mesmo que DueDate <= hoje - N. Resolver isso no :data (que a view ja
-        // tem) evita que o laco de paginacao puxe pagina do SAP so pra descartar localmente.
+    fun `o corte de vencimento e a data pedida, sem deslocamento por dias de atraso`() {
+        // O filtro de dias em atraso saiu da tela: nada mais mexe no :data, que e o corte de
+        // "vencido ate quando" que a view usa.
         whenever(sqlQueriesService.execute(eq("cobranca-titulos.sql"), any<List<Parameter>>())).thenReturn(odataVazia())
 
-        service.listar(admin, data = LocalDate.of(2026, 7, 28), diasAtrasoMin = 10)
+        service.listar(admin, data = LocalDate.of(2026, 7, 28))
 
-        assertEquals("2026-07-18", capturarParametros()["data"])
+        assertEquals("2026-07-28", capturarParametros()["data"])
     }
 
     @Test
-    fun `sem diasAtrasoMin o corte de vencimento continua sendo a data pedida`() {
+    fun `mes de lancamento vira intervalo fechado de DocDate no SQL`() {
+        // O mes chega da tela como YYYY-MM; virar primeiro/ultimo dia aqui deixa a view
+        // comparando data com data, sem funcao de data (que o parser do SQLQueries recusa).
         whenever(sqlQueriesService.execute(eq("cobranca-titulos.sql"), any<List<Parameter>>())).thenReturn(odataVazia())
 
-        service.listar(admin, data = LocalDate.of(2026, 7, 28), diasAtrasoMin = null)
+        service.listar(admin, lancamentoMeses = listOf(YearMonth.of(2026, 2)))
 
-        assertEquals("2026-07-28", capturarParametros()["data"])
+        val parametros = capturarParametros()
+        assertEquals("2026-02-01", parametros["lancamentoDe"])
+        assertEquals("2026-02-28", parametros["lancamentoAte"])
+    }
+
+    @Test
+    fun `varios meses viram um envelope so no SQL, nao uma consulta por mes`() {
+        // Lista fixa de valores nao passa no parser do SQLQueries e uma consulta por mes
+        // multiplicaria as chamadas ao SAP (ja e uma por filial). O envelope cobre a selecao e o
+        // mes exato e conferido depois, em Kotlin.
+        whenever(sqlQueriesService.execute(eq("cobranca-titulos.sql"), any<List<Parameter>>())).thenReturn(odataVazia())
+
+        service.listar(admin, lancamentoMeses = listOf(YearMonth.of(2026, 5), YearMonth.of(2026, 2)))
+
+        val parametros = capturarParametros()
+        assertEquals("2026-02-01", parametros["lancamentoDe"], "envelope comeca no mes mais antigo, independente da ordem")
+        assertEquals("2026-05-31", parametros["lancamentoAte"])
+        verify(sqlQueriesService, times(1)).execute(eq("cobranca-titulos.sql"), any<List<Parameter>>())
+    }
+
+    @Test
+    fun `mes que ficou de fora da selecao e descartado em Kotlin, mesmo caindo no envelope`() {
+        whenever(sqlQueriesService.execute(eq("cobranca-titulos.sql"), any<List<Parameter>>()))
+            .thenReturn(
+                odataComTitulos(
+                    titulo(diasAtraso = 3, status = null, docDate = "20260210"),
+                    titulo(diasAtraso = 4, status = null, docDate = "20260315"), // buraco da selecao
+                    titulo(diasAtraso = 5, status = null, docDate = "20260420"),
+                )
+            )
+
+        val resultado = service.listar(admin, lancamentoMeses = listOf(YearMonth.of(2026, 2), YearMonth.of(2026, 4)))
+
+        // Set: a ordem da lista e por vencimento (coberta em outro teste), o que importa aqui e
+        // quem sobrou.
+        assertEquals(setOf("20260210", "20260420"), resultado.map { it.DocDate }.toSet())
+    }
+
+    @Test
+    fun `sem mes de lancamento o intervalo de DocDate fica aberto dos dois lados`() {
+        whenever(sqlQueriesService.execute(eq("cobranca-titulos.sql"), any<List<Parameter>>())).thenReturn(odataVazia())
+
+        service.listar(admin)
+
+        val parametros = capturarParametros()
+        assertEquals("1900-01-01", parametros["lancamentoDe"])
+        assertEquals("9999-12-31", parametros["lancamentoAte"])
     }
 
     @Test
@@ -198,19 +404,39 @@ class CobrancaConsultaServiceTest {
     }
 
     @Test
-    fun `filtros de dias em atraso e status sao aplicados depois da consulta ao SAP`() {
+    fun `mes de lancamento tambem e conferido em Kotlin, com o DocDate que o SAP devolveu`() {
+        // O SQL ja corta pelo intervalo, mas a conferencia local repete o criterio: o laco de
+        // paginacao junta pagina de mais de uma view e o resultado nao pode depender so do SAP.
         whenever(sqlQueriesService.execute(eq("cobranca-titulos.sql"), any<List<Parameter>>()))
             .thenReturn(
                 odataComTitulos(
-                    titulo(diasAtraso = 3, status = "8 - EM NEGOCIAÇÃO"),
-                    titulo(diasAtraso = 20, status = "3 - SEM CONTATO"),
+                    titulo(diasAtraso = 3, status = null, docDate = "20260215"),
+                    titulo(diasAtraso = 20, status = null, docDate = "20260331"),
                 )
             )
 
-        val resultado = service.listar(admin, diasAtrasoMin = 10)
+        val resultado = service.listar(admin, lancamentoMeses = listOf(YearMonth.of(2026, 2)))
 
         assertEquals(1, resultado.size)
-        assertEquals(20L, resultado.first().DiasAtraso)
+        assertEquals("20260215", resultado.first().DocDate)
+    }
+
+    @Test
+    fun `titulo sem DocDate fica de fora quando o mes de lancamento e pedido`() {
+        // Sem data de lancamento nao da pra afirmar que a linha e do mes escolhido - deixar
+        // passar seria mostrar no filtro de fevereiro um titulo que pode ser de qualquer mes.
+        whenever(sqlQueriesService.execute(eq("cobranca-titulos.sql"), any<List<Parameter>>()))
+            .thenReturn(odataComTitulos(titulo(diasAtraso = 3, status = null, docDate = null)))
+
+        assertEquals(0, service.listar(admin, lancamentoMeses = listOf(YearMonth.of(2026, 2))).size)
+    }
+
+    @Test
+    fun `sem mes de lancamento o titulo sem DocDate continua aparecendo`() {
+        whenever(sqlQueriesService.execute(eq("cobranca-titulos.sql"), any<List<Parameter>>()))
+            .thenReturn(odataComTitulos(titulo(diasAtraso = 3, status = null, docDate = null)))
+
+        assertEquals(1, service.listar(admin).size)
     }
 
     @Test
@@ -414,6 +640,7 @@ class CobrancaConsultaServiceTest {
         status: String?,
         paidToDate: BigDecimal = BigDecimal.ZERO,
         statusParcela: String = "O",
+        docDate: String? = "20260701",
     ): CobrancaTituloSap {
         // DueDate relativo a hoje: DiasAtraso e calculado em Kotlin (CobrancaTituloSap.toDto),
         // nao vem pronto do SAP - por isso o teste monta a data em vez de fixar o numero.
@@ -421,7 +648,8 @@ class CobrancaConsultaServiceTest {
         return CobrancaTituloSap(
             DocEntry = 1, DocNum = 1, Serial = "1", Series = 1,
             BPLId = 6, BPLName = "Fazenda Serra Verde", CardCode = "CLI001", CardName = "Cliente Teste",
-            DocDate = "20260701", DocTotal = BigDecimal("100.00"),
+            Telefone = "6699998888", Celular = null,
+            DocDate = docDate, DocTotal = BigDecimal("100.00"),
             SlpCode = 60, SlpName = "Vendedor Teste",
             InstlmntID = 1, InsTotal = BigDecimal("100.00"), PaidToDate = paidToDate,
             DueDate = dueDate, StatusParcela = statusParcela,
@@ -435,6 +663,7 @@ class CobrancaConsultaServiceTest {
         return CobrancaAdiantamentoSap(
             DocEntry = 1, DocNumAdiantamento = 501, ContratoDocNum = contratoDocNum,
             BPLId = 6, BPLName = "Fazenda Serra Verde", CardCode = "CLI001", CardName = "Cliente Teste",
+            Telefone = "6699998888", Celular = null,
             DocDate = "20260701", DocTotal = BigDecimal("50.00"),
             SlpCode = 60, SlpName = "Vendedor Teste",
             InstlmntID = 1, InsTotal = BigDecimal("50.00"), PaidToDate = BigDecimal.ZERO,

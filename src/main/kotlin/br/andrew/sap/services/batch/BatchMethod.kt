@@ -4,7 +4,10 @@ import br.andrew.sap.services.abstracts.EntitiesService
 import okio.Path
 
 enum class BatchMethod {
-        POST,PATCH,CANCEL,PUT,CLOSE;
+        POST,PATCH,DELETE,CANCEL,PUT,CLOSE;
+
+    // POST cria (sem id na URL); CANCEL/CLOSE sao acoes sem corpo; DELETE tambem vai sem corpo.
+    fun temCorpo(): Boolean = this == POST || this == PATCH || this == PUT
 
     fun getHttp(service: EntitiesService<*>, id : BatchId? = null): String {
         if(this != POST && id == null)

@@ -125,6 +125,11 @@ roles:
   cobranca:
     - url: "/cobranca/**"
       actions: ["get", "post"]
+    # Remocao de linha do historico. Regra propria em vez de somar "delete" ao /cobranca/**:
+    # o filtro e default-deny e assim DELETE novo em outro endpoint de cobranca nao entra de
+    # carona. Quem pode remover de fato e so o autor da linha, conferido em CobrancaService.
+    - url: "/cobranca/titulos/*/*/*/historico/*"
+      actions: ["delete"]
     - url: "/business-partners/search"
       actions: ["*"]
     - url: "/branch"

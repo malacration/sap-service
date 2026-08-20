@@ -20,6 +20,7 @@ class CobrancaTitulo(
     @get:JsonProperty("BPLName") val BPLName: String?,
     val CardCode: String,
     val CardName: String,
+    val Telefone: String?,
     val DocDate: String?,
     val DocTotal: BigDecimal,
     val SlpCode: Int?,
@@ -42,4 +43,13 @@ class CobrancaTitulo(
 ) {
     val code: String
         get() = CobrancaRegistro.code(Tipo, DocEntry, InstlmntID)
+
+    companion object {
+        /**
+         * Muito parceiro tem so o celular preenchido no OCRD - usar Phone1 puro deixaria a
+         * coluna Telefone em branco na tela de cobranca justamente pra quem o cobrador liga.
+         */
+        fun telefoneDeCobranca(phone1: String?, cellular: String?): String? =
+            listOfNotNull(phone1, cellular).map { it.trim() }.firstOrNull { it.isNotEmpty() }
+    }
 }

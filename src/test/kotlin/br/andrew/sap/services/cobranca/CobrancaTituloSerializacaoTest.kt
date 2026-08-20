@@ -19,7 +19,7 @@ class CobrancaTituloSerializacaoTest {
         val titulo = CobrancaTitulo(
             Tipo = "NF", DocEntry = 1, DocNum = 534, Serial = "1", Series = 1,
             BPLId = 6, BPLName = "FAZENDA SERRA VERDE",
-            CardCode = "CLI0007196", CardName = "GILBERTO", DocDate = "20260401",
+            CardCode = "CLI0007196", CardName = "GILBERTO", Telefone = "6699998888", DocDate = "20260401",
             DocTotal = BigDecimal("100.00"), SlpCode = 60, SlpName = "Agro Pasto",
             InstlmntID = 1, InsTotal = BigDecimal("100.00"), PaidToDate = BigDecimal.ZERO,
             DueDate = "20260701", Saldo = BigDecimal("100.00"), DiasAtraso = 30, SituacaoSap = "ABERTO",
@@ -34,5 +34,6 @@ class CobrancaTituloSerializacaoTest {
         assertTrue(json.contains("\"BPLName\":\"FAZENDA SERRA VERDE\""), "BPLName nao saiu com o nome exato esperado! JSON: $json")
         assertFalse(json.contains("\"Bplid\""), "voltou a sair com o nome mangled pelo UpperCamelCaseStrategy")
         assertFalse(json.contains("\"Bplname\""), "voltou a sair com o nome mangled pelo UpperCamelCaseStrategy")
+        assertTrue(json.contains("\"Telefone\":\"6699998888\""), "a coluna Telefone da tela de cobranca le esse nome exato. JSON: $json")
     }
 }

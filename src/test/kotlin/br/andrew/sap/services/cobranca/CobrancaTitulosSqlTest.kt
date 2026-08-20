@@ -77,6 +77,16 @@ class CobrancaTitulosSqlTest {
     }
 
     @Test
+    fun `mes de lancamento e filtrado no DocDate pelo SQL, sem funcao de data`() {
+        // O intervalo do mes e calculado em Kotlin (CobrancaConsultaService) e chega pronto: o
+        // parser do SQLQueries nao tem precedente pra YEAR()/MONTH()/TO_VARCHAR nessas views.
+        assertTrue(sql.contains("NS.\"DocDate\" >= :lancamentoDe"))
+        assertTrue(sql.contains("NS.\"DocDate\" <= :lancamentoAte"))
+        assertFalse(sql.contains("MONTH("))
+        assertFalse(sql.contains("YEAR("))
+    }
+
+    @Test
     fun `filtro de campo da UDT usa coluna nao-nula como escape, nunca a propria coluna nula`() {
         // C."U_Status" vem de LEFT JOIN: e nulo pra titulo nunca acompanhado. Se o "desligado"
         // fosse testado nele (C."U_Status" < :statusIsFilter), NULL < valor seria desconhecido
@@ -102,6 +112,15 @@ class CobrancaTitulosSqlTest {
             sql.contains("C.\"U_DataPromessa\" < :promessaVencidaIsFilter"),
             "escape em coluna de LEFT JOIN faria o titulo sem promessa desaparecer"
         )
+    }
+
+    @Test
+    fun `traz o telefone do cliente pra tela de cobranca sem poder derrubar linha`() {
+        // O join com OCRD e so pra exibir contato - se fosse INNER, titulo cujo parceiro nao
+        // casa (codigo migrado, cliente inativado) sairia da lista de cobranca.
+        assertTrue(sql.contains("LEFT JOIN OCRD CL ON CL.\"CardCode\" = NS.\"CardCode\""))
+        assertTrue(sql.contains("CL.\"Phone1\" AS \"Telefone\""))
+        assertTrue(sql.contains("CL.\"Cellular\" AS \"Celular\""))
     }
 
     @Test
@@ -162,6 +181,14 @@ class CobrancaTitulosAdiantamentoSqlTest {
     }
 
     @Test
+    fun `mes de lancamento existe aqui tambem, senao a consulta quebra pro adiantamento`() {
+        // As duas views recebem a MESMA lista de parametros - parametro que sobra numa delas
+        // derruba a consulta inteira daquele tipo de titulo.
+        assertTrue(sql.contains("T0.\"DocDate\" >= :lancamentoDe"))
+        assertTrue(sql.contains("T0.\"DocDate\" <= :lancamentoAte"))
+    }
+
+    @Test
     fun `filtro de campo da UDT tambem usa coluna nao-nula como escape aqui`() {
         assertTrue(sql.contains("C.\"U_Status\"    = :status   OR T0.\"DocEntry\" < :statusIsFilter"))
         assertTrue(sql.contains("C.\"U_Cobrador\"  = :cobrador OR T0.\"DocEntry\" < :cobradorIsFilter"))
@@ -173,6 +200,13 @@ class CobrancaTitulosAdiantamentoSqlTest {
         // As duas views recebem a MESMA lista de parametros em CobrancaConsultaService.
         assertTrue(sql.contains("C.\"Code\" IS NULL OR T0.\"DocEntry\" < :semAcompanhamentoIsFilter"))
         assertTrue(sql.contains("C.\"U_DataPromessa\" <= :promessaVencidaAte OR T0.\"DocEntry\" < :promessaVencidaIsFilter"))
+    }
+
+    @Test
+    fun `traz o telefone do cliente aqui tambem, senao a coluna fica vazia so pro adiantamento`() {
+        assertTrue(sql.contains("LEFT JOIN OCRD CL ON CL.\"CardCode\" = T0.\"CardCode\""))
+        assertTrue(sql.contains("CL.\"Phone1\" AS \"Telefone\""))
+        assertTrue(sql.contains("CL.\"Cellular\" AS \"Celular\""))
     }
 
     @Test
@@ -205,5 +239,46 @@ class TitulosEmailSqlTest {
     @Test
     fun `usa o Tipo NF ao juntar com a UDT, pra nao colidir com adiantamento de mesmo DocEntry`() {
         assertTrue(sql.contains("C.\"U_Tipo\" = 'NF'"))
+    }
+}
+
+class CobrancaCobradoresSqlTest {
+
+    private val sql = Files.readString(
+        Path.of("src/main/resources/views/cobranca/cobranca-cobradores.sql")
+    )
+
+    @Test
+    fun `lista os cobradores da UDT, nao das linhas que a tela carregou`() {
+        assertTrue(sql.contains("DISTINCT"))
+        assertTrue(sql.contains("\"@COB_TITULO\""))
+    }
+
+    @Test
+    fun `descarta cobrador vazio - a UDT guarda string vazia, nao so null`() {
+        assertTrue(sql.contains("IS NOT NULL"))
+        assertTrue(sql.contains("<> ''"))
+    }
+
+    @Test
+    fun `nao usa funcao sem precedente no parser do SQLQueries`() {
+        assertFalse(sql.contains("COALESCE"))
+        assertFalse(sql.contains("IFNULL"))
+        assertFalse(sql.contains("CAST("))
+    }
+}
+
+class CobrancaTituloVendedorSqlTest {
+
+    @Test
+    fun `view da fatura traz o CardCode, senao registrarAcao nao tem de onde gravar U_CardCode`() {
+        val sql = Files.readString(Path.of("src/main/resources/views/cobranca/cobranca-titulo-vendedor.sql"))
+        assertTrue(sql.contains("\"CardCode\""))
+    }
+
+    @Test
+    fun `view do adiantamento tambem traz o CardCode, pelo mesmo motivo`() {
+        val sql = Files.readString(Path.of("src/main/resources/views/cobranca/cobranca-titulo-vendedor-adiantamento.sql"))
+        assertTrue(sql.contains("\"CardCode\""))
     }
 }

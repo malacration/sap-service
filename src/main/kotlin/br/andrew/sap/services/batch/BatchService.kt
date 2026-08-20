@@ -20,6 +20,10 @@ class BatchService(val rest : RestTemplate,
 ) {
     private val lineBreak = "\r\n"
 
+    // Um mapper pro servico todo: getChangeSet roda por operacao, e criar ObjectMapper a cada
+    // item joga fora o cache de serializer por tipo (faturar um carregamento monta dezenas).
+    private val mapper = ObjectMapper().registerModule(KotlinModule.Builder().build())
+
     fun path(): String {
         return "/b1s/v1/\$batch"
     }
@@ -52,18 +56,35 @@ class BatchService(val rest : RestTemplate,
         return header.plus(content).plus(footer.toByteArray())
     }
 
-    private fun getChangeSet(changeSetUUID : String, item : Triple<BatchMethod,Any, EntitiesService<*>>, contentId : Int) : String{
-        val json = ObjectMapper().registerModule(KotlinModule()).writeValueAsString(item.second)
-        val batchId : BatchId? = if(item.second is BatchId) item.second as BatchId else null
-        return getChangeSet(changeSetUUID,item.first.getHttp(item.third,batchId),json,contentId)
+    private fun getChangeSet(changeSetUUID : String, item : BatchItem, contentId : Int) : String{
+        val temCorpo = item.method.temCorpo()
+        val json = if(temCorpo) mapper.writeValueAsString(item.payload) else ""
+        val batchId : BatchId? = if(item.payload is BatchId) item.payload as BatchId else null
+        return getChangeSet(
+            changeSetUUID,
+            item.method.getHttp(item.service,batchId),
+            json,
+            contentId,
+            temCorpo,
+            item.headers,
+        )
     }
 
-    private fun getChangeSet(changeSetUUID : String, http : String, json : String, contentId : Int): String {
-        val hasRequestBody = !http.endsWith("Cancel") && !http.endsWith("Close")
+    private fun getChangeSet(
+        changeSetUUID : String,
+        http : String,
+        json : String,
+        contentId : Int,
+        // Vem do metodo e nao mais do sufixo da URL: DELETE termina em ")" como o PATCH, entao
+        // olhar a URL nao distinguia os dois.
+        hasRequestBody : Boolean,
+        headers : Map<String,String>,
+    ): String {
         val requestHeaders = if (hasRequestBody)
             "Content-Type: application/json$lineBreak"
         else
             "Content-Length: 0$lineBreak"
+        val headersDoItem = headers.entries.joinToString("") { "${it.key}: ${it.value}$lineBreak" }
         val requestBody = if (hasRequestBody) "$lineBreak$json$lineBreak" else lineBreak
 
         return "--$changeSetUUID$lineBreak" +
@@ -72,6 +93,7 @@ class BatchService(val rest : RestTemplate,
                 "Content-ID: $contentId$lineBreak$lineBreak" +
                 "$http HTTP/1.1$lineBreak" +
                 requestHeaders +
+                headersDoItem +
                 requestBody
     }
 
