@@ -62,6 +62,27 @@ open abstract class EntitiesService<T>(protected val env: SapEnvrioment,
         }.body
     }
 
+    /**
+     * Igual ao update, mais o header B1S-ReplaceCollectionsOnPatch. Sem ele o Service Layer faz
+     * MERGE da colecao filha pelo LineId: linha que fica de fora do array continua existindo no
+     * SAP, e o PATCH responde 200 como se tivesse dado certo. Ou seja, nao da pra remover linha
+     * por omissao sem esse header (ver RegiaoService.salvarComColecoesSubstituidas, onde isso foi
+     * descoberto primeiro).
+     */
+    fun updateReplacingCollections(entry : Any, id : String): OData?{
+        val idNew = if(id.toIntOrNull() == null && id[0] != "'"[0])
+            "'$id'"
+        else
+            id
+        return exchangeWithValidSession(OData::class.java) { session ->
+            RequestEntity
+                .patch(env.host+this.path()+"($idNew)")
+                .header("cookie", session.cookieHeader())
+                .header("B1S-ReplaceCollectionsOnPatch", "true")
+                .body(entry)
+        }.body
+    }
+
     fun put(entry : Any, id : String): OData?{
         return exchangeWithValidSession(OData::class.java) { session ->
             RequestEntity

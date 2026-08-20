@@ -11,12 +11,14 @@ import br.andrew.sap.model.cobranca.CobrancaTituloVendedorSap
 import br.andrew.sap.services.abstracts.SqlQueriesService
 import org.springframework.stereotype.Service
 import java.time.LocalDate
+import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 
 @Service
 class CobrancaConsultaService(val sqlQueriesService: SqlQueriesService) {
 
     private val formatoSap = DateTimeFormatter.BASIC_ISO_DATE
+    private val formatoMesSap = DateTimeFormatter.ofPattern("yyyyMM")
 
     companion object {
         private const val SEM_FILTRO = "~"
@@ -49,7 +51,6 @@ class CobrancaConsultaService(val sqlQueriesService: SqlQueriesService) {
         vendedor: Int? = null,
         cliente: String? = null,
         data: LocalDate = LocalDate.now(),
-        diasAtrasoMin: Int? = null,
         status: String? = null,
         incluirSemStatus: Boolean? = null,
         cobrador: String? = null,
@@ -57,6 +58,7 @@ class CobrancaConsultaService(val sqlQueriesService: SqlQueriesService) {
         situacaoSap: String? = null,
         vencimentoDe: LocalDate? = null,
         vencimentoAte: LocalDate? = null,
+        lancamentoMeses: List<YearMonth>? = null,
         semAcompanhamento: Boolean? = null,
         promessaVencidaAte: LocalDate? = null,
         tipo: String? = null,
@@ -65,8 +67,19 @@ class CobrancaConsultaService(val sqlQueriesService: SqlQueriesService) {
     ): List<CobrancaTitulo> {
         val vendedorEfetivo = CobrancaEscopo.vendedorEfetivo(auth, vendedor)
 
-        val dataEfetiva = data.minusDays((diasAtrasoMin ?: 0).coerceAtLeast(0).toLong())
         val statusParcela = statusParcelaDe(situacaoSap)
+
+        // A tela manda um ou vários meses (arvore por ano, multi-selecao). No SQL vai só o
+        // ENVELOPE da selecao - do primeiro dia do mes mais antigo ao ultimo dia do mais novo -
+        // porque lista fixa de valores nao tem precedente no parser do SQLQueries e uma consulta
+        // por mes multiplicaria as chamadas ao SAP (ja e uma por filial). Selecao com buraco
+        // (julho e setembro, sem agosto) entra no envelope e agosto cai em passaNosFiltrosLocais,
+        // que compara o mes exato. A view tambem nao aceita YEAR()/MONTH() - ver o guarda em
+        // CobrancaTitulosSqlTest.
+        val mesesEscolhidos = lancamentoMeses?.distinct()?.sorted()?.takeIf { it.isNotEmpty() }
+        val mesesSap = mesesEscolhidos?.map { it.format(formatoMesSap) }?.toSet()
+        val lancamentoDe = mesesEscolhidos?.first()?.atDay(1)
+        val lancamentoAte = mesesEscolhidos?.last()?.atEndOfMonth()
 
         // Valor com acento nao pode ir pro SQLQueries (ver soAscii) - vira "sem filtro" aqui e
         // passaNosFiltrosLocais faz a comparacao exata depois, com o valor original.
@@ -77,7 +90,7 @@ class CobrancaConsultaService(val sqlQueriesService: SqlQueriesService) {
         val situacaoSql = soAscii(situacao)
 
         val parametrosBase = listOf(
-            Parameter("data", dataEfetiva.toString()),
+            Parameter("data", data.toString()),
             Parameter("vendedor", vendedorEfetivo ?: Int.MAX_VALUE),
             Parameter("vendedorIsFilter", if (vendedorEfetivo == null) Int.MAX_VALUE else -1),
             Parameter("cliente", cliente ?: SEM_FILTRO),
@@ -86,6 +99,8 @@ class CobrancaConsultaService(val sqlQueriesService: SqlQueriesService) {
             Parameter("statusParcelaIsFilter", if (statusParcela == SEM_FILTRO) SEM_FILTRO else ""),
             Parameter("vencimentoDe", vencimentoDe?.toString() ?: "1900-01-01"),
             Parameter("vencimentoAte", vencimentoAte?.toString() ?: "9999-12-31"),
+            Parameter("lancamentoDe", lancamentoDe?.toString() ?: "1900-01-01"),
+            Parameter("lancamentoAte", lancamentoAte?.toString() ?: "9999-12-31"),
             Parameter("status", statusSql ?: SEM_FILTRO),
             Parameter("statusIsFilter", if (statusSql == null) Int.MAX_VALUE else -1),
             Parameter("cobrador", cobradorSql ?: SEM_FILTRO),
@@ -109,13 +124,13 @@ class CobrancaConsultaService(val sqlQueriesService: SqlQueriesService) {
             val faturas = if (tipo == CobrancaRegistro.TIPO_ADIANTAMENTO) emptyList() else
                 buscarAte<CobrancaTituloSap>("cobranca-titulos.sql", parametros, alvo) { linhas ->
                     linhas.map { it.toDto() }
-                        .filter { passaNosFiltrosLocais(it, diasAtrasoMin, status, incluirSemStatus, cobrador, situacao, situacaoSap, vencimentoDe, vencimentoAte) }
+                        .filter { passaNosFiltrosLocais(it, status, incluirSemStatus, cobrador, situacao, situacaoSap, vencimentoDe, vencimentoAte, mesesSap) }
                 }
 
             val adiantamentos = if (tipo == CobrancaRegistro.TIPO_NOTA_FISCAL) emptyList() else
                 buscarAte<CobrancaAdiantamentoSap>("cobranca-titulos-adiantamento.sql", parametros, alvo) { linhas ->
                     linhas.map { it.toDto() }
-                        .filter { passaNosFiltrosLocais(it, diasAtrasoMin, status, incluirSemStatus, cobrador, situacao, situacaoSap, vencimentoDe, vencimentoAte) }
+                        .filter { passaNosFiltrosLocais(it, status, incluirSemStatus, cobrador, situacao, situacaoSap, vencimentoDe, vencimentoAte, mesesSap) }
                 }
 
             faturas + adiantamentos
@@ -178,7 +193,6 @@ class CobrancaConsultaService(val sqlQueriesService: SqlQueriesService) {
 
     private fun passaNosFiltrosLocais(
         titulo: CobrancaTitulo,
-        diasAtrasoMin: Int?,
         status: String?,
         incluirSemStatus: Boolean?,
         cobrador: String?,
@@ -186,13 +200,25 @@ class CobrancaConsultaService(val sqlQueriesService: SqlQueriesService) {
         situacaoSap: String?,
         vencimentoDe: LocalDate?,
         vencimentoAte: LocalDate?,
+        // Meses da selecao ja no formato do SAP ("202607"), calculados uma vez fora do laco.
+        mesesSap: Set<String>?,
     ): Boolean {
-        return (diasAtrasoMin == null || titulo.DiasAtraso >= diasAtrasoMin) &&
-            (status == null || titulo.U_Status == status || (incluirSemStatus == true && titulo.U_Status.isNullOrBlank())) &&
+        return (status == null || titulo.U_Status == status || (incluirSemStatus == true && titulo.U_Status.isNullOrBlank())) &&
             (cobrador == null || titulo.U_Cobrador == cobrador) &&
             (situacao == null || titulo.U_Situacao == situacao) &&
             (situacaoSap == null || titulo.SituacaoSap == situacaoSap) &&
             (vencimentoDe == null || titulo.DueDate >= vencimentoDe.format(formatoSap)) &&
-            (vencimentoAte == null || titulo.DueDate <= vencimentoAte.format(formatoSap))
+            (vencimentoAte == null || titulo.DueDate <= vencimentoAte.format(formatoSap)) &&
+            (mesesSap == null || ehDeAlgumMesDeLancamento(titulo.DocDate, mesesSap))
+    }
+
+    /**
+     * DocDate chega do SQLQueries como "20260701", mas data do Service Layer aparece como
+     * "2026-07-01" em outros contextos - so os digitos interessam, entao o separador sai antes de
+     * comparar. Titulo sem DocDate fica de fora: nao da pra afirmar que e do mes pedido.
+     */
+    private fun ehDeAlgumMesDeLancamento(docDate: String?, mesesSap: Set<String>): Boolean {
+        val digitos = docDate?.filter { it.isDigit() } ?: return false
+        return digitos.take(6) in mesesSap
     }
 }

@@ -24,6 +24,8 @@ WHERE
     AND (P."Status"    = :statusParcela OR P."Status" < :statusParcelaIsFilter)
     AND P."DueDate" >= :vencimentoDe
     AND P."DueDate" <= :vencimentoAte
+    AND NS."DocDate" >= :lancamentoDe
+    AND NS."DocDate" <= :lancamentoAte
     AND (C."U_Status"    = :status   OR NS."DocEntry" < :statusIsFilter)
     AND (C."U_Cobrador"  = :cobrador OR NS."DocEntry" < :cobradorIsFilter)
     AND (C."U_Situacao"  = :situacao OR NS."DocEntry" < :situacaoIsFilter)

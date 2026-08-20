@@ -20,6 +20,7 @@ import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 import java.math.BigDecimal
 import java.time.LocalDate
+import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 
 class CobrancaConsultaServiceTest {
@@ -246,23 +247,71 @@ class CobrancaConsultaServiceTest {
     }
 
     @Test
-    fun `diasAtrasoMin desloca o corte de vencimento no proprio SQL, sem parametro novo`() {
-        // Atraso >= N e o mesmo que DueDate <= hoje - N. Resolver isso no :data (que a view ja
-        // tem) evita que o laco de paginacao puxe pagina do SAP so pra descartar localmente.
+    fun `o corte de vencimento e a data pedida, sem deslocamento por dias de atraso`() {
+        // O filtro de dias em atraso saiu da tela: nada mais mexe no :data, que e o corte de
+        // "vencido ate quando" que a view usa.
         whenever(sqlQueriesService.execute(eq("cobranca-titulos.sql"), any<List<Parameter>>())).thenReturn(odataVazia())
 
-        service.listar(admin, data = LocalDate.of(2026, 7, 28), diasAtrasoMin = 10)
+        service.listar(admin, data = LocalDate.of(2026, 7, 28))
 
-        assertEquals("2026-07-18", capturarParametros()["data"])
+        assertEquals("2026-07-28", capturarParametros()["data"])
     }
 
     @Test
-    fun `sem diasAtrasoMin o corte de vencimento continua sendo a data pedida`() {
+    fun `mes de lancamento vira intervalo fechado de DocDate no SQL`() {
+        // O mes chega da tela como YYYY-MM; virar primeiro/ultimo dia aqui deixa a view
+        // comparando data com data, sem funcao de data (que o parser do SQLQueries recusa).
         whenever(sqlQueriesService.execute(eq("cobranca-titulos.sql"), any<List<Parameter>>())).thenReturn(odataVazia())
 
-        service.listar(admin, data = LocalDate.of(2026, 7, 28), diasAtrasoMin = null)
+        service.listar(admin, lancamentoMeses = listOf(YearMonth.of(2026, 2)))
 
-        assertEquals("2026-07-28", capturarParametros()["data"])
+        val parametros = capturarParametros()
+        assertEquals("2026-02-01", parametros["lancamentoDe"])
+        assertEquals("2026-02-28", parametros["lancamentoAte"])
+    }
+
+    @Test
+    fun `varios meses viram um envelope so no SQL, nao uma consulta por mes`() {
+        // Lista fixa de valores nao passa no parser do SQLQueries e uma consulta por mes
+        // multiplicaria as chamadas ao SAP (ja e uma por filial). O envelope cobre a selecao e o
+        // mes exato e conferido depois, em Kotlin.
+        whenever(sqlQueriesService.execute(eq("cobranca-titulos.sql"), any<List<Parameter>>())).thenReturn(odataVazia())
+
+        service.listar(admin, lancamentoMeses = listOf(YearMonth.of(2026, 5), YearMonth.of(2026, 2)))
+
+        val parametros = capturarParametros()
+        assertEquals("2026-02-01", parametros["lancamentoDe"], "envelope comeca no mes mais antigo, independente da ordem")
+        assertEquals("2026-05-31", parametros["lancamentoAte"])
+        verify(sqlQueriesService, times(1)).execute(eq("cobranca-titulos.sql"), any<List<Parameter>>())
+    }
+
+    @Test
+    fun `mes que ficou de fora da selecao e descartado em Kotlin, mesmo caindo no envelope`() {
+        whenever(sqlQueriesService.execute(eq("cobranca-titulos.sql"), any<List<Parameter>>()))
+            .thenReturn(
+                odataComTitulos(
+                    titulo(diasAtraso = 3, status = null, docDate = "20260210"),
+                    titulo(diasAtraso = 4, status = null, docDate = "20260315"), // buraco da selecao
+                    titulo(diasAtraso = 5, status = null, docDate = "20260420"),
+                )
+            )
+
+        val resultado = service.listar(admin, lancamentoMeses = listOf(YearMonth.of(2026, 2), YearMonth.of(2026, 4)))
+
+        // Set: a ordem da lista e por vencimento (coberta em outro teste), o que importa aqui e
+        // quem sobrou.
+        assertEquals(setOf("20260210", "20260420"), resultado.map { it.DocDate }.toSet())
+    }
+
+    @Test
+    fun `sem mes de lancamento o intervalo de DocDate fica aberto dos dois lados`() {
+        whenever(sqlQueriesService.execute(eq("cobranca-titulos.sql"), any<List<Parameter>>())).thenReturn(odataVazia())
+
+        service.listar(admin)
+
+        val parametros = capturarParametros()
+        assertEquals("1900-01-01", parametros["lancamentoDe"])
+        assertEquals("9999-12-31", parametros["lancamentoAte"])
     }
 
     @Test
@@ -355,19 +404,39 @@ class CobrancaConsultaServiceTest {
     }
 
     @Test
-    fun `filtros de dias em atraso e status sao aplicados depois da consulta ao SAP`() {
+    fun `mes de lancamento tambem e conferido em Kotlin, com o DocDate que o SAP devolveu`() {
+        // O SQL ja corta pelo intervalo, mas a conferencia local repete o criterio: o laco de
+        // paginacao junta pagina de mais de uma view e o resultado nao pode depender so do SAP.
         whenever(sqlQueriesService.execute(eq("cobranca-titulos.sql"), any<List<Parameter>>()))
             .thenReturn(
                 odataComTitulos(
-                    titulo(diasAtraso = 3, status = "8 - EM NEGOCIAÇÃO"),
-                    titulo(diasAtraso = 20, status = "3 - SEM CONTATO"),
+                    titulo(diasAtraso = 3, status = null, docDate = "20260215"),
+                    titulo(diasAtraso = 20, status = null, docDate = "20260331"),
                 )
             )
 
-        val resultado = service.listar(admin, diasAtrasoMin = 10)
+        val resultado = service.listar(admin, lancamentoMeses = listOf(YearMonth.of(2026, 2)))
 
         assertEquals(1, resultado.size)
-        assertEquals(20L, resultado.first().DiasAtraso)
+        assertEquals("20260215", resultado.first().DocDate)
+    }
+
+    @Test
+    fun `titulo sem DocDate fica de fora quando o mes de lancamento e pedido`() {
+        // Sem data de lancamento nao da pra afirmar que a linha e do mes escolhido - deixar
+        // passar seria mostrar no filtro de fevereiro um titulo que pode ser de qualquer mes.
+        whenever(sqlQueriesService.execute(eq("cobranca-titulos.sql"), any<List<Parameter>>()))
+            .thenReturn(odataComTitulos(titulo(diasAtraso = 3, status = null, docDate = null)))
+
+        assertEquals(0, service.listar(admin, lancamentoMeses = listOf(YearMonth.of(2026, 2))).size)
+    }
+
+    @Test
+    fun `sem mes de lancamento o titulo sem DocDate continua aparecendo`() {
+        whenever(sqlQueriesService.execute(eq("cobranca-titulos.sql"), any<List<Parameter>>()))
+            .thenReturn(odataComTitulos(titulo(diasAtraso = 3, status = null, docDate = null)))
+
+        assertEquals(1, service.listar(admin).size)
     }
 
     @Test
@@ -571,6 +640,7 @@ class CobrancaConsultaServiceTest {
         status: String?,
         paidToDate: BigDecimal = BigDecimal.ZERO,
         statusParcela: String = "O",
+        docDate: String? = "20260701",
     ): CobrancaTituloSap {
         // DueDate relativo a hoje: DiasAtraso e calculado em Kotlin (CobrancaTituloSap.toDto),
         // nao vem pronto do SAP - por isso o teste monta a data em vez de fixar o numero.
@@ -579,7 +649,7 @@ class CobrancaConsultaServiceTest {
             DocEntry = 1, DocNum = 1, Serial = "1", Series = 1,
             BPLId = 6, BPLName = "Fazenda Serra Verde", CardCode = "CLI001", CardName = "Cliente Teste",
             Telefone = "6699998888", Celular = null,
-            DocDate = "20260701", DocTotal = BigDecimal("100.00"),
+            DocDate = docDate, DocTotal = BigDecimal("100.00"),
             SlpCode = 60, SlpName = "Vendedor Teste",
             InstlmntID = 1, InsTotal = BigDecimal("100.00"), PaidToDate = paidToDate,
             DueDate = dueDate, StatusParcela = statusParcela,

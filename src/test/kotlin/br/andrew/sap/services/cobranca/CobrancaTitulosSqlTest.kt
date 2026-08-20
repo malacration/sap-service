@@ -77,6 +77,16 @@ class CobrancaTitulosSqlTest {
     }
 
     @Test
+    fun `mes de lancamento e filtrado no DocDate pelo SQL, sem funcao de data`() {
+        // O intervalo do mes e calculado em Kotlin (CobrancaConsultaService) e chega pronto: o
+        // parser do SQLQueries nao tem precedente pra YEAR()/MONTH()/TO_VARCHAR nessas views.
+        assertTrue(sql.contains("NS.\"DocDate\" >= :lancamentoDe"))
+        assertTrue(sql.contains("NS.\"DocDate\" <= :lancamentoAte"))
+        assertFalse(sql.contains("MONTH("))
+        assertFalse(sql.contains("YEAR("))
+    }
+
+    @Test
     fun `filtro de campo da UDT usa coluna nao-nula como escape, nunca a propria coluna nula`() {
         // C."U_Status" vem de LEFT JOIN: e nulo pra titulo nunca acompanhado. Se o "desligado"
         // fosse testado nele (C."U_Status" < :statusIsFilter), NULL < valor seria desconhecido
@@ -168,6 +178,14 @@ class CobrancaTitulosAdiantamentoSqlTest {
         assertTrue(sql.contains(":statusParcelaIsFilter"))
         assertTrue(sql.contains(":vencimentoDe"))
         assertTrue(sql.contains(":vencimentoAte"))
+    }
+
+    @Test
+    fun `mes de lancamento existe aqui tambem, senao a consulta quebra pro adiantamento`() {
+        // As duas views recebem a MESMA lista de parametros - parametro que sobra numa delas
+        // derruba a consulta inteira daquele tipo de titulo.
+        assertTrue(sql.contains("T0.\"DocDate\" >= :lancamentoDe"))
+        assertTrue(sql.contains("T0.\"DocDate\" <= :lancamentoAte"))
     }
 
     @Test
