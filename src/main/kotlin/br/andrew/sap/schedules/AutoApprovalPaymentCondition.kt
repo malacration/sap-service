@@ -18,7 +18,7 @@ import java.util.Calendar
 
 
 @Component
-@ConditionalOnProperty(value = ["org.quartz.enable"], havingValue = "true", matchIfMissing = false)
+@ConditionalOnProperty(value = ["jobs.aprovacao-automatica.enable"], havingValue = "true", matchIfMissing = false)
 class AutoApprovalPaymentCondition(
     val approvalRequestsService : ApprovalRequestsService,
     val telegramRequestService: TelegramRequestService,
