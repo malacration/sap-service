@@ -28,3 +28,12 @@ keycloak.realm=rovema
 keycloak.client-id=front-sap
 # Claim opcional que carrega o codigo SAP do usuario (default: sap_code)
 keycloak.sap-id-claim=sap_code
+
+# ----- Rotinas agendadas (substituem o antigo org.quartz.enable) -----
+# Cada rotina tem seu proprio toggle e vem DESATIVADA por padrao.
+# Aprovacao automatica de rascunhos de pedido (AutoApprovalPaymentCondition) - a cada 5 min
+jobs.aprovacao-automatica.enable=false
+# Fluxo de prazo / atualizacao cadastral de parceiros (FluxoPrazoFluxo) - a cada 5 min
+jobs.fluxo-prazo.enable=false
+# Atualizacao da cotacao de moeda no Bacen (CurrencyScheduled) - diaria a meia-noite
+jobs.cotacao-moeda.enable=false
