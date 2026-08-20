@@ -11,8 +11,14 @@ import br.andrew.sap.model.cobranca.CobrancaException
 import br.andrew.sap.model.cobranca.CobrancaHistorico
 import br.andrew.sap.model.cobranca.CobrancaHistoricoLinha
 import br.andrew.sap.model.cobranca.CobrancaRegistro
+import br.andrew.sap.model.cobranca.CobrancaRegistroPatch
+import br.andrew.sap.model.cobranca.CobrancaRemocaoLog
 import br.andrew.sap.model.sistema.SapEnvrioment
 import br.andrew.sap.services.abstracts.EntitiesService
+import br.andrew.sap.services.batch.BatchIdOnly
+import br.andrew.sap.services.batch.BatchList
+import br.andrew.sap.services.batch.BatchMethod
+import br.andrew.sap.services.batch.BatchService
 import br.andrew.sap.services.security.AuthService
 import org.slf4j.LoggerFactory
 import org.springframework.cache.annotation.CacheEvict
@@ -32,6 +38,7 @@ class CobrancaService(
     authService: AuthService,
     val consultaService: CobrancaConsultaService,
     val logService: CobrancaLogService,
+    val batchService: BatchService,
 ) : EntitiesService<CobrancaRegistro>(env, restTemplate, authService) {
 
     private val logger = LoggerFactory.getLogger(CobrancaService::class.java)
@@ -156,7 +163,9 @@ class CobrancaService(
      * cliente, entao ninguem apaga a linha de outro cobrador - nem quem tem acesso total.
      * Deletar a linha errada aqui nao tem desfazer, o SAP nao versiona a UDT.
      */
-    @CacheEvict("cobranca-dashboard", allEntries = true)
+    // beforeInvocation: se a remocao aplica o cabecalho e estoura na conferencia, o metodo sai por
+    // excecao - sem isso o dashboard continuaria servindo o numero de antes.
+    @CacheEvict("cobranca-dashboard", allEntries = true, beforeInvocation = true)
     fun removerHistorico(auth: User, tipo: String, docEntry: Int, instlmntId: Int, lineId: Int): List<CobrancaHistoricoLinha> {
         validarTipo(tipo)
         validarEscopo(auth, tipo, docEntry, instlmntId)
@@ -175,39 +184,101 @@ class CobrancaService(
                 )
 
             val restante = registro.historico.filter { it.LineId != lineId }
-
-            // Auditoria em @COB_TITULO_LOG ANTES de apagar: e o unico lugar onde o conteudo da
-            // linha continua existindo depois. Se ela falhar, nada e apagado (ver CobrancaLogService).
-            logService.registrarRemocao(code, linha, auth)
+            val auditoria = CobrancaRemocaoLog.de(code, linha, auth._name, auth.id)
 
             /*
+             * Auditoria e remocao no MESMO changeset: o Service Layer trata o changeset como uma
+             * transacao, entao ou as duas acontecem ou nenhuma. Em chamadas separadas existia a
+             * janela em que a auditoria gravava "linha removida" e a remocao falhava depois,
+             * deixando registro afirmando remocao que nao houve (e retentativa duplicando isso).
+             * Mesma propriedade que RegiaoService.substituir ja usa.
+             *
              * Sem nenhuma linha restante o registro deixa de ser acompanhamento: mante-lo vazio
-             * faria o titulo continuar contando como trabalhado no dashboard (que olha a
-             * presenca do registro em @COB_TITULO, nao o historico) e seguir aparecendo nos
-             * filtros de "rastreado" com o cabecalho de uma acao que nao existe mais. Apagar
-             * devolve o titulo pra "1 - NAO INICIADO", que e o estado real.
+             * faria o titulo continuar contando como trabalhado no dashboard (que olha a presenca
+             * do registro em @COB_TITULO, nao o historico) e seguir aparecendo nos filtros de
+             * "rastreado" com o cabecalho de uma acao que nao existe mais. Apagar devolve o titulo
+             * pra "1 - NAO INICIADO", que e o estado real.
+             *
+             * O header B1S-ReplaceCollectionsOnPatch e obrigatorio no PATCH: sem ele o Service
+             * Layer faz merge da colecao e devolve 200 com a linha ainda la.
+             */
+            val codigoDaAuditoria = requireNotNull(auditoria.Code) { "Auditoria de remoção sem Code" }
+            val lote = BatchList().add(BatchMethod.POST, auditoria, logService)
+
+            /*
+             * Os dois ramos conferem o resultado relendo o registro. Nao e redundancia: o
+             * BatchService so acusa erro quando consegue interpretar a resposta do SAP - resposta
+             * que o parser nao reconhece vira lista vazia de respostas, e "nenhum erro" passa por
+             * sucesso. Alem disso o Service Layer as vezes responde 200 e ignora a remocao.
              */
             if (restante.isEmpty()) {
-                delete("'$code'")
+                lote.add(BatchMethod.DELETE, BatchIdOnly("'$code'"), this)
+                enviarLote(lote, code, lineId)
+                if (buscarPorCode(code) != null) {
+                    apagarAuditoriaNaoAplicada(codigoDaAuditoria)
+                    throw CobrancaException(
+                        "O SAP não apagou o registro de cobrança $code. O histórico está intacto - " +
+                            "tente de novo ou avise o suporte.",
+                    )
+                }
                 return emptyList()
             }
 
-            // updateReplacingCollections e nao update: sem o header B1S-ReplaceCollectionsOnPatch
-            // o Service Layer faz merge da colecao e devolve 200 com a linha ainda lá.
-            updateReplacingCollections(payloadSemALinhaRemovida(restante, linha), code)
+            lote.add(
+                BatchMethod.PATCH,
+                CobrancaRegistroPatch(code, payloadSemALinhaRemovida(restante, linha)),
+                this,
+                mapOf("B1S-ReplaceCollectionsOnPatch" to "true"),
+            )
+            enviarLote(lote, code, lineId)
 
             val relido = buscarPorCode(code)
                 ?: throw CobrancaException("Falha ao reler o registro de cobrança $code")
 
-            // Confere de fato. O SAP responde 200 mesmo quando ignora a remocao da linha, e sem
-            // essa conferencia a tela dizia "removido" com a linha intacta na UDT.
-            if (relido.historico.any { it.LineId == lineId })
+            if (relido.historico.any { it.LineId == lineId }) {
+                apagarAuditoriaNaoAplicada(codigoDaAuditoria)
                 throw CobrancaException(
                     "O SAP não removeu a ação do histórico de $code (linha $lineId continua lá). " +
-                        "Nada foi perdido - tente de novo ou avise o suporte.",
+                        "O histórico está intacto, mas o cabeçalho do título pode ter ficado " +
+                        "desatualizado - refaça a remoção.",
                 )
+            }
 
             return paraTela(relido.historico, auth)
+        }
+    }
+
+    /**
+     * O changeset e transacional: se a remocao nao acontece, o POST da auditoria tambem e desfeito
+     * pelo SAP. Tipar a falha aqui evita que texto cru do Service Layer ("400 - Property ... is
+     * invalid") chegue na tela como erro generico, e mantem a mensagem dizendo o que importa pro
+     * cobrador: nada foi apagado.
+     */
+    private fun enviarLote(lote: BatchList, code: String, lineId: Int) {
+        try {
+            batchService.run(lote)
+        } catch (e: Exception) {
+            throw CobrancaException(
+                "Não foi possível remover a ação $lineId do histórico de $code: ${e.message}. " +
+                    "Nada foi apagado.",
+            )
+        }
+    }
+
+    /**
+     * Auditoria afirmando remocao que nao houve e pior que nao ter auditoria, entao ela e apagada.
+     * Se nem isso der, o log e o unico caminho pra alguem achar o registro e apagar a mao - por
+     * isso aqui tem log, diferente do resto do fluxo, cuja trilha e a propria UDT.
+     */
+    private fun apagarAuditoriaNaoAplicada(codigoDaAuditoria: String) {
+        try {
+            logService.delete("'$codigoDaAuditoria'")
+        } catch (e: Exception) {
+            logger.error(
+                "Falha ao apagar a auditoria {} de uma remocao que o SAP nao aplicou. O registro " +
+                    "afirma remocao que nao aconteceu e precisa ser apagado a mao em @COB_TITULO_LOG.",
+                codigoDaAuditoria, e,
+            )
         }
     }
 
