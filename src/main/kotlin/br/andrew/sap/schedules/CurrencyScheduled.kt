@@ -6,7 +6,7 @@ import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
 
 @Component
-@ConditionalOnProperty(value = ["org.quartz.enable"], havingValue = "true", matchIfMissing = false)
+@ConditionalOnProperty(value = ["jobs.cotacao-moeda.enable"], havingValue = "true", matchIfMissing = false)
 class CurrencyScheduled(val controller : CurrencyController) {
 
 

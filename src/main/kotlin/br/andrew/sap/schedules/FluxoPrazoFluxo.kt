@@ -15,7 +15,7 @@ import org.springframework.stereotype.Component
 
 
 @Component
-@ConditionalOnProperty(value = ["org.quartz.enable"], havingValue = "true", matchIfMissing = false)
+@ConditionalOnProperty(value = ["jobs.fluxo-prazo.enable"], havingValue = "true", matchIfMissing = false)
 class FluxoPrazoFluxo(
     val atualizaCadastroService : AtualizacaoCadastralService,
     val telegramRequestService: TelegramRequestService,
