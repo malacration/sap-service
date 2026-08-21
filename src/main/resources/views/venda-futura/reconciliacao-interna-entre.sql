@@ -1,7 +1,3 @@
--- ReconNum das reconciliações internas ATIVAS que ligam DOIS documentos específicos
--- (A e B), cada um identificado por SrcObjTyp + SrcObjAbs. Usado para cancelar apenas a
--- conciliação entre a nota de saída e o lançamento de reclassificação, sem tocar em outras
--- conciliações da nota (ex.: pagamentos).
 SELECT DISTINCT
 	r."ReconNum"
 FROM
