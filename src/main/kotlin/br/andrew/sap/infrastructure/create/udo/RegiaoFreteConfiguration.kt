@@ -53,6 +53,9 @@ class RegiaoFreteConfiguration(
             FieldMd("NomeRegiao", "Nome da Região", "@AR_REGIAO", DbType.db_Alpha),
             FieldMd("CodCordenador", "Codigo Cordenador", "@AR_REGIAO", DbType.db_Alpha),
             FieldMd("Filial", "Filial", "@AR_REGIAO", DbType.db_Numeric),
+            //custo por unidade pra levar o produto da fabrica ate a unidade dessa
+            //regiao - somado ao valor por unidade da faixa (ver Regiao.calcularFrete)
+            FieldMd("CustoTransporte", "Custo de Transporte por Unidade", "@AR_REGIAO", DbType.db_Float),
             //varias regioes podem compartilhar a mesma filial, mas so uma pode
             //estar ativa por filial ao mesmo tempo - toda regiao nova comeca
             //desativada (ver RegiaoService.ativar/criar)

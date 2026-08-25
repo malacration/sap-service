@@ -27,6 +27,13 @@ class Regiao : BatchId {
     @JsonProperty("U_Filial")
     var U_Filial : Int? = null
 
+    //custo por unidade pra trazer o produto da fabrica ate a unidade/filial dessa
+    //regiao. E somado ao valor por unidade da faixa antes de multiplicar pela
+    //quantidade (ver calcularFrete), entao acompanha o volume do pedido.
+    //Regiao cadastrada antes desse campo vem nula - vale 0
+    @JsonProperty("U_CustoTransporte")
+    var U_CustoTransporte : Double? = null
+
     //"0"/"1" (padrao do UDF de checkbox no service layer, ver VendedorConfiguration).
     //toda regiao nova comeca desativada - so passa a valer quando ativada
     @JsonProperty("U_Ativa")
@@ -76,7 +83,7 @@ class Regiao : BatchId {
         val distancia = getDistancia(codLocal) ?: return null
         val faixa = encontraFaixa(quantidade) ?: return null
         val valorKm = faixa.U_ValorKm ?: return null
-        return (distancia / 100.0) * valorKm * quantidade
+        return ((distancia / 100.0) * valorKm + (U_CustoTransporte ?: 0.0)) * quantidade
     }
 
     fun addLocalidade(codLocal : String, distanciaKm : Double) : Regiao {

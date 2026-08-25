@@ -12,8 +12,8 @@ class ComissaoServiceMock {
         fun get(): ComissaoService {
             val mock = mock(ComissaoService::class.java)
 
-            `when`(mock.getByIdTabela(5)).thenReturn(Comissao(1,5.5))
-            `when`(mock.getByIdTabela(anyInt())).thenReturn(Comissao(1,5.5))
+            `when`(mock.getByIdTabela(5)).thenReturn(Comissao("1",5.5))
+            `when`(mock.getByIdTabela(anyInt())).thenReturn(Comissao("1",5.5))
             return mock
         }
     }

@@ -6,6 +6,7 @@ import br.andrew.sap.infrastructure.odata.OData
 import br.andrew.sap.model.sistema.SapEnvrioment
 import br.andrew.sap.model.sap.cadastro.Regiao
 import br.andrew.sap.services.abstracts.EntitiesService
+import br.andrew.sap.services.batch.BatchIdOnly
 import br.andrew.sap.services.batch.BatchList
 import br.andrew.sap.services.batch.BatchMethod
 import br.andrew.sap.services.batch.BatchService
@@ -75,11 +76,80 @@ class RegiaoService(val batchService : BatchService,
         regiao.Code = code
         if(regiao.Name.isNullOrBlank())
             regiao.Name = regiao.U_NomeRegiao
+        regiao.U_CustoTransporte = validaCustoTransporte(regiao.U_CustoTransporte)
         //toda regiao nova comeca desativada - so passa a valer quando o
         //usuario ativa (ver ativar())
         regiao.U_Ativa = "0"
         save(regiao)
         return getRegiao(code)
+    }
+
+    /**
+     * Edicao do cadastro da regiao: nome, coordenador e o proprio codigo.
+     * As localidades, faixas, filial e situacao (ativa/inativa) nao sao
+     * tocadas aqui - cada uma tem sua propria operacao.
+     */
+    fun atualizarCadastro(code : String, dados : Regiao) : Regiao {
+        val nome = dados.U_NomeRegiao?.trim()
+        if(nome.isNullOrBlank())
+            throw Exception("O nome da regiao e obrigatorio")
+        //parte do objeto completo lido do SAP (com linhas/faixas ja carregadas):
+        //essas colecoes sao sempre serializadas (mesmo vazias), entao um patch
+        //montado so com os campos vindos do front apagaria o que ja existe
+        val regiao = getRegiao(code)
+        regiao.U_NomeRegiao = nome
+        val name = dados.Name?.trim()
+        regiao.Name = if(name.isNullOrBlank()) (regiao.Name ?: nome) else name
+        regiao.U_CodCordenador = dados.U_CodCordenador?.trim()
+        regiao.U_CustoTransporte = validaCustoTransporte(dados.U_CustoTransporte)
+        val novoCode = dados.Code?.trim()
+        if(!novoCode.isNullOrBlank() && novoCode != code)
+            return trocarCodigo(regiao, novoCode)
+        update(regiao, "'$code'")
+        return getRegiao(code)
+    }
+
+    /**
+     * O Code e a chave do UDO no service layer - nao existe PATCH que troque
+     * o codigo de uma regiao. Entao "renomear o codigo" e apagar a regiao e
+     * recria-la com o novo Code, levando junto tudo que ela tinha (nome,
+     * coordenador, filial, situacao, localidades e faixas de preco).
+     *
+     * DELETE antes do POST, num unico changeset batch: dentro do changeset as
+     * operacoes rodam na mesma transacao, entao (a) o novo registro so e
+     * inserido depois que o antigo saiu - se o SAP validar Name duplicado, a
+     * copia nao esbarra nela - e (b) se qualquer uma das duas falhar, nenhuma
+     * e aplicada, evitando perder a regiao no meio do caminho.
+     *
+     * Nenhum documento guarda o codigo da regiao (o frete e calculado achando
+     * a regiao ativa da filial + localidade, ver DocumentForAngular), entao a
+     * troca nao deixa referencia orfa.
+     */
+    private fun trocarCodigo(regiao : Regiao, novoCode : String) : Regiao {
+        val codeAntigo = regiao.Code ?: throw Exception("Regiao sem codigo")
+        if(existe(novoCode))
+            throw Exception("Ja existe uma regiao com o codigo $novoCode")
+        regiao.Code = novoCode
+        //as linhas filhas carregam o Code do pai - sem reescrever, o service
+        //layer recusaria a copia (ou gravaria linha apontando pro codigo velho)
+        regiao.linhas.forEach { it.Code = novoCode }
+        regiao.faixas.forEach { it.Code = novoCode }
+        batchService.run(BatchList()
+            .add(BatchMethod.DELETE, BatchIdOnly("'$codeAntigo'"), this)
+            .add(BatchMethod.POST, regiao, this))
+        return getRegiao(novoCode)
+    }
+
+    /**
+     * Custo de transporte da fabrica ate a unidade da regiao, por unidade
+     * vendida. Regiao cadastrada antes do campo existir vem nula - vale 0, e
+     * nao null, pra o valor ir explicito no PATCH e poder ser zerado.
+     */
+    private fun validaCustoTransporte(valor : Double?) : Double {
+        val custo = valor ?: 0.0
+        if(custo < 0)
+            throw Exception("O custo de transporte nao pode ser negativo")
+        return custo
     }
 
     fun existe(code : String) : Boolean {
