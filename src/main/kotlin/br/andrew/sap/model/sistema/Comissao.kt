@@ -8,7 +8,10 @@ import com.fasterxml.jackson.databind.annotation.JsonNaming
 @JsonNaming(PropertyNamingStrategies.UpperCamelCaseStrategy::class)
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-class Comissao(val Code : Int, var U_porcentagem : Double) {
+//Code e a chave do UDO no service layer: alfanumerica, nao numerica. Ja existe
+//comissao cadastrada com codigo "2,5" (a virgula vem do proprio nome da regra),
+//entao tipar como Int quebrava a leitura da lista inteira
+class Comissao(val Code : String, var U_porcentagem : Double) {
 
     var Name : String? = null
 
@@ -35,7 +38,7 @@ class Comissao(val Code : Int, var U_porcentagem : Double) {
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 class CondicaoComissao(
-    var Code : Int? = null,
+    var Code : String? = null,
     var LineId : Int? = null,
     @JsonProperty("U_prazo")
     var U_prazo : Int? = null,
@@ -50,7 +53,7 @@ class CondicaoComissao(
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 class LiberadoPara(
-    var Code : Int? = null,
+    var Code : String? = null,
     var LineId : Int? = null,
     @JsonProperty("U_Filial")
     var U_Filial : String? = null,

@@ -33,7 +33,7 @@ class ContratoTest {
         //Mockito.`when`(itemServiceMock.(Mockito.anyString(), Mockito.anyInt())).thenReturn(66.6)
 
         comissaoServiceMock = Mockito.mock(ComissaoService::class.java)
-        Mockito.`when`(comissaoServiceMock.getByIdTabela(Mockito.anyInt())).thenReturn(Comissao(1,5.0))
+        Mockito.`when`(comissaoServiceMock.getByIdTabela(Mockito.anyInt())).thenReturn(Comissao("1",5.0))
     }
 
     @Test

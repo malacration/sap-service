@@ -1,4 +1,4 @@
-SELECT
+SELECT distinct
 	r."ReconNum"
 FROM
 	"ITR1" l

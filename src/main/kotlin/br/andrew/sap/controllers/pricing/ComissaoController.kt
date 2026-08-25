@@ -22,7 +22,7 @@ class ComissaoController(val service: ComissaoService) {
     }
 
     @GetMapping("{id}")
-    fun getById(@PathVariable id : Int) : Comissao {
+    fun getById(@PathVariable id : String) : Comissao {
         return service.get(id)
     }
 
@@ -37,7 +37,7 @@ class ComissaoController(val service: ComissaoService) {
     }
 
     @PatchMapping("{id}")
-    fun atualizar(@PathVariable id : Int, @RequestBody comissao : Comissao) : Comissao {
+    fun atualizar(@PathVariable id : String, @RequestBody comissao : Comissao) : Comissao {
         return service.atualizar(id, comissao)
     }
 }

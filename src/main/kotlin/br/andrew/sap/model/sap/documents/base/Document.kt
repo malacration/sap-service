@@ -196,6 +196,31 @@ open class Document(val CardCode : String,
         return documentAdditionalExpenses.sumOf { BigDecimal(it.LineTotal) }
     }
 
+    //Frete efetivamente lancado no documento (despesa adicional codigo 1). Usado para apurar
+    //quanto de frete um contrato de venda futura ja cobrou ate agora.
+    @JsonIgnore
+    fun freteDespesaAdicional(): BigDecimal {
+        return documentAdditionalExpenses
+            .filter { it.expenseCode == AdditionalExpenses.CODIGO_FRETE }
+            .fold(BigDecimal.ZERO) { acc, it -> acc.plus(BigDecimal(it.LineTotal.toString())) }
+            .setScale(2, RoundingMode.HALF_UP)
+    }
+
+    //Base de produtos do documento ja gravado, na mesma definicao que a
+    //SBO_SP_VALIDACAO_VENDA_FUTURA usa: DocTotal menos as despesas adicionais.
+    @JsonIgnore
+    fun baseProdutosFaturada(): BigDecimal {
+        return BigDecimal(DocTotal ?: "0")
+            .minus(totalDespesaAdicional())
+            .setScale(2, RoundingMode.HALF_UP)
+    }
+
+    //Devolucao abate do que o contrato ja entregou/cobrou; nota de entrega soma.
+    @JsonIgnore
+    fun sinalNoContrato(): Int {
+        return if(docObjectCode == DocumentTypes.oCreditNotes) -1 else 1
+    }
+
 
     fun presumeDesonerado(rate : Double) : Double {
         return DocumentLines.sumOf { it.presumeDesonerado(rate) }

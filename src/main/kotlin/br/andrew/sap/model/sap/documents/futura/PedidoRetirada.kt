@@ -22,7 +22,8 @@ class PedidoRetirada(
         usage: Int,
         docDueDate : String? = null,
         order : Document,
-        numerosBoletos: List<String> = listOf()
+        numerosBoletos: List<String> = listOf(),
+        entregasFaturadas : List<Document> = listOf()
     ): Quotation {
         val itemOriginal = order.DocumentLines?.get(0)
         return Quotation(
@@ -43,11 +44,51 @@ class PedidoRetirada(
             it.journalMemo = "Entrega de mercadoria ref a contrato Nº ${contrato.DocEntry}"
             it.comments = it.journalMemo
             it.ClosingRemarks = observacaoFooter(contrato, numerosBoletos)
-            if(contrato.U_valorFrete > 0){
-                val proporcao = it.totalProdutos().divide(contrato.totalProdutos(), RoundingMode.HALF_DOWN)
-                it.frete = BigDecimal(contrato.U_valorFrete.toString()).multiply(proporcao).setScale(2, RoundingMode.HALF_DOWN).toDouble()
-            }
+            it.frete = freteResidual(contrato, it.totalProdutos(), entregasFaturadas)
         }
+    }
+
+    /**
+     * Frete da retirada rateado sobre o SALDO do contrato, nao sobre o contrato inteiro:
+     *
+     *     frete = (valorFrete do contrato - frete ja faturado) * base da retirada
+     *             / (base do contrato - base ja faturada)
+     *
+     * Isso faz a retirada absorver o desvio das notas anteriores - se uma nota saiu com frete a
+     * maior ou a menor, o residual encolhe/aumenta e as proximas se ajustam sozinhas. Na ultima
+     * retirada a base da retirada iguala a base residual, entao o frete dela e exatamente o
+     * residual e o somatorio do contrato sempre fecha no valorFrete contratado.
+     *
+     * Multiplica antes de dividir e arredonda uma unica vez no fim, na mesma ordem de operacoes
+     * da SBO_SP_VALIDACAO_VENDA_FUTURA, que revalida esse valor no faturamento. Dividir primeiro
+     * nao serve: divide(divisor, RoundingMode) devolve o resultado na escala do dividendo (2
+     * casas, vindo do setScale de totalProdutos), o que arredondava a proporcao e errava o frete
+     * em ate 0,5% do valor do contrato.
+     *
+     * Residual nao positivo (contrato ja cobrou todo o frete, ou cobrou a maior) devolve null:
+     * a nota sai sem despesa de frete e nada trava - nao se lanca despesa adicional negativa.
+     */
+    fun freteResidual(contrato: Contrato, baseRetirada: BigDecimal, entregasFaturadas: List<Document>): Double? {
+        if(contrato.U_valorFrete <= 0)
+            return null
+
+        val freteJaFaturado = entregasFaturadas.fold(BigDecimal.ZERO) { acc, doc ->
+            acc.plus(doc.freteDespesaAdicional().multiply(BigDecimal(doc.sinalNoContrato())))
+        }
+        val baseJaFaturada = entregasFaturadas.fold(BigDecimal.ZERO) { acc, doc ->
+            acc.plus(doc.baseProdutosFaturada().multiply(BigDecimal(doc.sinalNoContrato())))
+        }
+
+        val freteResidual = BigDecimal(contrato.U_valorFrete.toString()).minus(freteJaFaturado)
+        val baseResidual = contrato.totalProdutos().minus(baseJaFaturada)
+
+        if(freteResidual.signum() <= 0 || baseResidual.signum() <= 0)
+            return null
+
+        return freteResidual
+            .multiply(baseRetirada)
+            .divide(baseResidual, 2, RoundingMode.HALF_DOWN)
+            .toDouble()
     }
 
     fun parse(itemContrato: Item, usage :Int, lineOriginal : DocumentLines?): DocumentLines {

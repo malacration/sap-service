@@ -27,9 +27,13 @@ class AdditionalExpenses(val expenseCode : Int, val LineTotal : Double){
     }
 
     companion object{
+        //ExpnsCode 1 = frete (INV3/RIN3/QUT3."ExpnsCode"), mesma constante usada pela
+        //SBO_SP_VALIDACAO_VENDA_FUTURA para apurar o frete de venda futura.
+        const val CODIGO_FRETE = 1
+
         @JsonIgnore
         fun frete(valor : Double) : AdditionalExpenses {
-            return AdditionalExpenses(1,valor)
+            return AdditionalExpenses(CODIGO_FRETE,valor)
         }
     }
 }

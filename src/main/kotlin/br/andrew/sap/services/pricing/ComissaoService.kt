@@ -22,7 +22,7 @@ class ComissaoService(env : SapEnvrioment,
     }
 
     @Caching
-    fun get(id : Int): Comissao {
+    fun get(id : String): Comissao {
         return getById("'$id'").tryGetValue();
     }
 
@@ -38,7 +38,7 @@ class ComissaoService(env : SapEnvrioment,
         return save(comissao).tryGetValue()
     }
 
-    fun atualizar(id: Int, comissao: Comissao): Comissao {
+    fun atualizar(id: String, comissao: Comissao): Comissao {
         update(comissao, "'$id'")
         return get(id)
     }

@@ -41,17 +41,14 @@ class RegiaoController(val service : RegiaoService) {
         return service.criar(regiao)
     }
 
+    /**
+     * Nome, coordenador e codigo. Trocar o Code recria a regiao no SAP (o Code
+     * e a chave do UDO), entao a resposta pode vir com um codigo diferente do
+     * que veio na URL - o front precisa passar a usar o Code retornado.
+     */
     @PatchMapping("{code}")
     fun update(@PathVariable code : String, @RequestBody regiao : Regiao): Regiao {
-        //envia o objeto completo (com linhas/faixas ja carregadas) - essas
-        //colecoes agora sao sempre serializadas (mesmo vazias), entao um
-        //patch parcial vindo do front apagaria as linhas/faixas existentes
-        val atual = service.getRegiao(code)
-        atual.Name = regiao.Name
-        atual.U_NomeRegiao = regiao.U_NomeRegiao
-        atual.U_CodCordenador = regiao.U_CodCordenador
-        service.update(atual, "'$code'")
-        return service.getRegiao(code)
+        return service.atualizarCadastro(code, regiao)
     }
 
     @PutMapping("{code}/filial")

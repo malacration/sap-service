@@ -139,8 +139,24 @@ class ContratoVendaFuturaController(
         val boleto = boletos.last()
         val numerosBoletos = adiantamentoService.getOurNumbersByContratoVendaFutura(contrato.DocEntry!!)
         val orderSales = orderService.getById(contrato.U_orderDocEntry).tryGetValue<OrderSales>()
-        val cotacao = pedidoRetirada.parse(contrato,utilizacaoEntregaVendaFutura,boleto.DocDueDate,orderSales,numerosBoletos)
+        val cotacao = pedidoRetirada.parse(contrato,utilizacaoEntregaVendaFutura,boleto.DocDueDate,orderSales,numerosBoletos,
+            entregasFaturadas(contrato.DocEntry!!))
         return cotacaoController.saveForAngular(cotacao,auth)
+    }
+
+    /**
+     * Notas de entrega e devolucoes ja emitidas do contrato - a base do rateio residual do frete
+     * (ver PedidoRetirada.freteResidual). Precisa casar com o que a SBO_SP_VALIDACAO_VENDA_FUTURA
+     * soma do lado do banco, senao a nota nova e barrada no faturamento: nota de entrega e so a
+     * que tem U_entrega_vf = 1 (a de apropriacao de adiantamento nunca seta esse flag e fica de
+     * fora), devolucao entra sem esse filtro e com sinal negativo.
+     */
+    private fun entregasFaturadas(idContrato : Int) : List<Document> {
+        val filter = Filter(
+            Predicate("Cancelled", Cancelled.tNO, Condicao.EQUAL),
+            Predicate("U_venda_futura", idContrato, Condicao.EQUAL))
+        return invoiceService.getAll(Document::class.java, filter).filter { it.U_entrega_vf == 1 } +
+            creditNotesService.getAll(Document::class.java, filter)
     }
 
     @GetMapping("/encerrar/{docEntryVendaFutura}")
