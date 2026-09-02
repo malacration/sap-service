@@ -1,6 +1,7 @@
 package br.andrew.sap.controllers.authentication
 
 import br.andrew.sap.infrastructure.security.keycloak.KeycloakProperties
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
@@ -11,7 +12,10 @@ import org.springframework.web.bind.annotation.RestController
  */
 @RestController
 @RequestMapping("auth")
-class AuthConfigController(private val keycloak: KeycloakProperties) {
+class AuthConfigController(
+    private val keycloak: KeycloakProperties,
+    @Value("\${offline.enabled:false}") private val offlineEnabled: Boolean,
+) {
 
     @GetMapping("/config")
     fun config(): AuthConfigResponse {
@@ -23,9 +27,10 @@ class AuthConfigController(private val keycloak: KeycloakProperties) {
                     realm = keycloak.realm,
                     clientId = keycloak.clientId,
                 ),
+                offlineEnabled = offlineEnabled,
             )
         } else {
-            AuthConfigResponse(mode = "internal", keycloak = null)
+            AuthConfigResponse(mode = "internal", keycloak = null, offlineEnabled = offlineEnabled)
         }
     }
 }
@@ -33,6 +38,7 @@ class AuthConfigController(private val keycloak: KeycloakProperties) {
 data class AuthConfigResponse(
     val mode: String,
     val keycloak: KeycloakClientConfig?,
+    val offlineEnabled: Boolean,
 )
 
 data class KeycloakClientConfig(

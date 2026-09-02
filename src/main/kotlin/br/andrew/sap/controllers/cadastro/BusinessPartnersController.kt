@@ -1,5 +1,6 @@
 package br.andrew.sap.controllers.cadastro
 
+import br.andrew.sap.model.sap.partner.AddresType
 import br.andrew.sap.infrastructure.odata.*
 import br.andrew.sap.infrastructure.odata.OData
 import br.andrew.sap.infrastructure.odata.Predicate
@@ -68,12 +69,15 @@ class BusinessPartnersController(
         return service.getById("'$id'").tryGetValue()
     }
 
+    //addressType e obrigatorio de proposito: a chave do endereco no SAP e (nome, tipo), e sem ele
+    //o update escrevia no primeiro endereco de mesmo nome - ver atualizaLocalidadeEndereco.
     @PutMapping("{cardCode}/enderecos/{addressName}/localidade")
     fun atualizaLocalidadeEndereco(@PathVariable cardCode : String,
                                    @PathVariable addressName : String,
+                                   @RequestParam(name = "addressType") addressType : AddresType,
                                    @RequestParam(name = "localidade", required = false) localidade : Int?): BusinessPartner {
         //0 limpa o vinculo, o service layer nao aceita null em campo numerico de usuario
-        return service.atualizaLocalidadeEndereco(cardCode, addressName, localidade ?: 0)
+        return service.atualizaLocalidadeEndereco(cardCode, addressName, addressType, localidade ?: 0)
     }
 
     @PostMapping("search")

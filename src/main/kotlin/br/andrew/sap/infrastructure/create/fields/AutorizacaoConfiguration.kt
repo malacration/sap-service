@@ -58,6 +58,7 @@ class AutorizacaoConfiguration(val userFieldsMDService: UserFieldsMDService,
             FieldMd("observacao","Observação","@AUTORIZACAO", DbType.db_Memo),
             //preenchido so depois de aprovado e criado de verdade no SAP, pra rastreabilidade
             FieldMd("docEntryCriado","DocEntry Criado","@AUTORIZACAO", DbType.db_Numeric),
+            FieldMd("offline_id","ID transmissao offline","@AUTORIZACAO", DbType.db_Alpha).also { it.size = 64 },
         ).forEach { userFieldsMDService.findOrCreate(it) }
 
         listOf(

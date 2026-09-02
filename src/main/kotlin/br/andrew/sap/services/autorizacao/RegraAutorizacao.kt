@@ -30,4 +30,17 @@ class RegraAutorizacaoService(val regras : List<RegraAutorizacao>) {
     fun avaliar(documento : Document) : String? {
         return regras.firstOrNull { it.avalia(documento) }?.motivo
     }
+
+    /**
+     * Motivos que o motor de regras realmente produz - fonte unica pro cadastro de autorizador.
+     *
+     * O motivo e string solta em tres lugares (a regra, o U_motivo da @AUTORIZACAO e o cadastro
+     * de autorizador), e os tres precisam bater exatamente: podeAutorizar compara com ==. Com o
+     * cadastro em campo livre, um erro de digitacao criava autorizador para um motivo que
+     * nenhuma regra gera - o documento ficava pendente sem ninguem que pudesse aprovar, sem erro
+     * nenhum. Publicando a lista daqui, a tela so oferece motivo que existe de verdade.
+     */
+    fun motivos() : List<String> {
+        return regras.map { it.motivo }.distinct().sorted()
+    }
 }

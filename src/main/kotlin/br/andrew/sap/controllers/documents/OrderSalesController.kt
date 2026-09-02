@@ -26,6 +26,7 @@ import br.andrew.sap.services.documents.DownPaymentService
 import br.andrew.sap.services.documents.OrdersService
 import br.andrew.sap.services.documents.PedidoTesteService
 import br.andrew.sap.services.cadastro.BusinessPartnersService
+import br.andrew.sap.services.logistica.LocalidadeService
 import br.andrew.sap.services.logistica.RegiaoService
 import br.andrew.sap.services.pricing.ComissaoService
 import br.andrew.sap.services.stock.ItemsService
@@ -52,6 +53,7 @@ class OrderSalesController(val ordersService: OrdersService,
                            val sqlQueriesService : SqlQueriesService,
                            val businessPartnersService : BusinessPartnersService,
                            val regiaoService : RegiaoService,
+    val localidadeService: LocalidadeService,
                            val regraAutorizacaoService: RegraAutorizacaoService,
                            val autorizacaoService: AutorizacaoService,
                            @Value("\${pedido-venda.teste.enable:false}") private val pedidoVendaTesteHabilitado: Boolean
@@ -137,7 +139,7 @@ class OrderSalesController(val ordersService: OrdersService,
 
     @PostMapping("angular")
     fun saveForAngular(@RequestBody pedido : OrderSales, auth : Authentication): ResponseEntity<Any> {
-        val document = DocumentForAngular().prepareToSave(pedido,itemService,businessPartnersService,regiaoService,auth)
+        val document = DocumentForAngular().prepareToSave(pedido,itemService,businessPartnersService,regiaoService,localidadeService,auth)
         val motivo = regraAutorizacaoService.avaliar(document)
         if(motivo != null){
             val autorizacao = autorizacaoService.criar(

@@ -46,13 +46,25 @@ open class ItemsService(
             .firstOrNull()?.Price ?: throw Exception("Price[$priceListId] not found; ItemCode[$itemCode]")
     }
 
-    fun fullSearchText(keyWord : String, idVendedor : Int, branchId : Int): NextLink<Product> {
+    /**
+     * Busca de produtos para venda. A tabela de preco disponivel e limitada pelo @LIBERAPARA do
+     * vendedor (por filial ou nominalmente), exceto para super vendedor - admin/vendedor_admin,
+     * onde User.superVendedor() vale Int.MAX_VALUE e produto-tabela.sql libera todas as tabelas
+     * pelo "PriceList" < :superVendedor. Para vendedor comum superVendedor e -1 e a comparacao
+     * nunca e verdadeira, mantendo a restricao. Mesmo idioma de contratos-vendafutura.sql e
+     * parceiro-full-search-text.sql.
+     *
+     * Importa para o modo spring.security.disable=true: o usuario falso tem SlpCode -1, que nao
+     * existe em OSLP nem em @LIBERAPARA - sem o vinculo de vendedor_admin a busca volta vazia.
+     */
+    fun fullSearchText(keyWord : String, idVendedor : Int, branchId : Int, superVendedor : Int = -1): NextLink<Product> {
         val parameters = listOf(
             Parameter("search","'%${keyWord.uppercase()}%'"),
             Parameter("zero",0),
             Parameter("yes","'Y'"),
             Parameter("vendedor",idVendedor),
-            Parameter("branchId",branchId)
+            Parameter("branchId",branchId),
+            Parameter("superVendedor",superVendedor)
         )
         if(keyWord.contains("SQLQueries('produto-tabela.sql')"))
             return sqlQueriesService.nextLink(keyWord)!!.tryGetNextValues<Product>()

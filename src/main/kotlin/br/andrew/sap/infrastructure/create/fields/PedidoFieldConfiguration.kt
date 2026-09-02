@@ -37,6 +37,14 @@ class PedidoFieldConfiguration(val userFieldsMDService: UserFieldsMDService) {
         val precoBase = FieldMd("preco_base","Preço base","DRF1", DbType.db_Float)
         userFieldsMDService.findOrCreate(precoBase)
 
+        //Frete negociado com o cliente, o equivalente de preco_negociado para a despesa
+        //adicional de frete. DRF3 e a tabela de despesas do rascunho: criar o campo la
+        //replica em INV3/RDR3/QUT3/RIN3, do mesmo jeito que DRF1 replica nas linhas.
+        //Quando o frete tem ICMS desonerado o DesoneradoService majora o LineTotal a partir
+        //desse valor, para que o liquido volte ao que foi negociado.
+        val freteNegociado = FieldMd("frete_negociado","Frete Negociado","DRF3", DbType.db_Float)
+        userFieldsMDService.findOrCreate(freteNegociado)
+
         val idForcaVendas = FieldMd("U_id_pedido_forca","Id Força de vendas","OCRD", DbType.db_Numeric)
                 .also {
                     it.size = null

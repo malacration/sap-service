@@ -44,6 +44,10 @@ roles:
       actions: ["get"]
     - url: "/contrato-venda-futura/troca"
       actions: ["post"]
+    # pre-requisito da troca: contrato antigo sem localidade e recusado no /troca e o erro manda
+    # o usuario atribuir aqui. Sem esse put, quem pode trocar nao consegue destravar sozinho.
+    - url: "/contrato-venda-futura/*/localidade"
+      actions: ["put"]
     - url: "/contrato-venda-futura/emitir-boletos/*"
       actions: ["get"]
     - url: "/business-partners/cientes"
@@ -98,6 +102,10 @@ roles:
       actions: ["post"]
     - url: "/contrato-venda-futura/troca"
       actions: ["post"]
+    # mesmo motivo do vendedor: sem esse put, quem pode trocar nao consegue atribuir a
+    # localidade que a propria troca exige
+    - url: "/contrato-venda-futura/*/localidade"
+      actions: ["put"]
     - url: "/contrato-venda-futura/emitir-boletos/*"
       actions: ["get"]
     - url: "/future-sales/pedidos/*"

@@ -48,6 +48,18 @@ class ContratoVendaFuturaConfiguration(val userFieldsMDService: UserFieldsMDServ
             FieldMd("dataCriacao","Data de Criação","@AR_CONTRATO_FUTURO", DbType.db_Date),
             FieldMd("valorFrete","Valor Frete","@AR_CONTRATO_FUTURO", DbType.db_Float),
 
+            //Localidade de entrega negociada. E a UNICA entrada de calculo de frete que o
+            //contrato guarda: a regiao e as faixas sao sempre relidas do cadastro vigente da
+            //filial, entao editar a tabela de frete nao muda contrato nenhum sozinho - so um
+            //recalculo explicito (troca) muda.
+            FieldMd("Localidade","Localidade de Entrega","@AR_CONTRATO_FUTURO", DbType.db_Numeric),
+
+            //Regiao que valia na assinatura. Historico, para responder "com que regiao este
+            //contrato foi fechado" - NUNCA entra em calculo. Distancia nao e guardada de
+            //proposito: e atributo da regiao, muda com o cadastro, e um numero desatualizado
+            //aqui so convidaria alguem a usa-lo.
+            FieldMd("RegiaoCode","Regiao na Assinatura","@AR_CONTRATO_FUTURO", DbType.db_Alpha),
+
             FieldMd("valorProdutos","Valor Produtos","@AR_CONTRATO_FUTURO", DbType.db_Float),
 
             FieldMd("filial","Filial","@AR_CONTRATO_FUTURO", DbType.db_Numeric),

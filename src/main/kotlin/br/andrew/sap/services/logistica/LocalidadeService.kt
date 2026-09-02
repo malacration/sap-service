@@ -44,7 +44,7 @@ class LocalidadeService(val sqlQueriesService : SqlQueriesService, env : SapEnvr
         if(!CODIGO_VALIDO.matches(localidade.Code))
             throw Exception("O codigo da localidade deve conter apenas letras e numeros, sem acentos ou caracteres especiais")
         if(!NOME_VALIDO.matches(localidade.Name))
-            throw Exception("O nome da localidade deve conter apenas letras, numeros e espacos, sem acentos ou caracteres especiais")
+            throw Exception("O nome da localidade deve conter apenas letras, numeros e espacos")
     }
 
     private fun validaNomeDuplicado(localidade: Localidade) {
@@ -86,18 +86,26 @@ class LocalidadeService(val sqlQueriesService : SqlQueriesService, env : SapEnvr
             .trim()
     }
 
+    /**
+     * Acento e preservado: "MANICORE" e "MANICORÉ" sao nomes diferentes e apagar o acento perde
+     * informacao real. O Code continua sem acento - ele e a chave do UDO.
+     *
+     * Precisa andar junto com [normalizaBusca]: se um lado apagasse o acento e o outro nao, o
+     * LIKE do HANA nunca casaria (ele e sensivel a acento tanto quanto a caixa).
+     */
     private fun normalizaNome(value: String?): String {
-        return removeAcentos(value.orEmpty())
+        return value.orEmpty()
             .uppercase(Locale.ROOT)
-            .replace(Regex("[^A-Z0-9 ]"), "")
+            .replace(Regex("[^\\p{L}\\p{N} ]"), "")
             .replace(Regex("\\s+"), " ")
             .trim()
     }
 
+    /** Mesma regra de [normalizaNome], mais o curinga "*" que o usuario digita. */
     private fun normalizaBusca(value: String): String {
-        return removeAcentos(value)
+        return value
             .uppercase(Locale.ROOT)
-            .replace(Regex("[^A-Z0-9 *]"), "")
+            .replace(Regex("[^\\p{L}\\p{N} *]"), "")
             .replace(Regex("\\s+"), " ")
             .trim()
     }
@@ -109,6 +117,7 @@ class LocalidadeService(val sqlQueriesService : SqlQueriesService, env : SapEnvr
 
     companion object {
         private val CODIGO_VALIDO = Regex("^[A-Z0-9]+$")
-        private val NOME_VALIDO = Regex("^[A-Z0-9 ]+$")
+        //acento permitido no nome; o codigo continua restrito por ser chave do UDO
+        private val NOME_VALIDO = Regex("^[\\p{L}\\p{N} ]+$")
     }
 }

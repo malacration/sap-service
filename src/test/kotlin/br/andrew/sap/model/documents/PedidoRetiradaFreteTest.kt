@@ -23,13 +23,18 @@ class PedidoRetiradaFreteTest {
         return Document("C0001", null, listOf(Product("A", "1", "1", 0)), "2")
     }
 
-    /** Nota ja faturada do contrato: base de produtos e o frete que ela realmente cobrou. */
-    private fun faturado(base : Double, frete : Double, tipo : DocumentTypes = DocumentTypes.oInvoices) : Document {
-        return Document("C0001", null, listOf(Product("A", "1", "1", 0)), "2").also {
+    /**
+     * Nota ja faturada do contrato: a QUANTIDADE que ela entregou e o frete que ela cobrou.
+     *
+     * O rateio e por quantidade de itens, entao o que importa aqui e a quantidade das linhas -
+     * o DocTotal continua sendo preenchido so para o documento ficar coerente.
+     */
+    private fun faturado(quantidade : Double, frete : Double, tipo : DocumentTypes = DocumentTypes.oInvoices) : Document {
+        return Document("C0001", null, listOf(Product("A", quantidade.toString(), "1", 0)), "2").also {
             it.docObjectCode = tipo
             it.U_entrega_vf = 1
             it.documentAdditionalExpenses = mutableListOf(AdditionalExpenses.frete(frete))
-            it.DocTotal = (base + frete).toString()
+            it.DocTotal = (quantidade + frete).toString()
         }
     }
 
@@ -59,6 +64,29 @@ class PedidoRetiradaFreteTest {
     @Test
     fun retiradaPequenaNaoZeraOFrete() {
         Assertions.assertEquals(21.31, freteDa(contrato(1.0, 1000000.0, 5328.0), 4000.0))
+    }
+
+    /**
+     * A regra que o usuario deu como referencia: o rateio e por QUANTIDADE de itens, nao por
+     * valor. Retirar 1 item de 100 leva 1% do frete.
+     */
+    @Test
+    fun umItemDeCemLevaUmPorCentoDoFrete() {
+        Assertions.assertEquals(10.00, freteDa(contrato(50.0, 100.0, 1000.0), 1.0))
+    }
+
+    /**
+     * O preco do item nao entra na conta: dois contratos com a mesma quantidade e o mesmo frete
+     * rateiam igual, mesmo com produtos de precos muito diferentes. Antes o rateio era por valor
+     * e o item caro levava frete desproporcional.
+     */
+    @Test
+    fun precoDoItemNaoInfluenciaORateio() {
+        val barato = freteDa(contrato(1.0, 100.0, 1000.0), 25.0)
+        val caro = freteDa(contrato(999.0, 100.0, 1000.0), 25.0)
+
+        Assertions.assertEquals(250.00, barato)
+        Assertions.assertEquals(barato, caro)
     }
 
     @Test

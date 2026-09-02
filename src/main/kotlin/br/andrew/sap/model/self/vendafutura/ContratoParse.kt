@@ -8,7 +8,13 @@ class ContratoParse {
 
     companion object{
 
-        fun parse(doc : Document) : Contrato{
+        /**
+         * @param localidade localidade de entrega negociada, resolvida pelo chamador a partir do
+         *   endereco do pedido. Nulo quando nao da pra resolver (retirada, endereco sem
+         *   localidade cadastrada): o contrato nasce sem destino e a troca exige atribuir depois.
+         * @param regiaoCode regiao que valia na assinatura - historico, nunca entra em calculo.
+         */
+        fun parse(doc : Document, localidade : Int? = null, regiaoCode : String? = null) : Contrato{
             return Contrato(
                 doc.docEntry ?: throw Exception("A propriedade docEntry nao pode ser null"),
                 doc.CardCode,
@@ -16,8 +22,15 @@ class ContratoParse {
                 doc.salesPersonCode,
                 doc.cardName ?: throw Exception("Nome do cliente nao pode ser nulo"),
                 doc.getBPL_IDAssignedToInvoice().toIntOrNull() ?: throw Exception("Nao foi possivel obter o id da filial"),
-                doc.totalDespesaAdicional().toDouble() ?: 0.0,
-            )
+                //freteDespesaAdicional, nao totalDespesaAdicional: o segundo soma TODAS as
+                //despesas do pedido. Qualquer despesa que nao fosse frete nascia dentro do
+                //U_valorFrete e desalinhava o rateio das retiradas, dos dois lados (aqui e na
+                //SBO_SP_VALIDACAO_VENDA_FUTURA, que le so ExpnsCode = 1).
+                doc.freteDespesaAdicional().toDouble(),
+            ).also {
+                it.U_Localidade = localidade
+                it.U_RegiaoCode = regiaoCode
+            }
         }
 
         fun parse(line : DocumentLines) : Item{

@@ -8,11 +8,7 @@ import java.math.RoundingMode
 class PrecoUnitarioComDesoneracao {
 
     fun calculaPreco(produto : DocumentLines, tax : SalesTaxAuthorities) : BigDecimal{
-        val valor = if(produto.U_preco_negociado == null || produto.U_preco_negociado!! <= 0.0)
-            BigDecimal(produto.UnitPrice!!)
-        else
-            BigDecimal(produto.U_preco_negociado!!)
-        return calculaPreco(valor,tax,BigDecimal(produto.DiscountPercent?:0.0))
+        return calculaPreco(produto.precoAlvo(),tax,BigDecimal(produto.DiscountPercent?:0.0))
     }
 
     fun calculaPreco(valorAlvo : BigDecimal, tax : SalesTaxAuthorities, discountPercent : BigDecimal = BigDecimal("0")) : BigDecimal{

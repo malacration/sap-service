@@ -4,6 +4,7 @@ import br.andrew.sap.infrastructure.odata.Condicao
 import br.andrew.sap.infrastructure.odata.Filter
 import br.andrew.sap.infrastructure.odata.Predicate
 import br.andrew.sap.model.sap.sistema.SapUser
+import br.andrew.sap.model.impostos.ImpostosDesonerados
 import br.andrew.sap.model.sap.documents.base.Document
 import br.andrew.sap.schedules.desonerado.FalhaAoCalcularDesonerado
 import br.andrew.sap.services.financeiro.DraftsService
@@ -22,7 +23,8 @@ import java.time.LocalDate
 class DraftCalculaDesoneradoSchedule(
     @Value("\${draft.dias:10}") val dias : Long,
     val desoneradoService: DesoneradoService,
-    val draftService : DraftsService,val currentSapUser : SapUser
+    val draftService : DraftsService,val currentSapUser : SapUser,
+    val impostos: ImpostosDesonerados
 ) {
 
     val logger: Logger = LoggerFactory.getLogger(DraftCalculaDesoneradoSchedule::class.java)
@@ -30,14 +32,16 @@ class DraftCalculaDesoneradoSchedule(
     @Scheduled(fixedDelay = 15000)
     fun execute() {
         val data = LocalDate.now().plusDays(-dias).toString()
-        val filter = Filter(
+        val predicados = mutableListOf(
             Predicate("U_pedido_update", "1", Condicao.EQUAL),
             Predicate("DocDate", data, Condicao.GREAT),
             Predicate("DocumentStatus", "bost_Open", Condicao.EQUAL),
             Predicate("UserSign", currentSapUser.internalKey, Condicao.NOT_EQUAL),
             Predicate("DocObjectCode", "oOrders", Condicao.EQUAL),
         )
-        val resultado = draftService.get(filter).tryGetValues<Document>()
+        //so as filiais que calculam desonerado - as demais nem sao trazidas do SAP
+        predicados.add(impostos.filtroFiliais())
+        val resultado = draftService.get(Filter(predicados)).tryGetValues<Document>()
         resultado.forEach {
             val update = if(it.discountPercent == null || it.discountPercent!! == 0.0)
                 desoneradoService.aplicaDesonerado(it)

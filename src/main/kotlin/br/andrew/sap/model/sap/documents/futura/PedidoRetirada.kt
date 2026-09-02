@@ -15,7 +15,11 @@ import java.math.RoundingMode
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 class PedidoRetirada(
     val docEntryVendaFutura : Int,
-    val itensRetirada : List<ItemRetirada>){
+    val itensRetirada : List<ItemRetirada>,
+    //Endereco de entrega escolhido na tela. Nulo cai no primeiro bo_ShipTo do cliente, que era o
+    //comportamento antigo (o SAP aplicava o endereco padrao) - mantido para nao quebrar chamador
+    //que ainda nao manda o campo.
+    val shipToCode : String? = null){
 
     fun parse(
         contrato: Contrato,
@@ -23,7 +27,11 @@ class PedidoRetirada(
         docDueDate : String? = null,
         order : Document,
         numerosBoletos: List<String> = listOf(),
-        entregasFaturadas : List<Document> = listOf()
+        entregasFaturadas : List<Document> = listOf(),
+        //Endereco que a validacao de regiao resolveu e aprovou. Vai no shipToCode para o SAP
+        //entregar exatamente onde foi validado: sem ele, cliente antigo que nao manda endereco
+        //deixava o SAP aplicar o padrao DELE, que nao e necessariamente o que foi conferido.
+        enderecoValidado : String? = null
     ): Quotation {
         val itemOriginal = order.DocumentLines?.get(0)
         return Quotation(
@@ -44,15 +52,20 @@ class PedidoRetirada(
             it.journalMemo = "Entrega de mercadoria ref a contrato Nº ${contrato.DocEntry}"
             it.comments = it.journalMemo
             it.ClosingRemarks = observacaoFooter(contrato, numerosBoletos)
-            it.frete = freteResidual(contrato, it.totalProdutos(), entregasFaturadas)
+            it.shipToCode = enderecoValidado ?: shipToCode
+            it.frete = freteResidual(contrato, it.quantidadeProdutos(), entregasFaturadas)
         }
     }
 
     /**
      * Frete da retirada rateado sobre o SALDO do contrato, nao sobre o contrato inteiro:
      *
-     *     frete = (valorFrete do contrato - frete ja faturado) * base da retirada
-     *             / (base do contrato - base ja faturada)
+     *     frete = (valorFrete do contrato - frete ja faturado) * QUANTIDADE da retirada
+     *             / (quantidade do contrato - quantidade ja faturada)
+     *
+     * A base e QUANTIDADE DE ITENS, nao valor: o frete e calculado multiplicando pela quantidade
+     * (ver Regiao.calcularFrete), entao retirar 1 item de 100 leva 1% do frete, independente de
+     * aquele item ser o mais caro ou o mais barato do contrato.
      *
      * Isso faz a retirada absorver o desvio das notas anteriores - se uma nota saiu com frete a
      * maior ou a menor, o residual encolhe/aumenta e as proximas se ajustam sozinhas. Na ultima
@@ -68,26 +81,26 @@ class PedidoRetirada(
      * Residual nao positivo (contrato ja cobrou todo o frete, ou cobrou a maior) devolve null:
      * a nota sai sem despesa de frete e nada trava - nao se lanca despesa adicional negativa.
      */
-    fun freteResidual(contrato: Contrato, baseRetirada: BigDecimal, entregasFaturadas: List<Document>): Double? {
+    fun freteResidual(contrato: Contrato, quantidadeRetirada: BigDecimal, entregasFaturadas: List<Document>): Double? {
         if(contrato.U_valorFrete <= 0)
             return null
 
         val freteJaFaturado = entregasFaturadas.fold(BigDecimal.ZERO) { acc, doc ->
             acc.plus(doc.freteDespesaAdicional().multiply(BigDecimal(doc.sinalNoContrato())))
         }
-        val baseJaFaturada = entregasFaturadas.fold(BigDecimal.ZERO) { acc, doc ->
-            acc.plus(doc.baseProdutosFaturada().multiply(BigDecimal(doc.sinalNoContrato())))
+        val quantidadeJaFaturada = entregasFaturadas.fold(BigDecimal.ZERO) { acc, doc ->
+            acc.plus(doc.quantidadeProdutos().multiply(BigDecimal(doc.sinalNoContrato())))
         }
 
         val freteResidual = BigDecimal(contrato.U_valorFrete.toString()).minus(freteJaFaturado)
-        val baseResidual = contrato.totalProdutos().minus(baseJaFaturada)
+        val quantidadeResidual = BigDecimal(contrato.quantidadeTotal().toString()).minus(quantidadeJaFaturada)
 
-        if(freteResidual.signum() <= 0 || baseResidual.signum() <= 0)
+        if(freteResidual.signum() <= 0 || quantidadeResidual.signum() <= 0)
             return null
 
         return freteResidual
-            .multiply(baseRetirada)
-            .divide(baseResidual, 2, RoundingMode.HALF_DOWN)
+            .multiply(quantidadeRetirada)
+            .divide(quantidadeResidual, 2, RoundingMode.HALF_DOWN)
             .toDouble()
     }
 
