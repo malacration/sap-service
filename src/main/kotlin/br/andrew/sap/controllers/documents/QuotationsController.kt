@@ -16,6 +16,7 @@ import br.andrew.sap.services.autorizacao.RegraAutorizacaoService
 import br.andrew.sap.services.cadastro.BusinessPartnersService
 import br.andrew.sap.services.documents.DocumentForAngular
 import br.andrew.sap.services.documents.QuotationsService
+import br.andrew.sap.services.logistica.LocalidadeService
 import br.andrew.sap.services.logistica.RegiaoService
 import br.andrew.sap.services.pricing.ComissaoService
 import br.andrew.sap.services.stock.ItemsService
@@ -37,6 +38,7 @@ class QuotationsController(val quotationsService: QuotationsService,
                            val applicationEventPublisher: ApplicationEventPublisher,
                            val businessPartnersService : BusinessPartnersService,
                            val regiaoService : RegiaoService,
+    val localidadeService: LocalidadeService,
                            val regraAutorizacaoService: RegraAutorizacaoService,
                            val autorizacaoService: AutorizacaoService) {
 
@@ -59,7 +61,7 @@ class QuotationsController(val quotationsService: QuotationsService,
 
     @PostMapping("angular")
     fun saveForAngular(@RequestBody pedido : Quotation, auth : Authentication): ResponseEntity<Any> {
-        val document = DocumentForAngular().prepareToSave(pedido,itemService,businessPartnersService,regiaoService,auth)
+        val document = DocumentForAngular().prepareToSave(pedido,itemService,businessPartnersService,regiaoService,localidadeService,auth)
         val motivo = regraAutorizacaoService.avaliar(document)
         if(motivo != null){
             val autorizacao = autorizacaoService.criar(

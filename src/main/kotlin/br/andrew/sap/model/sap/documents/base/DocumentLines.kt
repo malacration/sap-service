@@ -55,13 +55,23 @@ abstract class DocumentLines(
     var FatherType : String? = null
 
     var BatchNumbers: List<BatchStock> = listOf()
-    @JsonProperty("CFOPCode")
+    //Anotar so a propriedade deixa o @JsonProperty no campo e o getter getCFOPCode() vira uma
+    //SEGUNDA propriedade implicita ("Cfopcode", depois do UpperCamelCase). O payload saia com
+    //"CFOPCode" e "Cfopcode", e o Service Layer rejeita a segunda com "Internal error (-5002)".
+    //Fixar o nome nos dois acessores mantem uma unica propriedade.
+    @get:JsonProperty("CFOPCode")
+    @set:JsonProperty("CFOPCode")
     var CFOPCode : String? = null
 
     // Impostos ja calculados pelo SAP nesta linha. Populado no deserializer
-    // (o setJson por reflexao so trata escalares). @JsonIgnore para nao inflar o payload
-    // nem ser enviado de volta ao SAP; a leitura vem do DocumentLinesDeserializer.
-    @JsonIgnore
+    // (o setJson por reflexao so trata escalares). Nunca volta para o SAP: o Service Layer
+    // responde "Internal error (-5002)" ao receber LineTaxJurisdictions num PATCH.
+    //
+    // Precisa ser @get:JsonIgnore. Propriedade Kotlin que comeca com maiuscula quebra o
+    // pareamento do Jackson: a anotacao sem use-site cai no campo ("LineTaxJurisdictions"),
+    // mas o getter tem nome implicito "lineTaxJurisdictions" - nomes diferentes, o Jackson
+    // nao liga os dois, e o getter vira propriedade sozinho carregando o @JsonIgnore do campo.
+    @get:JsonIgnore
     var LineTaxJurisdictions : List<LineTaxJurisdiction> = listOf()
 
 
@@ -98,6 +108,22 @@ abstract class DocumentLines(
         return this
     }
 
+
+    /**
+     * Valor que o desonerado tem que fazer o liquido da linha voltar a ser: o preco negociado
+     * quando existe, senao o preco da propria linha.
+     *
+     * Regra unica de proposito: quando o "U_preco_negociado" era lido cru no calculo do total
+     * esperado, pedido com o campo zerado gerava desconto de 100% e o SAP recusava com
+     * "(7) Desconto nao permitido" (DocNum 65506).
+     */
+    @JsonIgnore
+    fun precoAlvo(): BigDecimal {
+        return if((U_preco_negociado ?: 0.0) <= 0.0)
+            BigDecimal(UnitPrice)
+        else
+            BigDecimal(U_preco_negociado!!)
+    }
 
     @JsonIgnore
     fun totalNegociado(): BigDecimal {

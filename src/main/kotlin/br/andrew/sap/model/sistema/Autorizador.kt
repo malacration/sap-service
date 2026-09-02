@@ -16,6 +16,10 @@ class Autorizador(
     @JsonProperty("U_motivo") var U_motivo : String,
     @JsonProperty("U_usuario") var U_usuario : String,
 ) {
-    var Code : Int? = null
+    //Code e a chave do UDO no service layer: alfanumerica, nao numerica - mesma pegadinha
+    //documentada em Comissao.kt, onde tipar como Int quebrava a leitura da lista inteira.
+    //Preenchido pelo AutorizadorService no cadastro: @AUTORIZADOR e bott_MasterData e o SAP
+    //recusa POST sem codigo ("Enter valid code [@AUTORIZADOR.Code]").
+    var Code : String? = null
     var Name : String? = null
 }

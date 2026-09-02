@@ -42,7 +42,13 @@ class AutorizacaoService(
         return getById(id).tryGetValue()
     }
 
-    fun criar(tipoDocumento: String, motivo: String, documento: Document, solicitante: String): Autorizacao {
+    fun criar(
+        tipoDocumento: String,
+        motivo: String,
+        documento: Document,
+        solicitante: String,
+        offlineId: String? = null
+    ): Autorizacao {
         val autorizacao = Autorizacao(
             U_tipoDocumento = tipoDocumento,
             U_motivo = motivo,
@@ -52,6 +58,7 @@ class AutorizacaoService(
             it.U_cardName = documento.cardName
             it.U_valor = documento.total()
             it.U_solicitante = solicitante
+            it.U_offline_id = offlineId
         }
         return save(autorizacao).tryGetValue()
     }

@@ -52,4 +52,7 @@ class Autorizacao(
 
     @JsonProperty("U_docEntryCriado")
     var U_docEntryCriado : Int? = null
+
+    @JsonProperty("U_offline_id")
+    var U_offline_id : String? = null
 }

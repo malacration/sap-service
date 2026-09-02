@@ -29,6 +29,16 @@ keycloak.client-id=front-sap
 # Claim opcional que carrega o codigo SAP do usuario (default: sap_code)
 keycloak.sap-id-claim=sap_code
 
+# ----- Vendas offline / catalogos antecipados -----
+offline.enabled=false
+offline.catalog.ttl-hours=72
+offline.catalog.max-concurrency=1
+offline.catalog.lease-minutes=60
+offline.catalog.prewarm-hours=12
+offline.catalog.part-size-bytes=4194304
+spring.data.redis.host=localhost
+spring.data.redis.port=6379
+
 # ----- Rotinas agendadas (substituem o antigo org.quartz.enable) -----
 # Cada rotina tem seu proprio toggle e vem DESATIVADA por padrao.
 # Aprovacao automatica de rascunhos de pedido (AutoApprovalPaymentCondition) - a cada 5 min

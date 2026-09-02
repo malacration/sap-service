@@ -23,6 +23,16 @@ class JwtAuthenticationFilter(private val jwtHandler: JwtHandler, private val di
     override fun doFilterInternal(request: HttpServletRequest,
                                   response: HttpServletResponse,
                                   filterChain: FilterChain) {
+        // Modo bypass: o token e ignorado por completo e toda requisicao roda como o mesmo
+        // usuario admin-fake. Sem isso, quem passasse pelo /otp/login (que em modo disable
+        // aceita qualquer CPF/CNPJ sem validar OTP) viraria business_partner, perdendo o
+        // vinculo de vendedor_admin - e com isso as filiais em /branch e os produtos em
+        // produto-tabela.sql, alem de estourar em User.getIdInt() com um CPF/CNPJ.
+        if(disable){
+            SecurityContextHolder.getContext().authentication = usuarioBypass()
+            filterChain.doFilter(request,response)
+            return
+        }
         if(SecurityContextHolder.getContext().authentication != null){
             // ja autenticado por um filtro anterior (ex.: Keycloak)
             filterChain.doFilter(request,response)
@@ -44,13 +54,22 @@ class JwtAuthenticationFilter(private val jwtHandler: JwtHandler, private val di
                 log.error("Erro no filtro",e)
             }
         }
-        // Modo bypass: garante um usuario admin-fake quando nada autenticou
-        // (inclusive quando ha um token nao-interno, ex.: Keycloak, no header).
-        if(disable && SecurityContextHolder.getContext().authentication == null){
-            SecurityContextHolder.getContext().authentication = User("-1","Nenhum vendedor",
-            UserOriginEnum.SalePerson,"","","",listOf(),listOf("admin","pix_admin"))
-        }
         filterChain.doFilter(request,response)
+    }
+
+    /**
+     * Usuario do modo bypass. Entra como vendedor_admin porque o SlpCode e -1, que nao existe em
+     * OSLP nem em @LIBERAPARA: sem esse vinculo o User.superVendedor() vale -1, a busca de
+     * produtos (produto-tabela.sql) volta vazia e /branch nao lista filial nenhuma. Com o vinculo
+     * o superVendedor vale Int.MAX_VALUE e libera as duas coisas, do mesmo jeito que ja faz com
+     * parceiros e contratos.
+     *
+     * bussinesPlace fica vazio de proposito - quem lista filial e o /branch (BranchController),
+     * que devolve todas para super vendedor. O /me so espelha esse campo, nao restringe nada.
+     */
+    private fun usuarioBypass() : User {
+        return User("-1","Nenhum vendedor", UserOriginEnum.SalePerson,"","","",
+            listOf(), listOf("admin","pix_admin","vendedor_admin"))
     }
 
     /** Verdadeiro se o JWT usa algoritmo HMAC (HS*), ou seja, e um token interno. */

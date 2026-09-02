@@ -70,6 +70,12 @@ open class Document(val CardCode : String,
     @JsonProperty("U_uuid_forca")
     var u_uuid_forca: String? = null
 
+    @JsonProperty("U_offline_id")
+    var u_offline_id: String? = null
+
+    @JsonProperty("U_offline_user")
+    var u_offline_user: String? = null
+
     var cardName: String? = null
     var OpeningRemarks: String? = null
     var controlAccount: String? = null
@@ -98,6 +104,10 @@ open class Document(val CardCode : String,
     var ClosingRemarks: String? = null
 
 
+    //@JsonIgnore obrigatorio: sem ele o Jackson enxerga isso como getter da propriedade
+    //"OrCreateTaxExtension" e manda esse campo inexistente em todo POST/PATCH de documento -
+    //o Service Layer responde "Internal error (-5002)" quando recebe propriedade que nao e do SAP.
+    @JsonIgnore
     fun getOrCreateTaxExtension(): TaxExtension {
         if (this.TaxExtension == null) {
             this.TaxExtension = TaxExtension()
@@ -125,6 +135,23 @@ open class Document(val CardCode : String,
             }
             this.TaxExtension?.Incoterms = value
         }
+
+    /**
+     * O Incoterms que o documento realmente carrega.
+     *
+     * O campo de topo so e preenchido por quem monta o Document em Kotlin: o setter escreve
+     * PARA DENTRO do TaxExtension, mas nada le de volta. O front manda o valor aninhado
+     * ("TaxExtension": {"Incoterms": 0}), entao na desserializacao o campo de topo fica null -
+     * foi assim que a validacao de frete ficou sem disparar em nenhuma venda pelo portal.
+     *
+     * @JsonIgnore obrigatorio: Incoterms nao e campo de topo no SAP, e um getter comum faria o
+     * Jackson serializar "Incoterms" na raiz do PATCH. Foi exatamente assim que
+     * LineTaxJurisdictions e OrCreateTaxExtension derrubaram o Service Layer com -5002.
+     */
+    @JsonIgnore
+    fun incotermsEfetivo(): Int? {
+        return Incoterms ?: TaxExtension?.Incoterms
+    }
 
     @JsonProperty("BPL_IDAssignedToInvoice")
     fun getBPL_IDAssignedToInvoice(): String {
@@ -196,13 +223,14 @@ open class Document(val CardCode : String,
         return documentAdditionalExpenses.sumOf { BigDecimal(it.LineTotal) }
     }
 
-    //Frete efetivamente lancado no documento (despesa adicional codigo 1). Usado para apurar
-    //quanto de frete um contrato de venda futura ja cobrou ate agora.
+    //Frete do documento (despesa adicional codigo 1), usado para apurar quanto de frete um
+    //contrato de venda futura ja cobrou ate agora. Vale o frete negociado quando existe: com
+    //ICMS desonerado o LineTotal fica majorado e nao representa o valor combinado.
     @JsonIgnore
     fun freteDespesaAdicional(): BigDecimal {
         return documentAdditionalExpenses
             .filter { it.expenseCode == AdditionalExpenses.CODIGO_FRETE }
-            .fold(BigDecimal.ZERO) { acc, it -> acc.plus(BigDecimal(it.LineTotal.toString())) }
+            .fold(BigDecimal.ZERO) { acc, it -> acc.plus(BigDecimal(it.valorConferencia().toString())) }
             .setScale(2, RoundingMode.HALF_UP)
     }
 
@@ -213,6 +241,20 @@ open class Document(val CardCode : String,
         return BigDecimal(DocTotal ?: "0")
             .minus(totalDespesaAdicional())
             .setScale(2, RoundingMode.HALF_UP)
+    }
+
+    /**
+     * Quantidade de itens do documento - base do rateio de frete da venda futura.
+     *
+     * O frete e calculado por quantidade (a formula da regiao multiplica pela quantidade), entao
+     * o rateio tem que ser pela mesma grandeza: retirar 1 item de 100 leva 1% do frete,
+     * independente do valor daquele item.
+     */
+    @JsonIgnore
+    fun quantidadeProdutos(): BigDecimal {
+        return DocumentLines.fold(BigDecimal.ZERO) { acc, linha ->
+            acc.plus(BigDecimal(linha.Quantity))
+        }
     }
 
     //Devolucao abate do que o contrato ja entregou/cobrou; nota de entrega soma.

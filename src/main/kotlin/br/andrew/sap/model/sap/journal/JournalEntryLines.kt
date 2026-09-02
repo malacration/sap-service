@@ -27,7 +27,10 @@ class JournalEntryLines(
         return BPLID
     }
 
-    @JsonIgnore
+    //@get:JsonIgnore, nao @JsonIgnore: propriedade que comeca com maiuscula nao pareia
+    //campo e getter no Jackson, e o ignore no campo nao alcanca o getter
+    //(mesmo caso de DocumentLines.LineTaxJurisdictions).
+    @get:JsonIgnore
     var JdtNum : Int? = null
 
     @JsonIgnore

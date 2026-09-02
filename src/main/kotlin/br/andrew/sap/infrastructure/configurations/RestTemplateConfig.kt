@@ -47,7 +47,9 @@ class RestTemplateConfig {
 
         val requestFactory = HttpComponentsClientHttpRequestFactory()
         requestFactory.httpClient = httpClient
-        return RestTemplate(requestFactory)
+        return RestTemplate(requestFactory).also {
+            it.interceptors.add(LogRequisicaoComFalhaInterceptor())
+        }
     }
 
 }

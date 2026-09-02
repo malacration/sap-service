@@ -139,10 +139,14 @@ class Installment(
         )
     }
 
+    //@JsonIgnore: getter sem argumento vira propriedade no JSON. A parcela vai dentro do
+    //documento nos PATCH/POST do Service Layer, que rejeita campo que nao e do SAP com -5002.
+    @JsonIgnore
     fun getPixProximaConsultaEm(): OffsetDateTime? {
         return parseOffset(U_pix_proxima_consulta_em)
     }
 
+    @JsonIgnore
     fun getPixConsultarAte(): OffsetDateTime? {
         return parseOffset(U_pix_consultar_ate) ?: getPixValidadeCalculada()
     }

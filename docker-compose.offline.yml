@@ -1,0 +1,17 @@
+services:
+  redis-offline:
+    image: redis:7.4-alpine
+    command: redis-server --appendonly yes --maxmemory-policy noeviction
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-offline-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  redis-offline-data:

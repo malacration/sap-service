@@ -53,12 +53,18 @@ class BusinessPartnersService(
     /**
      * O service layer substitui a colecao BPAddresses inteira no patch, por isso
      * lemos o parceiro, trocamos a localidade do endereco e reenviamos todos.
+     *
+     * A chave de endereco no SAP e (AddressName, AddressType), NAO so o nome: o mesmo nome pode
+     * existir nos dois tipos. Casar so pelo nome pegava o primeiro da lista - cliente com um
+     * "COBRANCA" de cobranca e outro "COBRANCA" de entrega recebia a localidade no endereco
+     * errado, sempre no de cobranca.
      */
-    fun atualizaLocalidadeEndereco(cardCode: String, addressName: String, localidade: Int?): BusinessPartner {
+    fun atualizaLocalidadeEndereco(cardCode: String, addressName: String, addressType: AddresType,
+                                   localidade: Int?): BusinessPartner {
         val bp = getById("'$cardCode'").tryGetValue<BusinessPartner>()
         val enderecos = bp.getAddresses()
-        val endereco = enderecos.firstOrNull { it.addressName == addressName }
-            ?: throw Exception("Endereco $addressName nao encontrado no parceiro $cardCode")
+        val endereco = enderecos.firstOrNull { it.addressName == addressName && it.addressType == addressType }
+            ?: throw Exception("Endereco $addressName do tipo ${addressType.cardType} nao encontrado no parceiro $cardCode")
         endereco.U_Localidade = localidade
         update(BusinessPartner().also { it.setAddresses(enderecos) }, "'$cardCode'")
         return getById("'$cardCode'").tryGetValue()
@@ -111,8 +117,12 @@ class BusinessPartnersService(
     fun fullSearchTextFallBack(fullText: String, user: User): NextLink<BusinessPartnerSlin> {
         if (fullText.startsWith("SQLQueries('parceiro-full-search-text.sql')"))
             return sqlQueriesService.nextLink(fullText)!!.tryGetNextValues()
+        //Termo em maiusculo: o HANA e case sensitive no LIKE, e o normalizador deixa CardName
+        //todo em caixa alta - buscar "mauro" nao acharia "MAURO CARRETA". CardCode e TaxId, os
+        //outros campos que a view casa, ja sao maiusculos/numericos, entao nada se perde.
+        //O ramo de CPF/CNPJ e so digito e nao passa por aqui.
         val busca =
-            if (fullText.toDoubleOrNull() == null) fullText.replace("*", "%") else CpfCnpj(fullText).getWithMask();
+            if (fullText.toDoubleOrNull() == null) fullText.replace("*", "%").uppercase(Locale.ROOT) else CpfCnpj(fullText).getWithMask();
         val parametros = listOf(
             Parameter("superVendedor", user.superVendedor()),
             Parameter("valor", "'%${busca}%'"),
@@ -128,7 +138,8 @@ class BusinessPartnersService(
             throw IllegalArgumentException("O parâmetro de busca não pode estar vazio.")
         }
 
-        val busca = if (search.toDoubleOrNull() == null) search.replace("*", "%") else CpfCnpj(search).getWithMask()
+        //mesma razao do fullSearchTextFallBack: LIKE case sensitive contra nome ja normalizado
+        val busca = if (search.toDoubleOrNull() == null) search.replace("*", "%").uppercase(Locale.ROOT) else CpfCnpj(search).getWithMask()
         val parametros = listOf(
             Parameter("valor", "'%$busca%'")
         )

@@ -3,6 +3,7 @@ package br.andrew.sap.schedules.desonerado
 import br.andrew.sap.infrastructure.odata.Condicao
 import br.andrew.sap.infrastructure.odata.Filter
 import br.andrew.sap.infrastructure.odata.Predicate
+import br.andrew.sap.model.impostos.ImpostosDesonerados
 import br.andrew.sap.model.sap.documents.base.Document
 import br.andrew.sap.services.documents.DesoneradoService
 import br.andrew.sap.services.documents.OrdersService
@@ -17,18 +18,21 @@ import org.springframework.stereotype.Component
 @ConditionalOnProperty(value = ["jobs.desonerado.salesorder"], havingValue = "true", matchIfMissing = false)
 class SalesOrderCalculaDesoneradoSchedule(
     val desoneradoService: DesoneradoService,
-    val ordersService: OrdersService) {
+    val ordersService: OrdersService,
+    val impostos: ImpostosDesonerados) {
 
     val logger: Logger = LoggerFactory.getLogger(SalesOrderCalculaDesoneradoSchedule::class.java)
 
     @Scheduled(fixedDelay = 15000)
     fun execute() {
-        val filter = Filter(
+        val predicados = mutableListOf(
             Predicate("U_pedido_update", "1", Condicao.EQUAL),
             Predicate("DocDate", "2024-09-30", Condicao.GREAT),
             Predicate("DocumentStatus", "bost_Open", Condicao.EQUAL),
         )
-        val resultado = ordersService.get(filter).tryGetValues<Document>()
+        //so as filiais que calculam desonerado - as demais nem sao trazidas do SAP
+        predicados.add(impostos.filtroFiliais())
+        val resultado = ordersService.get(Filter(predicados)).tryGetValues<Document>()
         resultado.forEach {
             try {
                 val update = if(it.discountPercent == null || it.discountPercent!! == 0.0)

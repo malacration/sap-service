@@ -22,7 +22,9 @@ import br.andrew.sap.model.sap.comercial.InternalReconciliationsBuilder
 import br.andrew.sap.services.comercial.BaixaSpreadResultado
 import br.andrew.sap.services.comercial.BaixaSpreadVendaFuturaService
 import br.andrew.sap.services.comercial.EntregaPendenteBaixa
+import br.andrew.sap.model.sap.partner.AddresType
 import br.andrew.sap.services.comercial.ContratoVendaFuturaService
+import br.andrew.sap.services.comercial.FreteContratoService
 import br.andrew.sap.services.financeiro.InternalReconciliationsService
 import br.andrew.sap.services.financeiro.RecomNum
 import br.andrew.sap.services.comercial.EstornoReclassificacaoVendaFuturaService
@@ -68,6 +70,7 @@ class ContratoVendaFuturaController(
     val baixaSpreadService : BaixaSpreadVendaFuturaService,
     @Value("\${venda-futura.entrega:9}") val utilizacaoEntregaVendaFutura : Int,
     val cotacaoController : QuotationsController,
+    val freteContratoService : FreteContratoService,
     val impostosDesonerados : ImpostosDesonerados){
     val logger = LoggerFactory.getLogger(ContratoVendaFuturaController::class.java)
 
@@ -138,6 +141,7 @@ class ContratoVendaFuturaController(
             throw Exception("Não existem adiantamentos criados para o contrato ${contrato.DocEntry}. Emita os boletos antes de realizar a retirada.")
         val boleto = boletos.last()
         val numerosBoletos = adiantamentoService.getOurNumbersByContratoVendaFutura(contrato.DocEntry!!)
+        validaRegiaoDaEntrega(contrato, pedidoRetirada.shipToCode)
         val orderSales = orderService.getById(contrato.U_orderDocEntry).tryGetValue<OrderSales>()
         val cotacao = pedidoRetirada.parse(contrato,utilizacaoEntregaVendaFutura,boleto.DocDueDate,orderSales,numerosBoletos,
             entregasFaturadas(contrato.DocEntry!!))
@@ -413,6 +417,57 @@ class ContratoVendaFuturaController(
         adiantamentoService.createAdiantamentoBycontrato(contrato,1)
     }
 
+    /**
+     * A retirada pode sair para outro endereco do cliente, desde que caia na MESMA regiao de
+     * frete do contrato - o valor foi negociado para aquele destino.
+     *
+     * A comparacao usa a regiao VIGENTE da filial, nao o U_RegiaoCode gravado (que e historico).
+     * Como so existe uma regiao ativa por filial, "mesma regiao" e simplesmente ela cobrir as
+     * duas localidades - a do contrato e a do endereco escolhido.
+     *
+     * Contrato legado, sem localidade, nao valida nada: a retirada dele confia no U_valorFrete
+     * ja atribuido e segue funcionando como sempre funcionou.
+     */
+    private fun validaRegiaoDaEntrega(contrato: Contrato, shipToCode: String?) {
+        val localidadeContrato = contrato.U_Localidade ?: return
+
+        val localidadeEntrega = freteContratoService.localidadeDoEndereco(
+            contrato.U_cardCode, shipToCode, AddresType.bo_ShipTo)
+        if(localidadeEntrega == localidadeContrato)
+            return
+
+        val regiao = freteContratoService.regiaoVigente(contrato.U_filial)
+        if(!regiao.temLocalidade(localidadeEntrega.toString()))
+            throw Exception(
+                "A entrega esta indo para a localidade ${freteContratoService.descreve(localidadeEntrega)}, " +
+                "fora da regiao ${regiao.Code} em que o frete deste contrato foi negociado " +
+                "(localidade ${freteContratoService.descreve(localidadeContrato)}). " +
+                "Escolha um endereco da mesma regiao ou renegocie o frete em um novo contrato.")
+    }
+
+    /**
+     * Atribui a localidade de entrega a um contrato que nasceu sem ela (criado antes do frete por
+     * regiao, ou com o endereco do pedido sem localidade cadastrada).
+     *
+     * Existe para destravar a troca: sem destino nao ha regiao, sem regiao nao ha frete novo.
+     * A gravacao acontece fora do batch da troca de proposito - se a pessoa desistir da troca
+     * depois, a localidade fica registrada mesmo assim, porque o destino do contrato e verdade
+     * independente de a troca ter acontecido.
+     */
+    @PutMapping("{docEntry}/localidade")
+    fun atribuiLocalidade(@PathVariable docEntry : Int,
+                          @RequestParam(name = "localidade") localidade : Int): Contrato {
+        val contrato = service.getById(docEntry).tryGetValue<Contrato>()
+        //Falha aqui se a regiao vigente nao cobrir a localidade: melhor recusar na atribuicao,
+        //com a pessoa olhando, do que deixar a troca falhar depois com o mesmo motivo.
+        freteContratoService.calcula(contrato.U_filial, localidade, contrato.quantidadeTotal())
+        service.update(
+            mapOf("U_Localidade" to localidade,
+                  "U_RegiaoCode" to freteContratoService.regiaoVigente(contrato.U_filial).Code),
+            docEntry.toString())
+        return service.getById(docEntry).tryGetValue()
+    }
+
     @PostMapping("troca")
     fun troca(@RequestBody pedidoTroca : PedidoTroca, auth : Authentication): List<BatchResponse> {
         val bathcList = BatchList()
@@ -424,7 +479,15 @@ class ContratoVendaFuturaController(
         if(entregas.size > 0)
             throw Exception("Existe entregas programadas para esse contrato, cancele elas para realizar a troca!")
 
-        val resultado = contrato.troca(pedidoTroca,itemService,comissaoService)
+        //A troca recalcula o frete, e sem localidade nao ha destino para resolver a regiao.
+        //Contrato criado antes dessa funcionalidade precisa receber a localidade primeiro
+        //(PUT /contrato-venda-futura/{docEntry}/localidade). A retirada nao passa por aqui:
+        //ela confia no U_valorFrete ja atribuido e segue funcionando em contrato legado.
+        if(contrato.U_Localidade == null)
+            throw Exception("O contrato ${contrato.DocEntry} nao possui localidade de entrega. " +
+                "Informe a localidade antes de realizar a troca - ela e necessaria para recalcular o frete.")
+
+        val resultado = contrato.troca(pedidoTroca,itemService,comissaoService,freteContratoService)
         bathcList.add(BatchMethod.PUT,contrato,service)
 
         if(resultado.compareTo(BigDecimal.ZERO) > 0.0){
