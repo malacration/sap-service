@@ -27,7 +27,11 @@ class PedidoRetirada(
         docDueDate : String? = null,
         order : Document,
         numerosBoletos: List<String> = listOf(),
-        entregasFaturadas : List<Document> = listOf()
+        entregasFaturadas : List<Document> = listOf(),
+        //Endereco que a validacao de regiao resolveu e aprovou. Vai no shipToCode para o SAP
+        //entregar exatamente onde foi validado: sem ele, cliente antigo que nao manda endereco
+        //deixava o SAP aplicar o padrao DELE, que nao e necessariamente o que foi conferido.
+        enderecoValidado : String? = null
     ): Quotation {
         val itemOriginal = order.DocumentLines?.get(0)
         return Quotation(
@@ -48,7 +52,7 @@ class PedidoRetirada(
             it.journalMemo = "Entrega de mercadoria ref a contrato Nº ${contrato.DocEntry}"
             it.comments = it.journalMemo
             it.ClosingRemarks = observacaoFooter(contrato, numerosBoletos)
-            it.shipToCode = shipToCode
+            it.shipToCode = enderecoValidado ?: shipToCode
             it.frete = freteResidual(contrato, it.quantidadeProdutos(), entregasFaturadas)
         }
     }

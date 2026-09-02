@@ -141,10 +141,10 @@ class ContratoVendaFuturaController(
             throw Exception("Não existem adiantamentos criados para o contrato ${contrato.DocEntry}. Emita os boletos antes de realizar a retirada.")
         val boleto = boletos.last()
         val numerosBoletos = adiantamentoService.getOurNumbersByContratoVendaFutura(contrato.DocEntry!!)
-        validaRegiaoDaEntrega(contrato, pedidoRetirada.shipToCode)
+        val enderecoValidado = validaRegiaoDaEntrega(contrato, pedidoRetirada.shipToCode)
         val orderSales = orderService.getById(contrato.U_orderDocEntry).tryGetValue<OrderSales>()
         val cotacao = pedidoRetirada.parse(contrato,utilizacaoEntregaVendaFutura,boleto.DocDueDate,orderSales,numerosBoletos,
-            entregasFaturadas(contrato.DocEntry!!))
+            entregasFaturadas(contrato.DocEntry!!), enderecoValidado)
         return cotacaoController.saveForAngular(cotacao,auth)
     }
 
@@ -428,21 +428,29 @@ class ContratoVendaFuturaController(
      * Contrato legado, sem localidade, nao valida nada: a retirada dele confia no U_valorFrete
      * ja atribuido e segue funcionando como sempre funcionou.
      */
-    private fun validaRegiaoDaEntrega(contrato: Contrato, shipToCode: String?) {
-        val localidadeContrato = contrato.U_Localidade ?: return
+    private fun validaRegiaoDaEntrega(contrato: Contrato, shipToCode: String?): String? {
+        //Contrato legado nao tem regiao negociada para violar: nao valida e nao resolve endereco
+        //nenhum, para nao introduzir falha em retirada que funcionava antes.
+        val localidadeContrato = contrato.U_Localidade ?: return shipToCode
 
-        val localidadeEntrega = freteContratoService.localidadeDoEndereco(
+        val endereco = freteContratoService.enderecoEntrega(
             contrato.U_cardCode, shipToCode, AddresType.bo_ShipTo)
-        if(localidadeEntrega == localidadeContrato)
-            return
 
-        val regiao = freteContratoService.regiaoVigente(contrato.U_filial)
-        if(!regiao.temLocalidade(localidadeEntrega.toString()))
-            throw Exception(
-                "A entrega esta indo para a localidade ${freteContratoService.descreve(localidadeEntrega)}, " +
-                "fora da regiao ${regiao.Code} em que o frete deste contrato foi negociado " +
-                "(localidade ${freteContratoService.descreve(localidadeContrato)}). " +
-                "Escolha um endereco da mesma regiao ou renegocie o frete em um novo contrato.")
+        if(endereco.localidade != localidadeContrato){
+            val regiao = freteContratoService.regiaoVigente(contrato.U_filial)
+            if(!regiao.temLocalidade(endereco.localidade.toString()))
+                throw Exception(
+                    "A entrega esta indo para a localidade ${freteContratoService.descreve(endereco.localidade)}, " +
+                    "fora da regiao ${regiao.Code} em que o frete deste contrato foi negociado " +
+                    "(localidade ${freteContratoService.descreve(localidadeContrato)}). " +
+                    "Escolha um endereco da mesma regiao ou renegocie o frete em um novo contrato.")
+        }
+
+        //Devolve o endereco VALIDADO para ir no shipToCode da cotacao. Sem isso, cliente antigo
+        //que nao manda shipToCode fazia a validacao olhar o primeiro endereco da colecao enquanto
+        //o SAP entregava no endereco padrao dele - podia recusar pela regiao errada, ou aceitar
+        //com a entrega caindo fora da regiao negociada.
+        return endereco.addressName
     }
 
     /**

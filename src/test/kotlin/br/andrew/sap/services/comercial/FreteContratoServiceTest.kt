@@ -152,6 +152,32 @@ class FreteContratoServiceTest {
         assertEquals(20, service.localidadeDoEndereco("C0001", null, AddresType.bo_ShipTo))
     }
 
+    /**
+     * Cliente antigo nao manda shipToCode. A validacao caia no primeiro endereco da colecao,
+     * mas o SAP aplicava o endereco padrao DELE - podia recusar pela regiao errada, ou aceitar
+     * com a entrega caindo fora da regiao negociada. O nome resolvido tem que voltar para ser
+     * gravado no documento.
+     */
+    @Test
+    fun `devolve o nome do endereco usado, para o documento fixar o mesmo`() {
+        cliente(endereco("ENTREGA", 20), endereco("FAZENDA", 30))
+
+        val resolvido = service.enderecoEntrega("C0001", null, AddresType.bo_ShipTo)
+
+        assertEquals("ENTREGA", resolvido.addressName)
+        assertEquals(20, resolvido.localidade)
+    }
+
+    @Test
+    fun `devolve o nome do endereco escolhido explicitamente`() {
+        cliente(endereco("ENTREGA", 20), endereco("FAZENDA", 30))
+
+        val resolvido = service.enderecoEntrega("C0001", "FAZENDA", AddresType.bo_ShipTo)
+
+        assertEquals("FAZENDA", resolvido.addressName)
+        assertEquals(30, resolvido.localidade)
+    }
+
     @Test
     fun `falha quando o endereco nao tem localidade`() {
         cliente(endereco("ENTREGA", null))

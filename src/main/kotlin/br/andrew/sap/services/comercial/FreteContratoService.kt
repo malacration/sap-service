@@ -57,8 +57,16 @@ class FreteContratoService(
                 "que cubra $quantidade unidades")
     }
 
-    /** Localidade do endereco de entrega escolhido. Chave do endereco no SAP e (nome, tipo). */
-    fun localidadeDoEndereco(cardCode: String, shipToCode: String?, addressType: AddresType): Int {
+    /**
+     * Endereco de entrega efetivamente usado e a localidade dele. Chave do endereco no SAP e
+     * (nome, tipo).
+     *
+     * Quem chama tem que gravar o [EnderecoEntregaResolvido.addressName] no documento. Sem
+     * shipToCode o SAP aplica o endereco padrao DELE, que nao e necessariamente o primeiro da
+     * colecao - validar um e entregar no outro deixava o pedido ser recusado pela regiao errada,
+     * ou aceito com entrega fora da regiao negociada.
+     */
+    fun enderecoEntrega(cardCode: String, shipToCode: String?, addressType: AddresType): EnderecoEntregaResolvido {
         val bp = businessPartnersService.getById("'$cardCode'").tryGetValue<BusinessPartner>()
         val enderecos = bp.getAddresses().filter { it.addressType == addressType }
 
@@ -69,10 +77,23 @@ class FreteContratoService(
             enderecos.firstOrNull { it.addressName?.trim().equals(shipToCode.trim(), ignoreCase = true) }
                 ?: throw Exception("Endereco de entrega $shipToCode nao encontrado no cliente $cardCode")
 
-        return endereco.U_Localidade
+        val localidade = endereco.U_Localidade
             ?: throw Exception("O endereco de entrega '${endereco.addressName}' do cliente $cardCode nao possui " +
                 "localidade cadastrada - cadastre a localidade antes de continuar")
+
+        return EnderecoEntregaResolvido(endereco.addressName, localidade)
     }
+
+    /** Localidade do endereco de entrega escolhido. */
+    fun localidadeDoEndereco(cardCode: String, shipToCode: String?, addressType: AddresType): Int {
+        return enderecoEntrega(cardCode, shipToCode, addressType).localidade
+    }
+
+    /**
+     * O endereco que a validacao usou. O nome tem que ir no shipToCode do documento, senao o SAP
+     * escolhe o padrao dele e entrega em outro lugar.
+     */
+    class EnderecoEntregaResolvido(val addressName: String?, val localidade: Int)
 
     /**
      * "12 - MANICORE" quando da para buscar o nome, so o codigo quando nao da.
