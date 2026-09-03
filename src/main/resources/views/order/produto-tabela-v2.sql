@@ -26,7 +26,7 @@ WHERE
     AND "ITM1"."Price" > :zero
     AND p."U_publica_forca" = 1
     AND "OBPL"."BPLId" = :branchId
-	AND "ITM1"."PriceList" IN(SELECT
+	AND ("ITM1"."PriceList" < :superVendedor OR "ITM1"."PriceList" IN(SELECT
                               	"OPLN"."ListNum"
                               FROM
                               	"OPLN"
@@ -41,5 +41,5 @@ WHERE
                                                 WHERE
                                                     o."SlpCode" = :vendedor
                                                 )
-                                  OR "@LIBERAPARA"."U_vendedor" = :vendedor)
+                                  OR "@LIBERAPARA"."U_vendedor" = :vendedor))
 	AND	"OITM"."validFor" = :yes

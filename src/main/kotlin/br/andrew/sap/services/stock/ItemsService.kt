@@ -21,6 +21,20 @@ import org.springframework.web.client.RestTemplate
 import java.math.BigDecimal
 import java.util.concurrent.TimeUnit
 
+/**
+ * A view fica no SAP, nao na aplicacao, e o nome do arquivo e o sqlCode dela - ou seja, ela e
+ * GLOBAL e compartilhada por todas as APIs que apontam pra mesma company. Quando a v7.1
+ * acrescentou o :superVendedor em produto-tabela.sql, o boot reescreveu a view no SAP e a versao
+ * anterior da API, que continua chamando a mesma consulta sem esse parametro, parou de buscar
+ * produto. Por isso a consulta nova mora num arquivo proprio: produto-tabela.sql ficou congelada
+ * como contrato da API antiga e quem evolui e a v2. Ver src/main/resources/views/README.md.
+ */
+private const val VIEW_PRODUTO_TABELA = "produto-tabela-v2.sql"
+
+//prefixo sem o sufixo de versao de proposito: casa com o nextLink da v2 e tambem com um emitido
+//pela API antiga (produto-tabela.sql), que continua valendo no SAP - sem isso a URL da proxima
+//pagina seria tratada como termo de busca
+private const val PREFIXO_NEXTLINK_PRODUTO_TABELA = "SQLQueries('produto-tabela"
 
 @Service
 open class ItemsService(
@@ -49,7 +63,7 @@ open class ItemsService(
     /**
      * Busca de produtos para venda. A tabela de preco disponivel e limitada pelo @LIBERAPARA do
      * vendedor (por filial ou nominalmente), exceto para super vendedor - admin/vendedor_admin,
-     * onde User.superVendedor() vale Int.MAX_VALUE e produto-tabela.sql libera todas as tabelas
+     * onde User.superVendedor() vale Int.MAX_VALUE e produto-tabela-v2.sql libera todas as tabelas
      * pelo "PriceList" < :superVendedor. Para vendedor comum superVendedor e -1 e a comparacao
      * nunca e verdadeira, mantendo a restricao. Mesmo idioma de contratos-vendafutura.sql e
      * parceiro-full-search-text.sql.
@@ -66,9 +80,9 @@ open class ItemsService(
             Parameter("branchId",branchId),
             Parameter("superVendedor",superVendedor)
         )
-        if(keyWord.contains("SQLQueries('produto-tabela.sql')"))
+        if(keyWord.contains(PREFIXO_NEXTLINK_PRODUTO_TABELA))
             return sqlQueriesService.nextLink(keyWord)!!.tryGetNextValues<Product>()
-        return sqlQueriesService.execute("produto-tabela.sql", parameters)!!.tryGetNextValues<Product>()
+        return sqlQueriesService.execute(VIEW_PRODUTO_TABELA, parameters)!!.tryGetNextValues<Product>()
     }
 
     fun produtosComEstrutura(prefix : String): List<ProdutoSelecao> {

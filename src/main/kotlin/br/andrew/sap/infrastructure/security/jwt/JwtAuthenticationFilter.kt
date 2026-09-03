@@ -27,7 +27,7 @@ class JwtAuthenticationFilter(private val jwtHandler: JwtHandler, private val di
         // usuario admin-fake. Sem isso, quem passasse pelo /otp/login (que em modo disable
         // aceita qualquer CPF/CNPJ sem validar OTP) viraria business_partner, perdendo o
         // vinculo de vendedor_admin - e com isso as filiais em /branch e os produtos em
-        // produto-tabela.sql, alem de estourar em User.getIdInt() com um CPF/CNPJ.
+        // produto-tabela-v2.sql, alem de estourar em User.getIdInt() com um CPF/CNPJ.
         if(disable){
             SecurityContextHolder.getContext().authentication = usuarioBypass()
             filterChain.doFilter(request,response)
@@ -60,7 +60,7 @@ class JwtAuthenticationFilter(private val jwtHandler: JwtHandler, private val di
     /**
      * Usuario do modo bypass. Entra como vendedor_admin porque o SlpCode e -1, que nao existe em
      * OSLP nem em @LIBERAPARA: sem esse vinculo o User.superVendedor() vale -1, a busca de
-     * produtos (produto-tabela.sql) volta vazia e /branch nao lista filial nenhuma. Com o vinculo
+     * produtos (produto-tabela-v2.sql) volta vazia e /branch nao lista filial nenhuma. Com o vinculo
      * o superVendedor vale Int.MAX_VALUE e libera as duas coisas, do mesmo jeito que ja faz com
      * parceiros e contratos.
      *
