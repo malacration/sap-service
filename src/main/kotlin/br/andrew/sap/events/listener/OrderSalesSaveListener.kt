@@ -37,7 +37,7 @@ class OrderSalesSaveListener(val telegramRequest : TelegramRequestService,
     @EventListener
     fun draftOrder(event: CreditException) {
         val draft = draftsService.getById(event.idLocation).tryGetValue<Document>()
-        val order = desoneradoService.aplicaDesonerado(draft)
+        val order = desoneradoService.aplicaDesonerado(draft, rascunho = true)
         logger.info("Draft ${order.docEntry} Foi atualiza som desoneracao de ICMS!")
         draftsService.update(order,order.docEntry.toString())
         val msg = "Rascunho do pedido para ${order.cardName ?: "semCardName"} [DocNum:${order.docNum ?: "Sem docNum"}] foi recebido com sucesso! " +
