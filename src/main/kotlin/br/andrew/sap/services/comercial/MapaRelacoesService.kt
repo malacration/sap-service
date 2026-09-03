@@ -6,6 +6,7 @@ import br.andrew.sap.infrastructure.odata.Filter
 import br.andrew.sap.infrastructure.odata.Parameter
 import br.andrew.sap.infrastructure.odata.Predicate
 import br.andrew.sap.model.bank.Payment
+import br.andrew.sap.model.enums.Cancelled
 import br.andrew.sap.model.comercial.MapaEdge
 import br.andrew.sap.model.comercial.MapaNode
 import br.andrew.sap.model.comercial.MapaRelacoesResponse
@@ -190,7 +191,10 @@ class MapaRelacoesService(
         //NAO o cliente - o cliente e so mais um no no grafo (o "avo" de tudo)
         val semConciliacaoRedundante = removerConciliacaoRedundante(edges, nodes)
         val edgesFinais = removerGeradoParaContratoRedundante(semConciliacaoRedundante)
-        return MapaRelacoesResponse(raizKey, nodes.values.toList(), edgesFinais)
+        //usa as arestas ANTES da limpeza: a conciliacao mutua e o que identifica o par de
+        //cancelamento, nao pode depender de aresta que so foi tirada pra enxugar o desenho
+        val nodesFinais = anularParesDeCancelamento(nodes.values.toList(), edges.values.toList())
+        return MapaRelacoesResponse(raizKey, nodesFinais, edgesFinais)
     }
 
     /**
@@ -405,8 +409,33 @@ class MapaRelacoesService(
             cardCode = doc.CardCode, label = "${tipo.label} ${doc.docNum ?: doc.docEntry ?: ""}".trim(),
             valor = doc.DocTotal?.toBigDecimalOrNull(), data = doc.docDate,
             status = doc.DocumentStatus?.typeName ?: doc.Cancelled?.toString(),
-            situacao = if (tipo == MapaTipoDocumento.ADIANTAMENTO) situacaoAdiantamento(doc) else null
+            //cancelado tem prioridade sobre qualquer outra situacao: um adiantamento
+            //cancelado nao esta "pendente de utilizacao", esta fora do jogo
+            situacao = when {
+                cancelado(doc) -> SituacaoNode.CANCELADO
+                tipo == MapaTipoDocumento.ADIANTAMENTO -> situacaoAdiantamento(doc)
+                else -> null
+            }
         )
+    }
+
+    /**
+     * Documento cancelado no SAP, dos dois lados do estorno: o original (CancelStatus
+     * csYes/csCancelled) e o documento de cancelamento que o SAP cria pra anula-lo
+     * (csCancellationDocument) - e por isso que eles aparecem no mapa como um par
+     * conciliado um com o outro (o SAP concilia os dois automaticamente na ITR1), o que
+     * parecia um documento "ligado a ele mesmo".
+     *
+     * Cancelled (tYES/tNO) entra como reforco porque nem toda versao do Service Layer
+     * devolve CancelStatus em todos os tipos de documento; quando devolve, ele e o unico
+     * que separa o original do documento de cancelamento.
+     *
+     * Os dois se anulam - o front os tira do desenho e dos totais (ver
+     * mapa-relacoes-grafo.component), mas eles continuam no payload pra serem exibidos
+     * agrupados a parte.
+     */
+    private fun cancelado(doc: Document): Boolean {
+        return doc.Cancelled == Cancelled.tYES || doc.CancelStatus?.cancelado() == true
     }
 
     /**
@@ -474,6 +503,58 @@ class MapaRelacoesService(
         DocumentTypes.oJournalEntries.value -> MapaTipoDocumento.LANCAMENTO_CONTABIL
         else -> null
     }
+}
+
+/**
+ * Anula o par de cancelamento inteiro.
+ *
+ * O SAP marca só UM lado do estorno (ver MapaRelacoesService.cancelado): normalmente o documento
+ * de cancelamento vem com CancelStatus preenchido e o documento original, o que foi estornado,
+ * volta como se estivesse valendo. Como os dois se anulam, deixar o original no mapa desenhava
+ * uma nota que nao existe mais e, pior, somava ela nos totais (o "Baixado" do contrato ficava
+ * com o dobro das apropriacoes canceladas).
+ *
+ * O par e reconhecido pela CONCILIACAO MUTUA - existe a aresta A->B e a B->A -, que e o que o
+ * SAP cria sozinho na ITR1 ao cancelar um documento. Duas condicoes a mais delimitam o que e
+ * mesmo um estorno, e sao obrigatorias:
+ *  - mesmo tipo: o cancelamento de uma nota fiscal e sempre outra nota fiscal;
+ *  - mesmo valor: e literalmente o "os documentos se anulam".
+ * Sem elas a regra sairia anulando o que nao deve - nota fiscal e adiantamento tambem ficam
+ * conciliados nos dois sentidos (ver as arestas APROPRIACAO), e o adiantamento seria arrastado
+ * junto com a nota cancelada.
+ *
+ * Top-level e internal de proposito: e uma funcao pura sobre os nodes/arestas, testavel sem
+ * precisar levantar o service inteiro (ver MapaRelacoesCancelamentoTest).
+ */
+internal fun anularParesDeCancelamento(nodes: List<MapaNode>, edges: List<MapaEdge>): List<MapaNode> {
+    val porId = nodes.associateBy { it.id }
+    val conciliacoes = edges.filter { it.tipo == TipoAresta.CONCILIACAO }.map { it.from to it.to }.toSet()
+
+    val anulados = mutableSetOf<String>()
+    for ((from, to) in conciliacoes) {
+        if (to to from !in conciliacoes)
+            continue
+        val a = porId[from] ?: continue
+        val b = porId[to] ?: continue
+        if (a.tipo != b.tipo || !mesmoValor(a, b))
+            continue
+        if (a.situacao == SituacaoNode.CANCELADO || b.situacao == SituacaoNode.CANCELADO) {
+            anulados.add(a.id)
+            anulados.add(b.id)
+        }
+    }
+
+    if (anulados.isEmpty())
+        return nodes
+    return nodes.map { if (it.id in anulados) it.copy(situacao = SituacaoNode.CANCELADO) else it }
+}
+
+//compareTo, e nao equals: BigDecimal("1.5") != BigDecimal("1.50") no equals (a escala conta).
+//Sem valor nos dois lados nao da pra afirmar que se anulam, entao o par nao passa.
+private fun mesmoValor(a: MapaNode, b: MapaNode): Boolean {
+    val valorA = a.valor ?: return false
+    val valorB = b.valor ?: return false
+    return valorA.compareTo(valorB) == 0
 }
 
 @JsonNaming(PropertyNamingStrategies.UpperCamelCaseStrategy::class)

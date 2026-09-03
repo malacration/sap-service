@@ -39,6 +39,11 @@ enum class TipoAresta {
 object SituacaoNode {
     //adiantamento que ainda tem saldo nao apropriado por nenhuma nota fiscal
     const val PENDENTE_UTILIZACAO = "PENDENTE_UTILIZACAO"
+
+    //documento cancelado no SAP - tanto o original estornado quanto o documento de
+    //cancelamento que o anula (ver MapaRelacoesService.cancelado). O front tira os dois
+    //do desenho do grafo e dos totais, e mostra a pilha num canto
+    const val CANCELADO = "CANCELADO"
 }
 
 data class MapaNode(

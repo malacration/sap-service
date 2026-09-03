@@ -18,7 +18,7 @@ import java.nio.file.Path
 /**
  * Com spring.security.disable=true nao existe login: o JwtAuthenticationFilter injeta um usuario
  * falso de SlpCode -1. Esse SlpCode nao existe em OSLP nem em @LIBERAPARA, entao sem o vinculo de
- * vendedor_admin a busca de produtos (order/produto-tabela.sql) volta vazia e nao da para vender.
+ * vendedor_admin a busca de produtos (order/produto-tabela-v2.sql) volta vazia e nao da para vender.
  */
 class BypassVendedorAdminTest {
 
@@ -26,7 +26,11 @@ class BypassVendedorAdminTest {
 
     private val filtro = JwtAuthenticationFilter(jwtHandler, true)
 
-    private val produtoTabela = Files.readString(Path.of("src/main/resources/views/order/produto-tabela.sql"))
+    //v1 = a consulta congelada que a API antiga ainda chama; v2 = a que esta API usa
+    private val produtoTabelaV1 = Files.readString(Path.of("src/main/resources/views/order/produto-tabela.sql"))
+    private val produtoTabelaV2 = Files.readString(Path.of("src/main/resources/views/order/produto-tabela-v2.sql"))
+
+    private fun parametros(sql : String) = ":(\\w+)".toRegex().findAll(sql).map { it.groupValues[1] }.toSortedSet()
 
     @AfterEach
     fun limpa() = SecurityContextHolder.clearContext()
@@ -55,7 +59,7 @@ class BypassVendedorAdminTest {
         Assertions.assertEquals(Int.MAX_VALUE, user.superVendedor())
     }
 
-    /** superVendedor e o interruptor que libera todas as tabelas de preco no produto-tabela.sql. */
+    /** superVendedor e o interruptor que libera todas as tabelas de preco no produto-tabela-v2.sql. */
     @Test
     fun `vendedor comum continua limitado ao seu LIBERAPARA`() {
         val vendedor = User("42", "vendedor", br.andrew.sap.model.authentication.UserOriginEnum.SalePerson,
@@ -85,17 +89,47 @@ class BypassVendedorAdminTest {
     }
 
     @Test
-    fun `produto-tabela libera todas as tabelas para super vendedor`() {
-        Assertions.assertTrue(produtoTabela.contains("\"ITM1\".\"PriceList\" < :superVendedor"),
+    fun `produto-tabela v2 libera todas as tabelas para super vendedor`() {
+        Assertions.assertTrue(produtoTabelaV2.contains("\"ITM1\".\"PriceList\" < :superVendedor"),
             "sem essa clausula o vendedor_admin nao enxerga produto nenhum")
-        Assertions.assertTrue(produtoTabela.contains("\"@LIBERAPARA\".\"U_vendedor\" = :vendedor"),
+        Assertions.assertTrue(produtoTabelaV2.contains("\"@LIBERAPARA\".\"U_vendedor\" = :vendedor"),
             "a restricao do vendedor comum tem que continuar valendo")
+    }
+
+    /**
+     * A view mora no SAP e o nome do arquivo e o sqlCode dela: ela e global, compartilhada por
+     * todas as APIs que apontam pra mesma company. Foi assim que a v7.1 derrubou a busca de
+     * produto da versao anterior da API - acrescentou o :superVendedor em produto-tabela.sql, o
+     * boot reescreveu a view no SAP e a API antiga passou a chamar uma consulta que pede um
+     * parametro que ela nao manda. Este teste congela o contrato: mexeu nos parametros da v1,
+     * quebrou a API antiga de novo.
+     */
+    @Test
+    fun `produto-tabela v1 continua compativel com a API antiga`() {
+        Assertions.assertFalse(produtoTabelaV1.contains(":superVendedor"),
+            "produto-tabela.sql e o contrato da API antiga - parametro novo tem que ir pra v2")
+        Assertions.assertEquals(
+            sortedSetOf("branchId", "search", "vendedor", "yes", "zero"),
+            parametros(produtoTabelaV1),
+            "a v1 esta congelada no que a API antiga sabe mandar"
+        )
+    }
+
+    /** A v2 e a v1 mais o interruptor - nenhum outro parametro pode divergir entre as duas. */
+    @Test
+    fun `produto-tabela v2 so acrescenta o superVendedor`() {
+        Assertions.assertEquals(
+            (parametros(produtoTabelaV1) + "superVendedor").toSortedSet(),
+            parametros(produtoTabelaV2)
+        )
     }
 
     @Test
     fun `produto-tabela sem comentario SQL`() {
-        Assertions.assertFalse(produtoTabela.contains("--"),
-            "comentario quebra a view depois do achatamento em uma linha")
-        Assertions.assertFalse(produtoTabela.contains("/*"), "comentario de bloco tambem nao e aceito")
+        listOf("v1" to produtoTabelaV1, "v2" to produtoTabelaV2).forEach { (versao, sql) ->
+            Assertions.assertFalse(sql.contains("--"),
+                "comentario quebra a view $versao depois do achatamento em uma linha")
+            Assertions.assertFalse(sql.contains("/*"), "comentario de bloco tambem nao e aceito na $versao")
+        }
     }
 }

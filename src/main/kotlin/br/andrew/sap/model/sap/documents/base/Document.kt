@@ -1,5 +1,6 @@
 package br.andrew.sap.model.sap.documents.base
 
+import br.andrew.sap.model.enums.CancelStatus
 import br.andrew.sap.model.enums.Cancelled
 import br.andrew.sap.model.sistema.WarehouseDefault
 import br.andrew.sap.model.enums.YesNo
@@ -51,6 +52,16 @@ open class Document(val CardCode : String,
     var documentInstallments : List<Installment>? = null
     var journalMemo : String? = null
     var Cancelled : Cancelled? = null
+
+    //somente leitura: o Jackson le o que o SAP responde no GET (@set:JsonProperty) mas
+    //NUNCA manda de volta (@get:JsonIgnore) - CancelStatus nao e campo gravavel no Service
+    //Layer, e manda-lo num POST/PATCH derruba a chamada com "Internal error (-5002)", igual
+    //aconteceu com LineTaxJurisdictions/OrCreateTaxExtension.
+    //Os use-site targets (@get:/@set:) sao obrigatorios: sem eles a anotacao vai parar no
+    //backing field, que e privado e o Jackson nem enxerga - ficaria sem efeito nenhum.
+    @get:JsonIgnore
+    @set:JsonProperty("CancelStatus")
+    var CancelStatus : CancelStatus? = null
     var u_pedido_update : String? = "0"
     var DocTotal : String? = null
     var discountPercent : Double? = null
