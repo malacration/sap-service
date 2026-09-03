@@ -6,6 +6,7 @@ import br.andrew.sap.model.sap.documents.base.Document
 import br.andrew.sap.model.sap.documents.base.Product
 import br.andrew.sap.services.tax.SalesTaxAuthoritiesService
 import br.andrew.sap.services.tax.SalesTaxCodeService
+import br.andrew.sap.services.tax.TaxCodeDespesaService
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.mock
@@ -35,7 +36,11 @@ class DesoneradoSemPrecoNegociadoTest {
                   "U_Base" to 0.0, "U_Isento" to 0.0, "U_Outros" to outros)
         })
 
-        return DesoneradoService(taxCode, ImpostosDesonerados(listOf(25), listOf(10, 28), listOf(6)), authorities)
+        //Sem despesa adicional neste fluxo: o servico da view responde vazio.
+        val despesas = mock(TaxCodeDespesaService::class.java, Answer { mapOf<Int, String>() })
+
+        return DesoneradoService(taxCode, ImpostosDesonerados(listOf(25), listOf(10, 28), listOf(6)),
+            authorities, despesas)
     }
 
     private fun pedido(precoNegociado: Double) = Document(
