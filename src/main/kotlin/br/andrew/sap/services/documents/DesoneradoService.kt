@@ -6,6 +6,7 @@ import br.andrew.sap.model.impostos.PrecoUnitarioComDesoneracao
 import br.andrew.sap.model.impostos.ImpostosDesonerados
 import br.andrew.sap.model.sap.tax.SalesTaxAuthorities
 import br.andrew.sap.model.sap.tax.SalesTaxCode
+import br.andrew.sap.model.sap.tax.TaxCodeDespesa
 import br.andrew.sap.services.tax.SalesTaxAuthoritiesService
 import br.andrew.sap.services.tax.SalesTaxCodeService
 import br.andrew.sap.services.tax.TaxCodeDespesaService
@@ -90,58 +91,99 @@ class DesoneradoService(val taxCodeService: SalesTaxCodeService,
      * fica intacta, nenhum recalculo e feito.
      */
     fun aplicaDesoneradoFrete(order : Document, rascunho : Boolean = false) {
-        val fretes = order.documentAdditionalExpenses
-            .filter { it.expenseCode == AdditionalExpenses.CODIGO_FRETE }
-        if(fretes.isEmpty())
+        val comNegociado = order.documentAdditionalExpenses
+            .filter { it.expenseCode == AdditionalExpenses.CODIGO_FRETE && it.temFreteNegociado() }
+        if(comNegociado.isEmpty())
             return
 
-        val comNegociado = fretes.filter { it.temFreteNegociado() }
-        if(comNegociado.isEmpty()) {
-            logger.debug("Documento {} tem frete sem U_frete_negociado - nada a majorar", order.docNum)
-            return
-        }
-
-        //A view cobre QUT13/RDR13/INV13/RIN13. Rascunho guarda a despesa em DRF13, que ela
-        //ainda nao le - e consultar pelo docObjectCode dele acertaria um pedido real de mesmo
-        //numero. Melhor nao majorar do que majorar errado.
-        val taxCodeDoDocumento = if(rascunho) {
-            logger.warn("Documento {} e rascunho: a despesa dele vive em DRF13, que a view " +
-                "{} nao cobre - o frete nao sera majorado",
-                order.docNum, TaxCodeDespesaService.VIEW)
-            null
-        } else taxCodeDespesaService.taxCodeDoFrete(
+        //A view cobre QUT13/RDR13/INV13/RIN13. Rascunho guarda a despesa em DRF13, que ela nao
+        //le - e consultar pelo docObjectCode dele (oOrders) acertaria um PEDIDO REAL de mesmo
+        //numero, porque sequencia de DocEntry e por tabela. Melhor nao majorar do que majorar
+        //pelo imposto de outro documento.
+        val rateios = if(rascunho) {
+            logger.warn("Documento {} e rascunho: a despesa dele vive em DRF13, que a view {} " +
+                "nao cobre - o frete nao sera majorado", order.docNum, TaxCodeDespesaService.VIEW)
+            listOf()
+        } else taxCodeDespesaService.rateiosDoFrete(
             order.docObjectCode, order.docEntry, AdditionalExpenses.CODIGO_FRETE)
 
+        val aliquotas = mutableMapOf<String, BigDecimal>()
         comNegociado.forEach { despesa ->
-            val taxCode = despesa.TaxCode?.takeIf { it.isNotBlank() } ?: taxCodeDoDocumento
-            if(taxCode.isNullOrBlank()) {
-                logger.warn("Frete do documento {} (LineNum {}) ficou sem codigo de imposto - " +
-                    "nao foi majorado e o liquido vai sair abaixo do negociado",
-                    order.docNum, despesa.LineNum)
+            val taxa = aliquotaDoFrete(order, despesa, rateios, aliquotas) ?: return@forEach
+            if(taxa.signum() <= 0) {
+                logger.debug("Frete do documento {} nao tem imposto desonerado - LineTotal fica " +
+                    "como esta", order.docNum)
                 return@forEach
             }
+            despesa.LineTotal = PrecoUnitarioComDesoneracao()
+                .calculaPrecoComTaxa(BigDecimal(despesa.U_frete_negociado!!.toString()), taxa)
+                .setScale(2, RoundingMode.HALF_UP)
+                .toDouble()
+        }
+    }
 
-            val desonerados = taxCodeService.getById("'${taxCode}'").tryGetValue<SalesTaxCode>()
-                .salesTaxCodes_Lines?.filter { impostos.ids.contains(it.STAType) } ?: listOf()
-            if(desonerados.isEmpty()) {
-                logger.debug("Codigo de imposto {} do frete do documento {} nao tem imposto " +
-                    "desonerado - LineTotal fica como esta", taxCode, order.docNum)
-                return@forEach
-            }
+    /**
+     * A alíquota desonerada que incide sobre a despesa, ou nulo quando nao da para saber.
+     *
+     * Com um codigo de imposto so - o caso de quase todo documento - e a alíquota dele. Quando
+     * os rateios tem codigos diferentes (uma varredura em producao achou 9 documentos assim),
+     * e a media PONDERADA pelo valor de cada rateio: majorar tudo pela alíquota de um dos
+     * codigos deixaria o liquido acima ou abaixo do negociado.
+     *
+     * As duas situacoes usam a mesma conta - com um codigo so, a media ponderada e a propria
+     * alíquota dele -, entao nao ha caminho especial para o caso raro.
+     */
+    private fun aliquotaDoFrete(order : Document,
+                                despesa : AdditionalExpenses,
+                                rateios : List<TaxCodeDespesa>,
+                                cache : MutableMap<String, BigDecimal>) : BigDecimal? {
+        //O TaxCode do Service Layer e sempre nulo hoje, mas continua sendo tentado primeiro:
+        //custa zero e blinda caso a SAP passe a preencher.
+        despesa.TaxCode?.takeIf { it.isNotBlank() }?.also {
+            return aliquotaDesonerada(it, cache)
+        }
 
-            desonerados.forEach { tax ->
-                val taxParam = taxAuthoritiesService.get(tax).tryGetValue<SalesTaxAuthorities>()
-                if(taxParam.u_Outros <= 0) {
-                    logger.debug("Autoridade {}/{} do frete do documento {} tem U_Outros zerado - " +
-                        "sem majoracao por essa linha de imposto",
-                        tax.STACode, tax.STAType, order.docNum)
-                    return@forEach
+        if(rateios.isEmpty()) {
+            logger.warn("Frete do documento {} ficou sem codigo de imposto - nao foi majorado e " +
+                "o liquido vai sair abaixo do negociado", order.docNum)
+            return null
+        }
+
+        val pesoTotal = rateios.fold(BigDecimal.ZERO) { acc, r ->
+            acc.plus(BigDecimal((r.LineTotal ?: 0.0).toString()))
+        }
+        //Rateio sem valor nao serve de peso: cai para media simples entre os codigos distintos.
+        if(pesoTotal.signum() <= 0) {
+            val codigos = rateios.mapNotNull { it.TaxCode }.distinct()
+            logger.warn("Os rateios do frete do documento {} nao tem valor para ponderar - " +
+                "usando a media simples de {}", order.docNum, codigos)
+            return codigos
+                .fold(BigDecimal.ZERO) { acc, codigo -> acc.plus(aliquotaDesonerada(codigo, cache)) }
+                .divide(BigDecimal(codigos.size), 6, RoundingMode.HALF_UP)
+        }
+
+        return rateios.fold(BigDecimal.ZERO) { acc, r ->
+            val peso = BigDecimal((r.LineTotal ?: 0.0).toString())
+            acc.plus(aliquotaDesonerada(r.TaxCode!!, cache).multiply(peso))
+        }.divide(pesoTotal, 6, RoundingMode.HALF_UP)
+    }
+
+    /**
+     * Soma das alíquotas desoneradas de um codigo de imposto.
+     *
+     * Soma em vez de escolher: o `5109-003` tem duas linhas que passam pelo filtro - a STAType
+     * 10, com `U_Outros` 0 e portanto alíquota 0, e a 25, com `U_Outros` 100. Somar da o
+     * resultado certo e dispensa a ordem em que o SAP devolve as linhas. A versao anterior
+     * sobrescrevia o valor a cada linha e so funcionava porque a 25 vinha por ultimo.
+     */
+    private fun aliquotaDesonerada(taxCode : String, cache : MutableMap<String, BigDecimal>) : BigDecimal {
+        return cache.getOrPut(taxCode) {
+            (taxCodeService.getById("'${taxCode}'").tryGetValue<SalesTaxCode>()
+                .salesTaxCodes_Lines?.filter { impostos.ids.contains(it.STAType) } ?: listOf())
+                .fold(BigDecimal.ZERO) { acc, tax ->
+                    acc.plus(taxAuthoritiesService.get(tax)
+                        .tryGetValue<SalesTaxAuthorities>().rateBaseOutro())
                 }
-                despesa.LineTotal = PrecoUnitarioComDesoneracao()
-                    .calculaPreco(BigDecimal(despesa.U_frete_negociado!!.toString()), taxParam)
-                    .setScale(2, RoundingMode.HALF_UP)
-                    .toDouble()
-            }
         }
     }
 }

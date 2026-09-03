@@ -40,48 +40,40 @@ class TaxCodeDespesaService(val sqlQueriesService: SqlQueriesService) {
     }
 
     /**
-     * Codigo de imposto de cada despesa do documento, indexado por `LineNum`.
+     * Os rateios de uma despesa: uma linha por produto que recebeu parte dela.
      *
-     * A `LineNum` da `*13` NAO e a linha da despesa: e a linha de PRODUTO que recebeu o rateio
-     * dela. Uma despesa unica de frete vira N linhas, uma por produto - conferido em homolog:
-     * a cotacao 169655 (2 produtos) devolve LineNum 0 e 1, a 169620 (5 produtos) devolve 0 a 4.
-     * Cruzar isso com o `AdditionalExpenses.LineNum`, que indexa a colecao de despesas do
-     * cabecalho, e juntar duas numeracoes sem relacao - na cotacao 169635 a despesa vem com
-     * LineNum 1 e pegaria o imposto do segundo produto.
+     * A busca e por `ExpnsCode`, NUNCA por LineNum. A `LineNum` da `*13` e a linha de PRODUTO
+     * que recebeu o rateio, nao a linha da despesa - conferido em homolog: a cotacao 169655
+     * (2 produtos) devolve LineNum 0 e 1, a 169620 (5 produtos) devolve 0 a 4. Cruzar isso com
+     * o `AdditionalExpenses.LineNum`, que indexa a colecao de despesas do cabecalho, junta duas
+     * numeracoes sem relacao: na cotacao 169635 a despesa vem com LineNum 1 e pegaria o imposto
+     * do segundo produto.
      *
-     * Por isso a leitura e por `ExpnsCode`: a despesa tem UM codigo de imposto, repetido em
-     * todos os rateios. Se os rateios divergirem nao existe alíquota unica que sirva - devolve
-     * nulo e quem chama deixa o frete intacto, melhor que majorar pelo codigo errado.
+     * Cada rateio traz o proprio `TaxCode` e o `LineTotal` que coube a ele. Quase sempre o
+     * codigo e o mesmo em todos, mas nao sempre - uma varredura em producao achou 9 documentos
+     * com dois codigos diferentes no mesmo frete. Por isso quem chama pondera pelo LineTotal em
+     * vez de assumir codigo unico.
      *
-     * Falha de leitura nao derruba o calculo do documento inteiro: devolve nulo e quem chama
+     * Falha de leitura nao derruba o calculo do documento inteiro: devolve vazio e quem chama
      * loga. O preco de nao majorar um frete e conhecido; o de abortar o desonerado das linhas
      * de produto e maior.
      */
-    fun taxCodeDoFrete(tipo: DocumentTypes?, docEntry: Int?, expnsCode: Int): String? {
+    fun rateiosDoFrete(tipo: DocumentTypes?, docEntry: Int?, expnsCode: Int): List<TaxCodeDespesa> {
         if (tipo == null || docEntry == null) {
             logger.warn("Sem tipo ou docEntry, nao da para buscar o codigo de imposto da despesa " +
                 "(tipo=$tipo docEntry=$docEntry)")
-            return null
+            return listOf()
         }
-        val codigos = try {
+        return try {
             sqlQueriesService.getAll<TaxCodeDespesa>(VIEW, listOf(
                 Parameter("docEntry", docEntry),
                 Parameter("objType", tipo.value.toString()),
                 Parameter("expnsCode", expnsCode)))
-                .mapNotNull { linha -> linha.TaxCode?.takeIf { it.isNotBlank() } }
-                .distinct()
+                .filter { !it.TaxCode.isNullOrBlank() }
         } catch (e: Exception) {
             logger.error("Falha ao ler o codigo de imposto da despesa $expnsCode do documento " +
                 "$docEntry (${tipo.name}) na view $VIEW", e)
-            return null
+            listOf()
         }
-
-        if (codigos.size > 1) {
-            logger.warn("A despesa {} do documento {} ({}) tem codigos de imposto diferentes por " +
-                "rateio ({}) - sem alíquota unica para majorar, o frete fica intacto",
-                expnsCode, docEntry, tipo.name, codigos)
-            return null
-        }
-        return codigos.firstOrNull()
     }
 }
