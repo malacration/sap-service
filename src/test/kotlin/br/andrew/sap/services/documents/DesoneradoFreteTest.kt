@@ -6,6 +6,7 @@ import br.andrew.sap.model.sap.documents.DocumentTypes
 import br.andrew.sap.model.sap.documents.base.AdditionalExpenses
 import br.andrew.sap.model.sap.documents.base.Document
 import br.andrew.sap.model.sap.tax.SalesTaxCodeLine
+import br.andrew.sap.model.sap.tax.TaxCodeDespesa
 import br.andrew.sap.services.tax.SalesTaxAuthoritiesService
 import br.andrew.sap.services.tax.SalesTaxCodeService
 import br.andrew.sap.services.tax.TaxCodeDespesaService
@@ -35,13 +36,16 @@ class DesoneradoFreteTest {
      * comum) e a 25 (`U_Outros` 100, o desonerado de verdade). A autoridade responde conforme o
      * STAType pedido, senao o teste nao distingue as duas.
      */
-    private fun servico(taxCodeDoFrete: String?,
+    private fun servico(rateios: List<TaxCodeDespesa>,
+                        porTaxCode: Map<String, List<Map<String, Any>>> = mapOf(),
                         linhasDoTaxCode: List<Map<String, Any>> = listOf(
                             mapOf("STCCode" to "5109-003", "STACode" to "IC17BI02", "STAType" to 10),
                             mapOf("STCCode" to "5109-003", "STACode" to "IC17BI02", "STAType" to 25))
     ): DesoneradoService {
-        val taxCode = mock(SalesTaxCodeService::class.java, Answer {
-            odata("Code" to "5109-003", "SalesTaxCodes_Lines" to linhasDoTaxCode)
+        val taxCode = mock(SalesTaxCodeService::class.java, Answer { invocacao ->
+            val codigo = invocacao.arguments[0].toString().trim('\'')
+            odata("Code" to codigo,
+                  "SalesTaxCodes_Lines" to (porTaxCode[codigo] ?: linhasDoTaxCode))
         })
         val authorities = mock(SalesTaxAuthoritiesService::class.java, Answer { invocacao ->
             val tipo = (invocacao.arguments[0] as SalesTaxCodeLine).STAType
@@ -49,7 +53,7 @@ class DesoneradoFreteTest {
                   "U_Isento" to if (tipo == 10) 100.0 else 0.0,
                   "U_Outros" to if (tipo == 25) 100.0 else 0.0)
         })
-        val despesas = mock(TaxCodeDespesaService::class.java, Answer { taxCodeDoFrete })
+        val despesas = mock(TaxCodeDespesaService::class.java, Answer { rateios })
 
         return DesoneradoService(
             taxCode,
@@ -71,12 +75,19 @@ class DesoneradoFreteTest {
         }
     }
 
+    private fun rateio(vararg codigoEValor: Pair<String, Double>) =
+        codigoEValor.mapIndexed { i, (codigo, valor) ->
+            TaxCodeDespesa(176199, i, 1, valor, codigo)
+        }
+
+    private fun rateio(codigo: String) = rateio(codigo to 450.0)
+
     private fun frete(doc: Document) = doc.documentAdditionalExpenses.first()
 
     @Test
     fun `frete com ICMS desonerado e majorado ate o liquido voltar ao negociado`() {
         val doc = cotacao(450.0)
-        servico("5109-003").aplicaDesoneradoFrete(doc)
+        servico(rateio("5109-003")).aplicaDesoneradoFrete(doc)
 
         val majorado = frete(doc).LineTotal
         assertEquals(555.56, majorado, 0.001, "450 / (1 - 0,19)")
@@ -91,7 +102,7 @@ class DesoneradoFreteTest {
     @Test
     fun `linha de imposto sem U_Outros nao desfaz a majoracao`() {
         val doc = cotacao(450.0)
-        servico("5109-003", listOf(
+        servico(rateio("5109-003"), linhasDoTaxCode = listOf(
             mapOf("STCCode" to "5109-003", "STACode" to "IC17BI02", "STAType" to 25),
             mapOf("STCCode" to "5109-003", "STACode" to "IC17BI02", "STAType" to 10))
         ).aplicaDesoneradoFrete(doc)
@@ -102,7 +113,7 @@ class DesoneradoFreteTest {
     @Test
     fun `o negociado nao muda - e ele que a conferencia do contrato usa`() {
         val doc = cotacao(450.0)
-        servico("5109-003").aplicaDesoneradoFrete(doc)
+        servico(rateio("5109-003")).aplicaDesoneradoFrete(doc)
 
         assertEquals(450.0, frete(doc).U_frete_negociado)
         assertEquals(450.0, doc.freteDespesaAdicional().toDouble())
@@ -112,7 +123,7 @@ class DesoneradoFreteTest {
     fun `TaxCode do Service Layer tem precedencia sobre a view`() {
         val doc = cotacao(450.0)
         frete(doc).TaxCode = "5109-003"
-        servico(null).aplicaDesoneradoFrete(doc)
+        servico(listOf()).aplicaDesoneradoFrete(doc)
 
         assertEquals(555.56, frete(doc).LineTotal, 0.001)
     }
@@ -120,7 +131,7 @@ class DesoneradoFreteTest {
     @Test
     fun `sem codigo de imposto em lugar nenhum o LineTotal fica intacto`() {
         val doc = cotacao(450.0)
-        servico(null).aplicaDesoneradoFrete(doc)
+        servico(listOf()).aplicaDesoneradoFrete(doc)
 
         assertEquals(450.0, frete(doc).LineTotal)
     }
@@ -129,7 +140,7 @@ class DesoneradoFreteTest {
     @Test
     fun `codigo sem imposto desonerado nao majora`() {
         val doc = cotacao(233.58)
-        servico("5102-001", listOf(
+        servico(rateio("5102-001"), linhasDoTaxCode = listOf(
             mapOf("STCCode" to "5102-001", "STACode" to "PI00BO02", "STAType" to 19))
         ).aplicaDesoneradoFrete(doc)
 
@@ -140,7 +151,7 @@ class DesoneradoFreteTest {
     @Test
     fun `despesa sem frete negociado nao e tocada`() {
         val doc = cotacao(null, lineTotal = 270.0)
-        servico("5109-003").aplicaDesoneradoFrete(doc)
+        servico(rateio("5109-003")).aplicaDesoneradoFrete(doc)
 
         assertEquals(270.0, frete(doc).LineTotal)
     }
@@ -156,7 +167,7 @@ class DesoneradoFreteTest {
         val doc = cotacao(450.0)
         frete(doc).LineNum = 7
 
-        servico("5109-003").aplicaDesoneradoFrete(doc)
+        servico(rateio("5109-003")).aplicaDesoneradoFrete(doc)
 
         assertEquals(555.56, frete(doc).LineTotal, 0.001)
     }
@@ -170,9 +181,62 @@ class DesoneradoFreteTest {
     fun `rascunho nao consulta a view e nao majora`() {
         val doc = cotacao(450.0).also { it.docObjectCode = DocumentTypes.oOrders }
 
-        servico("5109-003").aplicaDesoneradoFrete(doc, rascunho = true)
+        servico(rateio("5109-003")).aplicaDesoneradoFrete(doc, rascunho = true)
 
         assertEquals(450.0, frete(doc).LineTotal,
             "rascunho tem a despesa em DRF13; majorar pelo RDR13 pegaria outro documento")
+    }
+
+    /**
+     * Os 9 documentos que a varredura em producao achou: rateios do mesmo frete com codigos de
+     * imposto diferentes. Aqui metade do frete e desonerada a 19% e a outra metade nao tem
+     * desoneracao nenhuma, entao a alíquota efetiva e 9,5% e o liquido volta ao negociado.
+     */
+    @Test
+    fun `rateios com codigos diferentes usam a media ponderada`() {
+        val doc = cotacao(450.0)
+        val servico = servico(
+            rateio("5109-003" to 225.0, "5102-001" to 225.0),
+            porTaxCode = mapOf(
+                "5109-003" to listOf(
+                    mapOf("STCCode" to "5109-003", "STACode" to "IC17BI02", "STAType" to 25)),
+                "5102-001" to listOf(
+                    mapOf("STCCode" to "5102-001", "STACode" to "PI00BO02", "STAType" to 19))))
+
+        servico.aplicaDesoneradoFrete(doc)
+
+        val majorado = frete(doc).LineTotal
+        assertEquals(497.24, majorado, 0.01, "450 / (1 - 0,095)")
+        //metade majorada leva 19% de abatimento, a outra metade nao leva nada
+        assertEquals(450.0, majorado - majorado / 2 * 0.19, 0.02,
+            "o liquido tem que voltar ao negociado mesmo com dois codigos")
+    }
+
+    /** Peso desigual: 3/4 do frete a 19% e 1/4 sem desoneracao -> 14,25%. */
+    @Test
+    fun `a ponderacao respeita o valor de cada rateio`() {
+        val doc = cotacao(450.0)
+        val servico = servico(
+            rateio("5109-003" to 300.0, "5102-001" to 100.0),
+            porTaxCode = mapOf(
+                "5109-003" to listOf(
+                    mapOf("STCCode" to "5109-003", "STACode" to "IC17BI02", "STAType" to 25)),
+                "5102-001" to listOf(
+                    mapOf("STCCode" to "5102-001", "STACode" to "PI00BO02", "STAType" to 19))))
+
+        servico.aplicaDesoneradoFrete(doc)
+
+        assertEquals(524.78, frete(doc).LineTotal, 0.01, "450 / (1 - 0,1425)")
+    }
+
+    /** Codigo unico repetido em varios rateios da exatamente a alíquota dele. */
+    @Test
+    fun `frete rateado em varios produtos com o mesmo codigo majora igual`() {
+        val doc = cotacao(450.0)
+        servico(rateio("5109-003" to 90.0, "5109-003" to 180.0, "5109-003" to 180.0))
+            .aplicaDesoneradoFrete(doc)
+
+        assertEquals(555.56, frete(doc).LineTotal, 0.001,
+            "media ponderada de um codigo so e a propria alíquota dele")
     }
 }
