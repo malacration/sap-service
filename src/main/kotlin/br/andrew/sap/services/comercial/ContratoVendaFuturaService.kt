@@ -15,6 +15,8 @@ import br.andrew.sap.model.self.vendafutura.Status
 import br.andrew.sap.services.abstracts.EntitiesService
 import br.andrew.sap.services.abstracts.SqlQueriesService
 import br.andrew.sap.services.documents.DownPaymentService
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.web.client.RestTemplate
 import java.math.BigDecimal
@@ -26,6 +28,8 @@ class ContratoVendaFuturaService(restTemplate: RestTemplate,
                                  val sqlQueriesService : SqlQueriesService,
                                  env: SapEnvrioment,
                                  authService : AuthService) : EntitiesService<Contrato>(env,restTemplate, authService) {
+
+    val logger = LoggerFactory.getLogger(ContratoVendaFuturaService::class.java)
 
     override fun path(): String {
         return "/b1s/v1/AR_CONTRATO_FUTURO"
@@ -65,6 +69,35 @@ class ContratoVendaFuturaService(restTemplate: RestTemplate,
 
         )
         return sqlQueriesService.execute("contratos-vendafutura.sql", parameters)
+    }
+
+    /**
+     * Contrato do UDO acrescido dos tres campos de exibicao que o UDO nao guarda: nome da
+     * filial, nome do vendedor e DocNum do pedido de origem. Na listagem eles vem dos joins
+     * da contratos-vendafutura.sql; sem repetir esses joins aqui, o detalhe aberto por link
+     * direto (ou de contrato cujo status nao e o filtrado na lista, que por isso nunca esta
+     * em memoria) mostrava Filial, Vendedor e Numero do Pedido em branco.
+     *
+     * A view falhar nao pode derrubar a tela: os tres campos sao rotulo, o contrato em si ja
+     * veio. Nesse caso volta o contrato cru, como era antes.
+     */
+    fun getByIdComCabecalho(id: String): Contrato {
+        val contrato = getById(id).tryGetValue<Contrato>()
+        val docEntry = contrato.DocEntry ?: return contrato
+        val cabecalho = try {
+            sqlQueriesService
+                .execute("contrato-cabecalho.sql", Parameter("idContrato", docEntry))
+                ?.tryGetValues<ContratoCabecalho>()
+                ?.firstOrNull()
+        } catch (e: Exception) {
+            logger.warn("Nao foi possivel carregar o cabecalho do contrato [$docEntry]", e)
+            null
+        } ?: return contrato
+
+        contrato.Bplname = cabecalho.Bplname
+        contrato.SalesEmployeeName = cabecalho.SalesEmployeeName
+        contrato.OrderDocNum = cabecalho.OrderDocNum
+        return contrato
     }
 
     fun saveOnly(contrato: Contrato): Contrato {
@@ -108,3 +141,16 @@ class ContratoVendaFuturaService(restTemplate: RestTemplate,
     }
 
 }
+
+/**
+ * Projecao da contrato-cabecalho.sql - so os rotulos que o UDO do contrato nao guarda.
+ * ignoreUnknown porque o ObjectMapper do OData mantem o FAIL_ON_UNKNOWN_PROPERTIES ligado:
+ * qualquer coluna a mais na view derrubaria o parse da linha inteira.
+ */
+@JsonIgnoreProperties(ignoreUnknown = true)
+class ContratoCabecalho(
+    val DocEntry : Int?,
+    val SalesEmployeeName : String?,
+    val OrderDocNum : String?,
+    val Bplname : String?
+)

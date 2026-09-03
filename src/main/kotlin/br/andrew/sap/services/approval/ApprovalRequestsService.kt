@@ -42,7 +42,7 @@ class ApprovalRequestsService(env : SapEnvrioment,
 
     fun aprovaEhCria(draft : Document, approvalRequest : ApprovalRequests) {
         if(draft.u_pedido_update == "1"){
-            draftsService.update(desoneradoService.aplicaDesonerado(draft),draft.docEntry.toString())
+            draftsService.update(desoneradoService.aplicaDesonerado(draft, rascunho = true),draft.docEntry.toString())
         }else if(draft.docEntry!=approvalRequest.draftEntry)
             throw Exception("O draft deve ter o mesmo id da requisição de aprovação")
         else if(draft.isAvista() && approvalRequest.status == "arsPending"){

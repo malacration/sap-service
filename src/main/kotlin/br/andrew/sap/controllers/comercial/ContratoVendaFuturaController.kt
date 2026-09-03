@@ -103,7 +103,7 @@ class ContratoVendaFuturaController(
     fun get(@PathVariable id : String, auth : Authentication): ResponseEntity<Contrato> {
         if(auth !is User)
             return ResponseEntity.noContent().build()
-        return ResponseEntity.ok(service.getById(id).tryGetValue<Contrato>())
+        return ResponseEntity.ok(service.getByIdComCabecalho(id))
     }
 
     @PostMapping("/nextlink")

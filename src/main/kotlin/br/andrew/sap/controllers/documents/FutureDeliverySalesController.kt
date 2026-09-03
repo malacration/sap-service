@@ -2,6 +2,7 @@ package br.andrew.sap.controllers.documents
 
 import br.andrew.sap.infrastructure.odata.*
 import br.andrew.sap.model.authentication.User
+import br.andrew.sap.model.impostos.ImpostosDesonerados
 import br.andrew.sap.model.sap.documents.Invoice
 import br.andrew.sap.model.sap.documents.base.Document
 import br.andrew.sap.services.documents.CreditNotesService
@@ -25,7 +26,8 @@ class FutureDeliverySalesController(
     val invoiceService: InvoiceService,
     val creditNotesService: CreditNotesService,
     val ordersService: OrdersService,
-    val quotationsService : QuotationsService) {
+    val quotationsService : QuotationsService,
+    val impostosDesonerados : ImpostosDesonerados) {
 
     @GetMapping("/{id}/saida")
     fun entrada(@PathVariable id: Int, page : Pageable): Page<Invoice>?{
@@ -39,6 +41,10 @@ class FutureDeliverySalesController(
         return listOf(ordersService,quotationsService)
             .map { it.getAll(Document::class.java,filter) }
             .flatMap { it }
+            // Mesmo preenchimento de /entregas: sem ele o LineTotalDesonerado volta null e a
+            // aba Pedidos do contrato mostra "R$ ∞" no total, alem de nao bater com a aba
+            // Entregas, que ja vem liquida.
+            .onEach { it.preencheDesonerado(impostosDesonerados.ids) }
             .sortedWith(compareBy(
                 { it.docDate },
                 { it.docObjectCode?.ordinal }

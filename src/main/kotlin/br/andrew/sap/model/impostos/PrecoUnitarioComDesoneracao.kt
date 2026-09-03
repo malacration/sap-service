@@ -25,4 +25,19 @@ class PrecoUnitarioComDesoneracao {
             valorAlvo
                 .divide(minusDiscont,4,RoundingMode.HALF_DOWN)
     }
+
+    /**
+     * Mesma majoracao, recebendo a alíquota pronta em vez de uma autoridade fiscal.
+     *
+     * Existe para o frete, onde a alíquota pode ser a media ponderada de varios rateios com
+     * codigos de imposto diferentes - nesse caso nao ha uma `SalesTaxAuthorities` unica que
+     * represente o documento. Com um codigo so o resultado e identico ao [calculaPreco].
+     *
+     * Alíquota zero devolve o proprio valor: sem imposto a compensar, nao ha o que majorar.
+     */
+    fun calculaPrecoComTaxa(valorAlvo : BigDecimal, taxa : BigDecimal) : BigDecimal{
+        if(taxa.signum() <= 0)
+            return valorAlvo
+        return valorAlvo.divide(BigDecimal(1).minus(taxa), 4, RoundingMode.HALF_DOWN)
+    }
 }
