@@ -42,30 +42,46 @@ class TaxCodeDespesaService(val sqlQueriesService: SqlQueriesService) {
     /**
      * Codigo de imposto de cada despesa do documento, indexado por `LineNum`.
      *
-     * Uma consulta por documento em vez de uma por despesa: a view ja devolve todas as linhas
-     * daquele `ExpnsCode`, e os schedules rodam a cada 15s sobre lotes de documentos.
+     * A `LineNum` da `*13` NAO e a linha da despesa: e a linha de PRODUTO que recebeu o rateio
+     * dela. Uma despesa unica de frete vira N linhas, uma por produto - conferido em homolog:
+     * a cotacao 169655 (2 produtos) devolve LineNum 0 e 1, a 169620 (5 produtos) devolve 0 a 4.
+     * Cruzar isso com o `AdditionalExpenses.LineNum`, que indexa a colecao de despesas do
+     * cabecalho, e juntar duas numeracoes sem relacao - na cotacao 169635 a despesa vem com
+     * LineNum 1 e pegaria o imposto do segundo produto.
      *
-     * Falha de leitura nao derruba o calculo do documento inteiro - devolve vazio e quem chama
-     * loga a despesa que ficou sem codigo. O preco de nao majorar um frete e conhecido; o de
-     * abortar o desonerado das linhas de produto e maior.
+     * Por isso a leitura e por `ExpnsCode`: a despesa tem UM codigo de imposto, repetido em
+     * todos os rateios. Se os rateios divergirem nao existe alíquota unica que sirva - devolve
+     * nulo e quem chama deixa o frete intacto, melhor que majorar pelo codigo errado.
+     *
+     * Falha de leitura nao derruba o calculo do documento inteiro: devolve nulo e quem chama
+     * loga. O preco de nao majorar um frete e conhecido; o de abortar o desonerado das linhas
+     * de produto e maior.
      */
-    fun porLinha(tipo: DocumentTypes?, docEntry: Int?, expnsCode: Int): Map<Int, String> {
+    fun taxCodeDoFrete(tipo: DocumentTypes?, docEntry: Int?, expnsCode: Int): String? {
         if (tipo == null || docEntry == null) {
             logger.warn("Sem tipo ou docEntry, nao da para buscar o codigo de imposto da despesa " +
                 "(tipo=$tipo docEntry=$docEntry)")
-            return mapOf()
+            return null
         }
-        return try {
+        val codigos = try {
             sqlQueriesService.getAll<TaxCodeDespesa>(VIEW, listOf(
                 Parameter("docEntry", docEntry),
                 Parameter("objType", tipo.value.toString()),
                 Parameter("expnsCode", expnsCode)))
-                .filter { it.LineNum != null && !it.TaxCode.isNullOrBlank() }
-                .associate { it.LineNum!! to it.TaxCode!! }
+                .mapNotNull { linha -> linha.TaxCode?.takeIf { it.isNotBlank() } }
+                .distinct()
         } catch (e: Exception) {
-            logger.error("Falha ao ler o codigo de imposto das despesas do documento $docEntry " +
-                "(${tipo.name}) na view $VIEW", e)
-            mapOf()
+            logger.error("Falha ao ler o codigo de imposto da despesa $expnsCode do documento " +
+                "$docEntry (${tipo.name}) na view $VIEW", e)
+            return null
         }
+
+        if (codigos.size > 1) {
+            logger.warn("A despesa {} do documento {} ({}) tem codigos de imposto diferentes por " +
+                "rateio ({}) - sem alíquota unica para majorar, o frete fica intacto",
+                expnsCode, docEntry, tipo.name, codigos)
+            return null
+        }
+        return codigos.firstOrNull()
     }
 }

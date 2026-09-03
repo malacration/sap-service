@@ -35,7 +35,7 @@ class DesoneradoFreteTest {
      * comum) e a 25 (`U_Outros` 100, o desonerado de verdade). A autoridade responde conforme o
      * STAType pedido, senao o teste nao distingue as duas.
      */
-    private fun servico(taxCodePorLinha: Map<Int, String>,
+    private fun servico(taxCodeDoFrete: String?,
                         linhasDoTaxCode: List<Map<String, Any>> = listOf(
                             mapOf("STCCode" to "5109-003", "STACode" to "IC17BI02", "STAType" to 10),
                             mapOf("STCCode" to "5109-003", "STACode" to "IC17BI02", "STAType" to 25))
@@ -49,7 +49,7 @@ class DesoneradoFreteTest {
                   "U_Isento" to if (tipo == 10) 100.0 else 0.0,
                   "U_Outros" to if (tipo == 25) 100.0 else 0.0)
         })
-        val despesas = mock(TaxCodeDespesaService::class.java, Answer { taxCodePorLinha })
+        val despesas = mock(TaxCodeDespesaService::class.java, Answer { taxCodeDoFrete })
 
         return DesoneradoService(
             taxCode,
@@ -76,7 +76,7 @@ class DesoneradoFreteTest {
     @Test
     fun `frete com ICMS desonerado e majorado ate o liquido voltar ao negociado`() {
         val doc = cotacao(450.0)
-        servico(mapOf(0 to "5109-003")).aplicaDesoneradoFrete(doc)
+        servico("5109-003").aplicaDesoneradoFrete(doc)
 
         val majorado = frete(doc).LineTotal
         assertEquals(555.56, majorado, 0.001, "450 / (1 - 0,19)")
@@ -91,7 +91,7 @@ class DesoneradoFreteTest {
     @Test
     fun `linha de imposto sem U_Outros nao desfaz a majoracao`() {
         val doc = cotacao(450.0)
-        servico(mapOf(0 to "5109-003"), listOf(
+        servico("5109-003", listOf(
             mapOf("STCCode" to "5109-003", "STACode" to "IC17BI02", "STAType" to 25),
             mapOf("STCCode" to "5109-003", "STACode" to "IC17BI02", "STAType" to 10))
         ).aplicaDesoneradoFrete(doc)
@@ -102,7 +102,7 @@ class DesoneradoFreteTest {
     @Test
     fun `o negociado nao muda - e ele que a conferencia do contrato usa`() {
         val doc = cotacao(450.0)
-        servico(mapOf(0 to "5109-003")).aplicaDesoneradoFrete(doc)
+        servico("5109-003").aplicaDesoneradoFrete(doc)
 
         assertEquals(450.0, frete(doc).U_frete_negociado)
         assertEquals(450.0, doc.freteDespesaAdicional().toDouble())
@@ -112,7 +112,7 @@ class DesoneradoFreteTest {
     fun `TaxCode do Service Layer tem precedencia sobre a view`() {
         val doc = cotacao(450.0)
         frete(doc).TaxCode = "5109-003"
-        servico(mapOf()).aplicaDesoneradoFrete(doc)
+        servico(null).aplicaDesoneradoFrete(doc)
 
         assertEquals(555.56, frete(doc).LineTotal, 0.001)
     }
@@ -120,7 +120,7 @@ class DesoneradoFreteTest {
     @Test
     fun `sem codigo de imposto em lugar nenhum o LineTotal fica intacto`() {
         val doc = cotacao(450.0)
-        servico(mapOf()).aplicaDesoneradoFrete(doc)
+        servico(null).aplicaDesoneradoFrete(doc)
 
         assertEquals(450.0, frete(doc).LineTotal)
     }
@@ -129,7 +129,7 @@ class DesoneradoFreteTest {
     @Test
     fun `codigo sem imposto desonerado nao majora`() {
         val doc = cotacao(233.58)
-        servico(mapOf(0 to "5102-001"), listOf(
+        servico("5102-001", listOf(
             mapOf("STCCode" to "5102-001", "STACode" to "PI00BO02", "STAType" to 19))
         ).aplicaDesoneradoFrete(doc)
 
@@ -140,8 +140,39 @@ class DesoneradoFreteTest {
     @Test
     fun `despesa sem frete negociado nao e tocada`() {
         val doc = cotacao(null, lineTotal = 270.0)
-        servico(mapOf(0 to "5109-003")).aplicaDesoneradoFrete(doc)
+        servico("5109-003").aplicaDesoneradoFrete(doc)
 
         assertEquals(270.0, frete(doc).LineTotal)
+    }
+
+    /**
+     * A despesa que o Service Layer devolve pode vir com LineNum diferente de 0 - a cotacao
+     * 169635 vem com 1. Como a busca e por ExpnsCode, isso nao pode influenciar em nada: a
+     * LineNum da `*13` e a linha de PRODUTO que recebeu o rateio, numeracao sem relacao
+     * nenhuma com a colecao de despesas do cabecalho.
+     */
+    @Test
+    fun `LineNum da despesa nao entra na busca do codigo de imposto`() {
+        val doc = cotacao(450.0)
+        frete(doc).LineNum = 7
+
+        servico("5109-003").aplicaDesoneradoFrete(doc)
+
+        assertEquals(555.56, frete(doc).LineTotal, 0.001)
+    }
+
+    /**
+     * Rascunho carrega `docObjectCode` do destino (oOrders) mas `docEntry` da sequencia do
+     * ODRF. Consultar a view com isso leria a despesa de um PEDIDO REAL de mesmo numero e
+     * majoraria pelo imposto de outro documento - por isso nem chega a consultar.
+     */
+    @Test
+    fun `rascunho nao consulta a view e nao majora`() {
+        val doc = cotacao(450.0).also { it.docObjectCode = DocumentTypes.oOrders }
+
+        servico("5109-003").aplicaDesoneradoFrete(doc, rascunho = true)
+
+        assertEquals(450.0, frete(doc).LineTotal,
+            "rascunho tem a despesa em DRF13; majorar pelo RDR13 pegaria outro documento")
     }
 }

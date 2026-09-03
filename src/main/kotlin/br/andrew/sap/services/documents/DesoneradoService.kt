@@ -23,7 +23,13 @@ class DesoneradoService(val taxCodeService: SalesTaxCodeService,
 
     val logger: Logger = LoggerFactory.getLogger(DesoneradoService::class.java)
 
-    fun aplicaDesonerado(order : Document): Document {
+    /**
+     * [rascunho] tem que vir `true` quando o Document veio de `Drafts`. O rascunho carrega
+     * `docObjectCode` do documento de destino (oOrders), mas o `docEntry` dele e da sequencia
+     * do ODRF - mandar isso para o ramo RDR13 da view leria a despesa de um PEDIDO REAL que
+     * por acaso tenha o mesmo numero, e majoraria o frete pelo imposto de outro documento.
+     */
+    fun aplicaDesonerado(order : Document, rascunho : Boolean = false): Document {
         order.productsByTax().forEach{
             taxCodeService.getById("'${it.key}'").tryGetValue<SalesTaxCode>()
                 .salesTaxCodes_Lines?.filter { impostos.ids.contains(it.STAType) }
@@ -58,7 +64,7 @@ class DesoneradoService(val taxCodeService: SalesTaxCodeService,
                     }
                 }
         }
-        aplicaDesoneradoFrete(order)
+        aplicaDesoneradoFrete(order, rascunho)
         order.aplicaDescontoDesonerado()
         order.u_pedido_update = "0"
         return order
@@ -83,7 +89,7 @@ class DesoneradoService(val taxCodeService: SalesTaxCodeService,
      * Despesa sem U_frete_negociado (vazio ou zero) e documento anterior a essa funcionalidade:
      * fica intacta, nenhum recalculo e feito.
      */
-    fun aplicaDesoneradoFrete(order : Document) {
+    fun aplicaDesoneradoFrete(order : Document, rascunho : Boolean = false) {
         val fretes = order.documentAdditionalExpenses
             .filter { it.expenseCode == AdditionalExpenses.CODIGO_FRETE }
         if(fretes.isEmpty())
@@ -95,12 +101,19 @@ class DesoneradoService(val taxCodeService: SalesTaxCodeService,
             return
         }
 
-        val taxCodePorLinha = taxCodeDespesaService.porLinha(
+        //A view cobre QUT13/RDR13/INV13/RIN13. Rascunho guarda a despesa em DRF13, que ela
+        //ainda nao le - e consultar pelo docObjectCode dele acertaria um pedido real de mesmo
+        //numero. Melhor nao majorar do que majorar errado.
+        val taxCodeDoDocumento = if(rascunho) {
+            logger.warn("Documento {} e rascunho: a despesa dele vive em DRF13, que a view " +
+                "{} nao cobre - o frete nao sera majorado",
+                order.docNum, TaxCodeDespesaService.VIEW)
+            null
+        } else taxCodeDespesaService.taxCodeDoFrete(
             order.docObjectCode, order.docEntry, AdditionalExpenses.CODIGO_FRETE)
 
         comNegociado.forEach { despesa ->
-            val taxCode = despesa.TaxCode?.takeIf { it.isNotBlank() }
-                ?: taxCodePorLinha[despesa.LineNum]
+            val taxCode = despesa.TaxCode?.takeIf { it.isNotBlank() } ?: taxCodeDoDocumento
             if(taxCode.isNullOrBlank()) {
                 logger.warn("Frete do documento {} (LineNum {}) ficou sem codigo de imposto - " +
                     "nao foi majorado e o liquido vai sair abaixo do negociado",

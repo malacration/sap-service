@@ -44,7 +44,7 @@ class DraftCalculaDesoneradoSchedule(
         val resultado = draftService.get(Filter(predicados)).tryGetValues<Document>()
         resultado.forEach {
             val update = if(it.discountPercent == null || it.discountPercent!! == 0.0)
-                desoneradoService.aplicaDesonerado(it)
+                desoneradoService.aplicaDesonerado(it, rascunho = true)
             else
                 FalhaAoCalcularDesonerado()
             draftService.update(update,it.docEntry.toString())
