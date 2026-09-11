@@ -27,8 +27,11 @@ WHERE
     AND NS."DocDate" >= :lancamentoDe
     AND NS."DocDate" <= :lancamentoAte
     AND (C."U_Status"    = :status   OR NS."DocEntry" < :statusIsFilter)
+    AND (C."U_Status"    LIKE :statusPrefixo   OR NS."DocEntry" < :statusPrefixoIsFilter)
     AND (C."U_Cobrador"  = :cobrador OR NS."DocEntry" < :cobradorIsFilter)
+    AND (C."U_Cobrador"  LIKE :cobradorPrefixo OR NS."DocEntry" < :cobradorPrefixoIsFilter)
     AND (C."U_Situacao"  = :situacao OR NS."DocEntry" < :situacaoIsFilter)
+    AND (C."U_Situacao"  LIKE :situacaoPrefixo OR NS."DocEntry" < :situacaoPrefixoIsFilter)
     AND (C."Code" IS NULL OR NS."DocEntry" < :semAcompanhamentoIsFilter)
     AND (C."U_DataPromessa" <= :promessaVencidaAte OR NS."DocEntry" < :promessaVencidaIsFilter)
     AND (NS."BPLId"    = :filial   OR NS."BPLId"    < :filialIsFilter)

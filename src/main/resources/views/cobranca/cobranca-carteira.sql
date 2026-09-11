@@ -1,6 +1,6 @@
 SELECT
     NS."BPLId", NS."BPLName",
-    C."U_Status",
+    C."U_Status", C."U_Cobrador",
     sum(P."InsTotal")   AS "Total",
     sum(P."PaidToDate") AS "Pago",
     count(P."InstlmntID") AS "Parcelas"
@@ -10,7 +10,7 @@ FROM OINV NS
          ON C."U_Tipo" = 'NF' AND C."U_DocEntry" = NS."DocEntry" AND C."U_InstlmntID" = P."InstlmntID"
 WHERE
     NS."CANCELED" = 'N'
-    AND P."InsTotal" <> 0
+    AND P."InsTotal" > P."PaidToDate"
     AND P."Status" = 'O'
     AND P."DueDate" >= :vencimentoDe
     AND P."DueDate" <= :vencimentoAte
@@ -18,4 +18,4 @@ WHERE
     AND (NS."SlpCode" = :vendedor OR NS."SlpCode" < :vendedorIsFilter)
     AND NS."CardCode" NOT IN (SELECT "DflCust" FROM OBPL WHERE "DflCust" IS NOT NULL)
 GROUP BY
-    NS."BPLId", NS."BPLName", C."U_Status"
+    NS."BPLId", NS."BPLName", C."U_Status", C."U_Cobrador"

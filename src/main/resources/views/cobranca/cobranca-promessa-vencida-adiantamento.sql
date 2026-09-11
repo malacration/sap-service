@@ -10,7 +10,7 @@ FROM ODPI T0
          ON C."U_Tipo" = 'AD' AND C."U_DocEntry" = T0."DocEntry" AND C."U_InstlmntID" = P."InstlmntID"
 WHERE
     T0."CANCELED" = 'N'
-    AND P."InsTotal" <> 0
+    AND P."InsTotal" > P."PaidToDate"
     AND P."Status" = 'O'
     AND C."U_DataPromessa" <= :data
     AND (T0."BPLId"   = :filial   OR T0."BPLId"   < :filialIsFilter)

@@ -13,6 +13,18 @@ class CobrancaTitulosSqlTest {
     )
 
     @Test
+    fun `valor com acento ainda estreita a consulta no SAP, pelo prefixo ASCII`() {
+        // Sem isto, status="8 - EM NEGOCIACAO" (que soAscii recusa por causa do C-cedilha e do
+        // A-til) some do SQL e sobra so o filtro em Kotlin - o laco de buscarAte varre a base
+        // de 20 em 20 ate juntar 20 linhas aprovadas, e o drill-down do dashboard trava.
+        // O LIKE do prefixo devolve quase o conjunto exato ja do lado do SAP.
+        listOf("statusPrefixo", "cobradorPrefixo", "situacaoPrefixo").forEach { parametro ->
+            assertTrue(sql.contains("LIKE :$parametro"), "titulos-sql perdeu o filtro $parametro")
+            assertTrue(sql.contains(":${parametro}IsFilter"), "$parametro precisa ser opcional")
+        }
+    }
+
+    @Test
     fun `nao reintroduz a lista fixa de filiais do titulos-sql`() {
         assertFalse(
             sql.contains("BPLId\" in ("),

@@ -121,6 +121,63 @@ class CobrancaConsultaServiceTest {
     }
 
     @Test
+    fun `valor com acento vai como prefixo ASCII, pra consulta nao varrer a base inteira`() {
+        // O status continua saindo do filtro exato (teste acima), mas o pedaco ASCII dele vai
+        // como LIKE. "8 - EM NEGOCIA%" pega o conjunto quase exato ja no SAP; a igualdade final
+        // segue em passaNosFiltrosLocais. Sem isso o drill-down do dashboard pagina a base toda.
+        whenever(sqlQueriesService.execute(eq("cobranca-titulos.sql"), any<List<Parameter>>())).thenReturn(odataVazia())
+
+        service.listar(admin, status = "8 - EM NEGOCIAÇÃO", cobrador = "José Antônio")
+
+        val parametros = capturarParametros()
+        assertEquals("8 - EM NEGOCIA%", parametros["statusPrefixo"])
+        assertEquals(-1, parametros["statusPrefixoIsFilter"])
+        assertEquals("Jos%", parametros["cobradorPrefixo"])
+        assertEquals(-1, parametros["cobradorPrefixoIsFilter"])
+    }
+
+    @Test
+    fun `apostrofo nao vai pro SQL por nenhum dos dois caminhos`() {
+        // Parameter.toString() envolve o valor em aspas simples e so pula isso quando ele COMECA
+        // com uma. Apostrofo no meio produz cobrador='O'Brien' / cobradorPrefixo='D'%', que o
+        // parser recusa - a consulta falha em vez de so ficar lenta. Os dois nomes tem que cair
+        // no filtro em Kotlin, que compara o valor original e devolve a lista certa.
+        whenever(sqlQueriesService.execute(eq("cobranca-titulos.sql"), any<List<Parameter>>())).thenReturn(odataVazia())
+
+        service.listar(admin, cobrador = "O'Brien", situacao = "D'Ávila")
+
+        val parametros = capturarParametros()
+        assertEquals(Int.MAX_VALUE, parametros["cobradorIsFilter"])
+        assertEquals(Int.MAX_VALUE, parametros["cobradorPrefixoIsFilter"])
+        assertEquals(Int.MAX_VALUE, parametros["situacaoIsFilter"])
+        assertEquals(Int.MAX_VALUE, parametros["situacaoPrefixoIsFilter"])
+    }
+
+    @Test
+    fun `valor que ja passa inteiro no SQL nao ganha filtro de prefixo redundante`() {
+        whenever(sqlQueriesService.execute(eq("cobranca-titulos.sql"), any<List<Parameter>>())).thenReturn(odataVazia())
+
+        service.listar(admin, status = "3 - SEM CONTATO")
+
+        val parametros = capturarParametros()
+        assertEquals("3 - SEM CONTATO", parametros["status"])
+        assertEquals(Int.MAX_VALUE, parametros["statusPrefixoIsFilter"])
+    }
+
+    @Test
+    fun `incluirSemStatus desliga tambem o prefixo, senao o LIKE descarta o U_Status nulo`() {
+        // "1 - NAO INICIADO" e rotulo de tela pra U_Status vazio. Se o prefixo fosse mandado,
+        // o LIKE cortaria justamente as linhas sem status que esse filtro existe pra trazer.
+        whenever(sqlQueriesService.execute(eq("cobranca-titulos.sql"), any<List<Parameter>>())).thenReturn(odataVazia())
+
+        service.listar(admin, status = "4 - LIGAÇÃO", incluirSemStatus = true)
+
+        val parametros = capturarParametros()
+        assertEquals(Int.MAX_VALUE, parametros["statusIsFilter"])
+        assertEquals(Int.MAX_VALUE, parametros["statusPrefixoIsFilter"])
+    }
+
+    @Test
     fun `valor sem acento continua filtrando no SQL, com espaco e tudo`() {
         // Espaco o SAP aceita numa boa - so o nao-ASCII quebra. Nao pode virar filtro-em-Kotlin
         // no atacado, senao o laco de paginacao varre a base de 20 em 20 sem necessidade.

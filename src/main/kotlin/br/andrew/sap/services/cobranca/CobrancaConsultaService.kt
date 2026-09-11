@@ -36,6 +36,11 @@ class CobrancaConsultaService(val sqlQueriesService: SqlQueriesService) {
      * 400 code 704 "Parameter error.". Testado contra o Service Layer - vale pra UTF-8 e pra
      * Latin-1, nao existe encoding que passe. Espaco nao e problema, so o acento.
      *
+     * O apostrofo tambem fica de fora, por outro motivo: Parameter.toString() envolve o valor
+     * em aspas simples e so pula isso quando o valor COMECA com uma. Um apostrofo no meio
+     * ("O'Brien", "D'Avila") produz cobrador='O'Brien', que o parser recusa - a consulta falha
+     * em vez de so ficar lenta. Sem ele no SQL, o nome e filtrado em Kotlin e a tela funciona.
+     *
      * Rotulo de dominio ("8 - EM NEGOCIAÇÃO", "4 - LIGAÇÃO") e nome de cobrador tem acento o
      * tempo todo, entao esses filtros nao podem ir crus. Quando o valor tem acento a comparacao
      * sai do SQL e fica so em passaNosFiltrosLocais, que ja aplica exatamente o mesmo criterio -
@@ -43,7 +48,29 @@ class CobrancaConsultaService(val sqlQueriesService: SqlQueriesService) {
      * estourar erro na cara do cobrador.
      */
     private fun soAscii(valor: String?): String? =
-        valor?.takeIf { texto -> texto.all { it.code in 32..126 } }
+        valor?.takeIf { texto -> texto.all { it.code in 32..126 && it != '\'' } }
+
+    /**
+     * Prefixo ASCII do valor, pra LIKE. Quando soAscii recusa o valor, o filtro sai do SQL
+     * inteiro e sobra so passaNosFiltrosLocais - que roda DEPOIS de a pagina chegar do SAP.
+     * "8 - EM NEGOCIACAO" sao algumas dezenas de parcelas em mais de mil, entao o laco de
+     * buscarAte varre a base de 20 em 20 ate juntar 20 aprovadas: e por isso que o drill-down
+     * do dashboard demorava tanto pra abrir.
+     *
+     * O pedaco do valor antes do primeiro acento e ASCII puro e passa no parser. Mandar ele
+     * como LIKE 'prefixo%' devolve quase exatamente o conjunto certo no proprio SAP, e a
+     * igualdade exata continua sendo de passaNosFiltrosLocais - nada muda no resultado, so no
+     * numero de paginas ate juntar ele.
+     *
+     * Prefixo com menos de 2 caracteres nao seleciona o bastante pra pagar a ida; % e _ dentro
+     * dele virariam curinga de LIKE e alargariam o filtro em vez de estreitar. Nos dois casos
+     * volta null e o filtro fica so no Kotlin, como era antes.
+     */
+    private fun prefixoLike(valor: String?): String? {
+        if (valor == null || soAscii(valor) != null) return null
+        val prefixo = valor.takeWhile { it.code in 32..126 && it != '%' && it != '_' && it != '\'' }
+        return if (prefixo.length < 2) null else "$prefixo%"
+    }
 
     fun listar(
         auth: User,
@@ -89,6 +116,12 @@ class CobrancaConsultaService(val sqlQueriesService: SqlQueriesService) {
         val cobradorSql = soAscii(cobrador)
         val situacaoSql = soAscii(situacao)
 
+        // Complemento do de cima: o que nao passa inteiro vai como prefixo. incluirSemStatus
+        // desliga os dois, porque LIKE tambem descarta a linha de U_Status nulo que ele quer.
+        val statusPrefixo = if (incluirSemStatus == true) null else prefixoLike(status)
+        val cobradorPrefixo = prefixoLike(cobrador)
+        val situacaoPrefixo = prefixoLike(situacao)
+
         val parametrosBase = listOf(
             Parameter("data", data.toString()),
             Parameter("vendedor", vendedorEfetivo ?: Int.MAX_VALUE),
@@ -103,10 +136,16 @@ class CobrancaConsultaService(val sqlQueriesService: SqlQueriesService) {
             Parameter("lancamentoAte", lancamentoAte?.toString() ?: "9999-12-31"),
             Parameter("status", statusSql ?: SEM_FILTRO),
             Parameter("statusIsFilter", if (statusSql == null) Int.MAX_VALUE else -1),
+            Parameter("statusPrefixo", statusPrefixo ?: SEM_FILTRO),
+            Parameter("statusPrefixoIsFilter", if (statusPrefixo == null) Int.MAX_VALUE else -1),
             Parameter("cobrador", cobradorSql ?: SEM_FILTRO),
             Parameter("cobradorIsFilter", if (cobradorSql == null) Int.MAX_VALUE else -1),
+            Parameter("cobradorPrefixo", cobradorPrefixo ?: SEM_FILTRO),
+            Parameter("cobradorPrefixoIsFilter", if (cobradorPrefixo == null) Int.MAX_VALUE else -1),
             Parameter("situacao", situacaoSql ?: SEM_FILTRO),
             Parameter("situacaoIsFilter", if (situacaoSql == null) Int.MAX_VALUE else -1),
+            Parameter("situacaoPrefixo", situacaoPrefixo ?: SEM_FILTRO),
+            Parameter("situacaoPrefixoIsFilter", if (situacaoPrefixo == null) Int.MAX_VALUE else -1),
             Parameter("semAcompanhamentoIsFilter", if (semAcompanhamento == true) -1 else Int.MAX_VALUE),
             Parameter("promessaVencidaAte", (promessaVencidaAte ?: data).toString()),
             Parameter("promessaVencidaIsFilter", if (promessaVencidaAte == null) Int.MAX_VALUE else -1),

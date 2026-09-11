@@ -41,6 +41,7 @@ class CobrancaRecuperadoSap(
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 class CobrancaTrabalhadosSap(
+    @get:JsonProperty("BPLId") val BPLId: Int? = null,
     val U_Usuario: String? = null,
     val Titulos: Int? = null,
 ) {
@@ -52,6 +53,8 @@ class CobrancaTrabalhadosSap(
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 class CobrancaRecuperadoDiaSap(
     val DocDate: String,
+    @get:JsonProperty("BPLId") val BPLId: Int? = null,
+    val U_Cobrador: String? = null,
     val Recuperado: BigDecimal? = null,
     val DocEntry: Int,
 ) {
