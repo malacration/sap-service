@@ -80,6 +80,49 @@ class PainelVendasV2ServiceTest {
     }
 
     @Test
+    fun `filtro que comeca em 29 de fevereiro nao gera ponto fora do intervalo`() {
+        // 2024-02-29 menos um ano vira 2023-02-28, e o ADD_YEARS do SQL devolveria
+        // esse dia como 2024-02-28 - fora do que foi pedido. A faixa anterior
+        // comeca em 01/03 e o comparativo do 29/02 fica nulo: 2023 nao teve 29/02.
+        val client = mock<OdbcClient>()
+        whenever(client.consultar(any(), any(), any())).thenReturn(QueryResponse(rows = listOf(
+            mapOf("SERIE" to "ATUAL", "PERIODO" to "2024-02-29", "FATURAMENTO" to "300", "QTD_FATURAS" to 3),
+            mapOf("SERIE" to "ANTERIOR", "PERIODO" to "2024-03-01", "FATURAMENTO" to "90", "QTD_FATURAS" to 1),
+            // Mesmo que algo assim chegasse, nao vira ponto: esta fora do eixo pedido.
+            mapOf("SERIE" to "ANTERIOR", "PERIODO" to "2024-02-28", "FATURAMENTO" to "70", "QTD_FATURAS" to 1),
+        )))
+        val service = PainelVendasV2Service(client, listOf())
+        val pedido = PainelFiltro(LocalDate.of(2024, 2, 29), LocalDate.of(2024, 3, 1), granularidade = Granularidade.DIA)
+
+        val pontos = service.evolucao(usuario(), pedido)
+
+        assertEquals(listOf("2024-02-29", "2024-03-01"), pontos.map { it.periodo })
+        assertNull(pontos.first().anoAnterior, "2023 nao teve 29/02: sem comparativo")
+        assertEquals("300", pontos.first().faturamento.toPlainString())
+        assertEquals("90", pontos.last().anoAnterior!!.toPlainString())
+
+        val params = argumentCaptor<Map<String, Any?>>()
+        org.mockito.kotlin.verify(client).consultar(any(), params.capture(), any())
+        assertEquals("2023-03-01", params.firstValue["dataInicioAnterior"])
+        assertEquals("2023-03-01", params.firstValue["dataFimAnterior"])
+    }
+
+    @Test
+    fun `fora do 29 de fevereiro a faixa anterior continua sendo o mesmo dia um ano antes`() {
+        val client = mock<OdbcClient>()
+        whenever(client.consultar(any(), any(), any())).thenReturn(QueryResponse(rows = listOf()))
+        val service = PainelVendasV2Service(client, listOf())
+
+        service.evolucao(usuario(), filtro)
+
+        val params = argumentCaptor<Map<String, Any?>>()
+        org.mockito.kotlin.verify(client).consultar(any(), params.capture(), any())
+        assertEquals("2025-01-01", params.firstValue["dataInicioAnterior"])
+        assertEquals("2025-01-31", params.firstValue["dataFimAnterior"])
+        assertEquals(LocalDate.of(2023, 2, 28), service.inicioAnterior(LocalDate.of(2024, 2, 28)))
+    }
+
+    @Test
     fun `mes gera todos os meses do filtro, mesmo com fatura so no ultimo`() {
         val client = mock<OdbcClient>()
         whenever(client.consultar(any(), any(), any())).thenReturn(QueryResponse(rows = listOf(

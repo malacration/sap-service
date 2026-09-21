@@ -120,9 +120,13 @@ class PainelVendasV2Service(
         // com o que veio das duas series deixaria buracos: o grafico pularia datas
         // e ligaria pontos nao vizinhos como se fossem sequencia. Por isso a lista
         // de periodos sai do FILTRO, como o painel v1 ja fazia com os 12 meses.
-        val periodos = LinkedHashSet(periodosDoFiltro(filtro))
-        // Defensivo: periodo que a consulta trouxe fora da faixa gerada nao some.
-        periodos += (atual.keys + anterior.keys)
+        val eixo = periodosDoFiltro(filtro)
+        val periodos = LinkedHashSet(eixo)
+        // Defensivo: periodo da serie ATUAL fora da faixa gerada nao some - ele e
+        // faturamento real do intervalo pedido. Ja o comparativo so existe em
+        // funcao do eixo: um rotulo fora dele (29/02 aparado para 28/02, por
+        // exemplo) viraria um ponto que o usuario nao pediu.
+        periodos += atual.keys
 
         return periodos.sorted().map { periodo ->
             val ponto = atual[periodo]
@@ -135,6 +139,21 @@ class PainelVendasV2Service(
                 anoAnterior = anterior[periodo],
             )
         }
+    }
+
+    /**
+     * Inicio da faixa do ano anterior, garantindo que TUDO que voltar de la caia
+     * dentro do eixo pedido depois do ADD_YEARS do SQL.
+     *
+     * 29/02 e o caso que quebra: `2024-02-29.minusYears(1)` da 2023-02-28 (Java
+     * apara), e o SQL devolve esse dia deslocado para 2024-02-28 - um ponto FORA
+     * do intervalo pedido, enquanto o proprio 29/02 ficaria sem comparativo. Nesse
+     * caso a faixa anterior comeca no dia seguinte (01/03), e o 29/02 fica sem
+     * comparativo mesmo: 2023 nao teve 29 de fevereiro, e inventar um seria mentir.
+     */
+    internal fun inicioAnterior(dataInicio: LocalDate): LocalDate {
+        val umAnoAntes = dataInicio.minusYears(1)
+        return if (umAnoAntes.plusYears(1).isBefore(dataInicio)) umAnoAntes.plusDays(1) else umAnoAntes
     }
 
     /**
@@ -286,7 +305,7 @@ class PainelVendasV2Service(
             "dataInicio" to filtro.dataInicio.toString(),
             "dataFim" to filtro.dataFim.toString(),
             // Mesmo recorte, um ano atras - comparativo de sazonalidade.
-            "dataInicioAnterior" to filtro.dataInicio.minusYears(1).toString(),
+            "dataInicioAnterior" to inicioAnterior(filtro.dataInicio).toString(),
             "dataFimAnterior" to filtro.dataFim.minusYears(1).toString(),
             // Lista viaja como colecao: o NamedParameterJdbcTemplate do sap-odbc
             // expande em IN (...). Confirmado por BindListaTest la.
