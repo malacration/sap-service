@@ -40,11 +40,21 @@ class CobrancaAdiantamentoSap(
     val U_Observacao: String?,
     val U_DataAcao: String?,
     val U_DataPromessa: String?,
+    val DataPagamento: String? = null,
+    val ValorPago: BigDecimal? = null,
+    val ObservacaoPagamento: String? = null,
 ) {
     fun toDto(hoje: LocalDate = LocalDate.now()): CobrancaTitulo {
         val saldo = InsTotal.subtract(PaidToDate)
         val diasAtraso = ChronoUnit.DAYS.between(LocalDate.parse(DueDate, DateTimeFormatter.BASIC_ISO_DATE), hoje)
-        val situacaoSap = if (StatusParcela == "O") "ABERTO" else "PAGO"
+        // PAGO_PARCIAL e so uma subdivisao visual de ABERTO (StatusParcela continua "O" -
+        // a parcela nao fechou no SAP), nunca troca pra "PAGO" so por ter recebido algo: quem
+        // decide fechado/aberto sempre e o Status oficial, nao o valor recebido.
+        val situacaoSap = when {
+            StatusParcela != "O" -> "PAGO"
+            ValorPago != null -> "PAGO_PARCIAL"
+            else -> "ABERTO"
+        }
         return CobrancaTitulo(
             Tipo = CobrancaRegistro.TIPO_ADIANTAMENTO,
             DocEntry = DocEntry,
@@ -75,6 +85,9 @@ class CobrancaAdiantamentoSap(
             U_Observacao = U_Observacao,
             U_DataAcao = U_DataAcao,
             U_DataPromessa = U_DataPromessa,
+            DataPagamento = DataPagamento,
+            ValorPago = ValorPago,
+            ObservacaoPagamento = ObservacaoPagamento,
         )
     }
 }

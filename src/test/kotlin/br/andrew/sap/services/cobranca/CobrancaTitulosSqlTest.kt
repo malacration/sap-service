@@ -119,11 +119,29 @@ class CobrancaTitulosSqlTest {
         // coluna do LEFT JOIN - os dois sao nulos pro titulo nunca acompanhado. Se o escape
         // fosse na propria coluna, ligar QUALQUER outro filtro faria esses titulos sumirem.
         assertTrue(sql.contains("C.\"Code\" IS NULL OR NS.\"DocEntry\" < :semAcompanhamentoIsFilter"))
+        assertTrue(sql.contains("C.\"Code\" IS NOT NULL OR NS.\"DocEntry\" < :comAcompanhamentoIsFilter"))
         assertTrue(sql.contains("C.\"U_DataPromessa\" <= :promessaVencidaAte OR NS.\"DocEntry\" < :promessaVencidaIsFilter"))
         assertFalse(
             sql.contains("C.\"U_DataPromessa\" < :promessaVencidaIsFilter"),
             "escape em coluna de LEFT JOIN faria o titulo sem promessa desaparecer"
         )
+    }
+
+    @Test
+    fun `toggle de a vista compara DocDate com DueDate, desligado por padrao`() {
+        // A vista = lancado e vencido no mesmo dia. NS.DocDate/DueDate nunca sao nulos (vem de
+        // INNER JOIN), entao o escape podia ser em qualquer um dos dois - segue o padrao do
+        // arquivo usando NS."DocEntry".
+        assertTrue(sql.contains("NS.\"DocDate\" <> P.\"DueDate\" OR NS.\"DocEntry\" < :ocultarAvistaIsFilter"))
+    }
+
+    @Test
+    fun `filtro de data de pagamento usa PR DocDate com escape em coluna nao-nula`() {
+        // PR vem de LEFT JOIN (pode ser nulo pra titulo sem pagamento) - mesmo motivo de
+        // semAcompanhamento/promessaVencidaAte: escapar na propria coluna faria todo titulo
+        // sem pagamento sumir quando o filtro estivesse desligado.
+        assertTrue(sql.contains("PR.\"DocDate\" >= :dataPagamentoDe OR NS.\"DocEntry\" < :dataPagamentoDeIsFilter"))
+        assertTrue(sql.contains("PR.\"DocDate\" <= :dataPagamentoAte OR NS.\"DocEntry\" < :dataPagamentoAteIsFilter"))
     }
 
     @Test
@@ -144,6 +162,77 @@ class CobrancaTitulosSqlTest {
         assertFalse(sql.contains("DAYS_BETWEEN"))
         assertFalse(sql.contains("CASE WHEN"))
         assertFalse(sql.contains("CURRENT_DATE"))
+    }
+
+    @Test
+    fun `traz data, valor e observacao do ultimo recebimento sem poder derrubar o titulo`() {
+        // LEFT JOIN (nao INNER): titulo sem nenhum recebimento tem que continuar na lista,
+        // so com essas 3 colunas em branco - mesmo motivo do LEFT JOIN com OCRD.
+        assertTrue(sql.contains("LEFT JOIN RCT2 PG"))
+        assertTrue(sql.contains("LEFT JOIN ORCT PR"))
+        assertTrue(sql.contains("PR.\"DocDate\" AS \"DataPagamento\""))
+        assertTrue(sql.contains("PG.\"SumApplied\" AS \"ValorPago\""))
+        assertTrue(sql.contains("PR.\"Comments\" AS \"ObservacaoPagamento\""))
+    }
+
+    @Test
+    fun `liga o recebimento a parcela pelo mesmo join de parcelas-pagas e recuperado`() {
+        // RCT2."DocNum" e o DocEntry do ORCT (nao o numero do documento) - o mesmo cuidado
+        // documentado em CobrancaDashboardSqlTest para o join do card Recuperado.
+        assertTrue(sql.contains("PG.\"DocEntry\" = NS.\"DocEntry\" AND PG.\"InstId\" = P.\"InstlmntID\" AND PG.\"InvType\" = 13"))
+        assertTrue(sql.contains("PR.\"DocEntry\" = PG.\"DocNum\""))
+    }
+
+    @Test
+    fun `recebimento cancelado nao vaza ValorPago nem duplica a parcela`() {
+        // Bug reportado: o filtro de cancelado so estava no LEFT JOIN ORCT (PR), nao no LEFT
+        // JOIN RCT2 (PG). PG."SumApplied" e selecionado direto de PG, entao um recebimento
+        // cancelado (PG preenchido, PR nulo) vazava o valor cancelado como ValorPago; e se a
+        // parcela tambem tivesse um recebimento valido, a parcela duplicava (uma linha pro
+        // cancelado escapando por "PR IS NULL", outra pro valido). O filtro de cancelado tem
+        // que estar no proprio JOIN de PG, senao PG casa com o recebimento cancelado.
+        assertTrue(
+            sql.contains(
+                "LEFT JOIN RCT2 PG\n" +
+                    "         ON PG.\"DocEntry\" = NS.\"DocEntry\" AND PG.\"InstId\" = P.\"InstlmntID\" AND PG.\"InvType\" = 13\n" +
+                    "         AND EXISTS (\n" +
+                    "             SELECT 1 FROM ORCT PRX WHERE PRX.\"DocEntry\" = PG.\"DocNum\" AND (PRX.\"Canceled\" = 'N' OR PRX.\"Canceled\" IS NULL)\n" +
+                    "         )"
+            )
+        )
+    }
+
+    @Test
+    fun `parcela com mais de um recebimento (pagamento parcial) traz so o mais recente, sem duplicar a linha`() {
+        // Uma parcela pode ter varios RCT2 (recebimentos parciais); sem esse desempate por
+        // NOT EXISTS a linha do titulo duplicaria uma vez por recebimento na lista.
+        assertTrue(
+            sql.contains(
+                "AND (\n" +
+                    "        PG.\"DocEntry\" IS NULL\n" +
+                    "        OR NOT EXISTS ("
+            )
+        )
+        assertTrue(sql.contains("PG2.\"DocEntry\" = PG.\"DocEntry\" AND PG2.\"InstId\" = PG.\"InstId\" AND PG2.\"InvType\" = 13"))
+        assertTrue(sql.contains("PR2.\"DocDate\" > PR.\"DocDate\""))
+        assertTrue(sql.contains("PG2.\"DocNum\" > PG.\"DocNum\""))
+    }
+
+    @Test
+    fun `o desempate do ultimo pagamento respeita a janela de dataPagamento`() {
+        // Sem isto a parcela paga DUAS vezes (uma dentro do periodo, outra depois) sumia inteira
+        // do recorte: a linha do pagamento de dentro perdia o desempate pro pagamento posterior,
+        // e a do posterior caia no filtro de data - subtracao silenciosa contra o card. Com o
+        // filtro desligado os sentinelas (1900-01-01 / 9999-12-31) deixam a subquery identica.
+        assertTrue(sql.contains("AND PR2.\"DocDate\" >= :dataPagamentoDe"))
+        assertTrue(sql.contains("AND PR2.\"DocDate\" <= :dataPagamentoAte"))
+    }
+
+    @Test
+    fun `nao usa RCT2 LineNum - coluna nao existe nesse schema do SAP B1`() {
+        // Provisionamento real ja quebrou com "Column 'LineNum' from table 'RCT2' not exist."
+        // (SAP B1 Service Layer, erro 703). O desempate usa so DocDate + DocNum do pagamento.
+        assertFalse(sql.contains("LineNum"))
     }
 }
 
@@ -211,7 +300,19 @@ class CobrancaTitulosAdiantamentoSqlTest {
     fun `os filtros do drill-down existem aqui tambem, senao a consulta quebra pro adiantamento`() {
         // As duas views recebem a MESMA lista de parametros em CobrancaConsultaService.
         assertTrue(sql.contains("C.\"Code\" IS NULL OR T0.\"DocEntry\" < :semAcompanhamentoIsFilter"))
+        assertTrue(sql.contains("C.\"Code\" IS NOT NULL OR T0.\"DocEntry\" < :comAcompanhamentoIsFilter"))
         assertTrue(sql.contains("C.\"U_DataPromessa\" <= :promessaVencidaAte OR T0.\"DocEntry\" < :promessaVencidaIsFilter"))
+    }
+
+    @Test
+    fun `toggle de a vista tambem existe aqui, senao a consulta quebra pro adiantamento`() {
+        assertTrue(sql.contains("T0.\"DocDate\" <> P.\"DueDate\" OR T0.\"DocEntry\" < :ocultarAvistaIsFilter"))
+    }
+
+    @Test
+    fun `filtro de data de pagamento tambem existe aqui, senao a consulta quebra pro adiantamento`() {
+        assertTrue(sql.contains("PR.\"DocDate\" >= :dataPagamentoDe OR T0.\"DocEntry\" < :dataPagamentoDeIsFilter"))
+        assertTrue(sql.contains("PR.\"DocDate\" <= :dataPagamentoAte OR T0.\"DocEntry\" < :dataPagamentoAteIsFilter"))
     }
 
     @Test
@@ -227,6 +328,59 @@ class CobrancaTitulosAdiantamentoSqlTest {
         assertFalse(sql.contains("COALESCE"))
         assertFalse(sql.contains("CAST("))
         assertFalse(sql.contains("IFNULL"))
+    }
+
+    @Test
+    fun `traz data, valor e observacao do ultimo recebimento do adiantamento sem poder derrubar a linha`() {
+        assertTrue(sql.contains("LEFT JOIN RCT2 PG"))
+        assertTrue(sql.contains("LEFT JOIN ORCT PR"))
+        assertTrue(sql.contains("PR.\"DocDate\" AS \"DataPagamento\""))
+        assertTrue(sql.contains("PG.\"SumApplied\" AS \"ValorPago\""))
+        assertTrue(sql.contains("PR.\"Comments\" AS \"ObservacaoPagamento\""))
+    }
+
+    @Test
+    fun `usa o InvType 203 ao ligar o recebimento, pra nao colidir com o recebimento de fatura`() {
+        assertTrue(sql.contains("PG.\"DocEntry\" = T0.\"DocEntry\" AND PG.\"InstId\" = P.\"InstlmntID\" AND PG.\"InvType\" = 203"))
+        assertTrue(sql.contains("PR.\"DocEntry\" = PG.\"DocNum\""))
+    }
+
+    @Test
+    fun `recebimento cancelado do adiantamento tambem nao vaza ValorPago nem duplica a parcela`() {
+        assertTrue(
+            sql.contains(
+                "LEFT JOIN RCT2 PG\n" +
+                    "         ON PG.\"DocEntry\" = T0.\"DocEntry\" AND PG.\"InstId\" = P.\"InstlmntID\" AND PG.\"InvType\" = 203\n" +
+                    "         AND EXISTS (\n" +
+                    "             SELECT 1 FROM ORCT PRX WHERE PRX.\"DocEntry\" = PG.\"DocNum\" AND (PRX.\"Canceled\" = 'N' OR PRX.\"Canceled\" IS NULL)\n" +
+                    "         )"
+            )
+        )
+    }
+
+    @Test
+    fun `adiantamento com mais de um recebimento tambem traz so o mais recente, sem duplicar a linha`() {
+        assertTrue(
+            sql.contains(
+                "AND (\n" +
+                    "        PG.\"DocEntry\" IS NULL\n" +
+                    "        OR NOT EXISTS ("
+            )
+        )
+        assertTrue(sql.contains("PG2.\"DocEntry\" = PG.\"DocEntry\" AND PG2.\"InstId\" = PG.\"InstId\" AND PG2.\"InvType\" = 203"))
+        assertTrue(sql.contains("PR2.\"DocDate\" > PR.\"DocDate\""))
+        assertTrue(sql.contains("PG2.\"DocNum\" > PG.\"DocNum\""))
+    }
+
+    @Test
+    fun `o desempate do adiantamento tambem respeita a janela de dataPagamento`() {
+        assertTrue(sql.contains("AND PR2.\"DocDate\" >= :dataPagamentoDe"))
+        assertTrue(sql.contains("AND PR2.\"DocDate\" <= :dataPagamentoAte"))
+    }
+
+    @Test
+    fun `nao usa RCT2 LineNum aqui tambem - coluna nao existe nesse schema do SAP B1`() {
+        assertFalse(sql.contains("LineNum"))
     }
 }
 

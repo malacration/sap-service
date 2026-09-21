@@ -6,13 +6,21 @@ SELECT
     V."SlpCode", V."SlpName",
     P."InstlmntID", P."InsTotal", P."PaidToDate", P."DueDate", P."Status" AS "StatusParcela",
     C."U_Status", C."U_Cobrador", C."U_Acao", C."U_Situacao",
-    C."U_Ocorrencia", C."U_Observacao", C."U_DataAcao", C."U_DataPromessa"
+    C."U_Ocorrencia", C."U_Observacao", C."U_DataAcao", C."U_DataPromessa",
+    PR."DocDate" AS "DataPagamento", PG."SumApplied" AS "ValorPago", PR."Comments" AS "ObservacaoPagamento"
 FROM OINV NS
     INNER JOIN INV6 P ON P."DocEntry" = NS."DocEntry"
     LEFT JOIN OSLP V ON V."SlpCode" = NS."SlpCode"
     LEFT JOIN OCRD CL ON CL."CardCode" = NS."CardCode"
     LEFT JOIN "@COB_TITULO" C
          ON C."U_Tipo" = 'NF' AND C."U_DocEntry" = NS."DocEntry" AND C."U_InstlmntID" = P."InstlmntID"
+    LEFT JOIN RCT2 PG
+         ON PG."DocEntry" = NS."DocEntry" AND PG."InstId" = P."InstlmntID" AND PG."InvType" = 13
+         AND EXISTS (
+             SELECT 1 FROM ORCT PRX WHERE PRX."DocEntry" = PG."DocNum" AND (PRX."Canceled" = 'N' OR PRX."Canceled" IS NULL)
+         )
+    LEFT JOIN ORCT PR
+         ON PR."DocEntry" = PG."DocNum"
 WHERE
     NS."CANCELED" = 'N'
     AND P."InsTotal" <> 0
@@ -33,9 +41,25 @@ WHERE
     AND (C."U_Situacao"  = :situacao OR NS."DocEntry" < :situacaoIsFilter)
     AND (C."U_Situacao"  LIKE :situacaoPrefixo OR NS."DocEntry" < :situacaoPrefixoIsFilter)
     AND (C."Code" IS NULL OR NS."DocEntry" < :semAcompanhamentoIsFilter)
+    AND (C."Code" IS NOT NULL OR NS."DocEntry" < :comAcompanhamentoIsFilter)
     AND (C."U_DataPromessa" <= :promessaVencidaAte OR NS."DocEntry" < :promessaVencidaIsFilter)
+    AND (NS."DocDate" <> P."DueDate" OR NS."DocEntry" < :ocultarAvistaIsFilter)
+    AND (PR."DocDate" >= :dataPagamentoDe OR NS."DocEntry" < :dataPagamentoDeIsFilter)
+    AND (PR."DocDate" <= :dataPagamentoAte OR NS."DocEntry" < :dataPagamentoAteIsFilter)
     AND (NS."BPLId"    = :filial   OR NS."BPLId"    < :filialIsFilter)
     AND (NS."SlpCode"  = :vendedor OR NS."SlpCode"  < :vendedorIsFilter)
     AND (NS."CardCode" = :cliente  OR NS."CardCode" < :clienteIsFilter)
     AND NS."CardCode" NOT IN (SELECT "DflCust" FROM OBPL WHERE "DflCust" IS NOT NULL)
+    AND (
+        PG."DocEntry" IS NULL
+        OR NOT EXISTS (
+            SELECT 1 FROM RCT2 PG2
+                INNER JOIN ORCT PR2 ON PR2."DocEntry" = PG2."DocNum" AND (PR2."Canceled" = 'N' OR PR2."Canceled" IS NULL)
+            WHERE PG2."DocEntry" = PG."DocEntry" AND PG2."InstId" = PG."InstId" AND PG2."InvType" = 13
+              AND PR2."DocDate" >= :dataPagamentoDe
+              AND PR2."DocDate" <= :dataPagamentoAte
+              AND (PR2."DocDate" > PR."DocDate"
+                   OR (PR2."DocDate" = PR."DocDate" AND PG2."DocNum" > PG."DocNum"))
+        )
+    )
 ORDER BY P."DueDate", NS."DocNum"

@@ -10,6 +10,7 @@ import br.andrew.sap.model.cobranca.CobrancaHistoricoLinha
 import br.andrew.sap.model.cobranca.CobrancaMes
 import br.andrew.sap.model.cobranca.CobrancaRegistro
 import br.andrew.sap.model.cobranca.CobrancaTitulo
+import br.andrew.sap.model.cobranca.CobrancaTitulosTotal
 import br.andrew.sap.services.cobranca.CobrancaConsultaService
 import br.andrew.sap.services.cobranca.CobrancaDashboardService
 import br.andrew.sap.services.cobranca.CobrancaDominioService
@@ -59,7 +60,16 @@ class CobrancaController(
         // (lancamentoMes=2026-07&lancamentoMes=2026-08); um valor unico continua valendo.
         @RequestParam(required = false) lancamentoMes: List<String>?,
         @RequestParam(required = false) semAcompanhamento: Boolean?,
+        // Inverso do de cima: so titulo que ja tem registro de cobranca. E o recorte do card
+        // "Recuperado" do dashboard, que so conta recuperacao atribuida a cobranca.
+        @RequestParam(required = false) comAcompanhamento: Boolean?,
         @RequestParam(required = false) promessaVencidaAte: String?,
+        // A vista = lancado e vencido no mesmo dia (DocDate = DueDate).
+        @RequestParam(required = false) ocultarAvista: Boolean?,
+        // Recorte do drill-down do card "Recuperado" do dashboard: mesmo periodo (de/ate) que
+        // o usuario esta vendo la, comparado com a data do recebimento (nao vencimento).
+        @RequestParam(required = false) dataPagamentoDe: String?,
+        @RequestParam(required = false) dataPagamentoAte: String?,
         @RequestParam(required = false) tipo: String?,
         @RequestParam(defaultValue = "0") pagina: Int,
         @RequestParam(defaultValue = "20") tamanho: Int,
@@ -82,12 +92,72 @@ class CobrancaController(
             vencimentoAte = vencimentoAte?.let { LocalDate.parse(it) },
             lancamentoMeses = lancamentoMes?.map { YearMonth.parse(it) },
             semAcompanhamento = semAcompanhamento,
+            comAcompanhamento = comAcompanhamento,
             promessaVencidaAte = promessaVencidaAte?.let { LocalDate.parse(it) },
+            ocultarAvista = ocultarAvista,
+            dataPagamentoDe = dataPagamentoDe?.let { LocalDate.parse(it) },
+            dataPagamentoAte = dataPagamentoAte?.let { LocalDate.parse(it) },
             tipo = tipo,
             pagina = pagina,
             tamanhoPagina = tamanho,
         )
         return ResponseEntity.ok(resultado)
+    }
+
+    /**
+     * Total do filtro inteiro, nao so da pagina. Mesmos parametros do /titulos (menos paginacao):
+     * a tela manda o filtro que esta na mao e recebe o total que aquele filtro produziria.
+     */
+    @GetMapping("titulos/totais")
+    fun totaisDosTitulos(
+        auth: Authentication,
+        @RequestParam(required = false) filial: List<Int>?,
+        @RequestParam(required = false) vendedor: Int?,
+        @RequestParam(required = false) cliente: String?,
+        @RequestParam(required = false) data: String?,
+        @RequestParam(required = false) status: String?,
+        @RequestParam(required = false) incluirSemStatus: Boolean?,
+        @RequestParam(required = false) cobrador: String?,
+        @RequestParam(required = false) situacao: String?,
+        @RequestParam(required = false) situacaoSap: String?,
+        @RequestParam(required = false) vencimentoDe: String?,
+        @RequestParam(required = false) vencimentoAte: String?,
+        @RequestParam(required = false) lancamentoMes: List<String>?,
+        @RequestParam(required = false) semAcompanhamento: Boolean?,
+        @RequestParam(required = false) comAcompanhamento: Boolean?,
+        @RequestParam(required = false) promessaVencidaAte: String?,
+        @RequestParam(required = false) ocultarAvista: Boolean?,
+        @RequestParam(required = false) dataPagamentoDe: String?,
+        @RequestParam(required = false) dataPagamentoAte: String?,
+        @RequestParam(required = false) tipo: String?,
+    ): ResponseEntity<CobrancaTitulosTotal> {
+        if (auth !is User)
+            return ResponseEntity.noContent().build()
+
+        return ResponseEntity.ok(
+            consultaService.totalizar(
+                auth = auth,
+                filiais = filial,
+                vendedor = vendedor,
+                cliente = cliente,
+                data = data?.let { LocalDate.parse(it) } ?: LocalDate.now(),
+                status = status,
+                incluirSemStatus = incluirSemStatus,
+                cobrador = cobrador,
+                situacao = situacao,
+                situacaoSap = situacaoSap,
+                vencimentoDe = vencimentoDe?.let { LocalDate.parse(it) },
+                vencimentoAte = vencimentoAte?.let { LocalDate.parse(it) },
+                lancamentoMeses = lancamentoMes?.map { YearMonth.parse(it) },
+                semAcompanhamento = semAcompanhamento,
+                comAcompanhamento = comAcompanhamento,
+                promessaVencidaAte = promessaVencidaAte?.let { LocalDate.parse(it) },
+                ocultarAvista = ocultarAvista,
+                dataPagamentoDe = dataPagamentoDe?.let { LocalDate.parse(it) },
+                dataPagamentoAte = dataPagamentoAte?.let { LocalDate.parse(it) },
+                tipo = tipo,
+            )
+        )
     }
 
     @GetMapping("titulos/{tipo}/{docEntry}/{instlmntId}/historico")

@@ -40,6 +40,9 @@ class CobrancaTitulo(
     val U_Observacao: String?,
     val U_DataAcao: String?,
     val U_DataPromessa: String?,
+    val DataPagamento: String? = null,
+    val ValorPago: BigDecimal? = null,
+    val ObservacaoPagamento: String? = null,
 ) {
     val code: String
         get() = CobrancaRegistro.code(Tipo, DocEntry, InstlmntID)
