@@ -143,8 +143,9 @@ class CobrancaController(
     @GetMapping("dashboard")
     fun dashboard(
         auth: Authentication,
-        @RequestParam(required = false) filial: Int?,
+        @RequestParam(required = false) filial: List<Int>?,
         @RequestParam(required = false) vendedor: Int?,
+        @RequestParam(required = false) cobrador: String?,
         @RequestParam(required = false) de: String?,
         @RequestParam(required = false) ate: String?,
     ): ResponseEntity<CobrancaDashboard> {
@@ -154,8 +155,9 @@ class CobrancaController(
         return ResponseEntity.ok(
             dashboardService.resumo(
                 auth = auth,
-                filial = filial,
+                filiais = filial,
                 vendedor = vendedor,
+                cobrador = cobrador,
                 de = de?.let { LocalDate.parse(it) } ?: hoje.withDayOfMonth(1),
                 ate = ate?.let { LocalDate.parse(it) } ?: hoje,
                 hoje = hoje,
@@ -166,8 +168,9 @@ class CobrancaController(
     @GetMapping("dashboard/evolucao")
     fun evolucao(
         auth: Authentication,
-        @RequestParam(required = false) filial: Int?,
+        @RequestParam(required = false) filial: List<Int>?,
         @RequestParam(required = false) vendedor: Int?,
+        @RequestParam(required = false) cobrador: String?,
         @RequestParam(defaultValue = "6") meses: Int,
     ): ResponseEntity<List<CobrancaMes>> {
         if (auth !is User)
@@ -175,8 +178,9 @@ class CobrancaController(
         return ResponseEntity.ok(
             dashboardService.evolucao(
                 auth = auth,
-                filial = filial,
+                filiais = filial,
                 vendedor = vendedor,
+                cobrador = cobrador,
                 meses = meses,
                 hoje = LocalDate.now(),
             )

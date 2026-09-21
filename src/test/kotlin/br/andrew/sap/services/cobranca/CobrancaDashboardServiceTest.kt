@@ -338,7 +338,8 @@ class CobrancaDashboardServiceTest {
         Recuperado = BigDecimal(valor), Documentos = documentos,
     )
 
-    private fun trabalhados(usuario: String, titulos: Int) = CobrancaTrabalhadosSap(usuario, titulos)
+    private fun trabalhados(usuario: String, titulos: Int) =
+        CobrancaTrabalhadosSap(U_Usuario = usuario, Titulos = titulos)
 
     private fun dia(docDate: String, valor: String, docEntry: Int) =
         CobrancaRecuperadoDiaSap(DocDate = docDate, Recuperado = BigDecimal(valor), DocEntry = docEntry)

@@ -64,6 +64,8 @@ roles:
       actions: ["get"]
     - url: "/cobranca/titulos/*/*/*/historico"
       actions: ["get"]
+    - url: "/invoice/**"
+      actions: ["get"]
 
   vendedor_admin:
     - url: "/down-payment/contrato-venda-futura/*/pix"
@@ -114,9 +116,13 @@ roles:
       actions: ["*"]
     - url: "/prazo/tabela/**"
       actions: ["get"]
+    - url: "/pedido-venda/listar"
+      actions: ["get"]
     - url: "/pedido-venda/angular"
       actions: ["*"]
     - url: "/quotation/**"
+      actions: ["get"]
+    - url: "/invoice/**"
       actions: ["get"]
   sysfeed:
     - url: "/sysfeed/fornecedores/pendentes"
@@ -138,6 +144,16 @@ roles:
     # carona. Quem pode remover de fato e so o autor da linha, conferido em CobrancaService.
     - url: "/cobranca/titulos/*/*/*/historico/*"
       actions: ["delete"]
+    - url: "/business-partners/**"
+      actions: ["get"]
+    - url: "/contrato-venda-futura/**"
+      actions: ["get"]
+    - url: "/future-sales/pedidos/*"
+      actions: ["get"]
+    - url: "/down-payment/contrato-venda-futura/*"
+      actions: ["get"]
+    - url: "/invoice/**"
+      actions: ["get"]
     - url: "/business-partners/search"
       actions: ["*"]
     - url: "/branch"
@@ -294,4 +310,10 @@ roles:
     - url: "/tax/**/pdf"
       actions: ["get"]
     - url: "/installment/**/paid"
+      actions: ["get"]
+
+  liberacao_trava:
+    - url: "/trava/otp"
+      actions: ["get"]
+    - url: "/trava/regras"
       actions: ["get"]

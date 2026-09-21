@@ -73,3 +73,11 @@ odbc.query-timeout-seconds=30
 # por usuario (HEM10 / papel filial-N do Keycloak) continua valendo por cima.
 # Vazio = sem restricao adicional.
 painel-vendas.filiais=
+
+# OTP de liberacao das travas (TransactionNotification). Deve ser IGUAL ao segredo
+# da funcao HANA fnValidaOtpBypass (repo sap-sql-sovis). Troque em producao.
+trava.otp.secret=TROCAR_ESTE_SEGREDO
+trava.otp.window-seconds=120
+trava.otp.length=6
+# Provisiona/semeia o catalogo de regras de trava (UDO TRAVA_REGRA) no boot.
+fields.trava=true

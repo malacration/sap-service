@@ -9,7 +9,7 @@ FROM OINV NS
          ON C."U_Tipo" = 'NF' AND C."U_DocEntry" = NS."DocEntry" AND C."U_InstlmntID" = P."InstlmntID"
 WHERE
     NS."CANCELED" = 'N'
-    AND P."InsTotal" <> 0
+    AND P."InsTotal" > P."PaidToDate"
     AND P."Status" = 'O'
     AND P."DueDate" <= :data
     AND C."Code" IS NULL

@@ -29,8 +29,11 @@ WHERE
     AND T0."DocDate" >= :lancamentoDe
     AND T0."DocDate" <= :lancamentoAte
     AND (C."U_Status"    = :status   OR T0."DocEntry" < :statusIsFilter)
+    AND (C."U_Status"    LIKE :statusPrefixo   OR T0."DocEntry" < :statusPrefixoIsFilter)
     AND (C."U_Cobrador"  = :cobrador OR T0."DocEntry" < :cobradorIsFilter)
+    AND (C."U_Cobrador"  LIKE :cobradorPrefixo OR T0."DocEntry" < :cobradorPrefixoIsFilter)
     AND (C."U_Situacao"  = :situacao OR T0."DocEntry" < :situacaoIsFilter)
+    AND (C."U_Situacao"  LIKE :situacaoPrefixo OR T0."DocEntry" < :situacaoPrefixoIsFilter)
     AND (C."Code" IS NULL OR T0."DocEntry" < :semAcompanhamentoIsFilter)
     AND (C."U_DataPromessa" <= :promessaVencidaAte OR T0."DocEntry" < :promessaVencidaIsFilter)
     AND (T0."BPLId"    = :filial   OR T0."BPLId"    < :filialIsFilter)

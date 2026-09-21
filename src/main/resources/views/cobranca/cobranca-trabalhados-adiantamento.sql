@@ -1,4 +1,5 @@
 SELECT
+    T0."BPLId",
     H."U_Usuario",
     count(DISTINCT H."Code") AS "Titulos"
 FROM "@COB_TITULO_L" H
@@ -12,4 +13,4 @@ WHERE
     AND (T0."SlpCode" = :vendedor OR T0."SlpCode" < :vendedorIsFilter)
     AND T0."CardCode" NOT IN (SELECT "DflCust" FROM OBPL WHERE "DflCust" IS NOT NULL)
 GROUP BY
-    H."U_Usuario"
+    T0."BPLId", H."U_Usuario"
