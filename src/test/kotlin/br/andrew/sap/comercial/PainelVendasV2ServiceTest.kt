@@ -42,10 +42,55 @@ class PainelVendasV2ServiceTest {
             mapOf("SERIE" to "ANTERIOR", "PERIODO" to "2026-01-12", "FATURAMENTO" to "50", "QTD_FATURAS" to 1),
         )))
         val pontos = PainelVendasV2Service(client).evolucao(usuario(), filtro.copy(granularidade = Granularidade.SEMANA))
-        assertEquals(listOf("2026-01-05", "2026-01-12"), pontos.map { it.periodo })
-        assertEquals("150", pontos.first().anoAnterior!!.toPlainString())
-        assertEquals(0, pontos.last().faturamento.signum())
-        assertEquals("50", pontos.last().anoAnterior!!.toPlainString())
+        // Todas as semanas do filtro (01/01 a 31/01/2026), comecando na segunda-feira
+        // da semana da data inicial - inclusive as que nao tiveram documento algum.
+        assertEquals(
+            listOf("2025-12-29", "2026-01-05", "2026-01-12", "2026-01-19", "2026-01-26"),
+            pontos.map { it.periodo },
+        )
+        val porPeriodo = pontos.associateBy { it.periodo }
+        assertEquals("150", porPeriodo["2026-01-05"]!!.anoAnterior!!.toPlainString())
+        assertEquals("200", porPeriodo["2026-01-05"]!!.faturamento.toPlainString())
+        assertEquals(0, porPeriodo["2026-01-12"]!!.faturamento.signum())
+        assertEquals("50", porPeriodo["2026-01-12"]!!.anoAnterior!!.toPlainString())
+    }
+
+    @Test
+    fun `periodo sem movimento em nenhuma das series continua na serie`() {
+        // Sem isso o grafico pula datas e liga pontos nao vizinhos como se fossem
+        // uma sequencia - o v1 ja gerava os 12 meses justamente por isso.
+        val client = mock<OdbcClient>()
+        whenever(client.consultar(any(), any(), any())).thenReturn(QueryResponse(rows = listOf(
+            mapOf("SERIE" to "ATUAL", "PERIODO" to "2026-01-03", "FATURAMENTO" to "100", "QTD_FATURAS" to 1),
+        )))
+        val pontos = PainelVendasV2Service(client).evolucao(
+            usuario(),
+            PainelFiltro(LocalDate.of(2026, 1, 1), LocalDate.of(2026, 1, 5), granularidade = Granularidade.DIA),
+        )
+
+        assertEquals(
+            listOf("2026-01-01", "2026-01-02", "2026-01-03", "2026-01-04", "2026-01-05"),
+            pontos.map { it.periodo },
+        )
+        val vazio = pontos.first()
+        assertEquals(0, vazio.faturamento.signum())
+        assertEquals(0, vazio.qtdFaturas)
+        assertNull(vazio.anoAnterior)
+        assertEquals("100", pontos[2].faturamento.toPlainString())
+    }
+
+    @Test
+    fun `mes gera todos os meses do filtro, mesmo com fatura so no ultimo`() {
+        val client = mock<OdbcClient>()
+        whenever(client.consultar(any(), any(), any())).thenReturn(QueryResponse(rows = listOf(
+            mapOf("SERIE" to "ATUAL", "PERIODO" to "2026-03", "FATURAMENTO" to "10", "QTD_FATURAS" to 1),
+        )))
+        val pontos = PainelVendasV2Service(client).evolucao(
+            usuario(),
+            PainelFiltro(LocalDate.of(2026, 1, 15), LocalDate.of(2026, 3, 10)),
+        )
+        assertEquals(listOf("2026-01", "2026-02", "2026-03"), pontos.map { it.periodo })
+        assertEquals("10", pontos.last().faturamento.toPlainString())
     }
 
 

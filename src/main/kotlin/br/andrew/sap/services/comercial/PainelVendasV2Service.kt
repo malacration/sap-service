@@ -12,6 +12,8 @@ import org.springframework.stereotype.Service
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.time.LocalDate
+import java.time.YearMonth
+import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 
 /**
@@ -114,16 +116,67 @@ class PainelVendasV2Service(
             }
         }
 
-        // A serie anterior pode ter periodo que a atual nao tem (ex.: mes sem
-        // venda este ano). Esses pontos entram com faturamento zero, senao a
-        // linha do ano passado apareceria cortada sem explicacao.
-        (anterior.keys - atual.keys).forEach { periodo ->
-            atual[periodo] = PontoEvolucao(periodo, BigDecimal.ZERO, 0, null)
-        }
+        // O GROUP BY nao devolve linha para periodo sem documento. Preencher so
+        // com o que veio das duas series deixaria buracos: o grafico pularia datas
+        // e ligaria pontos nao vizinhos como se fossem sequencia. Por isso a lista
+        // de periodos sai do FILTRO, como o painel v1 ja fazia com os 12 meses.
+        val periodos = LinkedHashSet(periodosDoFiltro(filtro))
+        // Defensivo: periodo que a consulta trouxe fora da faixa gerada nao some.
+        periodos += (atual.keys + anterior.keys)
 
-        return atual.values
-            .map { it.copy(anoAnterior = anterior[it.periodo]) }
-            .sortedBy { it.periodo }
+        return periodos.sorted().map { periodo ->
+            val ponto = atual[periodo]
+            PontoEvolucao(
+                periodo = periodo,
+                faturamento = ponto?.faturamento ?: BigDecimal.ZERO,
+                qtdFaturas = ponto?.qtdFaturas ?: 0,
+                // Continua nulo quando nao ha comparativo: zero afirmaria "vendeu
+                // zero no ano passado", que nem sempre e verdade (ex.: filial nova).
+                anoAnterior = anterior[periodo],
+            )
+        }
+    }
+
+    /**
+     * Todos os rotulos de periodo entre `dataInicio` e `dataFim`, no MESMO formato
+     * que o SQL produz (ver `fragmentoGranularidade`):
+     *  - DIA    -> cada dia, `YYYY-MM-DD`
+     *  - SEMANA -> a segunda-feira de cada semana, `YYYY-MM-DD` (pode ser anterior
+     *              a dataInicio quando o filtro comeca no meio da semana)
+     *  - MES    -> `YYYY-MM`
+     *
+     * A quantidade e limitada pelos tetos ja validados em `validar` (92 dias, 366
+     * para semana, 1096 para mes), entao nao ha risco de lista gigante aqui.
+     */
+    internal fun periodosDoFiltro(filtro: PainelFiltro): List<String> = when (filtro.granularidade) {
+        Granularidade.DIA -> geraSequencia(filtro.dataInicio, filtro.dataFim, { it.plusDays(1) }) {
+            it.format(DateTimeFormatter.ISO_LOCAL_DATE)
+        }
+        Granularidade.SEMANA -> geraSequencia(
+            filtro.dataInicio.minusDays((filtro.dataInicio.dayOfWeek.value - 1).toLong()),
+            filtro.dataFim,
+            { it.plusWeeks(1) },
+        ) { it.format(DateTimeFormatter.ISO_LOCAL_DATE) }
+        Granularidade.MES -> geraSequencia(
+            filtro.dataInicio.withDayOfMonth(1),
+            filtro.dataFim,
+            { it.plusMonths(1) },
+        ) { YearMonth.from(it).toString() }
+    }
+
+    private fun geraSequencia(
+        inicio: LocalDate,
+        fim: LocalDate,
+        proxima: (LocalDate) -> LocalDate,
+        rotulo: (LocalDate) -> String,
+    ): List<String> {
+        val rotulos = mutableListOf<String>()
+        var data = inicio
+        while (!data.isAfter(fim)) {
+            rotulos += rotulo(data)
+            data = proxima(data)
+        }
+        return rotulos
     }
 
     // ---------------------------------------------------------------- escopo
