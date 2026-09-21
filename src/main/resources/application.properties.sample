@@ -18,6 +18,11 @@ pix.schedule.consulta-interval-minutes=5
 # Vale para o PIX de titulo (contas a receber) e para o PIX dos boletos de contrato de venda futura.
 pix.juros.mora.percent=0.1
 
+# Bloqueia retirada de venda futura quando ha titulo vencido do proprio contrato.
+# Variavel de ambiente equivalente: VENDA_FUTURA_BLOQUEIO_RETIRADA_INADIMPLENCIA=false
+# para desativar. Se nao for informada, o bloqueio permanece ligado.
+venda-futura.bloqueio-retirada-inadimplencia=true
+
 # ----- Autenticacao via Keycloak (toggle) -----
 # Quando habilitado, o backend passa a aceitar tokens do Keycloak (RS256, via
 # JWKS) e o /auth/config instrui o front-sap a usar o fluxo OIDC. Os tokens
@@ -47,6 +52,27 @@ jobs.aprovacao-automatica.enable=false
 jobs.fluxo-prazo.enable=false
 # Atualizacao da cotacao de moeda no Bacen (CurrencyScheduled) - diaria a meia-noite
 jobs.cotacao-moeda.enable=false
+
+# ----- Gateway de consultas SQL (sap-odbc) -----
+# Usado pelo painel de vendas v2, que precisa AGREGAR no banco (GROUP BY, funcoes
+# de data, janelas) - coisa que o SQLQueries do Service Layer nao aceita.
+#
+# Estas credenciais ficam APENAS aqui, no backend. O front-sap nunca fala com o
+# sap-odbc: ele chama /painel-vendas/v2/** e este servico aplica o recorte de
+# filial e vendedor antes de consultar. Se a chave fosse para o navegador,
+# qualquer usuario a leria no devtools e consultaria o gateway direto, sem
+# nenhum filtro de permissao.
+odbc.base-url=http://localhost:8080
+odbc.api-key=
+# Timeout pedido ao gateway por consulta, em segundos.
+odbc.query-timeout-seconds=30
+
+# ----- Painel de vendas v2 -----
+# Limita QUAIS filiais o painel pode consultar neste ambiente. E limite de
+# deploy, nao permissao de usuario: nem o papel admin passa dele. A permissao
+# por usuario (HEM10 / papel filial-N do Keycloak) continua valendo por cima.
+# Vazio = sem restricao adicional.
+painel-vendas.filiais=
 
 # OTP de liberacao das travas (TransactionNotification). Deve ser IGUAL ao segredo
 # da funcao HANA fnValidaOtpBypass (repo sap-sql-sovis). Troque em producao.
