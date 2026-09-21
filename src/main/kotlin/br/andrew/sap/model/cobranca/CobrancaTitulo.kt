@@ -43,6 +43,11 @@ class CobrancaTitulo(
     val DataPagamento: String? = null,
     val ValorPago: BigDecimal? = null,
     val ObservacaoPagamento: String? = null,
+    // Soma de TODOS os recebimentos da parcela dentro de [dataPagamentoDe, dataPagamentoAte],
+    // nao so o mais recente (ValorPago). Preenchida depois da consulta principal, a partir de
+    // uma view separada (cobranca-recebimentos-periodo.sql) - existe pra o total da lista poder
+    // bater com o card "Recuperado", que soma por recebimento, nao por parcela.
+    var ValorRecebidoNoPeriodo: BigDecimal? = null,
 ) {
     val code: String
         get() = CobrancaRegistro.code(Tipo, DocEntry, InstlmntID)

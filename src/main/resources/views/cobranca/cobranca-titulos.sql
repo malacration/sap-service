@@ -41,7 +41,17 @@ WHERE
     AND (C."U_Situacao"  = :situacao OR NS."DocEntry" < :situacaoIsFilter)
     AND (C."U_Situacao"  LIKE :situacaoPrefixo OR NS."DocEntry" < :situacaoPrefixoIsFilter)
     AND (C."Code" IS NULL OR NS."DocEntry" < :semAcompanhamentoIsFilter)
-    AND (C."Code" IS NOT NULL OR NS."DocEntry" < :comAcompanhamentoIsFilter)
+    AND (
+        NS."DocEntry" < :comAcompanhamentoIsFilter
+        OR EXISTS (
+            SELECT 1 FROM RCT2 PGX
+                INNER JOIN ORCT PRX ON PRX."DocEntry" = PGX."DocNum" AND (PRX."Canceled" = 'N' OR PRX."Canceled" IS NULL)
+                INNER JOIN "@COB_TITULO" CX ON CX."U_Tipo" = 'NF' AND CX."U_DocEntry" = PGX."DocEntry" AND CX."U_InstlmntID" = PGX."InstId"
+                INNER JOIN "@COB_TITULO_L" HX ON HX."Code" = CX."Code" AND HX."U_Data" <= PRX."DocDate"
+            WHERE PGX."DocEntry" = NS."DocEntry" AND PGX."InstId" = P."InstlmntID" AND PGX."InvType" = 13
+              AND PRX."DocDate" >= :dataPagamentoDe AND PRX."DocDate" <= :dataPagamentoAte
+        )
+    )
     AND (C."U_DataPromessa" <= :promessaVencidaAte OR NS."DocEntry" < :promessaVencidaIsFilter)
     AND (NS."DocDate" <> P."DueDate" OR NS."DocEntry" < :ocultarAvistaIsFilter)
     AND (PR."DocDate" >= :dataPagamentoDe OR NS."DocEntry" < :dataPagamentoDeIsFilter)

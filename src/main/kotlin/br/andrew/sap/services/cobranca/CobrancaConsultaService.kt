@@ -4,10 +4,12 @@ import br.andrew.sap.infrastructure.odata.Parameter
 import br.andrew.sap.model.authentication.User
 import br.andrew.sap.model.cobranca.CobrancaAdiantamentoSap
 import br.andrew.sap.model.cobranca.CobrancaCobradorSap
+import br.andrew.sap.model.cobranca.CobrancaRecebimentoPeriodoSap
 import br.andrew.sap.model.cobranca.CobrancaRegistro
 import br.andrew.sap.model.cobranca.CobrancaTitulo
 import br.andrew.sap.model.cobranca.CobrancaTituloSap
 import br.andrew.sap.model.cobranca.CobrancaTituloVendedorSap
+import br.andrew.sap.model.cobranca.CobrancaTitulosPagina
 import br.andrew.sap.model.cobranca.CobrancaTitulosTotal
 import br.andrew.sap.services.abstracts.SqlQueriesService
 import org.springframework.stereotype.Service
@@ -114,7 +116,42 @@ class CobrancaConsultaService(val sqlQueriesService: SqlQueriesService) {
         tipo: String? = null,
         pagina: Int = 0,
         tamanhoPagina: Int = 20,
-    ): List<CobrancaTitulo> {
+    ): List<CobrancaTitulo> = listarComTruncamento(
+        auth, filiais, vendedor, cliente, data, status, incluirSemStatus, cobrador, situacao,
+        situacaoSap, vencimentoDe, vencimentoAte, lancamentoMeses, semAcompanhamento,
+        comAcompanhamento, promessaVencidaAte, ocultarAvista, dataPagamentoDe, dataPagamentoAte,
+        tipo, pagina, tamanhoPagina,
+    ).Titulos
+
+    /**
+     * Mesma pagina do listar, mas avisando se a busca de ValorRecebidoNoPeriodo (view auxiliar,
+     * teto proprio de paginas) parou incompleta - sem isso uma parcela com recebimento real
+     * aparecia com esse campo nulo em silencio, e o rodape ignorava aquele pagamento sem avisar.
+     */
+    fun listarComTruncamento(
+        auth: User,
+        filiais: List<Int>? = null,
+        vendedor: Int? = null,
+        cliente: String? = null,
+        data: LocalDate = LocalDate.now(),
+        status: String? = null,
+        incluirSemStatus: Boolean? = null,
+        cobrador: String? = null,
+        situacao: String? = null,
+        situacaoSap: String? = null,
+        vencimentoDe: LocalDate? = null,
+        vencimentoAte: LocalDate? = null,
+        lancamentoMeses: List<YearMonth>? = null,
+        semAcompanhamento: Boolean? = null,
+        comAcompanhamento: Boolean? = null,
+        promessaVencidaAte: LocalDate? = null,
+        ocultarAvista: Boolean? = null,
+        dataPagamentoDe: LocalDate? = null,
+        dataPagamentoAte: LocalDate? = null,
+        tipo: String? = null,
+        pagina: Int = 0,
+        tamanhoPagina: Int = 20,
+    ): CobrancaTitulosPagina {
         val busca = buscarCombinado(
             auth, filiais, vendedor, cliente, data, status, incluirSemStatus, cobrador, situacao,
             situacaoSap, vencimentoDe, vencimentoAte, lancamentoMeses, semAcompanhamento,
@@ -123,7 +160,7 @@ class CobrancaConsultaService(val sqlQueriesService: SqlQueriesService) {
         )
         val inicio = (pagina * tamanhoPagina).coerceAtMost(busca.linhas.size)
         val fim = (inicio + tamanhoPagina).coerceAtMost(busca.linhas.size)
-        return busca.linhas.subList(inicio, fim)
+        return CobrancaTitulosPagina(busca.linhas.subList(inicio, fim), busca.truncado)
     }
 
     /**
@@ -163,13 +200,22 @@ class CobrancaConsultaService(val sqlQueriesService: SqlQueriesService) {
             comAcompanhamento, promessaVencidaAte, ocultarAvista, dataPagamentoDe, dataPagamentoAte,
             tipo, alvo = Int.MAX_VALUE, maxPaginasSap = TETO_PAGINAS_SAP,
         )
+        // Com a janela de data de pagamento ligada, o total precisa contar CADA recebimento
+        // dentro dela (ValorRecebidoNoPeriodo), nao so o mais recente de cada parcela
+        // (ValorPago) - senao parcela paga duas vezes no mesmo periodo fica subcontada contra
+        // o card "Recuperado", que soma por recebimento. Sem janela nenhuma pra comparar com,
+        // ValorPago (o ultimo pagamento) continua sendo o unico numero que faz sentido.
+        val usaJanelaDePagamento = dataPagamentoDe != null || dataPagamentoAte != null
+        fun valorRecebido(titulo: CobrancaTitulo): BigDecimal? =
+            if (usaJanelaDePagamento) titulo.ValorRecebidoNoPeriodo else titulo.ValorPago
+
         return CobrancaTitulosTotal(
             Parcelas = busca.linhas.size,
             Saldo = busca.linhas.fold(BigDecimal.ZERO) { soma, titulo -> soma.add(titulo.Saldo) },
             ValorPago = busca.linhas.fold(BigDecimal.ZERO) { soma, titulo ->
-                soma.add(titulo.ValorPago ?: BigDecimal.ZERO)
+                soma.add(valorRecebido(titulo) ?: BigDecimal.ZERO)
             },
-            ParcelasComPagamento = busca.linhas.count { it.ValorPago != null },
+            ParcelasComPagamento = busca.linhas.count { valorRecebido(it) != null },
             Truncado = busca.truncado,
         )
     }
@@ -299,7 +345,92 @@ class CobrancaConsultaService(val sqlQueriesService: SqlQueriesService) {
             faturas.linhas + adiantamentos.linhas
         }.sortedWith(compareBy({ it.DueDate }, { it.DocNum }))
 
+        // ValorRecebidoNoPeriodo so faz sentido - e so e buscado - com a janela de pagamento
+        // ligada (ver o comentario em CobrancaTitulo). Sem ela, a busca acima ja e o suficiente.
+        // Com comAcompanhamento ligado (drill-down do card "Recuperado"), a soma tambem exige
+        // acao ANTES de cada recebimento - a mesma exigencia do card - senao um titulo cobrado
+        // SO DEPOIS de ja ter recebido inflava o total contra o card (nao so o card via
+        // @COB_TITULO_L.U_Data <= data do pagamento, comAcompanhamento sozinho so exigia "tem
+        // alguma acao, a qualquer momento").
+        if (dataPagamentoDe != null || dataPagamentoAte != null) {
+            val somenteComAcaoAntes = comAcompanhamento == true
+            if (tipo != CobrancaRegistro.TIPO_ADIANTAMENTO) {
+                val recebidoNf = somarRecebimentosNoPeriodoPorFiliais(
+                    "cobranca-recebimentos-periodo.sql", filiais, vendedorEfetivo, cliente,
+                    dataPagamentoDe, dataPagamentoAte, somenteComAcaoAntes,
+                )
+                truncado = truncado || recebidoNf.truncado
+                combinado.filter { it.Tipo == CobrancaRegistro.TIPO_NOTA_FISCAL }
+                    .forEach { it.ValorRecebidoNoPeriodo = recebidoNf.porParcela[it.DocEntry to it.InstlmntID] }
+            }
+            if (tipo != CobrancaRegistro.TIPO_NOTA_FISCAL) {
+                val recebidoAd = somarRecebimentosNoPeriodoPorFiliais(
+                    "cobranca-recebimentos-periodo-adiantamento.sql", filiais, vendedorEfetivo, cliente,
+                    dataPagamentoDe, dataPagamentoAte, somenteComAcaoAntes,
+                )
+                truncado = truncado || recebidoAd.truncado
+                combinado.filter { it.Tipo == CobrancaRegistro.TIPO_ADIANTAMENTO }
+                    .forEach { it.ValorRecebidoNoPeriodo = recebidoAd.porParcela[it.DocEntry to it.InstlmntID] }
+            }
+        }
+
         return BuscaCombinada(combinado, truncado)
+    }
+
+    /** Soma por (DocEntry, InstId) e se a varredura (de QUALQUER filial) bateu no teto de paginas. */
+    private class RecebimentosNoPeriodo(val porParcela: Map<Pair<Int, Int>, BigDecimal>, val truncado: Boolean)
+
+    /**
+     * Soma de TODOS os recebimentos (nao so o mais recente por parcela) dentro da janela de
+     * pagamento, agrupados por (DocEntry, InstId). View separada e mais simples que a dos
+     * titulos: SAP recusou (erro 701, "Invalid SQL syntax") uma subquery escalar com sum() na
+     * lista de SELECT da view principal - esse parser aceita subquery como predicado (WHERE/ON),
+     * nao como valor de coluna.
+     *
+     * Uma consulta por filial escolhida - igual buscarCombinado faz pra titulos - pra nao varrer
+     * recebimento de filial/cliente/vendedor fora do filtro e gastar o teto de paginas com
+     * dado que nunca ia ser usado. E igualmente importante propagar o truncado: sem isso, um
+     * teto batido no meio da varredura devolvia mapa incompleto sem avisar, e uma parcela paga
+     * so na pagina 101 aparecia com ValorRecebidoNoPeriodo nulo em vez de sinalizar total parcial.
+     */
+    private fun somarRecebimentosNoPeriodoPorFiliais(
+        view: String,
+        filiais: List<Int>?,
+        vendedorEfetivo: Int?,
+        cliente: String?,
+        dataPagamentoDe: LocalDate?,
+        dataPagamentoAte: LocalDate?,
+        somenteComAcaoAntes: Boolean,
+    ): RecebimentosNoPeriodo {
+        val linhas = mutableListOf<CobrancaRecebimentoPeriodoSap>()
+        var truncado = false
+        filiaisEfetivas(filiais).forEach { filial ->
+            val parametros = listOf(
+                Parameter("dataPagamentoDe", (dataPagamentoDe ?: LocalDate.of(1900, 1, 1)).toString()),
+                Parameter("dataPagamentoAte", (dataPagamentoAte ?: LocalDate.of(9999, 12, 31)).toString()),
+                Parameter("acaoAntesPagamentoIsFilter", if (somenteComAcaoAntes) -1 else Int.MAX_VALUE),
+                Parameter("vendedor", vendedorEfetivo ?: Int.MAX_VALUE),
+                Parameter("vendedorIsFilter", if (vendedorEfetivo == null) Int.MAX_VALUE else -1),
+                Parameter("cliente", cliente ?: SEM_FILTRO),
+                Parameter("clienteIsFilter", if (cliente == null) SEM_FILTRO else ""),
+            ) + parametrosDeFilial(filial)
+
+            var paginaSap = sqlQueriesService.execute(view, parametros)
+            var paginas = 0
+            while (paginaSap != null) {
+                linhas.addAll(paginaSap.tryGetValues<CobrancaRecebimentoPeriodoSap>())
+                paginas++
+                if (!paginaSap.hasNext()) break
+                if (paginas >= TETO_PAGINAS_SAP) {
+                    truncado = true
+                    break
+                }
+                paginaSap = sqlQueriesService.nextLink(paginaSap.nextLink())
+            }
+        }
+        val porParcela = linhas.groupingBy { it.DocEntry to it.InstId }
+            .fold(BigDecimal.ZERO) { total, linha -> total.add(linha.SumApplied) }
+        return RecebimentosNoPeriodo(porParcela, truncado)
     }
 
     // Nenhuma filial escolhida = uma consulta com o filtro desligado (null), nao consulta nenhuma.

@@ -9,7 +9,7 @@ import br.andrew.sap.model.cobranca.CobrancaDominio
 import br.andrew.sap.model.cobranca.CobrancaHistoricoLinha
 import br.andrew.sap.model.cobranca.CobrancaMes
 import br.andrew.sap.model.cobranca.CobrancaRegistro
-import br.andrew.sap.model.cobranca.CobrancaTitulo
+import br.andrew.sap.model.cobranca.CobrancaTitulosPagina
 import br.andrew.sap.model.cobranca.CobrancaTitulosTotal
 import br.andrew.sap.services.cobranca.CobrancaConsultaService
 import br.andrew.sap.services.cobranca.CobrancaDashboardService
@@ -73,11 +73,11 @@ class CobrancaController(
         @RequestParam(required = false) tipo: String?,
         @RequestParam(defaultValue = "0") pagina: Int,
         @RequestParam(defaultValue = "20") tamanho: Int,
-    ): ResponseEntity<List<CobrancaTitulo>> {
+    ): ResponseEntity<CobrancaTitulosPagina> {
         if (auth !is User)
             return ResponseEntity.noContent().build()
 
-        val resultado = consultaService.listar(
+        val resultado = consultaService.listarComTruncamento(
             auth = auth,
             filiais = filial,
             vendedor = vendedor,
