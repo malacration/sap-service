@@ -17,17 +17,23 @@ import br.andrew.sap.services.abstracts.SqlQueriesService
 import br.andrew.sap.services.documents.DownPaymentService
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import org.springframework.web.client.RestTemplate
 import java.math.BigDecimal
+import java.time.LocalDate
 import br.andrew.sap.services.security.AuthService
+import br.andrew.sap.model.dto.TituloVencidoDto
 
 @Service
 class ContratoVendaFuturaService(restTemplate: RestTemplate,
                                  val adiantamentoService : DownPaymentService,
                                  val sqlQueriesService : SqlQueriesService,
                                  env: SapEnvrioment,
-                                 authService : AuthService) : EntitiesService<Contrato>(env,restTemplate, authService) {
+                                 authService : AuthService,
+                                 @Value("\${venda-futura.bloqueio-retirada-inadimplencia:true}")
+                                 val bloqueioRetiradaInadimplencia: Boolean = true
+) : EntitiesService<Contrato>(env,restTemplate, authService) {
 
     val logger = LoggerFactory.getLogger(ContratoVendaFuturaService::class.java)
 
@@ -98,6 +104,27 @@ class ContratoVendaFuturaService(restTemplate: RestTemplate,
         contrato.SalesEmployeeName = cabecalho.SalesEmployeeName
         contrato.OrderDocNum = cabecalho.OrderDocNum
         return contrato
+    }
+
+    /**
+     * Verifica a inadimplencia somente nos titulos gerados pelo contrato informado. Titulos
+     * vencidos de outros contratos ou de outras vendas do mesmo cliente nao bloqueiam a retirada.
+     * A carencia de tres dias e a mesma usada pela regra geral de autorizacao de vendas.
+     */
+    fun temTituloVencidoNoContrato(cardCode: String, idContrato: Int): Boolean {
+        if (!bloqueioRetiradaInadimplencia || cardCode.isBlank())
+            return false
+
+        val parametros = listOf(
+            Parameter("cardCode", "'$cardCode'"),
+            Parameter("idContrato", idContrato),
+            Parameter("dataLimite", "'${LocalDate.now().minusDays(3)}'")
+        )
+        val resultado = sqlQueriesService
+            .execute("cliente-em-atraso-venda-futura.sql", parametros)
+            ?.tryGetValues<TituloVencidoDto>()
+            ?: throw Exception("Não foi possível validar a inadimplência do contrato $idContrato.")
+        return resultado.isNotEmpty()
     }
 
     fun saveOnly(contrato: Contrato): Contrato {

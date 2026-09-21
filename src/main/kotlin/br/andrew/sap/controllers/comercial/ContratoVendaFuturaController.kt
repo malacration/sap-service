@@ -136,6 +136,8 @@ class ContratoVendaFuturaController(
         val contrato = service.get(Filter(
             Predicate("DocEntry",pedidoRetirada.docEntryVendaFutura,Condicao.EQUAL)
         )).tryGetValues<Contrato>().firstOrNull() ?: throw  Exception("O contrato nao foi encontrado")
+        if (service.temTituloVencidoNoContrato(contrato.U_cardCode, contrato.DocEntry!!))
+            throw Exception("Retirada não permitida: o cliente possui título deste contrato vencido há mais de 3 dias.")
         val boletos = adiantamentoService.getByContratoVendaFutura(contrato.DocEntry!!)
         if (boletos.isEmpty())
             throw Exception("Não existem adiantamentos criados para o contrato ${contrato.DocEntry}. Emita os boletos antes de realizar a retirada.")
