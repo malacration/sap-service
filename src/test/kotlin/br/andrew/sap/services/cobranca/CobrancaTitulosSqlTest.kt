@@ -119,12 +119,23 @@ class CobrancaTitulosSqlTest {
         // coluna do LEFT JOIN - os dois sao nulos pro titulo nunca acompanhado. Se o escape
         // fosse na propria coluna, ligar QUALQUER outro filtro faria esses titulos sumirem.
         assertTrue(sql.contains("C.\"Code\" IS NULL OR NS.\"DocEntry\" < :semAcompanhamentoIsFilter"))
-        assertTrue(sql.contains("C.\"Code\" IS NOT NULL OR NS.\"DocEntry\" < :comAcompanhamentoIsFilter"))
+        assertTrue(sql.contains("NS.\"DocEntry\" < :comAcompanhamentoIsFilter"))
         assertTrue(sql.contains("C.\"U_DataPromessa\" <= :promessaVencidaAte OR NS.\"DocEntry\" < :promessaVencidaIsFilter"))
         assertFalse(
             sql.contains("C.\"U_DataPromessa\" < :promessaVencidaIsFilter"),
             "escape em coluna de LEFT JOIN faria o titulo sem promessa desaparecer"
         )
+    }
+
+    @Test
+    fun `comAcompanhamento exige acao ANTES de algum recebimento no periodo - o mesmo criterio do card, nao so ter historico`() {
+        // "Alguma acao, a qualquer momento" deixava passar titulo cobrado SO DEPOIS de ja ter
+        // recebido - esse titulo nunca compos o card (que exige @COB_TITULO_L.U_Data <= data do
+        // pagamento). Sem essa linha, o drill-down do Recuperado mostrava linha que nao pertence
+        // ao card.
+        assertTrue(sql.contains("INNER JOIN \"@COB_TITULO\" CX ON CX.\"U_Tipo\" = 'NF' AND CX.\"U_DocEntry\" = PGX.\"DocEntry\" AND CX.\"U_InstlmntID\" = PGX.\"InstId\""))
+        assertTrue(sql.contains("INNER JOIN \"@COB_TITULO_L\" HX ON HX.\"Code\" = CX.\"Code\" AND HX.\"U_Data\" <= PRX.\"DocDate\""))
+        assertTrue(sql.contains("WHERE PGX.\"DocEntry\" = NS.\"DocEntry\" AND PGX.\"InstId\" = P.\"InstlmntID\" AND PGX.\"InvType\" = 13"))
     }
 
     @Test
@@ -300,8 +311,15 @@ class CobrancaTitulosAdiantamentoSqlTest {
     fun `os filtros do drill-down existem aqui tambem, senao a consulta quebra pro adiantamento`() {
         // As duas views recebem a MESMA lista de parametros em CobrancaConsultaService.
         assertTrue(sql.contains("C.\"Code\" IS NULL OR T0.\"DocEntry\" < :semAcompanhamentoIsFilter"))
-        assertTrue(sql.contains("C.\"Code\" IS NOT NULL OR T0.\"DocEntry\" < :comAcompanhamentoIsFilter"))
+        assertTrue(sql.contains("T0.\"DocEntry\" < :comAcompanhamentoIsFilter"))
         assertTrue(sql.contains("C.\"U_DataPromessa\" <= :promessaVencidaAte OR T0.\"DocEntry\" < :promessaVencidaIsFilter"))
+    }
+
+    @Test
+    fun `comAcompanhamento do adiantamento tambem exige acao ANTES do recebimento, com InvType 203 e U_Tipo AD`() {
+        assertTrue(sql.contains("INNER JOIN \"@COB_TITULO\" CX ON CX.\"U_Tipo\" = 'AD' AND CX.\"U_DocEntry\" = PGX.\"DocEntry\" AND CX.\"U_InstlmntID\" = PGX.\"InstId\""))
+        assertTrue(sql.contains("INNER JOIN \"@COB_TITULO_L\" HX ON HX.\"Code\" = CX.\"Code\" AND HX.\"U_Data\" <= PRX.\"DocDate\""))
+        assertTrue(sql.contains("WHERE PGX.\"DocEntry\" = T0.\"DocEntry\" AND PGX.\"InstId\" = P.\"InstlmntID\" AND PGX.\"InvType\" = 203"))
     }
 
     @Test
@@ -446,5 +464,96 @@ class CobrancaTituloVendedorSqlTest {
     fun `view do adiantamento tambem traz o CardCode, pelo mesmo motivo`() {
         val sql = Files.readString(Path.of("src/main/resources/views/cobranca/cobranca-titulo-vendedor-adiantamento.sql"))
         assertTrue(sql.contains("\"CardCode\""))
+    }
+}
+
+/**
+ * View auxiliar do ValorRecebidoNoPeriodo: soma TODOS os recebimentos da parcela na janela, nao
+ * so o mais recente (ValorPago). Ficou de fora de cobranca-titulos.sql porque o SAP recusa
+ * subquery escalar com sum() na lista de SELECT (erro 701, "Invalid SQL syntax") - o parser
+ * aceita subquery como predicado (WHERE/ON, ja usado em cobranca-titulos.sql), nao como valor
+ * de coluna. Por isso virou linha a linha aqui, agregada em Kotlin (CobrancaConsultaService).
+ */
+class CobrancaRecebimentosPeriodoSqlTest {
+
+    private val sql = Files.readString(
+        Path.of("src/main/resources/views/cobranca/cobranca-recebimentos-periodo.sql")
+    )
+
+    @Test
+    fun `traz cada recebimento em linha propria, sem agregar aqui`() {
+        assertTrue(sql.contains("PG.\"DocEntry\""))
+        assertTrue(sql.contains("PG.\"InstId\""))
+        assertTrue(sql.contains("PG.\"SumApplied\""))
+        assertFalse(sql.contains("SELECT sum("), "a soma e feita em Kotlin, nao nesta view")
+        assertFalse(sql.contains("GROUP BY"))
+    }
+
+    @Test
+    fun `so fatura - InvType 13 - e recebimento nao cancelado`() {
+        assertTrue(sql.contains("PG.\"InvType\" = 13"))
+        assertTrue(sql.contains("PR.\"Canceled\" = 'N' OR PR.\"Canceled\" IS NULL"))
+    }
+
+    @Test
+    fun `recorta pela mesma janela de data de pagamento do resto do modulo`() {
+        assertTrue(sql.contains("PR.\"DocDate\" >= :dataPagamentoDe"))
+        assertTrue(sql.contains("PR.\"DocDate\" <= :dataPagamentoAte"))
+    }
+
+    @Test
+    fun `com o filtro ligado, so soma recebimento com acao registrada ANTES dele - igual o card`() {
+        // Reproduz o mesmo criterio de cobranca-recuperado.sql (INNER JOIN @COB_TITULO_L com
+        // H.U_Data <= data do pagamento), so que como EXISTS: nao precisamos do NOT EXISTS de
+        // desempate do card (que escolhe UMA linha de H pra evitar duplicar a transacao no
+        // GROUP BY) porque aqui so importa SE existe alguma acao qualificada, nao qual.
+        assertTrue(sql.contains("LEFT JOIN \"@COB_TITULO\" C"))
+        assertTrue(sql.contains("C.\"U_Tipo\" = 'NF' AND C.\"U_DocEntry\" = PG.\"DocEntry\" AND C.\"U_InstlmntID\" = PG.\"InstId\""))
+        assertTrue(sql.contains("PG.\"DocEntry\" < :acaoAntesPagamentoIsFilter"))
+        assertTrue(sql.contains("EXISTS (\n                SELECT 1 FROM \"@COB_TITULO_L\" H WHERE H.\"Code\" = C.\"Code\" AND H.\"U_Data\" <= PR.\"DocDate\""))
+    }
+
+    @Test
+    fun `restringe por filial, vendedor e cliente - senao a varredura come pagina com dado fora do filtro`() {
+        // Bug reportado: sem isso, qualquer recebimento da empresa inteira consumia o teto de
+        // paginas do CobrancaConsultaService, mesmo pertencendo a filial/cliente fora do filtro
+        // atual da tela.
+        assertTrue(sql.contains("INNER JOIN OINV NS ON NS.\"DocEntry\" = PG.\"DocEntry\""))
+        assertTrue(sql.contains("NS.\"BPLId\"    = :filial   OR NS.\"BPLId\"    < :filialIsFilter"))
+        assertTrue(sql.contains("NS.\"SlpCode\"  = :vendedor OR NS.\"SlpCode\"  < :vendedorIsFilter"))
+        assertTrue(sql.contains("NS.\"CardCode\" = :cliente  OR NS.\"CardCode\" < :clienteIsFilter"))
+    }
+}
+
+class CobrancaRecebimentosPeriodoAdiantamentoSqlTest {
+
+    private val sql = Files.readString(
+        Path.of("src/main/resources/views/cobranca/cobranca-recebimentos-periodo-adiantamento.sql")
+    )
+
+    @Test
+    fun `usa o InvType 203, pra nao colidir com recebimento de fatura`() {
+        assertTrue(sql.contains("PG.\"InvType\" = 203"))
+    }
+
+    @Test
+    fun `mesmo recorte de recebimento nao cancelado e janela de data`() {
+        assertTrue(sql.contains("PR.\"Canceled\" = 'N' OR PR.\"Canceled\" IS NULL"))
+        assertTrue(sql.contains("PR.\"DocDate\" >= :dataPagamentoDe"))
+        assertTrue(sql.contains("PR.\"DocDate\" <= :dataPagamentoAte"))
+    }
+
+    @Test
+    fun `mesmo filtro de acao antes do pagamento aqui, com U_Tipo AD`() {
+        assertTrue(sql.contains("C.\"U_Tipo\" = 'AD' AND C.\"U_DocEntry\" = PG.\"DocEntry\" AND C.\"U_InstlmntID\" = PG.\"InstId\""))
+        assertTrue(sql.contains("PG.\"DocEntry\" < :acaoAntesPagamentoIsFilter"))
+    }
+
+    @Test
+    fun `restringe por filial, vendedor e cliente aqui tambem, via ODPI`() {
+        assertTrue(sql.contains("INNER JOIN ODPI T0 ON T0.\"DocEntry\" = PG.\"DocEntry\""))
+        assertTrue(sql.contains("T0.\"BPLId\"    = :filial   OR T0.\"BPLId\"    < :filialIsFilter"))
+        assertTrue(sql.contains("T0.\"SlpCode\"  = :vendedor OR T0.\"SlpCode\"  < :vendedorIsFilter"))
+        assertTrue(sql.contains("T0.\"CardCode\" = :cliente  OR T0.\"CardCode\" < :clienteIsFilter"))
     }
 }
