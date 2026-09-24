@@ -53,6 +53,30 @@ jobs.fluxo-prazo.enable=false
 # Atualizacao da cotacao de moeda no Bacen (CurrencyScheduled) - diaria a meia-noite
 jobs.cotacao-moeda.enable=false
 
+# ----- Centro de custo em lancamento contabil (AtualizarCentrodeCustoLancamentoSchedule) -----
+# Roda a cada 60s e preenche as dimensoes de rateio (CostingCode = grupo economico,
+# CostingCode2 = centro de custo) dos lancamentos com U_Atualizar_Centro_de_Custo = 0.
+lc.centrodecusto.grupoeconomico.enable=false
+# Janela de dias para tras. Aumentar para alcancar backlog antigo - cuidado: o job dara
+# PATCH em todo lancamento da janela, so para marcar o UDF de processado.
+lc.centrodecusto.dias=5
+# Contas que recebem o rateio quando a linha esta sem dimensao, na filial abaixo.
+lc.centrodecusto.contas=4.9.1.001.00001,4.2.1.001.00007
+lc.centrodecusto.filial=2
+lc.centrodecusto.grupo-economico=500
+lc.centrodecusto.centro-custo=50000205
+# Padrao por filial, no formato filial:grupoEconomico:centroCusto separado por virgula.
+# Escopo unico: lancamento de pagamento ou recebimento (ttVendorPayment/ttReceipt) cuja linha
+# aponte para uma regra de reparticao INATIVADA no SAP - situacao em que o Service Layer recusa
+# qualquer update nesse lancamento, mesmo um PATCH que so marque o UDF de processado
+# ("-5002 Inactive distribution rule"). So a dimensao inativa e trocada; a que continua valida
+# fica como esta. Entrada com campo em branco e ignorada, e filial sem padrao nao e alterada.
+#
+# NAO e usado em nenhum outro cenario. O rateio de pedido de venda, cotacao e NF de compra tem
+# configuracao propria e independente: distibuicao.custo (DistribuicaoCustoByBranchConfig), que
+# e um JSON e nao este formato. Mexer numa nao altera a outra.
+lc.centrodecusto.padrao-por-filial=2:500:50000205,4:501:50100401,11:502:50200501
+
 # ----- Gateway de consultas SQL (sap-odbc) -----
 # Usado pelo painel de vendas v2, que precisa AGREGAR no banco (GROUP BY, funcoes
 # de data, janelas) - coisa que o SQLQueries do Service Layer nao aceita.
