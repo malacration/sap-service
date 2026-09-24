@@ -10,5 +10,8 @@ enum class OriginalJournal {
     ttReturn,
     ttARCredItnote,
     ttVendorPayment,
-    ttReceipt;
+    ttReceipt,
+    ttJournalEntry,
+    ttProductionOrder,
+    ttGeneralReleaseFromStock;
 }
