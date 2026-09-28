@@ -1,0 +1,14 @@
+package br.andrew.sap.model.cobranca
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import com.fasterxml.jackson.databind.PropertyNamingStrategies
+import com.fasterxml.jackson.databind.annotation.JsonNaming
+import java.math.BigDecimal
+
+@JsonNaming(PropertyNamingStrategies.UpperCamelCaseStrategy::class)
+@JsonIgnoreProperties(ignoreUnknown = true)
+class CobrancaRecebimentoPeriodoSap(
+    val DocEntry: Int,
+    val InstId: Int,
+    val SumApplied: BigDecimal,
+)
