@@ -23,12 +23,21 @@ class ClienteEmAtrasoRegra(val businessPartnersService : BusinessPartnersService
 }
 
 @org.springframework.stereotype.Service
-class RegraAutorizacaoService(val regras : List<RegraAutorizacao>) {
+class RegraAutorizacaoService(val regras : List<RegraAutorizacao>,
+                              val regraFilialService : RegraFilialService) {
 
     //devolve o motivo da primeira regra que bater, ou null se nenhuma regra
     //exigir autorizacao pra esse documento
+    //
+    //O filtro por filial vem ANTES do avalia(): alem de nenhuma regra precisar saber de
+    //filial, regra desligada naquela filial nem chega a consultar o banco (ClienteEmAtraso
+    //e ClienteEstouraLimiteCredito fazem uma consulta cada uma por documento).
     fun avaliar(documento : Document) : String? {
-        return regras.firstOrNull { it.avalia(documento) }?.motivo
+        val filial = documento.getBPL_IDAssignedToInvoice()
+        return regras
+            .filter { regraFilialService.ativaPara(it.motivo, filial) }
+            .firstOrNull { it.avalia(documento) }
+            ?.motivo
     }
 
     /**

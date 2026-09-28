@@ -15,6 +15,8 @@ import org.springframework.context.annotation.Profile
 //completo em U_payload, reenviado ao SAP no fluxo direto de sempre quando aprovado).
 //@AUTORIZADOR: tabela de roteamento motivo -> usuario, independente (nao e filha de
 //AUTORIZACAO), mesmo espirito do LiberaPara da Comissao.
+//@REGRAFILIAL: em que filiais cada regra esta ativa (motivo -> filial). Motivo sem nenhuma
+//linha vale em toda filial - ver RegraFilialService.ativaPara.
 @Configuration
 @Profile("!test")
 @ConditionalOnProperty(value = ["fields"], havingValue = "true", matchIfMissing = true)
@@ -25,7 +27,8 @@ class AutorizacaoConfiguration(val userFieldsMDService: UserFieldsMDService,
         listOf(
             //TableDescription do SAP tem limite de 30 caracteres (UserTablesMD)
             TableMd("AUTORIZACAO","Autorizacao de documentos", TbType.bott_MasterData),
-            TableMd("AUTORIZADOR","Autorizadores por motivo", TbType.bott_MasterData)
+            TableMd("AUTORIZADOR","Autorizadores por motivo", TbType.bott_MasterData),
+            TableMd("REGRAFILIAL","Regras ativas por filial", TbType.bott_MasterData)
         ).forEach{ tableService.findOrCreate(it) }
 
         listOf(
@@ -69,8 +72,17 @@ class AutorizacaoConfiguration(val userFieldsMDService: UserFieldsMDService,
         ).forEach { userFieldsMDService.findOrCreate(it) }
 
         listOf(
+            FieldMd("motivo","Motivo","@REGRAFILIAL", DbType.db_Alpha),
+            //BPLId da filial gravado como texto: e o formato que o Document carrega em
+            //BPL_IDAssignedToInvoice, e comparar texto com texto evita conversao na hora
+            //de decidir se a regra vale para o documento
+            FieldMd("filial","Filial","@REGRAFILIAL", DbType.db_Alpha),
+        ).forEach { userFieldsMDService.findOrCreate(it) }
+
+        listOf(
             autorizacaoObject(),
-            autorizadorObject()
+            autorizadorObject(),
+            regraFilialObject()
         ).forEach{
             udoService.findOrCreate(it)
         }
@@ -100,6 +112,18 @@ class AutorizacaoConfiguration(val userFieldsMDService: UserFieldsMDService,
             FormColumns("Name","Descrição",0,ud),
             FormColumns("U_motivo","Motivo",0,ud),
             FormColumns("U_usuario","Usuário",0,ud),
+        ))
+        return ud
+    }
+
+    fun regraFilialObject(): UserDefinedObject {
+        val ud = UserDefinedObject("regrafilial", "Regras por Filial", "REGRAFILIAL",
+            ManageSeries = YesNo.tYES)
+        ud.UserObjectMD_FormColumns.addAll(listOf(
+            FormColumns("Code","Código",0,ud),
+            FormColumns("Name","Descrição",0,ud),
+            FormColumns("U_motivo","Motivo",0,ud),
+            FormColumns("U_filial","Filial",0,ud),
         ))
         return ud
     }
