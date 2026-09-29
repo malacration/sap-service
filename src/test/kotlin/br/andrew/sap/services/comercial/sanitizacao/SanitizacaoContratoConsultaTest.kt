@@ -59,24 +59,28 @@ class SanitizacaoContratoConsultaTest {
             mapOf("Tipo" to "APROPRIACAO", "Id" to 51, "Data" to "2026-06-16T00:00", "Original" to "2026-06-16T00:00"),
         )
         whenever(odbc.consultar(any(), any(), any())).thenReturn(QueryResponse(rows = rows))
-        val resultado = consulta.verificar(exemploSanitizacao())
+        val resultado = consulta.verificar(exemploSanitizacao(), "2026-09-28")
         assertEquals("APLICADO", resultado.status)
         assertEquals(11, resultado.estorno)
         assertEquals(listOf(51), resultado.cancelamentos)
+        // A data do SAP no momento da operação também é legítima; outra data qualquer, não.
         whenever(odbc.consultar(any(), any(), any())).thenReturn(QueryResponse(rows = listOf(
             rows[0], rows[1] + ("Data" to "2026-09-28T00:00"))))
-        assertEquals("CONFERIR", consulta.verificar(exemploSanitizacao()).status)
+        assertEquals("APLICADO", consulta.verificar(exemploSanitizacao(), "2026-09-28").status)
+        whenever(odbc.consultar(any(), any(), any())).thenReturn(QueryResponse(rows = listOf(
+            rows[0], rows[1] + ("Data" to "2026-09-27T00:00"))))
+        assertEquals("CONFERIR", consulta.verificar(exemploSanitizacao(), "2026-09-28").status)
     }
 
     @Test fun `resposta vazia ou reconciliacao ainda ativa nao e sucesso`() {
         whenever(odbc.consultar(any(), any(), any())).thenReturn(QueryResponse())
-        assertEquals("CONFERIR", consulta.verificar(exemploSanitizacao()).status)
+        assertEquals("CONFERIR", consulta.verificar(exemploSanitizacao(), "2026-09-28").status)
         whenever(odbc.consultar(any(), any(), any())).thenReturn(QueryResponse(rows = listOf(
             mapOf("Tipo" to "ESTORNO", "Id" to 11, "Data" to "2026-09-24", "Original" to "2026-09-24"),
             mapOf("Tipo" to "APROPRIACAO", "Id" to 51, "Data" to "2026-09-24", "Original" to "2026-09-24"),
             mapOf("Tipo" to "PENDENCIA", "Id" to 9, "Data" to "2026-09-24", "Original" to null),
         )))
-        assertEquals("CONFERIR", consulta.verificar(exemploSanitizacao()).status)
+        assertEquals("CONFERIR", consulta.verificar(exemploSanitizacao(), "2026-09-28").status)
     }
 }
 

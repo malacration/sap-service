@@ -20,7 +20,7 @@ class ClienteEstouraLimiteCreditoRegraTest {
     private fun pedido(total: Double, avista: Boolean = false) = mock<Document>().also {
         whenever(it.CardCode).doReturn("C001")
         whenever(it.isAvista()).doReturn(avista)
-        whenever(it.total()).doReturn(total)
+        whenever(it.totalLiquido()).doReturn(total)
     }
 
     //NUMERIC do HANA chega como String pelo sap-odbc

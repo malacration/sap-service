@@ -82,7 +82,15 @@ class SanitizacaoContratoConsulta(
         return resultado
     }
 
-    fun verificar(item: ReclassificacaoSanitizacao): ResultadoSanitizacao {
+    /**
+     * @param dataSap data corrente do SAP lida imediatamente antes do changeset.
+     *
+     * O Cancel nativo não aceita data. Em HMG ele lançou estorno e cancelamento na data do
+     * documento original (contrato 108, set/2026); a data usada pode depender da configuração
+     * da empresa, então as duas datas legítimas são aceitas — a do original ou a do SAP no
+     * momento da operação. Qualquer outra data é divergência.
+     */
+    fun verificar(item: ReclassificacaoSanitizacao, dataSap: String): ResultadoSanitizacao {
         val apps = item.apropriacoes.filter { !it.cancelada }.map { it.docEntry }
         // Confere todas, inclusive as de adiantamento não enviadas no lote: o SAP deve tê-las
         // desfeito ao cancelar a apropriação.
@@ -90,11 +98,10 @@ class SanitizacaoContratoConsulta(
             "reconciliacoes" to item.reconciliacoes.map { it.numero }.ifEmpty { listOf(-1) }))
         val estornos = rows.filter { it.texto("Tipo") == "ESTORNO" }
         val cancelamentos = rows.filter { it.texto("Tipo") == "APROPRIACAO" }
-        // O Cancel nativo lança o estorno e o documento de cancelamento na data do original.
         if (estornos.size != 1 || cancelamentos.size != apps.size || rows.any { it.texto("Tipo") == "PENDENCIA" } ||
-            (estornos + cancelamentos).any { it.texto("Data").take(10) != it.texto("Original").take(10) })
+            (estornos + cancelamentos).any { it.texto("Data").take(10) !in setOf(it.texto("Original").take(10), dataSap) })
             return ResultadoSanitizacao(item.transId, "CONFERIR", "SAP aceitou a transação, mas a conferência dos documentos ou das datas divergiu. Confira no SAP antes de repetir.")
-        return ResultadoSanitizacao(item.transId, "APLICADO", "Reconciliações canceladas, apropriações canceladas e reclassificação estornada na data dos documentos originais.",
+        return ResultadoSanitizacao(item.transId, "APLICADO", "Reconciliações canceladas, apropriações canceladas e reclassificação estornada.",
             estornos.single().inteiro("Id"), cancelamentos.map { it.inteiro("Id") })
     }
 

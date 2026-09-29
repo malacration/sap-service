@@ -28,9 +28,9 @@ class SanitizacaoContratoLancamentos(
         item.reconciliacoes.filter { it.cancelavel }.map { it.numero }.distinct().forEach { numero ->
             lote.add(BatchMethod.POST, mapOf("InternalReconciliationParams" to mapOf("ReconNum" to numero)), destino)
         }
-        // As ações nativas Cancel lançam na data do documento original (conferido em HMG:
-        // estorno e cancelamento saem com RefDate/DocDate do original). Não enviar parâmetros
-        // de data: as ações não os aceitam. As datas são conferidas após o changeset.
+        // As ações nativas Cancel não aceitam data. Em HMG lançaram na data do documento
+        // original; a conferência aceita essa ou a data do SAP no momento da operação
+        // (ver SanitizacaoContratoConsulta.verificar).
         item.apropriacoes.filter { !it.cancelada }.forEach {
             lote.add(BatchMethod.CANCEL, ChaveSanitizacao(it.docEntry), invoices)
         }

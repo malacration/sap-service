@@ -53,7 +53,8 @@ class ClienteEstouraLimiteCreditoRegra(private val odbcClient: OdbcClient) : Reg
         if (limite <= 0.0)
             return false
 
-        return (numero(linha["DividaAberta"]) + documento.total()) > limite
+        //liquido: com desconto de cabecalho, o total() bruto retinha pedido que cabe no limite
+        return (numero(linha["DividaAberta"]) + documento.totalLiquido()) > limite
     }
 
     /**

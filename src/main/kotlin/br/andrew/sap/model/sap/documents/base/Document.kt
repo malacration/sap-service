@@ -222,6 +222,23 @@ open class Document(val CardCode : String,
             .setScale(2,RoundingMode.HALF_UP).toDouble()
     }
 
+    //total() e BRUTO de proposito: aplicaDescontoDesonerado calcula o discountPercent em
+    //cima dele. Para valor de exposicao (limite de credito) use este: desconto de cabecalho
+    //aplicado sobre as linhas, como o SAP faz no DocTotal - despesa adicional (frete) nao
+    //entra no desconto. Percentual tem precedencia; sem ele, vale o totalDiscount em valor.
+    @JsonIgnore
+    fun totalLiquido() : Double {
+        val linhas = DocumentLines.sumOf { it.total().setScale(2,RoundingMode.HALF_UP) }
+        val percentual = discountPercent ?: 0.0
+        val desconto = if (percentual != 0.0)
+            linhas.multiply(BigDecimal(percentual)).divide(BigDecimal(100), 2, RoundingMode.HALF_UP)
+        else
+            totalDiscount?.toBigDecimalOrNull() ?: BigDecimal.ZERO
+        return linhas.minus(desconto)
+            .plus(totalDespesaAdicional())
+            .setScale(2,RoundingMode.HALF_UP).toDouble()
+    }
+
     fun totalNegociado() : BigDecimal {
         return DocumentLines.sumOf { it.totalNegociado() }.setScale(2)
     }

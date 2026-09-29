@@ -42,8 +42,9 @@ class SanitizacaoContratoService(
                     usuario, original.transId, original.reconciliacoes.map { it.numero },
                     original.apropriacoes.filter { !it.cancelada }.map { it.docEntry })
                 enviou = true
+                val dataSap = consulta.dataCorrente()
                 lancamentos.aplicar(original)
-                consulta.verificar(original)
+                consulta.verificar(original, dataSap)
             } catch (e: Exception) {
                 logger.error("Falha sanitização contrato: usuario={}, transId={}, enviado={}", usuario, original.transId, enviou, e)
                 ResultadoSanitizacao(original.transId, if (enviou) "CONFERIR" else "REJEITADO",

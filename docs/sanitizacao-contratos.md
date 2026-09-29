@@ -22,10 +22,16 @@ estrutura, contas, valor, parceiro ou filial. Uma consulta truncada falha sem pr
 Para cada item elegível, um único changeset do Service Layer cancela as reconciliações,
 cancela as apropriações ativas e cancela/estorna o lançamento contábil. São usadas as ações
 nativas `InternalReconciliationsService_Cancel`, `Invoices(id)/Cancel` e `JournalEntries(id)/Cancel`.
-Não há atualização direta de tabelas do SAP. As ações Cancel utilizam a data corrente do SAP;
-não são enviados parâmetros de data não suportados e as datas originais não são alteradas.
-A data corrente é lida no HANA antes de cada efetivação. Após o changeset são conferidos os
-documentos de cancelamento, suas datas, as apropriações, as reconciliações e o saldo da reclassificação.
+Não há atualização direta de tabelas do SAP. As ações Cancel não aceitam data e as datas originais
+não são alteradas. Em HMG (contrato 108, set/2026) o estorno e o documento de cancelamento saíram
+com a data do documento original, não com a data corrente. Como isso pode depender da configuração
+da empresa, a conferência aceita a data do original ou a data do SAP lida imediatamente antes do
+changeset; qualquer outra data resulta em CONFERIR. Após o changeset são conferidos os documentos
+de cancelamento, suas datas, as apropriações, as reconciliações (inclusive as de adiantamento,
+tipo 16, que o SAP desfaz ao cancelar a apropriação) e o saldo da reclassificação.
+
+Somente as reconciliações manuais (ReconType 0) são canceladas explicitamente. A reconciliação de
+adiantamento (ReconType 16, IsSystem = Y) é do sistema: o SAP recusa cancelá-la e a desfaz sozinho.
 
 Referência das ações: [SAP Service Layer API Reference](https://help.sap.com/doc/056f69366b5345a386bb8149f1700c19/10.0/en-US/Service%20Layer%20API%20Reference.html).
 
@@ -47,8 +53,10 @@ Validação local:
 python3 -m unittest discover -s src/test/python -p test_sanitizacao_contratos_sql.py
 ```
 
-Os testes Python executam fixtures relacionais em SQLite em memória, traduzindo TOP para LIMIT.
+Os testes Python executam fixtures relacionais em SQLite em memória, com o SQL exatamente como
+é enviado (sem tradução).
 Eles não substituem a execução das consultas no HANA. Antes da primeira efetivação em produção,
 homologar na versão instalada do SAP as ações Cancel em changeset, a data dos documentos gerados
-e a liberação dos adiantamentos após cancelamento da apropriação. Nenhum lançamento real foi
-efetuado durante o desenvolvimento.
+e a liberação dos adiantamentos após cancelamento da apropriação. Em HMG os dois itens do
+contrato 108 foram efetivados e conferidos (set/2026). Se os períodos dos documentos originais
+estiverem fechados em produção, o SAP recusa o changeset e o item volta como REJEITADO.

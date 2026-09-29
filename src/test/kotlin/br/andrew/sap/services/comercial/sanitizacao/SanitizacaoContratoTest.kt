@@ -63,7 +63,7 @@ class SanitizacaoContratoServiceTest {
         whenever(consulta.dataCorrente()).thenReturn(data)
         whenever(consulta.buscar()).thenReturn(listOf(item))
         whenever(consulta.buscar(10)).thenReturn(listOf(item))
-        whenever(consulta.verificar(item)).thenReturn(ResultadoSanitizacao(10, "APLICADO", "ok", 11))
+        whenever(consulta.verificar(item, data)).thenReturn(ResultadoSanitizacao(10, "APLICADO", "ok", 11))
         return service.previa("admin")
     }
 
@@ -75,7 +75,7 @@ class SanitizacaoContratoServiceTest {
         assertEquals("APLICADO", primeiro.status)
         assertEquals(primeiro, service.aplicar("admin", pedido))
         verify(lancamentos, times(1)).aplicar(item)
-        verify(consulta).verificar(item)
+        verify(consulta).verificar(item, data)
     }
     @Test fun `token desconhecido outro usuario e item nao exibido sao recusados`() {
         val p = previa()
