@@ -7,12 +7,13 @@ import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 
 /**
- * Venda a prazo em que a divida vencida do cliente MAIS o proprio pedido passam do limite
- * de credito cadastrado (OCRD.CreditLine).
+ * Venda a prazo em que o saldo em aberto do cliente (vencido e a vencer, OCRD.Balance) MAIS
+ * o proprio pedido passam do limite de credito cadastrado (OCRD.CreditLine).
  *
  * Complementa ClienteEmAtrasoRegra em vez de substituir: aquela olha EXISTENCIA de titulo
  * vencido ha mais de 3 dias (qualquer valor), esta olha VALOR contra o limite. Cliente
- * pontual mas ja no teto do limite so e pego por esta; atraso de valor pequeno, so por aquela.
+ * pontual mas ja no teto do limite so e pego por esta - por isso o saldo inclui o que ainda
+ * nao venceu; atraso de valor pequeno, so por aquela.
  */
 @Component
 class ClienteEstouraLimiteCreditoRegra(private val odbcClient: OdbcClient) : RegraAutorizacao {

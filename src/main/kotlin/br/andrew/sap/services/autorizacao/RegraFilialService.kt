@@ -29,19 +29,11 @@ class RegraFilialService(
     }
 
     /**
-     * A regra vale nessa filial?
-     *
-     * Motivo sem nenhuma linha cadastrada vale em TODA filial. Esse default existe para o
-     * cadastro entrar sem mudar o comportamento atual: hoje toda regra do motor vale em
-     * qualquer filial, e o contrario (nada cadastrado = regra desligada em todo lugar)
-     * desativaria em silencio, no deploy, controles financeiros que ja estao valendo.
+     * Retrato do cadastro inteiro numa leitura so. Quem avalia varias regras deve pedir um
+     * retrato e consultar todas contra ele: getTodos() e uma leitura paginada no Service Layer,
+     * e chama-lo uma vez por regra multiplicava essa leitura pelo numero de regras em todo pedido.
      */
-    fun ativaPara(motivo: String, filial: String?): Boolean {
-        val doMotivo = getTodos().filter { it.U_motivo == motivo }
-        if (doMotivo.isEmpty())
-            return true
-        return doMotivo.any { it.U_filial == filial }
-    }
+    fun cadastro(): CadastroRegraFilial = CadastroRegraFilial(getTodos())
 
     /**
      * @param motivosValidos motivos que o motor de regras realmente produz, vindos do
@@ -70,5 +62,22 @@ class RegraFilialService(
 
     fun remover(id: String) {
         delete("'$id'")
+    }
+}
+
+class CadastroRegraFilial(private val linhas: List<RegraFilial>) {
+    /**
+     * A regra vale nessa filial?
+     *
+     * Motivo sem nenhuma linha cadastrada vale em TODA filial. Esse default existe para o
+     * cadastro entrar sem mudar o comportamento atual: hoje toda regra do motor vale em
+     * qualquer filial, e o contrario (nada cadastrado = regra desligada em todo lugar)
+     * desativaria em silencio, no deploy, controles financeiros que ja estao valendo.
+     */
+    fun ativaPara(motivo: String, filial: String?): Boolean {
+        val doMotivo = linhas.filter { it.U_motivo == motivo }
+        if (doMotivo.isEmpty())
+            return true
+        return doMotivo.any { it.U_filial == filial }
     }
 }

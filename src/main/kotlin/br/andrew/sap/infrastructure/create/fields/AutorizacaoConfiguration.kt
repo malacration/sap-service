@@ -16,7 +16,7 @@ import org.springframework.context.annotation.Profile
 //@AUTORIZADOR: tabela de roteamento motivo -> usuario, independente (nao e filha de
 //AUTORIZACAO), mesmo espirito do LiberaPara da Comissao.
 //@REGRAFILIAL: em que filiais cada regra esta ativa (motivo -> filial). Motivo sem nenhuma
-//linha vale em toda filial - ver RegraFilialService.ativaPara.
+//linha vale em toda filial - ver CadastroRegraFilial.ativaPara.
 @Configuration
 @Profile("!test")
 @ConditionalOnProperty(value = ["fields"], havingValue = "true", matchIfMissing = true)

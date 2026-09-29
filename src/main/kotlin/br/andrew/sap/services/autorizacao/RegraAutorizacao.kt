@@ -32,10 +32,14 @@ class RegraAutorizacaoService(val regras : List<RegraAutorizacao>,
     //O filtro por filial vem ANTES do avalia(): alem de nenhuma regra precisar saber de
     //filial, regra desligada naquela filial nem chega a consultar o banco (ClienteEmAtraso
     //e ClienteEstouraLimiteCredito fazem uma consulta cada uma por documento).
+    //
+    //O cadastro de filial e lido UMA vez por avaliacao e todas as regras sao filtradas contra
+    //esse retrato - ler por regra repetia a mesma leitura paginada do UDO a cada regra.
     fun avaliar(documento : Document) : String? {
         val filial = documento.getBPL_IDAssignedToInvoice()
+        val cadastro = regraFilialService.cadastro()
         return regras
-            .filter { regraFilialService.ativaPara(it.motivo, filial) }
+            .filter { cadastro.ativaPara(it.motivo, filial) }
             .firstOrNull { it.avalia(documento) }
             ?.motivo
     }
