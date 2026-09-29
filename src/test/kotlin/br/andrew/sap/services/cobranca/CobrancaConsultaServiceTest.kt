@@ -5,9 +5,11 @@ import br.andrew.sap.infrastructure.odata.Parameter
 import br.andrew.sap.model.authentication.User
 import br.andrew.sap.model.authentication.UserOriginEnum
 import br.andrew.sap.model.cobranca.CobrancaAdiantamentoSap
+import br.andrew.sap.model.cobranca.CobrancaRecebimentoPeriodoSap
 import br.andrew.sap.model.cobranca.CobrancaTituloSap
 import br.andrew.sap.services.abstracts.SqlQueriesService
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.any
@@ -528,6 +530,60 @@ class CobrancaConsultaServiceTest {
     }
 
     @Test
+    fun `parcela aberta que ja recebeu algo classifica como PAGO_PARCIAL, nao ABERTO nem PAGO`() {
+        // StatusParcela continua 'O' (o SAP nao fechou a parcela) - so ganha ValorPago porque
+        // teve um recebimento aplicado. Nunca pode virar "PAGO": quem fecha e o Status oficial.
+        whenever(sqlQueriesService.execute(eq("cobranca-titulos.sql"), any<List<Parameter>>()))
+            .thenReturn(
+                odataComTitulos(
+                    titulo(diasAtraso = 5, status = null, statusParcela = "O", valorPago = BigDecimal("20.00")),
+                )
+            )
+
+        val resultado = service.listar(admin, situacaoSap = null)
+
+        assertEquals(1, resultado.size)
+        assertEquals("PAGO_PARCIAL", resultado.first().SituacaoSap)
+    }
+
+    @Test
+    fun `filtro ABERTO continua trazendo PAGO_PARCIAL junto, senao os drill-downs da carteira perdem titulo`() {
+        // verCarteira/verFilial/verFaixa etc. no dashboard mandam situacaoSap=ABERTO esperando
+        // TODO titulo nao fechado no SAP - perder o que recebeu pagamento parcial encolheria
+        // a lista sem que o numero do widget mudasse.
+        whenever(sqlQueriesService.execute(eq("cobranca-titulos.sql"), any<List<Parameter>>()))
+            .thenReturn(
+                odataComTitulos(
+                    titulo(diasAtraso = 5, status = null, statusParcela = "O"),
+                    titulo(diasAtraso = 6, status = null, statusParcela = "O", valorPago = BigDecimal("20.00")),
+                    titulo(diasAtraso = 7, status = null, statusParcela = "C"),
+                )
+            )
+
+        val resultado = service.listar(admin, situacaoSap = "ABERTO")
+
+        assertEquals(2, resultado.size)
+        assertTrue(resultado.map { it.SituacaoSap }.containsAll(listOf("ABERTO", "PAGO_PARCIAL")))
+    }
+
+    @Test
+    fun `filtro PAGO_PARCIAL traz so quem recebeu algo e continua aberto no SAP`() {
+        whenever(sqlQueriesService.execute(eq("cobranca-titulos.sql"), any<List<Parameter>>()))
+            .thenReturn(
+                odataComTitulos(
+                    titulo(diasAtraso = 5, status = null, statusParcela = "O"),
+                    titulo(diasAtraso = 6, status = null, statusParcela = "O", valorPago = BigDecimal("20.00")),
+                    titulo(diasAtraso = 7, status = null, statusParcela = "C"),
+                )
+            )
+
+        val resultado = service.listar(admin, situacaoSap = "PAGO_PARCIAL")
+
+        assertEquals(1, resultado.size)
+        assertEquals("PAGO_PARCIAL", resultado.first().SituacaoSap)
+    }
+
+    @Test
     fun `saldo negativo (rateio, adiantamento vinculado etc) nao classifica como pago se a parcela ainda esta aberta no SAP`() {
         // Bug reportado: InsTotal - PaidToDate pode dar negativo (parcela aparentemente
         // "paga a mais") mesmo com a parcela ainda 'O' (aberta) no SAP - a situacao tem que
@@ -543,6 +599,41 @@ class CobrancaConsultaServiceTest {
 
         assertEquals(1, resultado.size)
         assertEquals("ABERTO", resultado.first().SituacaoSap)
+    }
+
+    @Test
+    fun `data, valor e observacao do ultimo recebimento chegam ate o titulo final`() {
+        whenever(sqlQueriesService.execute(eq("cobranca-titulos.sql"), any<List<Parameter>>()))
+            .thenReturn(
+                odataComTitulos(
+                    titulo(
+                        diasAtraso = 5, status = null, paidToDate = BigDecimal("40.00"),
+                        dataPagamento = "20260810", valorPago = BigDecimal("40.00"),
+                        observacaoPagamento = "cheque pre-datado",
+                    )
+                )
+            )
+
+        val resultado = service.listar(admin, situacaoSap = null)
+
+        assertEquals(1, resultado.size)
+        assertEquals("20260810", resultado.first().DataPagamento)
+        assertEquals(BigDecimal("40.00"), resultado.first().ValorPago)
+        assertEquals("cheque pre-datado", resultado.first().ObservacaoPagamento)
+    }
+
+    @Test
+    fun `titulo sem nenhum recebimento continua na lista, so com os campos de pagamento em branco`() {
+        // A view usa LEFT JOIN pra isso - esse teste trava que o Kotlin nao exige esses campos.
+        whenever(sqlQueriesService.execute(eq("cobranca-titulos.sql"), any<List<Parameter>>()))
+            .thenReturn(odataComTitulos(titulo(diasAtraso = 5, status = null)))
+
+        val resultado = service.listar(admin, situacaoSap = null)
+
+        assertEquals(1, resultado.size)
+        assertEquals(null, resultado.first().DataPagamento)
+        assertEquals(null, resultado.first().ValorPago)
+        assertEquals(null, resultado.first().ObservacaoPagamento)
     }
 
     @Test
@@ -686,6 +777,319 @@ class CobrancaConsultaServiceTest {
         assertEquals(Int.MAX_VALUE, parametros["promessaVencidaIsFilter"])
     }
 
+    @Test
+    fun `comAcompanhamento ligado envia o filtro ligado no SQL`() {
+        whenever(sqlQueriesService.execute(eq("cobranca-titulos.sql"), any<List<Parameter>>())).thenReturn(odataVazia())
+
+        service.listar(admin, comAcompanhamento = true)
+
+        assertEquals(-1, capturarParametros()["comAcompanhamentoIsFilter"])
+    }
+
+    @Test
+    fun `sem comAcompanhamento o filtro fica desligado e titulo nunca cobrado continua vindo`() {
+        whenever(sqlQueriesService.execute(eq("cobranca-titulos.sql"), any<List<Parameter>>())).thenReturn(odataVazia())
+
+        service.listar(admin)
+
+        assertEquals(Int.MAX_VALUE, capturarParametros()["comAcompanhamentoIsFilter"])
+    }
+
+    @Test
+    fun `comAcompanhamento e semAcompanhamento juntos sao mutuamente exclusivos, nao bug`() {
+        // Um pede C."Code" nulo e o outro nao-nulo: ligar os dois no SQL nao devolve linha
+        // nenhuma. A tela nunca liga os dois juntos, mas URL montada na mao consegue - o teste
+        // documenta que lista vazia e o comportamento correto, nao defeito.
+        whenever(sqlQueriesService.execute(eq("cobranca-titulos.sql"), any<List<Parameter>>())).thenReturn(odataVazia())
+
+        service.listar(admin, semAcompanhamento = true, comAcompanhamento = true)
+
+        val parametros = capturarParametros()
+        assertEquals(-1, parametros["semAcompanhamentoIsFilter"])
+        assertEquals(-1, parametros["comAcompanhamentoIsFilter"])
+    }
+
+    @Test
+    fun `ocultarAvista ligado envia o filtro ligado no SQL`() {
+        whenever(sqlQueriesService.execute(eq("cobranca-titulos.sql"), any<List<Parameter>>())).thenReturn(odataVazia())
+
+        service.listar(admin, ocultarAvista = true)
+
+        assertEquals(-1, capturarParametros()["ocultarAvistaIsFilter"])
+    }
+
+    @Test
+    fun `sem ocultarAvista o filtro fica desligado e o titulo a vista continua vindo`() {
+        whenever(sqlQueriesService.execute(eq("cobranca-titulos.sql"), any<List<Parameter>>())).thenReturn(odataVazia())
+
+        service.listar(admin)
+
+        assertEquals(Int.MAX_VALUE, capturarParametros()["ocultarAvistaIsFilter"])
+    }
+
+    @Test
+    fun `dataPagamentoDe e dataPagamentoAte informados ligam o filtro no SQL`() {
+        whenever(sqlQueriesService.execute(eq("cobranca-titulos.sql"), any<List<Parameter>>())).thenReturn(odataVazia())
+
+        service.listar(admin, dataPagamentoDe = LocalDate.of(2026, 8, 1), dataPagamentoAte = LocalDate.of(2026, 8, 31))
+
+        val parametros = capturarParametros()
+        assertEquals("2026-08-01", parametros["dataPagamentoDe"])
+        assertEquals(-1, parametros["dataPagamentoDeIsFilter"])
+        assertEquals("2026-08-31", parametros["dataPagamentoAte"])
+        assertEquals(-1, parametros["dataPagamentoAteIsFilter"])
+    }
+
+    @Test
+    fun `sem dataPagamentoDe e dataPagamentoAte o filtro fica desligado`() {
+        // Sem isso, o drill-down do card Recuperado (que so entra com essas duas datas) volta
+        // a trazer titulo pago de qualquer epoca, nao so do periodo que o dashboard mostra.
+        whenever(sqlQueriesService.execute(eq("cobranca-titulos.sql"), any<List<Parameter>>())).thenReturn(odataVazia())
+
+        service.listar(admin)
+
+        val parametros = capturarParametros()
+        assertEquals(Int.MAX_VALUE, parametros["dataPagamentoDeIsFilter"])
+        assertEquals(Int.MAX_VALUE, parametros["dataPagamentoAteIsFilter"])
+    }
+
+    @Test
+    fun `totalizar soma o que a lista mostraria, inclusive o que so o filtro em Kotlin descarta`() {
+        // O teste que sustenta a decisao de NAO criar view agregada: "8 - EM NEGOCIAÇÃO" tem
+        // acento, entao o filtro sai do SQL (soAscii) e so existe em passaNosFiltrosLocais. Um
+        // SUM feito em SQL somaria os tres titulos; o total tem que somar so o que casa.
+        whenever(sqlQueriesService.execute(eq("cobranca-titulos.sql"), any<List<Parameter>>()))
+            .thenReturn(
+                odataComTitulos(
+                    titulo(diasAtraso = 3, status = "8 - EM NEGOCIAÇÃO"),
+                    titulo(diasAtraso = 4, status = "3 - SEM CONTATO"),
+                    titulo(diasAtraso = 5, status = "3 - SEM CONTATO"),
+                )
+            )
+
+        val total = service.totalizar(admin, status = "8 - EM NEGOCIAÇÃO")
+
+        assertEquals(1, total.Parcelas)
+        assertEquals(BigDecimal("100.00"), total.Saldo)
+    }
+
+    @Test
+    fun `totalizar nao para no tamanho da pagina da tela`() {
+        // listar devolve 20 por vez; o total tem que enxergar as 25 linhas do filtro.
+        val vinteECinco = (1..25).map { titulo(diasAtraso = it, status = null) }.toTypedArray()
+        whenever(sqlQueriesService.execute(eq("cobranca-titulos.sql"), any<List<Parameter>>()))
+            .thenReturn(odataComTitulos(*vinteECinco))
+
+        assertEquals(25, service.totalizar(admin).Parcelas)
+        assertEquals(20, service.listar(admin).size)
+    }
+
+    @Test
+    fun `totalizar soma ValorPago ignorando parcela sem pagamento`() {
+        whenever(sqlQueriesService.execute(eq("cobranca-titulos.sql"), any<List<Parameter>>()))
+            .thenReturn(
+                odataComTitulos(
+                    titulo(diasAtraso = 3, status = null, valorPago = BigDecimal("40.00")),
+                    titulo(diasAtraso = 4, status = null, valorPago = BigDecimal("60.50")),
+                    titulo(diasAtraso = 5, status = null),
+                )
+            )
+
+        val total = service.totalizar(admin)
+
+        assertEquals(BigDecimal("100.50"), total.ValorPago)
+        assertEquals(2, total.ParcelasComPagamento)
+        assertEquals(3, total.Parcelas)
+    }
+
+    @Test
+    fun `totalizar com janela de pagamento soma TODOS os recebimentos, nao so o mais recente`() {
+        // O card "Recuperado" soma por recebimento (RCT2), nao por parcela. Uma parcela paga
+        // duas vezes no periodo (ValorPago = so o mais recente) tinha que contar as duas vezes
+        // no total pra bater com o card - e a view cobranca-recebimentos-periodo.sql (agregada
+        // aqui, ja que o SAP recusa sum() na lista de SELECT da view principal) que carrega
+        // esse numero.
+        whenever(sqlQueriesService.execute(eq("cobranca-titulos.sql"), any<List<Parameter>>()))
+            .thenReturn(
+                odataComTitulos(
+                    // Pago duas vezes no periodo: ValorPago (so o mais recente) e 50, mas o
+                    // total de verdade da janela e 40 + 50 = 90.
+                    titulo(diasAtraso = 3, status = null, valorPago = BigDecimal("50.00"), docEntry = 1),
+                    // Pago uma vez so.
+                    titulo(diasAtraso = 4, status = null, valorPago = BigDecimal("30.00"), docEntry = 2),
+                    titulo(diasAtraso = 5, status = null, docEntry = 3),
+                )
+            )
+        whenever(sqlQueriesService.execute(eq("cobranca-recebimentos-periodo.sql"), any<List<Parameter>>()))
+            .thenReturn(
+                odataComRecebimentos(
+                    CobrancaRecebimentoPeriodoSap(DocEntry = 1, InstId = 1, SumApplied = BigDecimal("40.00")),
+                    CobrancaRecebimentoPeriodoSap(DocEntry = 1, InstId = 1, SumApplied = BigDecimal("50.00")),
+                    CobrancaRecebimentoPeriodoSap(DocEntry = 2, InstId = 1, SumApplied = BigDecimal("30.00")),
+                )
+            )
+
+        val total = service.totalizar(admin, dataPagamentoDe = LocalDate.of(2026, 9, 1), dataPagamentoAte = LocalDate.of(2026, 9, 30))
+
+        assertEquals(BigDecimal("120.00"), total.ValorPago)
+        assertEquals(2, total.ParcelasComPagamento)
+    }
+
+    @Test
+    fun `drill-down do Recuperado (comAcompanhamento) exige acao ANTES de cada recebimento na soma, igual o card`() {
+        // Sem isso, um titulo cobrado SO DEPOIS de ja ter recebido entrava na soma da lista mas
+        // nunca entrou no card (que exige @COB_TITULO_L.U_Data <= data do pagamento) - a lista
+        // ficava MAIOR que o card, nao menor, depois que a causa 1 parou de mascarar o problema.
+        whenever(sqlQueriesService.execute(eq("cobranca-titulos.sql"), any<List<Parameter>>()))
+            .thenReturn(odataComTitulos(titulo(diasAtraso = 3, status = null, valorPago = BigDecimal("50.00"))))
+        whenever(sqlQueriesService.execute(eq("cobranca-recebimentos-periodo.sql"), any<List<Parameter>>()))
+            .thenReturn(odataVazia())
+
+        service.totalizar(
+            admin, comAcompanhamento = true,
+            dataPagamentoDe = LocalDate.of(2026, 9, 1), dataPagamentoAte = LocalDate.of(2026, 9, 30),
+        )
+
+        val captor = argumentCaptor<List<Parameter>>()
+        verify(sqlQueriesService).execute(eq("cobranca-recebimentos-periodo.sql"), captor.capture())
+        val parametros = captor.firstValue.associate { it.key to it.value }
+        assertEquals(-1, parametros["acaoAntesPagamentoIsFilter"])
+    }
+
+    @Test
+    fun `sem comAcompanhamento, a soma do periodo nao exige acao antes do recebimento`() {
+        // O filtro "Pagamento de/ate" tambem existe sozinho, sem vir do drill-down do card - ai
+        // a exigencia de rastreamento nao faz sentido, e um titulo NUNCA cobrado que recebeu no
+        // periodo precisa continuar contando no total.
+        whenever(sqlQueriesService.execute(eq("cobranca-titulos.sql"), any<List<Parameter>>()))
+            .thenReturn(odataComTitulos(titulo(diasAtraso = 3, status = null, valorPago = BigDecimal("50.00"))))
+        whenever(sqlQueriesService.execute(eq("cobranca-recebimentos-periodo.sql"), any<List<Parameter>>()))
+            .thenReturn(odataVazia())
+
+        service.totalizar(
+            admin, dataPagamentoDe = LocalDate.of(2026, 9, 1), dataPagamentoAte = LocalDate.of(2026, 9, 30),
+        )
+
+        val captor = argumentCaptor<List<Parameter>>()
+        verify(sqlQueriesService).execute(eq("cobranca-recebimentos-periodo.sql"), captor.capture())
+        val parametros = captor.firstValue.associate { it.key to it.value }
+        assertEquals(Int.MAX_VALUE, parametros["acaoAntesPagamentoIsFilter"])
+    }
+
+    @Test
+    fun `busca do recebimento no periodo e uma chamada por filial, com cliente e vendedor propagados`() {
+        // Bug reportado: a view auxiliar nao restringia por filial/cliente/vendedor - qualquer
+        // recebimento da empresa inteira consumia o teto de paginas, mesmo fora do filtro atual.
+        whenever(sqlQueriesService.execute(eq("cobranca-titulos.sql"), any<List<Parameter>>()))
+            .thenReturn(odataVazia())
+        whenever(sqlQueriesService.execute(eq("cobranca-recebimentos-periodo.sql"), any<List<Parameter>>()))
+            .thenReturn(odataVazia())
+
+        service.totalizar(
+            admin, filiais = listOf(6, 7), cliente = "CLI001",
+            dataPagamentoDe = LocalDate.of(2026, 9, 1), dataPagamentoAte = LocalDate.of(2026, 9, 30),
+        )
+
+        val captor = argumentCaptor<List<Parameter>>()
+        verify(sqlQueriesService, times(2)).execute(eq("cobranca-recebimentos-periodo.sql"), captor.capture())
+        val filiaisChamadas = captor.allValues.map { it.associate { p -> p.key to p.value }["filial"] }
+        assertEquals(listOf(6, 7), filiaisChamadas)
+        val parametrosPrimeiraChamada = captor.firstValue.associate { it.key to it.value }
+        assertEquals("CLI001", parametrosPrimeiraChamada["cliente"])
+        assertEquals("", parametrosPrimeiraChamada["clienteIsFilter"])
+    }
+
+    @Test
+    fun `totalizar propaga Truncado quando a busca do recebimento no periodo bate no teto de paginas`() {
+        // Bug reportado: essa busca auxiliar comia paginas sem propagar o truncamento - um
+        // recebimento que so existisse na pagina 101 sumia do total em silencio, com
+        // Truncado=false escondendo que a soma ficou incompleta.
+        whenever(sqlQueriesService.execute(eq("cobranca-titulos.sql"), any<List<Parameter>>()))
+            .thenReturn(odataComTitulos(titulo(diasAtraso = 3, status = null, valorPago = BigDecimal("50.00"))))
+        // "Pagina infinita": sempre tem proxima, entao so o teto de paginas para o laco.
+        val paginaComProxima = odataComRecebimentos(
+            CobrancaRecebimentoPeriodoSap(DocEntry = 1, InstId = 1, SumApplied = BigDecimal("10.00")),
+            proximaPagina = "pagina-seguinte-de-recebimento",
+        )
+        whenever(sqlQueriesService.execute(eq("cobranca-recebimentos-periodo.sql"), any<List<Parameter>>()))
+            .thenReturn(paginaComProxima)
+        whenever(sqlQueriesService.nextLink("pagina-seguinte-de-recebimento")).thenReturn(paginaComProxima)
+
+        val total = service.totalizar(
+            admin, dataPagamentoDe = LocalDate.of(2026, 9, 1), dataPagamentoAte = LocalDate.of(2026, 9, 30),
+        )
+
+        assertEquals(true, total.Truncado)
+    }
+
+    @Test
+    fun `listarComTruncamento avisa quando a busca do recebimento no periodo bate no teto, listar continua so a lista`() {
+        // Bug reportado: totalizar ja propagava Truncado, mas listar() (a pagina de 20 que a
+        // tela mostra) descartava essa informacao - uma parcela com recebimento real virava
+        // ValorRecebidoNoPeriodo=null em silencio, sem a tela saber que a busca ficou incompleta.
+        whenever(sqlQueriesService.execute(eq("cobranca-titulos.sql"), any<List<Parameter>>()))
+            .thenReturn(odataComTitulos(titulo(diasAtraso = 3, status = null, valorPago = BigDecimal("50.00"))))
+        val paginaComProxima = odataComRecebimentos(
+            CobrancaRecebimentoPeriodoSap(DocEntry = 1, InstId = 1, SumApplied = BigDecimal("10.00")),
+            proximaPagina = "pagina-seguinte-de-recebimento-2",
+        )
+        whenever(sqlQueriesService.execute(eq("cobranca-recebimentos-periodo.sql"), any<List<Parameter>>()))
+            .thenReturn(paginaComProxima)
+        whenever(sqlQueriesService.nextLink("pagina-seguinte-de-recebimento-2")).thenReturn(paginaComProxima)
+
+        val pagina = service.listarComTruncamento(
+            admin, dataPagamentoDe = LocalDate.of(2026, 9, 1), dataPagamentoAte = LocalDate.of(2026, 9, 30),
+        )
+
+        assertEquals(true, pagina.TruncadoRecebimento)
+        assertEquals(1, pagina.Titulos.size)
+        assertEquals(1, service.listar(
+            admin, dataPagamentoDe = LocalDate.of(2026, 9, 1), dataPagamentoAte = LocalDate.of(2026, 9, 30),
+        ).size)
+    }
+
+    @Test
+    fun `sem truncamento, listarComTruncamento devolve TruncadoRecebimento false`() {
+        whenever(sqlQueriesService.execute(eq("cobranca-titulos.sql"), any<List<Parameter>>()))
+            .thenReturn(odataComTitulos(titulo(diasAtraso = 3, status = null, valorPago = BigDecimal("50.00"))))
+        whenever(sqlQueriesService.execute(eq("cobranca-recebimentos-periodo.sql"), any<List<Parameter>>()))
+            .thenReturn(odataComRecebimentos(CobrancaRecebimentoPeriodoSap(DocEntry = 1, InstId = 1, SumApplied = BigDecimal("10.00"))))
+
+        val pagina = service.listarComTruncamento(
+            admin, dataPagamentoDe = LocalDate.of(2026, 9, 1), dataPagamentoAte = LocalDate.of(2026, 9, 30),
+        )
+
+        assertEquals(false, pagina.TruncadoRecebimento)
+    }
+
+    @Test
+    fun `totalizar sem janela de pagamento continua usando o ultimo recebimento (ValorPago)`() {
+        // Sem data de pagamento pra comparar, a view auxiliar nem e chamada - ValorPago (o
+        // ultimo recebimento) continua sendo o unico numero que faz sentido mostrar.
+        whenever(sqlQueriesService.execute(eq("cobranca-titulos.sql"), any<List<Parameter>>()))
+            .thenReturn(
+                odataComTitulos(
+                    titulo(diasAtraso = 3, status = null, valorPago = BigDecimal("50.00")),
+                )
+            )
+
+        val total = service.totalizar(admin)
+
+        assertEquals(BigDecimal("50.00"), total.ValorPago)
+        verify(sqlQueriesService, never()).execute(eq("cobranca-recebimentos-periodo.sql"), any<List<Parameter>>())
+    }
+
+    @Test
+    fun `totalizar sem nada no filtro devolve zero, nao erro`() {
+        whenever(sqlQueriesService.execute(eq("cobranca-titulos.sql"), any<List<Parameter>>())).thenReturn(odataVazia())
+
+        val total = service.totalizar(admin)
+
+        assertEquals(0, total.Parcelas)
+        assertEquals(BigDecimal.ZERO, total.Saldo)
+        assertEquals(false, total.Truncado)
+    }
+
     private fun capturarParametros(): Map<String, Any> {
         val captor = argumentCaptor<List<Parameter>>()
         verify(sqlQueriesService).execute(eq("cobranca-titulos.sql"), captor.capture())
@@ -698,12 +1102,16 @@ class CobrancaConsultaServiceTest {
         paidToDate: BigDecimal = BigDecimal.ZERO,
         statusParcela: String = "O",
         docDate: String? = "20260701",
+        dataPagamento: String? = null,
+        valorPago: BigDecimal? = null,
+        observacaoPagamento: String? = null,
+        docEntry: Int = 1,
     ): CobrancaTituloSap {
         // DueDate relativo a hoje: DiasAtraso e calculado em Kotlin (CobrancaTituloSap.toDto),
         // nao vem pronto do SAP - por isso o teste monta a data em vez de fixar o numero.
         val dueDate = LocalDate.now().minusDays(diasAtraso.toLong()).format(DateTimeFormatter.BASIC_ISO_DATE)
         return CobrancaTituloSap(
-            DocEntry = 1, DocNum = 1, Serial = "1", Series = 1,
+            DocEntry = docEntry, DocNum = docEntry, Serial = "1", Series = 1,
             BPLId = 6, BPLName = "Fazenda Serra Verde", CardCode = "CLI001", CardName = "Cliente Teste",
             Telefone = "6699998888", Celular = null,
             DocDate = docDate, DocTotal = BigDecimal("100.00"),
@@ -712,6 +1120,7 @@ class CobrancaConsultaServiceTest {
             DueDate = dueDate, StatusParcela = statusParcela,
             U_Status = status, U_Cobrador = null, U_Acao = null, U_Situacao = null,
             U_Ocorrencia = null, U_Observacao = null, U_DataAcao = null, U_DataPromessa = null,
+            DataPagamento = dataPagamento, ValorPago = valorPago, ObservacaoPagamento = observacaoPagamento,
         )
     }
 
@@ -735,6 +1144,16 @@ class CobrancaConsultaServiceTest {
     private fun odataComTitulos(vararg titulos: CobrancaTituloSap): OData {
         val backing = LinkedHashMap<String, Any?>()
         backing["value"] = titulos.toList()
+        return OData(backing)
+    }
+
+    private fun odataComRecebimentos(
+        vararg recebimentos: CobrancaRecebimentoPeriodoSap,
+        proximaPagina: String? = null,
+    ): OData {
+        val backing = LinkedHashMap<String, Any?>()
+        backing["value"] = recebimentos.toList()
+        proximaPagina?.let { backing["odata.nextLink"] = it }
         return OData(backing)
     }
 
