@@ -160,6 +160,10 @@ roles:
       actions: ["get"]
     - url: "/sales-person/search"
       actions: ["*"]
+    # A lista de faturas resolve o nome do vendedor de cada linha com GET /sales-person/{id}.
+    # Sem isso o cobrador tomava 403 por linha (a tela cai no codigo, mas suja o console).
+    - url: "/sales-person/*"
+      actions: ["get"]
 
   qualidade:
     - url: "/batch-stock/item-code/**"
