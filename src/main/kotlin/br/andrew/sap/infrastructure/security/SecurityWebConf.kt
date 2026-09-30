@@ -14,7 +14,7 @@ import br.andrew.sap.infrastructure.security.otp.OneTimePasswordAuthenticationFi
 import br.andrew.sap.infrastructure.security.password.UserPasswordAuthenticationFilter
 import br.andrew.sap.services.security.OneTimePasswordService
 import br.andrew.sap.services.security.UserJwtService
-import br.andrew.sap.services.security.RuleService
+import br.andrew.sap.services.security.interfaces.RuleService
 import br.andrew.sap.services.security.UserPasswordService
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
@@ -50,6 +50,12 @@ class SecurityWebConf(
 
     private val jwtHandler = JwtHandler(jwtSecretBean)
     private val userService = UserJwtService()
+
+    init {
+        // Diz qual implementacao esta de fato aplicando as regras (arquivo ou SAP).
+        org.slf4j.LoggerFactory.getLogger(SecurityWebConf::class.java)
+            .info("Regras de acesso servidas por {}", ruleService.javaClass.simpleName)
+    }
 
     @Bean
     fun authorizationRequestRepository(http : HttpSecurity): DefaultSecurityFilterChain {
