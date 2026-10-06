@@ -150,6 +150,43 @@ class DocumentForAngularTest {
         assertTrue(erro.message!!.contains("negativo"), erro.message)
     }
 
+    @Test
+    fun `frete manual recusa negativo mesmo nos casos isentos do calculo`() {
+        val semIncoterms = pedidoComFreteNegativo().also { it.Incoterms = null }
+        val semFrete = pedidoComFreteNegativo().also { it.Incoterms = 9 }
+        val entregaVendaFutura = pedidoComFreteNegativo().also {
+            it.U_venda_futura = 1
+            it.U_entrega_vf = 1
+        }
+        whenever(auth.principal).thenReturn("55")
+
+        for (pedido in listOf(semIncoterms, semFrete, entregaVendaFutura)) {
+            val erro = assertThrows<Exception> {
+                DocumentForAngular(freteManual = true)
+                    .prepareToSave(pedido, itemService, businessPartnersService, regiaoService, localidadeService, auth)
+            }
+            assertTrue(erro.message!!.contains("negativo"), erro.message)
+        }
+    }
+
+    @Test
+    fun `frete manual recusa linha de frete negativa mesmo com soma positiva`() {
+        val pedido = pedidoDeEntrega("FAZENDA").also {
+            it.documentAdditionalExpenses.add(AdditionalExpenses.frete(-50.0))
+        }
+        whenever(auth.principal).thenReturn("55")
+
+        assertThrows<Exception> {
+            DocumentForAngular(freteManual = true)
+                .prepareToSave(pedido, itemService, businessPartnersService, regiaoService, localidadeService, auth)
+        }
+    }
+
+    private fun pedidoComFreteNegativo() = pedidoDeEntrega("FAZENDA").also {
+        it.documentAdditionalExpenses.clear()
+        it.documentAdditionalExpenses.add(AdditionalExpenses.frete(-1.0))
+    }
+
     private fun pedidoDeEntrega(shipToCode: String) = OrderSales(
         CardCode = "CLI001",
         DocDueDate = "2026-08-14",

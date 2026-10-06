@@ -55,6 +55,12 @@ class DocumentForAngular(private val freteManual: Boolean = false) {
      */
     private fun validaFreteParaEntrega(pedido : Document, businessPartnersService: BusinessPartnersService,
                                        regiaoService: RegiaoService, localidadeService: LocalidadeService) {
+        //Antes das isencoes abaixo de proposito: elas so dispensam o CALCULO pela tabela. No modo
+        //manual o valor vem do vendedor, e frete negativo abateria o total do documento em
+        //qualquer caso - sem Incoterms, "Sem Frete" ou entrega de venda futura inclusive.
+        if(freteManual && pedido.documentAdditionalExpenses.any { it.expenseCode == 1 && it.LineTotal < 0 })
+            throw Exception("O valor do frete nao pode ser negativo")
+
         //9 = "Sem Frete": nao ha o que conferir. null = chamador que nao e o portal (integracao,
         //sync offline), mantem o comportamento antigo de nao validar.
         val incoterms = pedido.incotermsEfetivo()
@@ -68,11 +74,8 @@ class DocumentForAngular(private val freteManual: Boolean = false) {
         if(pedido.U_venda_futura != null && pedido.U_entrega_vf == 1)
             return
 
-        if(freteManual){
-            if(freteEnviado(pedido) < 0)
-                throw Exception("O valor do frete nao pode ser negativo")
+        if(freteManual)
             return
-        }
 
         val bp = businessPartnersService.getById("'${pedido.CardCode}'").tryGetValue<BusinessPartner>()
         val enderecoEntrega = enderecoEntregaSelecionado(pedido, bp)
