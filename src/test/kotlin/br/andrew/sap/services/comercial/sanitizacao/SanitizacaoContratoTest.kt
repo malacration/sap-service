@@ -98,6 +98,13 @@ class SanitizacaoContratoServiceTest {
         assertEquals("CONFERIR", service.aplicar("admin", pedido).status)
         verify(lancamentos, times(1)).aplicar(item)
     }
+    @Test fun `falha lendo a data antes do envio e REJEITADO, nao CONFERIR`() {
+        val p = previa()
+        // A prévia já leu a data; a leitura seguinte, imediatamente antes do changeset, falha.
+        whenever(consulta.dataCorrente()).thenThrow(RuntimeException("sap-odbc fora do ar"))
+        assertEquals("REJEITADO", service.aplicar("admin", AplicarSanitizacao(p.id, 10)).status)
+        verifyNoInteractions(lancamentos)
+    }
     @Test fun `item estornado apos previa nao executa novamente`() {
         val p = previa()
         whenever(consulta.buscar(10)).thenReturn(emptyList())

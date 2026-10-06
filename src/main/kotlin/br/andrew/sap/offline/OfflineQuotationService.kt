@@ -18,6 +18,7 @@ import br.andrew.sap.services.logistica.LocalidadeService
 import br.andrew.sap.services.logistica.RegiaoService
 import br.andrew.sap.services.stock.ItemsService
 import com.fasterxml.jackson.databind.ObjectMapper
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.data.redis.core.StringRedisTemplate
 import org.springframework.data.redis.core.script.DefaultRedisScript
@@ -36,7 +37,8 @@ class OfflineQuotationService(
     private val regionService: RegiaoService,
     private val localityService: LocalidadeService,
     private val authorizationRuleService: RegraAutorizacaoService,
-    private val authorizationService: AutorizacaoService
+    private val authorizationService: AutorizacaoService,
+    @Value("\${frete.manual:false}") private val freteManual: Boolean
 ) {
 
     fun sync(request: OfflineQuotationSyncRequest, user: User): OfflineQuotationSyncResponse {
@@ -61,7 +63,7 @@ class OfflineQuotationService(
 
             request.quotation.u_offline_id = request.transmissionId
             request.quotation.u_offline_user = user.id
-            val document = DocumentForAngular().prepareToSave(
+            val document = DocumentForAngular(freteManual).prepareToSave(
                 request.quotation,
                 itemsService,
                 businessPartnersService,

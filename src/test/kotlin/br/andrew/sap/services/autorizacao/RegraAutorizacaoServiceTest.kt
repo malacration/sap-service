@@ -14,7 +14,7 @@ import org.mockito.kotlin.whenever
 
 class RegraAutorizacaoServiceTest {
 
-    private val regraFilialService = spy(RegraFilialService(mock(), mock(), mock()))
+    private val regraFilialService = spy(RegraFilialService(mock(), mock(), mock(), mock()))
 
     private fun regra(motivo: String, bate: Boolean) = mock<RegraAutorizacao>().also {
         whenever(it.motivo).doReturn(motivo)

@@ -13,7 +13,11 @@ import br.andrew.sap.services.logistica.RegiaoService
 import br.andrew.sap.services.stock.ItemsService
 import org.springframework.security.core.Authentication
 
-class DocumentForAngular {
+/**
+ * @param freteManual `frete.manual` (env FRETE_MANUAL): o vendedor digita o frete no front e o
+ * back so recusa valor negativo, sem exigir localidade/regiao nem recalcular pela tabela.
+ */
+class DocumentForAngular(private val freteManual: Boolean = false) {
 
     fun prepareToSave(pedido : Document, itemService: ItemsService, businessPartnersService: BusinessPartnersService,
                       regiaoService: RegiaoService, localidadeService: LocalidadeService,
@@ -64,6 +68,12 @@ class DocumentForAngular {
         if(pedido.U_venda_futura != null && pedido.U_entrega_vf == 1)
             return
 
+        if(freteManual){
+            if(freteEnviado(pedido) < 0)
+                throw Exception("O valor do frete nao pode ser negativo")
+            return
+        }
+
         val bp = businessPartnersService.getById("'${pedido.CardCode}'").tryGetValue<BusinessPartner>()
         val enderecoEntrega = enderecoEntregaSelecionado(pedido, bp)
             ?: throw Exception("O cliente ${pedido.CardCode} nao possui endereco de entrega cadastrado - cadastre o endereco antes de finalizar a venda")
@@ -83,9 +93,7 @@ class DocumentForAngular {
             ?: throw Exception("Nao foi possivel calcular o frete da localidade $localidade na regiao ${regiao.Code} - " +
                 "falta a distancia da localidade nessa regiao ou a faixa de preco que cubra $quantidade unidades")
 
-        val freteEnviado = pedido.documentAdditionalExpenses
-            .filter { it.expenseCode == 1 }
-            .sumOf { it.LineTotal }
+        val freteEnviado = freteEnviado(pedido)
 
         if(Math.abs(freteEsperado - freteEnviado) > TOLERANCIA_FRETE)
             throw Exception(
@@ -93,6 +101,10 @@ class DocumentForAngular {
                 "(enviado: R$ ${"%.2f".format(freteEnviado)}, esperado: R$ ${"%.2f".format(freteEsperado)})"
             )
     }
+
+    private fun freteEnviado(pedido: Document) = pedido.documentAdditionalExpenses
+        .filter { it.expenseCode == 1 }
+        .sumOf { it.LineTotal }
 
     /**
      * "12 - MANICORE" quando o nome esta cadastrado, so "12" quando nao da pra buscar.
