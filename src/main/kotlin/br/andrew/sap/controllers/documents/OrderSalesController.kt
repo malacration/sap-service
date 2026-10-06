@@ -56,7 +56,8 @@ class OrderSalesController(val ordersService: OrdersService,
     val localidadeService: LocalidadeService,
                            val regraAutorizacaoService: RegraAutorizacaoService,
                            val autorizacaoService: AutorizacaoService,
-                           @Value("\${pedido-venda.teste.enable:false}") private val pedidoVendaTesteHabilitado: Boolean
+                           @Value("\${pedido-venda.teste.enable:false}") private val pedidoVendaTesteHabilitado: Boolean,
+                           @Value("\${frete.manual:false}") private val freteManual: Boolean
 ) {
 
     val logger = LoggerFactory.getLogger(OrderSalesController::class.java)
@@ -139,7 +140,7 @@ class OrderSalesController(val ordersService: OrdersService,
 
     @PostMapping("angular")
     fun saveForAngular(@RequestBody pedido : OrderSales, auth : Authentication): ResponseEntity<Any> {
-        val document = DocumentForAngular().prepareToSave(pedido,itemService,businessPartnersService,regiaoService,localidadeService,auth)
+        val document = DocumentForAngular(freteManual).prepareToSave(pedido,itemService,businessPartnersService,regiaoService,localidadeService,auth)
         val motivo = regraAutorizacaoService.avaliar(document)
         if(motivo != null){
             val autorizacao = autorizacaoService.criar(

@@ -41,8 +41,10 @@ class SanitizacaoContratoService(
                 logger.info("Sanitização contrato: usuario={}, transId={}, reconciliacoes={}, apropriacoes={}",
                     usuario, original.transId, original.reconciliacoes.map { it.numero },
                     original.apropriacoes.filter { !it.cancelada }.map { it.docEntry })
-                enviou = true
                 val dataSap = consulta.dataCorrente()
+                // Só aqui: falha em qualquer leitura acima não enviou nada ao SAP e deve voltar
+                // REJEITADO, não CONFERIR.
+                enviou = true
                 lancamentos.aplicar(original)
                 consulta.verificar(original, dataSap)
             } catch (e: Exception) {
