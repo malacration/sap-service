@@ -34,6 +34,11 @@ keycloak.client-id=front-sap
 # Claim opcional que carrega o codigo SAP do usuario (default: sap_code)
 keycloak.sap-id-claim=sap_code
 
+# ----- Frete -----
+# true = vendedor digita o valor do frete na venda (sem exigir localidade/regiao);
+# false = frete calculado pela tabela de regioes e revalidado no back. Env: FRETE_MANUAL
+frete.manual=false
+
 # ----- Vendas offline / catalogos antecipados -----
 offline.enabled=false
 offline.catalog.ttl-hours=72

@@ -13,7 +13,11 @@ import br.andrew.sap.services.logistica.RegiaoService
 import br.andrew.sap.services.stock.ItemsService
 import org.springframework.security.core.Authentication
 
-class DocumentForAngular {
+/**
+ * @param freteManual `frete.manual` (env FRETE_MANUAL): o vendedor digita o frete no front e o
+ * back so recusa valor negativo, sem exigir localidade/regiao nem recalcular pela tabela.
+ */
+class DocumentForAngular(private val freteManual: Boolean = false) {
 
     fun prepareToSave(pedido : Document, itemService: ItemsService, businessPartnersService: BusinessPartnersService,
                       regiaoService: RegiaoService, localidadeService: LocalidadeService,
@@ -51,6 +55,12 @@ class DocumentForAngular {
      */
     private fun validaFreteParaEntrega(pedido : Document, businessPartnersService: BusinessPartnersService,
                                        regiaoService: RegiaoService, localidadeService: LocalidadeService) {
+        //Antes das isencoes abaixo de proposito: elas so dispensam o CALCULO pela tabela. No modo
+        //manual o valor vem do vendedor, e frete negativo abateria o total do documento em
+        //qualquer caso - sem Incoterms, "Sem Frete" ou entrega de venda futura inclusive.
+        if(freteManual && pedido.documentAdditionalExpenses.any { it.expenseCode == 1 && it.LineTotal < 0 })
+            throw Exception("O valor do frete nao pode ser negativo")
+
         //9 = "Sem Frete": nao ha o que conferir. null = chamador que nao e o portal (integracao,
         //sync offline), mantem o comportamento antigo de nao validar.
         val incoterms = pedido.incotermsEfetivo()
@@ -62,6 +72,9 @@ class DocumentForAngular {
         //toda retirada - a tolerancia aqui e de R$ 5,00 e os numeros nao tem por que bater.
         //Quem valida o frete dela e a SBO_SP_VALIDACAO_VENDA_FUTURA, do lado do banco.
         if(pedido.U_venda_futura != null && pedido.U_entrega_vf == 1)
+            return
+
+        if(freteManual)
             return
 
         val bp = businessPartnersService.getById("'${pedido.CardCode}'").tryGetValue<BusinessPartner>()
@@ -83,9 +96,7 @@ class DocumentForAngular {
             ?: throw Exception("Nao foi possivel calcular o frete da localidade $localidade na regiao ${regiao.Code} - " +
                 "falta a distancia da localidade nessa regiao ou a faixa de preco que cubra $quantidade unidades")
 
-        val freteEnviado = pedido.documentAdditionalExpenses
-            .filter { it.expenseCode == 1 }
-            .sumOf { it.LineTotal }
+        val freteEnviado = freteEnviado(pedido)
 
         if(Math.abs(freteEsperado - freteEnviado) > TOLERANCIA_FRETE)
             throw Exception(
@@ -93,6 +104,10 @@ class DocumentForAngular {
                 "(enviado: R$ ${"%.2f".format(freteEnviado)}, esperado: R$ ${"%.2f".format(freteEsperado)})"
             )
     }
+
+    private fun freteEnviado(pedido: Document) = pedido.documentAdditionalExpenses
+        .filter { it.expenseCode == 1 }
+        .sumOf { it.LineTotal }
 
     /**
      * "12 - MANICORE" quando o nome esta cadastrado, so "12" quando nao da pra buscar.
