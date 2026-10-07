@@ -124,7 +124,7 @@ class BatchService(val rest : RestTemplate,
                     response.errorMessage ?: response.body ?: "Erro ${response.statusCode}"
                 "${response.statusCode} - $erro"
             }
-            throw Exception(mensagem)
+            throw BatchRecusadoException(mensagem)
         }
         return resposta
     }

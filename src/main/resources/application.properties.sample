@@ -105,3 +105,10 @@ trava.otp.window-seconds=120
 trava.otp.length=6
 # Provisiona/semeia o catalogo de regras de trava (UDO TRAVA_REGRA) no boot.
 fields.trava=true
+
+# Tela de importacao de lancamentos contabeis (CSV com previa, /journal/importacao). Provisiona o
+# UDO LC_IMPORTACAO (log de quem importou) e liga os endpoints; usa o sap-odbc (odbc.*) para
+# validar filiais, contas e rateios.
+fields.importacao-lancamento=false
+# Linhas por arquivo. Todas vao num unico changeset do $batch (tudo ou nada).
+journal.importacao.max-linhas=500
