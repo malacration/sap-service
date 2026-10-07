@@ -9,15 +9,21 @@ class AuthConfigControllerTest {
 
     @Test
     fun `expoe vendas offline habilitadas na configuracao publica`() {
-        val response = AuthConfigController(KeycloakProperties(), true).config()
+        val response = AuthConfigController(KeycloakProperties(), true, false).config()
 
         assertTrue(response.offlineEnabled)
     }
 
     @Test
     fun `expoe vendas offline desabilitadas na configuracao publica`() {
-        val response = AuthConfigController(KeycloakProperties(), false).config()
+        val response = AuthConfigController(KeycloakProperties(), false, false).config()
 
         assertFalse(response.offlineEnabled)
+    }
+
+    @Test
+    fun `expoe modo de frete manual na configuracao publica`() {
+        assertTrue(AuthConfigController(KeycloakProperties(), false, true).config().freteManual)
+        assertFalse(AuthConfigController(KeycloakProperties(), false, false).config().freteManual)
     }
 }

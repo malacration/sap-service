@@ -201,9 +201,15 @@ class BusinessPartnersService(
         return result
     }
 
-    //cliente com titulo vencido ha mais de 3 dias e nao reconciliado (mesma regra
-    //de ClienteInadimplentesByContabilidade do sap-sql) - usado pelo motor de
-    //regras de autorizacao (ClienteEmAtrasoRegra)
+    //cliente com titulo vencido ha mais de 3 dias ainda com saldo em aberto - usado pelo
+    //motor de regras de autorizacao (ClienteEmAtrasoRegra)
+    //
+    //cliente-em-atraso.sql olha o saldo residual da PROPRIA linha (JDT1.BalDueDeb), nao a
+    //existencia de reconciliacao. O anti-join antigo (ITR1/OITR ligado so por TransId)
+    //escondia o titulo quando qualquer linha da transacao tinha reconciliacao: pagar a
+    //parcela 1 de uma nota sumia com as demais parcelas vencidas, e pagamento parcial
+    //contava como quitado. So debito: pagamento a conta nao reconciliado (credito) nao e
+    //titulo em atraso. Os comentarios ficam aqui porque view SQL nao pode ter comentario.
     fun temTituloVencido(cardCode: String): Boolean {
         if (cardCode.isBlank())
             return false
