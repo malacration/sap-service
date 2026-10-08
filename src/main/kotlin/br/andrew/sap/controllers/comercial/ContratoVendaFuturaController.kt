@@ -24,6 +24,7 @@ import br.andrew.sap.services.comercial.BaixaSpreadVendaFuturaService
 import br.andrew.sap.services.comercial.EntregaPendenteBaixa
 import br.andrew.sap.model.sap.partner.AddresType
 import br.andrew.sap.services.comercial.ContratoVendaFuturaService
+import br.andrew.sap.services.comercial.CondicaoPagamentoContratoService
 import br.andrew.sap.services.comercial.FreteContratoService
 import br.andrew.sap.services.financeiro.InternalReconciliationsService
 import br.andrew.sap.services.financeiro.RecomNum
@@ -71,6 +72,7 @@ class ContratoVendaFuturaController(
     @Value("\${venda-futura.entrega:9}") val utilizacaoEntregaVendaFutura : Int,
     val cotacaoController : QuotationsController,
     val freteContratoService : FreteContratoService,
+    val condicaoPagamentoContratoService : CondicaoPagamentoContratoService,
     val impostosDesonerados : ImpostosDesonerados){
     val logger = LoggerFactory.getLogger(ContratoVendaFuturaController::class.java)
 
@@ -478,6 +480,15 @@ class ContratoVendaFuturaController(
         return service.getById(docEntry).tryGetValue()
     }
 
+    /**
+     * Preenche a condicao de pagamento de contrato criado antes desse campo, a partir do pedido
+     * original. O front so dispara: o valor e resolvido aqui, nunca recebido. Idempotente.
+     */
+    @PostMapping("{docEntry}/condicao-pagamento/sanitizar")
+    fun sanitizaCondicaoPagamento(@PathVariable docEntry : Int): Contrato {
+        return condicaoPagamentoContratoService.sanitiza(docEntry)
+    }
+
     @PostMapping("troca")
     fun troca(@RequestBody pedidoTroca : PedidoTroca, auth : Authentication): List<BatchResponse> {
         val bathcList = BatchList()
@@ -496,6 +507,10 @@ class ContratoVendaFuturaController(
         if(contrato.U_Localidade == null)
             throw Exception("O contrato ${contrato.DocEntry} nao possui localidade de entrega. " +
                 "Informe a localidade antes de realizar a troca - ela e necessaria para recalcular o frete.")
+
+        //Produto novo tem que vir com o desconto/juros da condicao do pedido original. Contrato
+        //legado sem a condicao e recusado aqui - o front sanitiza ao abrir a troca.
+        condicaoPagamentoContratoService.validaPrecosDaTroca(contrato, pedidoTroca)
 
         val resultado = contrato.troca(pedidoTroca,itemService,comissaoService,freteContratoService)
         bathcList.add(BatchMethod.PUT,contrato,service)
