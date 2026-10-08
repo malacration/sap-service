@@ -52,6 +52,24 @@ class CondicaoPagamentoContratoServiceTest {
     }
 
     @Test
+    fun `sanitiza contrato de pedido a vista com condicao -1`() {
+        whenever(contratoService.getById(1)).thenReturn(odata(contrato(condicao = null)))
+        whenever(orderService.getById(99)).thenReturn(odata(pedido(condicao = -1)))
+
+        assertEquals(-1, service.sanitiza(1).U_condicaoPagamento)
+        verify(contratoService).update(eq(mapOf("U_condicaoPagamento" to -1)), eq("1"))
+    }
+
+    @Test
+    fun `troca de contrato a vista usa a condicao -1 da tabela`() {
+        whenever(prazoService.getByTabela(3)).thenReturn(listOf(PrazoPagamentoDto("-1", "A vista", "C1", "3", U_desconto = 5.0)))
+        whenever(itemService.getPriceBase("NOVO", 3)).thenReturn(100.0)
+
+        //100 x 0,95 x 0,90
+        assertDoesNotThrow { service.validaPrecosDaTroca(contrato(condicao = -1), troca(precoNegociado = 85.5)) }
+    }
+
+    @Test
     fun `sanitiza nao mexe em contrato que ja tem condicao`() {
         whenever(contratoService.getById(1)).thenReturn(odata(contrato(condicao = 7)))
 

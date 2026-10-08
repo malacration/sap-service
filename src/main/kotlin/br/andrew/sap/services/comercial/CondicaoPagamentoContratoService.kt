@@ -43,7 +43,8 @@ class CondicaoPagamentoContratoService(
             return contrato
 
         val pedido = orderService.getById(contrato.U_orderDocEntry).tryGetValue<OrderSales>()
-        val condicao = pedido.paymentGroupCode?.takeIf { it >= 0 }
+        //-1 e condicao valida (a vista, ver Document.isAvista) - so nulo e ausencia de condicao
+        val condicao = pedido.paymentGroupCode
             ?: throw Exception("O pedido original ${pedido.docNum ?: contrato.U_orderDocEntry} do contrato $docEntry " +
                 "nao possui condicao de pagamento - nao ha como definir o desconto da troca")
 
