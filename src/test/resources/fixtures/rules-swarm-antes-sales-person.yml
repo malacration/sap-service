@@ -16,8 +16,6 @@ roles:
       actions: ["get"]
     - url: "/business-partners/search"
       actions: ["*"]
-    - url: "/sales-person/*"
-      actions: ["get"]
     - url: "/item/search/branch/**"
       actions: ["*"]
     - url: "/prazo/tabela/**"
@@ -44,10 +42,6 @@ roles:
       actions: ["get"]
     - url: "/contrato-venda-futura/troca"
       actions: ["post"]
-    # pre-requisito da troca: contrato antigo sem localidade e recusado no /troca e o erro manda
-    # o usuario atribuir aqui. Sem esse put, quem pode trocar nao consegue destravar sozinho.
-    - url: "/contrato-venda-futura/*/localidade"
-      actions: ["put"]
     - url: "/contrato-venda-futura/emitir-boletos/*"
       actions: ["get"]
     - url: "/business-partners/cientes"
@@ -58,13 +52,9 @@ roles:
       actions: ["get"]
     - url: "/down-payment/contrato-venda-futura/*/pix"
       actions: [ "post" ]
-    - url: "/painel-vendas/**"
-      actions: ["*"]
     - url: "/cobranca/titulos"
       actions: ["get"]
     - url: "/cobranca/titulos/*/*/*/historico"
-      actions: ["get"]
-    - url: "/invoice/**"
       actions: ["get"]
 
   vendedor_admin:
@@ -78,14 +68,10 @@ roles:
       actions: ["*"]
     - url: "/painel/**"
       actions: ["*"]
-    - url: "/painel-vendas/**"
-      actions: ["*"]
     - url: "/branch"
       actions: ["get"]
     - url: "/sales-person/search"
       actions: ["*"]
-    - url: "/sales-person/*"
-      actions: ["get"]
     - url: "/sales-person/*/business-partners"
       actions: ["*"]
     - url: "/sales-person/replace/*/por/*"
@@ -104,10 +90,6 @@ roles:
       actions: ["post"]
     - url: "/contrato-venda-futura/troca"
       actions: ["post"]
-    # mesmo motivo do vendedor: sem esse put, quem pode trocar nao consegue atribuir a
-    # localidade que a propria troca exige
-    - url: "/contrato-venda-futura/*/localidade"
-      actions: ["put"]
     - url: "/contrato-venda-futura/emitir-boletos/*"
       actions: ["get"]
     - url: "/future-sales/pedidos/*"
@@ -116,54 +98,30 @@ roles:
       actions: ["*"]
     - url: "/prazo/tabela/**"
       actions: ["get"]
-    - url: "/pedido-venda/listar"
-      actions: ["get"]
     - url: "/pedido-venda/angular"
       actions: ["*"]
     - url: "/quotation/**"
       actions: ["get"]
-    - url: "/invoice/**"
+    - url: "/pedido-venda/**"
+      actions: ["*"]
+    - url: "/quotation/angular"
+      actions: ["*"]
+    - url: "/invoice/**/parcela/*"
       actions: ["get"]
-  sysfeed:
-    - url: "/sysfeed/fornecedores/pendentes"
+    - url: "/invoice/cardcode/**/payment"
       actions: ["get"]
-    - url: "/sysfeed/fornecedores/*"
-      actions: ["get"]
-    - url: "/sysfeed/ordens-recebimento/pendentes"
-      actions: ["get"]
-    - url: "/sysfeed/ordens-producao/pendentes"
-      actions: ["get"]
-    - url: "/sysfeed/status"
-      actions: ["post"]
 
   cobranca:
     - url: "/cobranca/**"
       actions: ["get", "post"]
-    # Remocao de linha do historico. Regra propria em vez de somar "delete" ao /cobranca/**:
-    # o filtro e default-deny e assim DELETE novo em outro endpoint de cobranca nao entra de
-    # carona. Quem pode remover de fato e so o autor da linha, conferido em CobrancaService.
     - url: "/cobranca/titulos/*/*/*/historico/*"
       actions: ["delete"]
-    - url: "/business-partners/**"
-      actions: ["get"]
-    - url: "/contrato-venda-futura/**"
-      actions: ["get"]
-    - url: "/future-sales/pedidos/*"
-      actions: ["get"]
-    - url: "/down-payment/contrato-venda-futura/*"
-      actions: ["get"]
-    - url: "/invoice/**"
-      actions: ["get"]
     - url: "/business-partners/search"
       actions: ["*"]
     - url: "/branch"
       actions: ["get"]
     - url: "/sales-person/search"
       actions: ["*"]
-    # A lista de faturas resolve o nome do vendedor de cada linha com GET /sales-person/{id}.
-    # Sem isso o cobrador tomava 403 por linha (a tela cai no codigo, mas suja o console).
-    - url: "/sales-person/*"
-      actions: ["get"]
 
   qualidade:
     - url: "/batch-stock/item-code/**"
@@ -257,10 +215,6 @@ roles:
     - url: "/item/search"
       actions: ["post"]
   pix:
-    - url: "/business-partners/search"
-      actions: [ "*" ]
-    - url: "/branch"
-      actions: [ "get" ]
     - url: "/pix"
       actions: ["get"]
     - url: "/pix/**"
@@ -281,10 +235,6 @@ roles:
       actions: [ "post" ]
 
   pix_admin:
-    - url: "/business-partners/search"
-      actions: [ "*" ]
-    - url: "/branch"
-      actions: [ "get" ]
     - url: "/pix"
       actions: ["get"]
     - url: "/pix/**"
@@ -314,10 +264,4 @@ roles:
     - url: "/tax/**/pdf"
       actions: ["get"]
     - url: "/installment/**/paid"
-      actions: ["get"]
-
-  liberacao_trava:
-    - url: "/trava/otp"
-      actions: ["get"]
-    - url: "/trava/regras"
       actions: ["get"]

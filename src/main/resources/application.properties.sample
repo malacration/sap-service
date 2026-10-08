@@ -110,3 +110,29 @@ trava.otp.window-seconds=120
 trava.otp.length=6
 # Provisiona/semeia o catalogo de regras de trava (UDO TRAVA_REGRA) no boot.
 fields.trava=true
+
+# Gestao das regras de acesso (o que antes so existia no rules.yml) pela tela
+# Configuracoes > Regras de Acesso. Cada alteracao vira uma versao no UDO ACESSO_REGRAS.
+# Provisiona o UDO, cria a versao 1 a partir do arquivo em uso (so se estiver vazio) e habilita
+# a API /acesso/regras (somente admin). Sozinho NAO muda quem manda no acesso.
+fields.acesso=false
+# Quem manda de verdade no acesso: arquivo (padrao, como sempre foi) ou sap (o cadastro da tela).
+# Trocar para sap exige fields.acesso=true. Se o SAP nao responder no boot, o boot FALHA de
+# proposito (nao cai em silencio para o arquivo, o que reabriria acessos revogados).
+# Antes de voltar para arquivo, exporte da tela e atualize o arquivo: ele nao acompanha o cadastro.
+acesso.regras.fonte=arquivo
+# Arquivo lido quando a fonte e arquivo, e usado como seed. Em producao (swarm) o arquivo montado
+# em /app/rules.yml; assim nao depende do efeito colateral do classpath do JarLauncher.
+acesso.regras.arquivo=classpath:rules.yml
+# Intervalo (ms) da conferencia de versao nova no SAP, quando a fonte e sap.
+acesso.regras.refresh-ms=60000
+
+# Criar a role no Keycloak ao criar um perfil na tela Regras de Acesso. Precisa de um client
+# CONFIDENCIAL com "Service accounts roles" ligado, no mesmo realm, e na aba Service account roles dele
+# as roles de realm-management: view-clients e manage-clients. A role nasce como role de client do
+# keycloak.client-id (a mesma que o login le). Desligado: a tela so avisa para criar a role la a mao.
+# Excluir um perfil NUNCA apaga a role no Keycloak (tiraria o perfil de quem o tem).
+keycloak.admin.enabled=false
+keycloak.admin.client-id=
+keycloak.admin.client-secret=
+keycloak.admin.timeout-ms=5000
