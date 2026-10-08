@@ -49,6 +49,16 @@ class Contrato(
     @JsonProperty("U_RegiaoCode")
     var U_RegiaoCode : String? = null
 
+    /**
+     * Condicao de pagamento (OCTG.GroupNum) do pedido original. Define o desconto/juros
+     * financeiro dos produtos novos na troca (ver CondicaoPagamentoContratoService).
+     *
+     * Nulo em contrato criado antes deste campo: preenchido sob demanda ao abrir a troca
+     * (POST /contrato-venda-futura/{docEntry}/condicao-pagamento/sanitizar).
+     */
+    @JsonProperty("U_condicaoPagamento")
+    var U_condicaoPagamento : Int? = null
+
     @JsonProperty("U_status")
     var U_status : Status = Status.aberto
 
@@ -189,6 +199,7 @@ class Contrato(
                 "U_valorFrete",
                 "U_Localidade",
                 "U_RegiaoCode",
+                "U_condicaoPagamento",
                 "U_status",
                 "DocNum",
                 "DocEntry",

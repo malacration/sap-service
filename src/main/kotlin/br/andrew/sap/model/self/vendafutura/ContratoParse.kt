@@ -30,6 +30,7 @@ class ContratoParse {
             ).also {
                 it.U_Localidade = localidade
                 it.U_RegiaoCode = regiaoCode
+                it.U_condicaoPagamento = doc.paymentGroupCode
             }
         }
 
