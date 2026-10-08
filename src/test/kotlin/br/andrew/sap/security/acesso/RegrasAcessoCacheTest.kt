@@ -56,12 +56,22 @@ class RegrasAcessoCacheTest {
     }
 
     @Test
-    fun `versao mais nova estragada e pulada e o boot usa a anterior`() {
+    fun `versao mais nova estragada derruba o boot em vez de voltar para uma anterior`() {
+        // a mais nova pode ter revogado um acesso: carregar a anterior o devolveria em silencio
         repo.inserir(1, json("cobranca" to "/cobranca/**"))
         repo.inserir(2, "isto nao e json")
-        repo.inserir(3, json().replace("\"/**\"", "\"/so-isso\""))
 
-        assertEquals(1, cache().carregarNoBoot().versao)
+        val erro = assertThrows(IllegalStateException::class.java) { cache().carregarNoBoot() }
+
+        assertTrue(erro.message!!.contains("NAO sera trocada por uma anterior"))
+    }
+
+    @Test
+    fun `versao mais nova sem o curinga do admin tambem derruba o boot`() {
+        repo.inserir(1, json())
+        repo.inserir(2, json().replace("\"/**\"", "\"/so-isso\""))
+
+        assertThrows(IllegalStateException::class.java) { cache().carregarNoBoot() }
     }
 
     @Test

@@ -1,5 +1,7 @@
 package br.andrew.sap.security.acesso
 
+import br.andrew.sap.infrastructure.security.keycloak.KeycloakAdminException
+import br.andrew.sap.infrastructure.security.keycloak.KeycloakRolesGateway
 import br.andrew.sap.model.authentication.User
 import br.andrew.sap.model.authentication.UserOriginEnum
 import br.andrew.sap.services.security.RegrasArquivoService
@@ -50,8 +52,14 @@ class RegrasAcessoServiceTest {
     }
 
     /** Sem cache = fonte arquivo. Com cache = fonte sap (o filtro receberia o SapRuleService). */
-    private fun servico(yaml: String = yamlSwarm, cache: RegrasAcessoCache? = null): RegrasAcessoService {
+    private fun servico(
+        yaml: String = yamlSwarm,
+        cache: RegrasAcessoCache? = null,
+        keycloak: KeycloakRolesGateway? = null,
+        keycloakLigado: Boolean = false,
+    ): RegrasAcessoService {
         val bf = DefaultListableBeanFactory()
+        if (keycloak != null) bf.registerSingleton("keycloak", keycloak)
         val arquivo = arquivoCom(yaml)
         if (cache != null) {
             bf.registerSingleton("cache", cache)
@@ -64,6 +72,8 @@ class RegrasAcessoServiceTest {
             bf.getBeanProvider(RegrasAcessoCache::class.java),
             bf.getBeanProvider(br.andrew.sap.services.security.interfaces.RuleService::class.java),
             "",
+            bf.getBeanProvider(KeycloakRolesGateway::class.java),
+            keycloakLigado,
         ).also { it.relogio = relogio }
     }
 
@@ -429,6 +439,326 @@ class RegrasAcessoServiceTest {
         }
         assertTrue(erro.erros.single().contains("limite"))
         assertEquals(1, repo.linhas.size)
+    }
+
+    // ------------------------------------------------------------------ roles no Keycloak
+
+    private class KeycloakFalso(
+        val existentes: MutableSet<String> = mutableSetOf(),
+        var falha: String? = null,
+        val deRealm: Set<String> = emptySet(),
+        /** Roda no meio de garantirRole, para o teste observar o que acontece enquanto o Keycloak esta sendo chamado. */
+        var duranteChamada: (() -> Unit)? = null,
+    ) : KeycloakRolesGateway {
+        val chamadas = mutableListOf<String>()
+        override fun garantirRole(nome: String): Boolean {
+            chamadas.add(nome)
+            duranteChamada?.invoke()
+            falha?.let { throw KeycloakAdminException(it) }
+            return existentes.add(nome)
+        }
+        override fun roleDeRealmExiste(nome: String): Boolean? = nome in deRealm
+    }
+
+    @Test
+    fun `perfil novo cria a role no keycloak, perfil existente nao mexe la`() {
+        val kc = KeycloakFalso()
+        val s = servico(keycloak = kc, keycloakLigado = true).also { it.semearSeVazio() }
+
+        val novo = s.salvarPerfil(admin, "conferente", listOf(regra("/branch", "get")), 1, null)
+        assertEquals(listOf("conferente"), kc.chamadas)
+        assertTrue(novo.avisos.isEmpty())
+        assertTrue(novo.keycloakCriaRoles && novo.keycloakLigado)
+
+        val edicao = s.salvarPerfil(admin, "cobranca", regrasDe(s, "cobranca") + regra("/a", "get"), 2, null)
+        assertEquals(listOf("conferente"), kc.chamadas)
+        assertTrue(edicao.avisos.isEmpty())
+    }
+
+    @Test
+    fun `falha no keycloak nao desfaz o perfil e vira aviso com o nome da role`() {
+        val kc = KeycloakFalso(falha = "HTTP 403")
+        val s = servico(keycloak = kc, keycloakLigado = true).also { it.semearSeVazio() }
+
+        val estado = s.salvarPerfil(admin, "conferente", listOf(regra("/branch", "get")), 1, null)
+
+        assertEquals(2, estado.versao)
+        assertTrue(estado.documento.perfis.containsKey("conferente"))
+        assertEquals(1, estado.avisos.size)
+        assertTrue(estado.avisos.single().contains("'conferente'") && estado.avisos.single().contains("HTTP 403"))
+    }
+
+    @Test
+    fun `sem a integracao mas com keycloak em uso avisa para criar a role a mao`() {
+        val s = servico(keycloakLigado = true).also { it.semearSeVazio() }
+
+        val estado = s.salvarPerfil(admin, "conferente", listOf(regra("/branch", "get")), 1, null)
+
+        assertEquals(1, estado.avisos.size)
+        assertTrue(estado.avisos.single().contains("Crie no Keycloak a role 'conferente'"))
+        assertFalse(estado.keycloakCriaRoles)
+    }
+
+    @Test
+    fun `sem keycloak em uso nao ha aviso nenhum`() {
+        val s = semeado()
+        assertTrue(s.salvarPerfil(admin, "conferente", listOf(regra("/branch", "get")), 1, null).avisos.isEmpty())
+    }
+
+    @Test
+    fun `excluir perfil nunca apaga a role no keycloak, so avisa`() {
+        val kc = KeycloakFalso()
+        val s = servico(keycloak = kc, keycloakLigado = true).also { it.semearSeVazio() }
+        s.salvarPerfil(admin, "conferente", listOf(regra("/branch", "get")), 1, null)
+
+        val estado = s.removerPerfil(admin, "conferente", 2, null)
+
+        assertEquals(listOf("conferente"), kc.chamadas)
+        assertTrue(estado.avisos.single().contains("continua no Keycloak"))
+    }
+
+    @Test
+    fun `role de realm com o mesmo nome avisa, mas o perfil e a role de client seguem`() {
+        val kc = KeycloakFalso(deRealm = setOf("conferente"))
+        val s = servico(keycloak = kc, keycloakLigado = true).also { it.semearSeVazio() }
+
+        val estado = s.salvarPerfil(admin, "conferente", listOf(regra("/branch", "get")), 1, null)
+
+        assertEquals(listOf("conferente"), kc.chamadas)
+        assertEquals(1, estado.avisos.size)
+        assertTrue(estado.avisos.single().contains("role de REALM chamada 'conferente'"))
+    }
+
+    @Test
+    fun `depois da primeira falha nao insiste nos demais perfis novos`() {
+        val kc = KeycloakFalso(falha = "Keycloak recusou criar a role: HTTP 403")
+        val s = servico(keycloak = kc, keycloakLigado = true).also { it.semearSeVazio() }
+        val yaml = "roles:\n  novo_a:\n    - url: \"/branch\"\n      actions: [\"get\"]\n  novo_b:\n    - url: \"/branch\"\n      actions: [\"get\"]\n  novo_c:\n    - url: \"/branch\"\n      actions: [\"get\"]\n"
+
+        val gravada = s.importar(admin, yaml, "mesclar", false, 1, null)
+
+        assertEquals(listOf("novo_a"), kc.chamadas)
+        assertEquals(3, gravada.avisosKeycloak.size)
+        assertTrue(gravada.avisosKeycloak.all { it.contains("HTTP 403") })
+        assertEquals(2, s.atual().versao)
+    }
+
+    @Test
+    fun `role que ja existia no keycloak avisa que quem a tem passa a receber o perfil`() {
+        val kc = KeycloakFalso(existentes = mutableSetOf("conferente"))
+        val s = servico(keycloak = kc, keycloakLigado = true).also { it.semearSeVazio() }
+
+        val estado = s.salvarPerfil(admin, "conferente", listOf(regra("/branch", "get")), 1, null)
+
+        assertEquals(1, estado.avisos.size)
+        assertTrue(estado.avisos.single().contains("já existia") && estado.avisos.single().contains("'conferente'"))
+    }
+
+    @Test
+    fun `se reler depois de gravar falhar, a resposta sai com o que foi gravado e o aviso do keycloak`() {
+        val kc = KeycloakFalso(falha = "HTTP 403")
+        val s = servico(keycloak = kc, keycloakLigado = true).also { it.semearSeVazio() }
+        kc.duranteChamada = { repo.falhaNaLeitura = { RuntimeException("SAP caiu depois do POST") } }
+
+        val estado = s.salvarPerfil(admin, "conferente", listOf(regra("/branch", "get")), 1, null)
+
+        assertEquals(2, estado.versao)
+        assertTrue(estado.documento.perfis.containsKey("conferente"))
+        assertEquals(2, estado.avisos.size)
+        assertTrue(estado.avisos.first().contains("HTTP 403"))
+        assertTrue(estado.avisos.last().contains("Recarregue a tela"))
+        assertEquals(2, repo.linhas.size)
+    }
+
+    @Test
+    fun `ultima versao ilegivel - a tela abre, editar e recusado e restaurar recupera`() {
+        val kc = KeycloakFalso()
+        val s = servico(keycloak = kc, keycloakLigado = true).also { it.semearSeVazio() }
+        repo.inserir(2, "isto nao e json")
+
+        val aberta = s.atual()
+        assertEquals(2, aberta.versao)
+        assertTrue(aberta.documento.perfis.isEmpty())
+        assertTrue(aberta.avisos.single().contains("ilegível"))
+
+        val erro = assertThrows(RegrasValidacaoException::class.java) {
+            s.salvarPerfil(admin, "conferente", listOf(regra("/branch", "get")), 2, null)
+        }
+        assertTrue(erro.erros.single().contains("ilegível"))
+        assertThrows(RegrasValidacaoException::class.java) { s.importar(admin, yamlRepo, "mesclar", false, 2, null) }
+
+        val recuperada = s.restaurar(admin, 1, 2, null)
+
+        assertEquals(3, recuperada.versao)
+        assertTrue(recuperada.documento.perfis.containsKey("admin"))
+        assertTrue(recuperada.avisos.isEmpty())
+        assertTrue(kc.chamadas.isEmpty(), "restaurar de uma base ilegivel nao deve tentar criar todas as roles")
+        assertEquals("RESTAURACAO", repo.linhas.getValue(3).U_Origem)
+    }
+
+    @Test
+    fun `restaurar de uma base ilegivel nao remove perfil protegido que existia antes`() {
+        val s = servico()
+        // v1 sem cobranca (so admin), v2 com cobranca (o arquivo do swarm), v3 ilegivel (a ultima)
+        repo.inserir(1, RegrasCodec.toJson(RegrasDocumento(perfis = mapOf("admin" to listOf(RegraDoc("/**", listOf("*")))))))
+        repo.inserir(2, RegrasCodec.toJson(RegrasYaml.importar(yamlSwarm)))
+        repo.inserir(3, "lixo")
+
+        // restaurar a v1 tiraria a cobranca, que existia na ultima versao legivel (v2)
+        val erro = assertThrows(RegrasValidacaoException::class.java) { s.restaurar(admin, 1, 3, null) }
+        assertTrue(erro.erros.any { it.contains("cobranca") && it.contains("não podem sair") })
+        assertEquals(3, repo.linhas.size)
+
+        // restaurar a v2 (que tem tudo) recupera
+        assertEquals(4, s.restaurar(admin, 2, 3, null).versao)
+    }
+
+    @Test
+    fun `sem base legivel ao alcance da busca restaurar e recusado em vez de assumir vazio`() {
+        val s = servico()
+        repo.inserir(1, RegrasCodec.toJson(RegrasDocumento(perfis = mapOf("admin" to listOf(RegraDoc("/**", listOf("*")))))))
+        repo.inserir(2, RegrasCodec.toJson(RegrasYaml.importar(yamlSwarm)))
+        (3..53).forEach { repo.inserir(it, "lixo") }
+
+        val erro = assertThrows(RegrasValidacaoException::class.java) { s.restaurar(admin, 1, 53, null) }
+
+        assertTrue(erro.erros.single().contains("versão anterior legível"))
+        assertEquals(53, repo.linhas.size)
+    }
+
+    @Test
+    fun `o aviso de versao ilegivel nao se perde atras dos avisos da gravacao`() {
+        val kc = KeycloakFalso(falha = "HTTP 403")
+        val s = servico(keycloak = kc, keycloakLigado = true).also { it.semearSeVazio() }
+        // outra versao, estragada, entra entre a gravacao e a releitura
+        kc.duranteChamada = { repo.inserir(3, "lixo") }
+
+        val estado = s.salvarPerfil(admin, "conferente", listOf(regra("/branch", "get")), 1, null)
+
+        assertEquals(2, estado.avisos.size)
+        assertTrue(estado.avisos.any { it.contains("ilegível ou inválida") })
+        assertTrue(estado.avisos.any { it.contains("HTTP 403") })
+    }
+
+    @Test
+    fun `ultima versao bem formada mas invalida tambem e tratada como a tela de recuperacao`() {
+        val s = semeado()
+        repo.inserir(2, RegrasCodec.toJson(RegrasDocumento(perfis = mapOf("cobranca" to listOf(RegraDoc("/cobranca/**", listOf("get")))))))
+
+        val aberta = s.atual()
+
+        assertTrue(aberta.documento.perfis.isEmpty())
+        assertTrue(aberta.avisos.single().contains("ilegível ou inválida"))
+        assertThrows(RegrasValidacaoException::class.java) { s.salvarPerfil(admin, "x", listOf(regra("/a", "get")), 2, null) }
+        assertEquals(3, s.restaurar(admin, 1, 2, null).versao)
+    }
+
+    @Test
+    fun `o estado informa a versao que este backend recusou aplicar`() {
+        val cache = RegrasAcessoCache(repo, 0)
+        servico().semearSeVazio()
+        cache.carregarNoBoot()
+        val s = servico(cache = cache)
+        assertNull(s.atual().versaoRejeitada)
+
+        repo.inserir(2, "lixo")
+        cache.conferir()
+
+        assertEquals(2, s.atual().versaoRejeitada)
+        assertEquals(1, s.atual().versaoEmVigor)
+
+        // uma versao valida mais nova substitui a rejeitada
+        repo.inserir(3, RegrasCodec.toJson(RegrasDocumento(perfis = mapOf("admin" to listOf(RegraDoc("/**", listOf("*")))))))
+        cache.conferir()
+        assertNull(s.atual().versaoRejeitada)
+    }
+
+    @Test
+    fun `o simulador diz qual versao simulou e se ela ja esta valendo`() {
+        val arquivoMode = semeado()
+        val r1 = arquivoMode.simular(listOf("cobranca"), "get", "/cobranca/titulos", null)
+        assertEquals(1, r1.versaoSimulada)
+        assertEquals(false, r1.valendo)
+
+        val cache = RegrasAcessoCache(repo, 0).also { it.carregarNoBoot() }
+        val sapMode = servico(cache = cache)
+        assertEquals(true, sapMode.simular(listOf("cobranca"), "get", "/cobranca/titulos", null).valendo)
+
+        // gravada nesta instancia o cache ja avanca; uma versao mais nova so no SAP (outra instancia) ainda nao esta valendo
+        repo.inserir(2, RegrasCodec.toJson(sapMode.atual().documento))
+        val defasado = sapMode.simular(listOf("cobranca"), "get", "/cobranca/titulos", null)
+        assertEquals(2, defasado.versaoSimulada)
+        assertEquals(false, defasado.valendo)
+
+        val rascunho = sapMode.simular(listOf("cobranca"), "get", "/cobranca/titulos", sapMode.atual().documento)
+        assertNull(rascunho.versaoSimulada)
+        assertNull(rascunho.valendo)
+    }
+
+    @Test
+    fun `estourou o orcamento de tempo - os perfis seguintes viram aviso sem tentar`() {
+        val kc = KeycloakFalso()
+        kc.duranteChamada = { Thread.sleep(150) }
+        val s = servico(keycloak = kc, keycloakLigado = true).also { it.semearSeVazio(); it.orcamentoKeycloakMs = 50 }
+        val yaml = "roles:\n  novo_a:\n    - url: \"/branch\"\n      actions: [\"get\"]\n  novo_b:\n    - url: \"/branch\"\n      actions: [\"get\"]\n"
+
+        val gravada = s.importar(admin, yaml, "mesclar", false, 1, null)
+
+        assertEquals(listOf("novo_a"), kc.chamadas)
+        assertEquals(1, gravada.avisosKeycloak.size)
+        assertTrue(gravada.avisosKeycloak.single().contains("'novo_b'") && gravada.avisosKeycloak.single().contains("tempo esgotado"))
+        assertEquals(2, s.atual().versao)
+    }
+
+    @Test
+    fun `excecao inesperada nao mostra a mensagem original na tela`() {
+        val kc = object : KeycloakRolesGateway {
+            override fun garantirRole(nome: String): Boolean = throw IllegalStateException("corpo com access_token=SEGREDO")
+        }
+        val s = servico(keycloak = kc, keycloakLigado = true).also { it.semearSeVazio() }
+
+        val aviso = s.salvarPerfil(admin, "conferente", listOf(regra("/branch", "get")), 1, null).avisos.single()
+
+        assertFalse(aviso.contains("SEGREDO"))
+        assertTrue(aviso.contains("veja o log do servidor"))
+    }
+
+    @Test
+    fun `o keycloak e chamado com a trava das gravacoes ja solta (importacao)`() {
+        val kc = KeycloakFalso()
+        val s = servico(keycloak = kc, keycloakLigado = true).also { it.semearSeVazio() }
+        var ficouPresa = false
+        kc.duranteChamada = {
+            // outra gravacao, em outra thread, enquanto o Keycloak "demora": se a trava ainda estivesse presa, ela nao terminaria
+            val t = Thread {
+                try { s.salvarPerfil(admin, "cobranca", regrasDe(s, "cobranca") + regra("/b", "get"), 2, null) } catch (_: Exception) {}
+            }
+            t.start()
+            t.join(3000)
+            if (t.isAlive) ficouPresa = true
+        }
+        val yaml = "roles:\n  novo_a:\n    - url: \"/branch\"\n      actions: [\"get\"]\n"
+
+        s.importar(admin, yaml, "mesclar", false, 1, null)
+
+        assertFalse(ficouPresa, "outra gravacao ficou presa esperando a chamada ao Keycloak")
+    }
+
+    @Test
+    fun `importar e restaurar tambem criam a role dos perfis que entraram`() {
+        val kc = KeycloakFalso()
+        val s = servico(keycloak = kc, keycloakLigado = true).also { it.semearSeVazio() }
+        val yaml = "roles:\n  novo_a:\n    - url: \"/branch\"\n      actions: [\"get\"]\n  novo_b:\n    - url: \"/branch\"\n      actions: [\"get\"]\n"
+
+        val previa = s.importar(admin, yaml, "mesclar", true, null, null)
+        assertTrue(kc.chamadas.isEmpty() && previa.avisosKeycloak.isEmpty())
+
+        val gravada = s.importar(admin, yaml, "mesclar", false, 1, null)
+        assertEquals(listOf("novo_a", "novo_b"), kc.chamadas)
+        assertTrue(gravada.avisosKeycloak.isEmpty())
+
+        s.restaurar(admin, 1, 2, null)
+        assertEquals(listOf("novo_a", "novo_b"), kc.chamadas)
     }
 
     // ------------------------------------------------------------------ cache e fonte

@@ -126,3 +126,13 @@ acesso.regras.fonte=arquivo
 acesso.regras.arquivo=classpath:rules.yml
 # Intervalo (ms) da conferencia de versao nova no SAP, quando a fonte e sap.
 acesso.regras.refresh-ms=60000
+
+# Criar a role no Keycloak ao criar um perfil na tela Regras de Acesso. Precisa de um client
+# CONFIDENCIAL com "Service accounts roles" ligado, no mesmo realm, e na aba Service account roles dele
+# as roles de realm-management: view-clients e manage-clients. A role nasce como role de client do
+# keycloak.client-id (a mesma que o login le). Desligado: a tela so avisa para criar a role la a mao.
+# Excluir um perfil NUNCA apaga a role no Keycloak (tiraria o perfil de quem o tem).
+keycloak.admin.enabled=false
+keycloak.admin.client-id=
+keycloak.admin.client-secret=
+keycloak.admin.timeout-ms=5000

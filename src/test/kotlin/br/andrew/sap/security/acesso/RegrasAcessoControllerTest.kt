@@ -75,6 +75,7 @@ class RegrasAcessoControllerTest {
         val bf = DefaultListableBeanFactory().apply { registerSingleton("regra", arquivo) }
         val service = RegrasAcessoService(
             repo, arquivo, bf.getBeanProvider(RegrasAcessoCache::class.java), bf.getBeanProvider(RuleService::class.java), "",
+            bf.getBeanProvider(br.andrew.sap.infrastructure.security.keycloak.KeycloakRolesGateway::class.java), false,
         ).also { it.semearSeVazio() }
         return RegrasAcessoController(service, mapeamento)
     }

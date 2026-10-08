@@ -10,9 +10,9 @@ import java.util.concurrent.atomic.AtomicReference
  * a requisicao nunca chama o SAP.
  *
  * Regras que este cache segue:
- *  - No boot, carrega a versao mais nova que le e valida; se a mais nova estiver estragada, desce
- *    para a anterior. Se o SAP nao responde ou nenhuma versao presta, LANCA - o boot falha e o swarm
- *    mantem a task antiga no ar. Nao cai em silencio para o arquivo: isso reabriria acessos revogados.
+ *  - No boot, carrega a versao MAIS NOVA. Se o SAP nao responde ou ela esta invalida, LANCA - o boot falha e o
+ *    swarm mantem a task antiga no ar. Nao cai em silencio para o arquivo nem para uma versao anterior: isso
+ *    poderia reabrir acessos revogados.
  *  - Nunca guarda um mapa vazio (o validador exige o `admin` com curinga).
  *  - So avanca: uma leitura lenta nao sobrescreve uma gravacao mais nova feita nesta instancia.
  *  - Se o SAP cair depois do boot, o ultimo snapshot valido continua valendo.
@@ -31,25 +31,29 @@ class RegrasAcessoCache(
 
     fun versaoAtual(): Int? = ref.get()?.versao
 
+    /** Versao mais nova do SAP que este backend recusou (ilegivel ou invalida) e por isso NAO aplica; null se nenhuma. */
+    fun versaoRejeitada(): Int? = ultimaRejeitada.takeIf { it > (ref.get()?.versao ?: 0) }
+
     fun carregarNoBoot(): Snapshot {
-        val versoes = comRetentativa { repositorio.listar(VERSOES_NO_BOOT) }
-        if (versoes.isEmpty())
-            throw IllegalStateException(
+        val ultima = comRetentativa { repositorio.ultimaVersao() }
+            ?: throw IllegalStateException(
                 "Nao ha nenhuma versao das regras de acesso no SAP (ACESSO_REGRAS). " +
                     "Suba com acesso.regras.fonte=arquivo e fields.acesso=true para o seed criar a versao 1."
             )
-        for (meta in versoes) {
-            val completa = repositorio.buscar(meta.numeroDaVersao()) ?: continue
-            val snapshot = montar(completa)
-            if (snapshot != null) {
-                ref.set(snapshot)
-                if (meta !== versoes.first())
-                    log.warn("As versoes mais novas das regras estavam invalidas; usando a versao {}", snapshot.versao)
-                log.info("Regras de acesso carregadas do SAP: versao {} ({} perfis)", snapshot.versao, snapshot.regras.size)
-                return snapshot
-            }
-        }
-        throw IllegalStateException("Nenhuma das ${versoes.size} versoes mais recentes das regras de acesso tem um documento valido")
+        val completa = repositorio.buscar(ultima)
+            ?: throw IllegalStateException("A versao $ultima das regras de acesso existe no indice mas nao pode ser lida no SAP")
+        // So a versao MAIS RECENTE vale. Se ela estiver estragada o boot falha em vez de cair para uma anterior: a mais nova pode
+        // ter revogado um acesso, e uma anterior o devolveria em silencio. O swarm mantem a task antiga no ar; para consertar,
+        // suba com fonte=arquivo e restaure uma versao pela tela.
+        val snapshot = montar(completa)
+            ?: throw IllegalStateException(
+                "A versao mais recente ($ultima) das regras de acesso e invalida e NAO sera trocada por uma anterior " +
+                    "(ela poderia reabrir acessos revogados). Suba com acesso.regras.fonte=arquivo e fields.acesso=true, abra Regras de Acesso " +
+                    "(a tela abre mesmo com a versao ilegivel) e use Restaurar numa versao anterior - isso grava uma versao nova valida."
+            )
+        ref.set(snapshot)
+        log.info("Regras de acesso carregadas do SAP: versao {} ({} perfis)", snapshot.versao, snapshot.regras.size)
+        return snapshot
     }
 
     /** Troca o snapshot se a versao for maior que a atual. Devolve true se trocou. */
@@ -113,10 +117,5 @@ class RegrasAcessoCache(
             }
         }
         return bloco()
-    }
-
-    companion object {
-        /** Quantas versoes o boot percorre ate achar uma valida. */
-        const val VERSOES_NO_BOOT = 50
     }
 }
