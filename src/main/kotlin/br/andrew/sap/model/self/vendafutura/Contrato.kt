@@ -156,6 +156,9 @@ class Contrato(
     var SalesEmployeeName: String? = null
     var OrderDocNum: String? = null
     var Bplname: String? = null
+    //so exibicao, como Bplname: preenchido no GET do contrato, nunca vai no PUT (nulo = omitido)
+    @JsonProperty("CondicaoPagamentoNome")
+    var CondicaoPagamentoNome: String? = null
     var TotalProdutosCalculado : Double? = null
 
     override fun getId(): String {

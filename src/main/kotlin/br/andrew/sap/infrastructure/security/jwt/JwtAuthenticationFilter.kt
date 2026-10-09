@@ -18,7 +18,6 @@ import java.util.Base64
 class JwtAuthenticationFilter(private val jwtHandler: JwtHandler, private val disable : Boolean = false) : OncePerRequestFilter() {
 
     val log = LoggerFactory.getLogger(JwtAuthenticationFilter::class.java)
-    private val mapper = ObjectMapper()
 
     override fun doFilterInternal(request: HttpServletRequest,
                                   response: HttpServletResponse,
@@ -57,30 +56,34 @@ class JwtAuthenticationFilter(private val jwtHandler: JwtHandler, private val di
         filterChain.doFilter(request,response)
     }
 
-    /**
-     * Usuario do modo bypass. Entra como vendedor_admin porque o SlpCode e -1, que nao existe em
-     * OSLP nem em @LIBERAPARA: sem esse vinculo o User.superVendedor() vale -1, a busca de
-     * produtos (produto-tabela-v2.sql) volta vazia e /branch nao lista filial nenhuma. Com o vinculo
-     * o superVendedor vale Int.MAX_VALUE e libera as duas coisas, do mesmo jeito que ja faz com
-     * parceiros e contratos.
-     *
-     * bussinesPlace fica vazio de proposito - quem lista filial e o /branch (BranchController),
-     * que devolve todas para super vendedor. O /me so espelha esse campo, nao restringe nada.
-     */
-    private fun usuarioBypass() : User {
-        return User("-1","Nenhum vendedor", UserOriginEnum.SalePerson,"","","",
-            listOf(), listOf("admin","pix_admin","vendedor_admin"))
-    }
+    companion object {
+        private val mapper = ObjectMapper()
 
-    /** Verdadeiro se o JWT usa algoritmo HMAC (HS*), ou seja, e um token interno. */
-    private fun isInternalToken(token: String): Boolean {
-        return try {
-            val header = token.removePrefix("Bearer ").trim().split(".").firstOrNull() ?: return false
-            val json = String(Base64.getUrlDecoder().decode(header))
-            val alg = mapper.readTree(json).get("alg")?.asText() ?: return false
-            alg.uppercase().startsWith("HS")
-        } catch (e: Exception) {
-            false
+        /**
+         * Usuario do modo bypass. Entra como vendedor_admin porque o SlpCode e -1, que nao existe em
+         * OSLP nem em @LIBERAPARA: sem esse vinculo o User.superVendedor() vale -1, a busca de
+         * produtos (produto-tabela-v2.sql) volta vazia e /branch nao lista filial nenhuma. Com o vinculo
+         * o superVendedor vale Int.MAX_VALUE e libera as duas coisas, do mesmo jeito que ja faz com
+         * parceiros e contratos.
+         *
+         * bussinesPlace fica vazio de proposito - quem lista filial e o /branch (BranchController),
+         * que devolve todas para super vendedor. O /me so espelha esse campo, nao restringe nada.
+         */
+        fun usuarioBypass() : User {
+            return User("-1","Nenhum vendedor", UserOriginEnum.SalePerson,"","","",
+                listOf(), listOf("admin","pix_admin","vendedor_admin"))
+        }
+
+        /** Verdadeiro se o JWT usa algoritmo HMAC (HS*), ou seja, e um token interno. */
+        fun isInternalToken(token: String): Boolean {
+            return try {
+                val header = token.removePrefix("Bearer ").trim().split(".").firstOrNull() ?: return false
+                val json = String(Base64.getUrlDecoder().decode(header))
+                val alg = mapper.readTree(json).get("alg")?.asText() ?: return false
+                alg.uppercase().startsWith("HS")
+            } catch (e: Exception) {
+                false
+            }
         }
     }
 }
