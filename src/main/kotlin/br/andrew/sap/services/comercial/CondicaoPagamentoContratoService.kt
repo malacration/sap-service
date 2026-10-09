@@ -68,10 +68,21 @@ class CondicaoPagamentoContratoService(
         return contrato
     }
 
+    /**
+     * Fallback da listagem (contratos-vendafutura.sql): o nome vem do LEFT JOIN com OCTG, que nao
+     * tem linha para o -1 - sem isto o contrato a vista aparecia sem rotulo na lista. Nao consulta
+     * o SAP: as demais condicoes ja trazem o nome do proprio join.
+     */
+    fun preencheNomeAVista(contratos: List<Contrato>): List<Contrato> {
+        contratos.filter { it.U_condicaoPagamento == A_VISTA && it.CondicaoPagamentoNome == null }
+            .forEach { it.CondicaoPagamentoNome = NOME_A_VISTA }
+        return contratos
+    }
+
     fun nome(condicao: Int): String? {
         //-1 e a condicao a vista do SAP, que pode nao ter cadastro em PaymentTermsTypes
-        if(condicao == -1)
-            return "À vista"
+        if(condicao == A_VISTA)
+            return NOME_A_VISTA
         return try {
             paymentTermsTypesService.getById(condicao).tryGetValue<PaymentTermsTypes>().PaymentTermsGroupName
         } catch (e: Exception) {
@@ -112,6 +123,9 @@ class CondicaoPagamentoContratoService(
     }
 
     companion object {
+        const val A_VISTA = -1
+        const val NOME_A_VISTA = "À vista"
+
         fun precoComCondicao(precoTabela: Double, prazo: PrazoPagamentoDto, descontoVendedor: Double): BigDecimal {
             val cem = BigDecimal(100)
             return BigDecimal(precoTabela.toString())

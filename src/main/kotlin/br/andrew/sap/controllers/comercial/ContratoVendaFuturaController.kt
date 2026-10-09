@@ -88,6 +88,7 @@ class ContratoVendaFuturaController(
             return ResponseEntity.noContent().build()
 
         val resultado = service.getContratos(auth, status, idContrato, filial, cliente)?.tryGetNextValues<Contrato>()
+        resultado?.let { condicaoPagamentoContratoService.preencheNomeAVista(it.content) }
         return ResponseEntity.ok(resultado)
     }
 
@@ -113,6 +114,7 @@ class ContratoVendaFuturaController(
         val nextLinkDto =
         return ResponseEntity.ok(
             service.next(link).tryGetNextValues<Contrato>()
+                .also { condicaoPagamentoContratoService.preencheNomeAVista(it.content) }
         )
     }
 

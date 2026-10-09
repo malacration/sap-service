@@ -142,6 +142,20 @@ class CondicaoPagamentoContratoServiceTest {
         assertEquals(null, service.preencheNome(contrato(condicao = 76)).CondicaoPagamentoNome)
     }
 
+    @Test
+    fun `listagem preenche o nome do contrato a vista sem join no OCTG`() {
+        val aVista = contrato(condicao = -1)
+        val semCondicao = contrato(condicao = null)
+        val prazo = contrato(condicao = 76).also { it.CondicaoPagamentoNome = "VF 3X" }
+
+        service.preencheNomeAVista(listOf(aVista, semCondicao, prazo))
+
+        assertEquals("À vista", aVista.CondicaoPagamentoNome)
+        assertEquals(null, semCondicao.CondicaoPagamentoNome)
+        assertEquals("VF 3X", prazo.CondicaoPagamentoNome)
+        verifyNoInteractions(paymentTermsService)
+    }
+
     private fun prepara() {
         whenever(prazoService.getByTabelaParaContrato(3)).thenReturn(listOf(prazo))
         whenever(itemService.getPriceBase("NOVO", 3)).thenReturn(100.0)
