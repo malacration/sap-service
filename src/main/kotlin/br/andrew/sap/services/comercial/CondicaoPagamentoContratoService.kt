@@ -1,11 +1,14 @@
 package br.andrew.sap.services.comercial
 
 import br.andrew.sap.model.comercial.PrazoPagamentoDto
+import br.andrew.sap.model.payment.PaymentTermsTypes
 import br.andrew.sap.model.sap.documents.OrderSales
 import br.andrew.sap.model.self.vendafutura.Contrato
 import br.andrew.sap.model.self.vendafutura.PedidoTroca
+import br.andrew.sap.services.bank.PaymentTermsTypesService
 import br.andrew.sap.services.documents.OrdersService
 import br.andrew.sap.services.stock.ItemsService
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
 import java.math.RoundingMode
@@ -24,7 +27,10 @@ class CondicaoPagamentoContratoService(
     private val orderService: OrdersService,
     private val prazoPagamentoService: PrazoPagamentoService,
     private val itemService: ItemsService,
+    private val paymentTermsTypesService: PaymentTermsTypesService,
 ) {
+
+    private val logger = LoggerFactory.getLogger(javaClass)
 
     //mesma folga de centavo do arredondamento do front (Item.formula, toFixed(2))
     private val TOLERANCIA_PRECO = BigDecimal("0.01")
@@ -54,6 +60,27 @@ class CondicaoPagamentoContratoService(
     }
 
     /**
+     * Nome da condicao para exibir na tela. Best effort, como o cabecalho do contrato: falha na
+     * busca nunca derruba a abertura do contrato - a tela mostra so o codigo.
+     */
+    fun preencheNome(contrato: Contrato): Contrato {
+        contrato.CondicaoPagamentoNome = nome(contrato.U_condicaoPagamento ?: return contrato)
+        return contrato
+    }
+
+    fun nome(condicao: Int): String? {
+        //-1 e a condicao a vista do SAP, que pode nao ter cadastro em PaymentTermsTypes
+        if(condicao == -1)
+            return "À vista"
+        return try {
+            paymentTermsTypesService.getById(condicao).tryGetValue<PaymentTermsTypes>().PaymentTermsGroupName
+        } catch (e: Exception) {
+            logger.warn("Nao foi possivel carregar o nome da condicao de pagamento [$condicao]", e)
+            null
+        }
+    }
+
+    /**
      * Confere que cada produto novo da troca foi precificado com a condicao do contrato:
      * preco da tabela x (1 - desconto) x (1 + juros) da condicao, x (1 - desconto do vendedor).
      * Mesma formula do front (Item.formula).
@@ -71,7 +98,7 @@ class CondicaoPagamentoContratoService(
             val tabela = item.PriceList ?: throw Exception("IdTabela nao pode ser nulo")
             val itemCode = item.ItemCode ?: throw Exception("A propriedade ItemCode nao pode ser null")
             val prazo = prazosPorTabela
-                .getOrPut(tabela) { prazoPagamentoService.getByTabela(tabela) ?: listOf() }
+                .getOrPut(tabela) { prazoPagamentoService.getByTabelaParaContrato(tabela) }
                 .firstOrNull { it.GroupNum == condicao.toString() }
                 ?: throw Exception("A condicao de pagamento $condicao do contrato nao esta disponivel para a " +
                     "tabela de preco $tabela do produto $itemCode - escolha o produto em outra tabela")

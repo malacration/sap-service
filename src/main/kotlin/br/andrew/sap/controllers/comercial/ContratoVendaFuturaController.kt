@@ -105,7 +105,7 @@ class ContratoVendaFuturaController(
     fun get(@PathVariable id : String, auth : Authentication): ResponseEntity<Contrato> {
         if(auth !is User)
             return ResponseEntity.noContent().build()
-        return ResponseEntity.ok(service.getByIdComCabecalho(id))
+        return ResponseEntity.ok(condicaoPagamentoContratoService.preencheNome(service.getByIdComCabecalho(id)))
     }
 
     @PostMapping("/nextlink")
@@ -486,7 +486,7 @@ class ContratoVendaFuturaController(
      */
     @PostMapping("{docEntry}/condicao-pagamento/sanitizar")
     fun sanitizaCondicaoPagamento(@PathVariable docEntry : Int): Contrato {
-        return condicaoPagamentoContratoService.sanitiza(docEntry)
+        return condicaoPagamentoContratoService.let { it.preencheNome(it.sanitiza(docEntry)) }
     }
 
     @PostMapping("troca")

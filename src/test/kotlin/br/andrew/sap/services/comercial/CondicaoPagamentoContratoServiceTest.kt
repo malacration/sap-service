@@ -7,7 +7,9 @@ import br.andrew.sap.model.sap.documents.base.Product
 import br.andrew.sap.model.self.vendafutura.Contrato
 import br.andrew.sap.model.self.vendafutura.Item
 import br.andrew.sap.model.self.vendafutura.PedidoTroca
+import br.andrew.sap.services.bank.PaymentTermsTypesService
 import br.andrew.sap.services.documents.OrdersService
+import br.andrew.sap.model.payment.PaymentTermsTypes
 import br.andrew.sap.services.stock.ItemsService
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -29,7 +31,8 @@ class CondicaoPagamentoContratoServiceTest {
     private val orderService = mock<OrdersService>()
     private val prazoService = mock<PrazoPagamentoService>()
     private val itemService = mock<ItemsService>()
-    private val service = CondicaoPagamentoContratoService(contratoService, orderService, prazoService, itemService)
+    private val paymentTermsService = mock<PaymentTermsTypesService>()
+    private val service = CondicaoPagamentoContratoService(contratoService, orderService, prazoService, itemService, paymentTermsService)
 
     /** Tabela 3, condicao 15: 5% de desconto e 2% de juros. */
     private val prazo = PrazoPagamentoDto("15", "30 dias", "C1", "3", U_desconto = 5.0, U_juros = 2.0)
@@ -62,7 +65,7 @@ class CondicaoPagamentoContratoServiceTest {
 
     @Test
     fun `troca de contrato a vista usa a condicao -1 da tabela`() {
-        whenever(prazoService.getByTabela(3)).thenReturn(listOf(PrazoPagamentoDto("-1", "A vista", "C1", "3", U_desconto = 5.0)))
+        whenever(prazoService.getByTabelaParaContrato(3)).thenReturn(listOf(PrazoPagamentoDto("-1", "A vista", "C1", "3", U_desconto = 5.0)))
         whenever(itemService.getPriceBase("NOVO", 3)).thenReturn(100.0)
 
         //100 x 0,95 x 0,90
@@ -121,8 +124,26 @@ class CondicaoPagamentoContratoServiceTest {
         assertTrue(erro.message!!.contains("nao possui condicao"), erro.message)
     }
 
+    @Test
+    fun `nome da condicao a vista nao consulta o SAP`() {
+        assertEquals("À vista", service.nome(-1))
+        verifyNoInteractions(paymentTermsService)
+    }
+
+    @Test
+    fun `nome da condicao vem do cadastro de condicoes`() {
+        whenever(paymentTermsService.getById(76)).thenReturn(odata(PaymentTermsTypes().also { it.PaymentTermsGroupName = "VF 3X" }))
+        assertEquals("VF 3X", service.preencheNome(contrato(condicao = 76)).CondicaoPagamentoNome)
+    }
+
+    @Test
+    fun `falha ao buscar o nome nao derruba o contrato`() {
+        whenever(paymentTermsService.getById(76)).thenThrow(RuntimeException("SAP fora"))
+        assertEquals(null, service.preencheNome(contrato(condicao = 76)).CondicaoPagamentoNome)
+    }
+
     private fun prepara() {
-        whenever(prazoService.getByTabela(3)).thenReturn(listOf(prazo))
+        whenever(prazoService.getByTabelaParaContrato(3)).thenReturn(listOf(prazo))
         whenever(itemService.getPriceBase("NOVO", 3)).thenReturn(100.0)
     }
 

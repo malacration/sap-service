@@ -15,5 +15,11 @@ class PrazoPagamentoController(val prazoPagamentoService: PrazoPagamentoService)
     fun getByTabela(@PathVariable idTabela : Int): List<PrazoPagamentoDto>? {
         return prazoPagamentoService.getByTabela(idTabela)
     }
+
+    /** Condicoes para a troca de contrato de venda futura - ver PrazoPagamentoService.getByTabelaParaContrato. */
+    @GetMapping("tabela/{idTabela}/contrato")
+    fun getByTabelaParaContrato(@PathVariable idTabela : Int): List<PrazoPagamentoDto> {
+        return prazoPagamentoService.getByTabelaParaContrato(idTabela)
+    }
 }
 
