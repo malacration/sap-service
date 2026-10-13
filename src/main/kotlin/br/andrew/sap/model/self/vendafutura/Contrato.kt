@@ -49,6 +49,16 @@ class Contrato(
     @JsonProperty("U_RegiaoCode")
     var U_RegiaoCode : String? = null
 
+    /**
+     * Condicao de pagamento (OCTG.GroupNum) do pedido original. Define o desconto/juros
+     * financeiro dos produtos novos na troca (ver CondicaoPagamentoContratoService).
+     *
+     * Nulo em contrato criado antes deste campo: preenchido sob demanda ao abrir a troca
+     * (POST /contrato-venda-futura/{docEntry}/condicao-pagamento/sanitizar).
+     */
+    @JsonProperty("U_condicaoPagamento")
+    var U_condicaoPagamento : Int? = null
+
     @JsonProperty("U_status")
     var U_status : Status = Status.aberto
 
@@ -146,6 +156,9 @@ class Contrato(
     var SalesEmployeeName: String? = null
     var OrderDocNum: String? = null
     var Bplname: String? = null
+    //so exibicao, como Bplname: preenchido no GET do contrato, nunca vai no PUT (nulo = omitido)
+    @JsonProperty("CondicaoPagamentoNome")
+    var CondicaoPagamentoNome: String? = null
     var TotalProdutosCalculado : Double? = null
 
     override fun getId(): String {
@@ -189,6 +202,7 @@ class Contrato(
                 "U_valorFrete",
                 "U_Localidade",
                 "U_RegiaoCode",
+                "U_condicaoPagamento",
                 "U_status",
                 "DocNum",
                 "DocEntry",

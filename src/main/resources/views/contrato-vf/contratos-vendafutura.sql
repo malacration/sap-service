@@ -8,6 +8,8 @@ SELECT
 	"@AR_CONTRATO_FUTURO"."U_valorFrete",
 	"@AR_CONTRATO_FUTURO"."U_Localidade",
 	"@AR_CONTRATO_FUTURO"."U_RegiaoCode",
+	"@AR_CONTRATO_FUTURO"."U_condicaoPagamento",
+	"OCTG"."PymntGroup" as "CondicaoPagamentoNome",
 	"@AR_CONTRATO_FUTURO"."U_status",
 	"@AR_CONTRATO_FUTURO"."DocNum",
 	"@AR_CONTRATO_FUTURO"."Series",
@@ -22,6 +24,7 @@ FROM
 	INNER JOIN "OSLP" ON ("@AR_CONTRATO_FUTURO"."U_vendedor" = "OSLP"."SlpCode")
 	INNER JOIN "OBPL" ON ("@AR_CONTRATO_FUTURO"."U_filial" = "OBPL"."BPLId")
 	INNER JOIN "ORDR" ON ("ORDR"."DocEntry" = "@AR_CONTRATO_FUTURO"."U_orderDocEntry" )
+	LEFT JOIN "OCTG" ON ("OCTG"."GroupNum" = "@AR_CONTRATO_FUTURO"."U_condicaoPagamento")
 where
     ("@AR_CONTRATO_FUTURO"."U_vendedor" = :vendedor or "@AR_CONTRATO_FUTURO"."U_vendedor" < :superVendedor)
     AND ("@AR_CONTRATO_FUTURO"."DocEntry" = :idContrato or "@AR_CONTRATO_FUTURO"."DocEntry" < :idContratoIsFilter)
@@ -38,6 +41,8 @@ group by
 	"@AR_CONTRATO_FUTURO"."U_valorFrete",
 	"@AR_CONTRATO_FUTURO"."U_Localidade",
 	"@AR_CONTRATO_FUTURO"."U_RegiaoCode",
+	"@AR_CONTRATO_FUTURO"."U_condicaoPagamento",
+	"OCTG"."PymntGroup",
 	"@AR_CONTRATO_FUTURO"."U_status",
 	"@AR_CONTRATO_FUTURO"."DocNum",
 	"@AR_CONTRATO_FUTURO"."Series",

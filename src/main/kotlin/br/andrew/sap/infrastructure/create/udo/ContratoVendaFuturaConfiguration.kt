@@ -62,6 +62,11 @@ class ContratoVendaFuturaConfiguration(val userFieldsMDService: UserFieldsMDServ
 
             FieldMd("valorProdutos","Valor Produtos","@AR_CONTRATO_FUTURO", DbType.db_Float),
 
+            //Condicao de pagamento (OCTG.GroupNum) do pedido original - define o desconto
+            //financeiro dos produtos novos na troca. Contrato antigo nasce sem e e preenchido
+            //sob demanda (CondicaoPagamentoContratoService.sanitiza).
+            FieldMd("condicaoPagamento","Condição de Pagamento","@AR_CONTRATO_FUTURO", DbType.db_Numeric),
+
             FieldMd("filial","Filial","@AR_CONTRATO_FUTURO", DbType.db_Numeric),
             FieldMd("observacao","observacao","@AR_CONTRATO_FUTURO", DbType.db_Memo),
             FieldMd("vendedor","Vendedor","@AR_CONTRATO_FUTURO", DbType.db_Float).also {
