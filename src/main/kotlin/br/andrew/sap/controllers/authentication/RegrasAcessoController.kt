@@ -67,7 +67,9 @@ class RegrasAcessoController(
         @PathVariable perfil: String,
         @RequestParam baseVersao: Int,
         @RequestParam(required = false) comentario: String?,
-    ): EstadoAtual = service.removerPerfil(exigirAdmin(auth), perfil, baseVersao, comentario)
+        /** Exclui tambem a role no Keycloak (tira o perfil de quem a tem). Padrao: nao. */
+        @RequestParam(defaultValue = "false") excluirRoleKeycloak: Boolean = false,
+    ): EstadoAtual = service.removerPerfil(exigirAdmin(auth), perfil, baseVersao, comentario, excluirRoleKeycloak)
 
     @GetMapping("/versoes")
     fun versoes(auth: Authentication): List<VersaoResumo> {

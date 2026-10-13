@@ -451,11 +451,20 @@ class RegrasAcessoServiceTest {
         var duranteChamada: (() -> Unit)? = null,
     ) : KeycloakRolesGateway {
         val chamadas = mutableListOf<String>()
+        val removidas = mutableListOf<String>()
+        var falhaAoRemover: String? = null
+        var duranteRemocao: (() -> Unit)? = null
         override fun garantirRole(nome: String): Boolean {
             chamadas.add(nome)
             duranteChamada?.invoke()
             falha?.let { throw KeycloakAdminException(it) }
             return existentes.add(nome)
+        }
+        override fun removerRole(nome: String): Boolean {
+            removidas.add(nome)
+            duranteRemocao?.invoke()
+            falhaAoRemover?.let { throw KeycloakAdminException(it) }
+            return existentes.remove(nome)
         }
         override fun roleDeRealmExiste(nome: String): Boolean? = nome in deRealm
     }
@@ -714,6 +723,7 @@ class RegrasAcessoServiceTest {
     fun `excecao inesperada nao mostra a mensagem original na tela`() {
         val kc = object : KeycloakRolesGateway {
             override fun garantirRole(nome: String): Boolean = throw IllegalStateException("corpo com access_token=SEGREDO")
+            override fun removerRole(nome: String): Boolean = throw IllegalStateException("corpo com access_token=SEGREDO")
         }
         val s = servico(keycloak = kc, keycloakLigado = true).also { it.semearSeVazio() }
 
@@ -729,19 +739,174 @@ class RegrasAcessoServiceTest {
         val s = servico(keycloak = kc, keycloakLigado = true).also { it.semearSeVazio() }
         var ficouPresa = false
         kc.duranteChamada = {
-            // outra gravacao, em outra thread, enquanto o Keycloak "demora": se a trava ainda estivesse presa, ela nao terminaria
+            // Outra gravacao, em outra thread, enquanto o Keycloak "demora". A GRAVACAO NO SAP tem que passar (a trava esta solta);
+            // a etapa do Keycloak dela espera a desta (serializada de proposito), entao a resposta so volta depois.
             val t = Thread {
                 try { s.salvarPerfil(admin, "cobranca", regrasDe(s, "cobranca") + regra("/b", "get"), 2, null) } catch (_: Exception) {}
             }
             t.start()
-            t.join(3000)
-            if (t.isAlive) ficouPresa = true
+            val limite = System.currentTimeMillis() + 3000
+            while (!repo.linhas.containsKey(3) && System.currentTimeMillis() < limite) Thread.sleep(10)
+            if (!repo.linhas.containsKey(3)) ficouPresa = true
         }
         val yaml = "roles:\n  novo_a:\n    - url: \"/branch\"\n      actions: [\"get\"]\n"
 
         s.importar(admin, yaml, "mesclar", false, 1, null)
 
         assertFalse(ficouPresa, "outra gravacao ficou presa esperando a chamada ao Keycloak")
+    }
+
+    @Test
+    fun `excluir com a opcao exclui tambem a role no keycloak e diz quem perde o perfil`() {
+        val kc = KeycloakFalso()
+        val s = servico(keycloak = kc, keycloakLigado = true).also { it.semearSeVazio() }
+        s.salvarPerfil(admin, "conferente", listOf(regra("/branch", "get")), 1, null)
+
+        val estado = s.removerPerfil(admin, "conferente", 2, null, excluirRoleKeycloak = true)
+
+        assertEquals(listOf("conferente"), kc.removidas)
+        assertFalse(estado.documento.perfis.containsKey("conferente"))
+        assertTrue(estado.avisos.single().contains("foi excluída do Keycloak"))
+    }
+
+    @Test
+    fun `se o perfil foi restaurado entre a gravacao e o keycloak, a role e mantida`() {
+        val kc = KeycloakFalso()
+        val s = servico(keycloak = kc, keycloakLigado = true).also { it.semearSeVazio() }
+        s.salvarPerfil(admin, "conferente", listOf(regra("/branch", "get")), 1, null)
+        val comConferente = repo.linhas.getValue(2).U_Documento!!
+        // outra pessoa restaura o perfil logo depois da exclusao ser gravada (versao 3)
+        repo.depoisDeGravar = { n -> if (n == 3) repo.inserir(4, comConferente) }
+
+        val estado = s.removerPerfil(admin, "conferente", 2, null, excluirRoleKeycloak = true)
+
+        assertTrue(kc.removidas.isEmpty(), "nao pode excluir a role de um perfil que voltou")
+        assertTrue(estado.avisos.single().contains("já foi recriado ou restaurado"))
+    }
+
+    @Test
+    fun `durante a exclusao da role nenhuma outra gravacao nesta instancia entra no meio`() {
+        val kc = KeycloakFalso()
+        val s = servico(keycloak = kc, keycloakLigado = true).also { it.semearSeVazio() }
+        s.salvarPerfil(admin, "conferente", listOf(regra("/branch", "get")), 1, null)
+        var entrouNoMeio = false
+        var outra: Thread? = null
+        kc.duranteRemocao = {
+            // outra pessoa tenta gravar (versao 4) enquanto o Keycloak exclui: tem que esperar
+            outra = Thread {
+                try { s.salvarPerfil(admin, "cobranca", regrasDe(s, "cobranca") + regra("/b", "get"), 3, null) } catch (_: Exception) {}
+            }.also { it.start() }
+            Thread.sleep(400)
+            if (repo.linhas.containsKey(4)) entrouNoMeio = true
+        }
+
+        s.removerPerfil(admin, "conferente", 2, null, excluirRoleKeycloak = true)
+        outra?.join(5000)
+
+        assertFalse(entrouNoMeio, "uma gravacao entrou no meio da exclusao da role")
+        assertTrue(repo.linhas.containsKey(4), "a outra gravacao deve concluir depois")
+    }
+
+    @Test
+    fun `se nao da para reler o cadastro, a role nao e excluida`() {
+        val kc = KeycloakFalso()
+        val s = servico(keycloak = kc, keycloakLigado = true).also { it.semearSeVazio() }
+        s.salvarPerfil(admin, "conferente", listOf(regra("/branch", "get")), 1, null)
+        repo.depoisDeGravar = { _ -> repo.falhaNaLeitura = { RuntimeException("SAP caiu") } }
+
+        val estado = s.removerPerfil(admin, "conferente", 2, null, excluirRoleKeycloak = true)
+
+        assertTrue(kc.removidas.isEmpty())
+        assertTrue(estado.avisos.any { it.contains("não foi possível reler o cadastro") })
+    }
+
+    @Test
+    fun `se o perfil foi excluido de novo antes de criar a role, nao cria role orfa`() {
+        val kc = KeycloakFalso()
+        val s = servico(keycloak = kc, keycloakLigado = true).also { it.semearSeVazio() }
+        val semConferente = repo.linhas.getValue(1).U_Documento!!
+        // criado (versao 2) e, antes do Keycloak, outra pessoa o exclui (versao 3 sem ele)
+        repo.depoisDeGravar = { n -> if (n == 2) repo.inserir(3, semConferente) }
+
+        val estado = s.salvarPerfil(admin, "conferente", listOf(regra("/branch", "get")), 1, null)
+
+        assertTrue(kc.chamadas.isEmpty(), "nao pode criar role de perfil que ja nao existe")
+        assertTrue(estado.avisos.isEmpty())
+    }
+
+    @Test
+    fun `pedir para excluir a role com o keycloak desligado avisa que nada foi excluido`() {
+        val s = semeado()
+        s.salvarPerfil(admin, "conferente", listOf(regra("/branch", "get")), 1, null)
+
+        val estado = s.removerPerfil(admin, "conferente", 2, null, excluirRoleKeycloak = true)
+
+        assertTrue(estado.avisos.single().contains("Keycloak não está ligado"))
+    }
+
+    @Test
+    fun `o aviso de exclusao diz que o token atual vale ate expirar`() {
+        val kc = KeycloakFalso()
+        val s = servico(keycloak = kc, keycloakLigado = true).also { it.semearSeVazio() }
+        s.salvarPerfil(admin, "conferente", listOf(regra("/branch", "get")), 1, null)
+
+        val aviso = s.removerPerfil(admin, "conferente", 2, null, excluirRoleKeycloak = true).avisos.single()
+
+        assertTrue(aviso.contains("quando o token for renovado") && aviso.contains("até expirar"))
+    }
+
+    @Test
+    fun `excluir sem a opcao nunca mexe na role, mesmo com a integracao ligada`() {
+        val kc = KeycloakFalso()
+        val s = servico(keycloak = kc, keycloakLigado = true).also { it.semearSeVazio() }
+        s.salvarPerfil(admin, "conferente", listOf(regra("/branch", "get")), 1, null)
+
+        val estado = s.removerPerfil(admin, "conferente", 2, null)
+
+        assertTrue(kc.removidas.isEmpty())
+        assertTrue(estado.avisos.single().contains("continua no Keycloak"))
+    }
+
+    @Test
+    fun `falha ao excluir a role vira aviso e o perfil continua excluido do cadastro`() {
+        val kc = KeycloakFalso(falha = null).also { it.falhaAoRemover = "Keycloak recusou excluir a role: HTTP 403" }
+        val s = servico(keycloak = kc, keycloakLigado = true).also { it.semearSeVazio() }
+        s.salvarPerfil(admin, "conferente", listOf(regra("/branch", "get")), 1, null)
+
+        val estado = s.removerPerfil(admin, "conferente", 2, null, excluirRoleKeycloak = true)
+
+        assertFalse(estado.documento.perfis.containsKey("conferente"))
+        assertEquals(3, estado.versao)
+        assertTrue(estado.avisos.single().contains("HTTP 403") && estado.avisos.single().contains("Exclua a role 'conferente'"))
+    }
+
+    @Test
+    fun `role que ja nao existia no keycloak e integracao desligada geram o aviso certo`() {
+        val kc = KeycloakFalso()
+        val s = servico(keycloak = kc, keycloakLigado = true).also { it.semearSeVazio() }
+        s.salvarPerfil(admin, "conferente", listOf(regra("/branch", "get")), 1, null)
+        kc.existentes.clear()
+        assertTrue(s.removerPerfil(admin, "conferente", 2, null, true).avisos.single().contains("não existia no Keycloak"))
+
+        val semIntegracao = servico(keycloakLigado = true)
+        semIntegracao.salvarPerfil(admin, "outro", listOf(regra("/branch", "get")), 3, null)
+        val avisos = semIntegracao.removerPerfil(admin, "outro", 4, null, true).avisos
+        assertTrue(avisos.single().contains("integração com o Keycloak está desligada"))
+    }
+
+    @Test
+    fun `excecao inesperada ao excluir a role nao mostra a mensagem original`() {
+        val kc = object : KeycloakRolesGateway {
+            override fun garantirRole(nome: String): Boolean = true
+            override fun removerRole(nome: String): Boolean = throw IllegalStateException("corpo com access_token=SEGREDO")
+        }
+        val s = servico(keycloak = kc, keycloakLigado = true).also { it.semearSeVazio() }
+        s.salvarPerfil(admin, "conferente", listOf(regra("/branch", "get")), 1, null)
+
+        val aviso = s.removerPerfil(admin, "conferente", 2, null, true).avisos.single()
+
+        assertFalse(aviso.contains("SEGREDO"))
+        assertTrue(aviso.contains("veja o log do servidor"))
     }
 
     @Test

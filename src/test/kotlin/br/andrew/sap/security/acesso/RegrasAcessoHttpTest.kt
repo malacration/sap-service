@@ -110,6 +110,19 @@ class RegrasAcessoHttpTest {
     }
 
     @Test
+    fun `excluir perfil aceita a opcao de excluir tambem a role e nao exige ela`() {
+        mvc.perform(put("/acesso/regras/perfis/conferente").principal(admin).contentType(MediaType.APPLICATION_JSON)
+            .content("""{"regras":[{"url":"/branch","actions":["get"]}],"baseVersao":1}"""))
+            .andExpect(status().isOk)
+
+        mvc.perform(delete("/acesso/regras/perfis/conferente").principal(admin)
+            .param("baseVersao", "2").param("excluirRoleKeycloak", "true"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.versao").value(3))
+            .andExpect(jsonPath("$.documento.perfis.conferente").doesNotExist())
+    }
+
+    @Test
     fun `excluir perfil do sistema responde 400 e perfil inexistente 404`() {
         mvc.perform(delete("/acesso/regras/perfis/cobranca").principal(admin).param("baseVersao", "1"))
             .andExpect(status().isBadRequest)

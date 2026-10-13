@@ -42,7 +42,7 @@ class KeycloakAdminClient(private val properties: KeycloakProperties) : Keycloak
     override fun garantirRole(nome: String): Boolean {
         require(nome.matches(NOME_SEGURO)) { "Nome de role invalido para o Keycloak: '$nome'" }
         val corpo = mapper.writeValueAsString(
-            mapOf("name" to nome, "description" to "Criada pela tela Regras de Acesso")
+            mapOf("name" to nome, "description" to DESCRICAO_DA_TELA)
         ).toRequestBody(json)
         var refezBusca = false
         while (true) {
@@ -60,6 +60,47 @@ class KeycloakAdminClient(private val properties: KeycloakProperties) : Keycloak
                     refezBusca = true
                 }
                 else -> throw KeycloakAdminException("Keycloak recusou criar a role '$nome': HTTP $codigo")
+            }
+        }
+    }
+
+    @Synchronized
+    override fun removerRole(nome: String): Boolean {
+        require(nome.matches(NOME_SEGURO)) { "Nome de role invalido para o Keycloak: '$nome'" }
+        var refezBusca = false
+        while (true) {
+            val usouCache = clientUuid != null
+            val uuid = uuidDoClient()
+            // Primeiro le a role: so exclui se foi criada por esta tela (descricao de marca).
+            val consulta = chamar { t ->
+                Request.Builder().url(admin("clients/$uuid/roles/$nome")).header("Authorization", "Bearer $t").get().build()
+            }.use { it.code to (if (it.code == 200) lerJson(it) else null) }
+            val codigo = consulta.first
+            when {
+                // 404 pode ser a role que nao existe OU o UUID guardado de um client recriado: refaz a busca uma vez para distinguir.
+                codigo == 404 && usouCache && !refezBusca -> {
+                    clientUuid = null
+                    refezBusca = true
+                    continue
+                }
+                codigo == 404 -> return false
+                codigo != 200 -> throw KeycloakAdminException("Keycloak nao leu a role '$nome': HTTP $codigo")
+            }
+            if (consulta.second?.get("description")?.asText() != DESCRICAO_DA_TELA)
+                throw KeycloakAdminException(
+                    "A role '$nome' do Keycloak não está marcada como criada por esta tela (pode ser de outro uso) e por isso não é excluída automaticamente: exclua-a lá à mão, se for o caso"
+                )
+            // Exclui pelo ID da role que ACABOU de ser lida (nao pelo nome): se ela foi trocada por outra de mesmo nome nesse
+            // intervalo, o DELETE nao a atinge.
+            val idDaRole = consulta.second?.get("id")?.asText()?.takeIf { it.matches(ID_SEGURO) }
+                ?: throw KeycloakAdminException("O Keycloak não devolveu o id da role '$nome'")
+            val exclusao = chamar { t ->
+                Request.Builder().url(adminRealm("roles-by-id/$idDaRole")).header("Authorization", "Bearer $t").delete().build()
+            }.use { it.code }
+            return when (exclusao) {
+                204 -> true.also { log.info("Role '{}' excluida do client {} do Keycloak", nome, properties.clientId) }
+                404 -> false
+                else -> throw KeycloakAdminException("Keycloak recusou excluir a role '$nome': HTTP $exclusao")
             }
         }
     }
@@ -141,10 +182,18 @@ class KeycloakAdminClient(private val properties: KeycloakProperties) : Keycloak
             throw KeycloakAdminException("Resposta do Keycloak em formato inesperado")
         }
 
+    private fun adminRealm(caminho: String) =
+        "${properties.url.trimEnd('/')}/admin/realms/${properties.realm}/$caminho".toHttpUrl()
+
     private fun admin(caminho: String) =
         "${properties.url.trimEnd('/')}/admin/realms/${properties.realm}/$caminho".toHttpUrl()
 
     private companion object {
+        /** Marca das roles criadas por esta tela: so estas podem ser excluidas por ela. */
+        const val DESCRICAO_DA_TELA = "Criada pela tela Regras de Acesso"
+        /** UUID do Keycloak: nada que possa mudar o caminho da URL. */
+        val ID_SEGURO = Regex("^[A-Za-z0-9-]{8,64}$")
+
         /** O mesmo formato que o validador aceita para perfis: nada que possa mudar o caminho da URL. */
         val NOME_SEGURO = Regex("^[a-z0-9][a-z0-9_-]*$")
     }

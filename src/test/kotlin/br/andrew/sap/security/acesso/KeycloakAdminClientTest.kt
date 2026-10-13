@@ -33,6 +33,10 @@ class KeycloakAdminClientTest {
     private var uuidInvalido: String? = null
     private var statusDaRoleDeRealm = 404
     private var corpoDoToken: String? = null
+    private var statusDaExclusao = 204
+    private var statusDaConsulta = 200
+    private var idDaRole = "11111111-2222-3333-4444-555555555555"
+    private var descricaoDaRole = "Criada pela tela Regras de Acesso"
 
     private val servidor: HttpServer = HttpServer.create(InetSocketAddress("127.0.0.1", 0), 0).also { s ->
         s.createContext("/") { ex -> responder(ex) }
@@ -50,6 +54,10 @@ class KeycloakAdminClientTest {
             caminho == "/realms/rovema/protocol/openid-connect/token" ->
                 if (statusDoToken == 200) 200 to (corpoDoToken ?: """{"access_token":"token-${++tokenN}","expires_in":300}""") else statusDoToken to "{}"
             caminho.startsWith("/admin/realms/rovema/roles/") && ex.requestMethod == "GET" -> statusDaRoleDeRealm to "{}"
+            ex.requestMethod == "GET" && caminho.contains("/clients/") && caminho.contains("/roles/") ->
+                if (uuidInvalido != null && caminho.contains("/clients/$uuidInvalido/")) 404 to "{}"
+                else statusDaConsulta to """{"id":"$idDaRole","name":"x","description":"$descricaoDaRole"}"""
+            ex.requestMethod == "DELETE" && caminho.startsWith("/admin/realms/rovema/roles-by-id/") -> statusDaExclusao to "{}"
             caminho.endsWith("/roles") && ex.requestMethod == "POST" && uuidInvalido != null && caminho.contains("/clients/$uuidInvalido/") -> 404 to "{}"
             caminho.startsWith("/admin/realms/rovema/clients?") -> 200 to clientsJson
             caminho.endsWith("/roles") && ex.requestMethod == "POST" ->
@@ -57,8 +65,9 @@ class KeycloakAdminClientTest {
             else -> 404 to "{}"
         }
         val bytes = resposta.toByteArray()
-        ex.sendResponseHeaders(status, if (status == 201) -1 else bytes.size.toLong())
-        if (status != 201) ex.responseBody.use { it.write(bytes) } else ex.close()
+        val semCorpo = status == 201 || status == 204
+        ex.sendResponseHeaders(status, if (semCorpo) -1 else bytes.size.toLong())
+        if (!semCorpo) ex.responseBody.use { it.write(bytes) } else ex.close()
     }
 
     private fun cliente(): KeycloakAdminClient {
@@ -198,11 +207,87 @@ class KeycloakAdminClientTest {
         assertEquals("Resposta do Keycloak em formato inesperado", erro.message)
     }
 
+    private fun deletes() = chamadas.filter { it.metodo == "DELETE" }
+
+    @Test
+    fun `exclui a role de client com bearer, lendo antes para conferir que e da tela`() {
+        assertTrue(cliente().removerRole("conferente"))
+
+        val leitura = chamadas.single { it.metodo == "GET" && it.caminho.endsWith("/roles/conferente") }
+        assertEquals("/admin/realms/rovema/clients/uuid-sapvema/roles/conferente", leitura.caminho)
+        // exclui pelo ID lido, nao pelo nome
+        val d = deletes().single()
+        assertEquals("/admin/realms/rovema/roles-by-id/11111111-2222-3333-4444-555555555555", d.caminho)
+        assertEquals("Bearer token-1", d.auth)
+        assertTrue(chamadas.indexOf(leitura) < chamadas.indexOf(d), "a leitura vem antes do DELETE")
+    }
+
+    @Test
+    fun `role criada por outro motivo nao e excluida pela tela`() {
+        descricaoDaRole = "Role do fluxo de outro sistema"
+
+        val erro = assertThrows(KeycloakAdminException::class.java) { cliente().removerRole("conferente") }
+
+        assertTrue(erro.message!!.contains("não está marcada como criada por esta tela"))
+        assertTrue(deletes().isEmpty(), "nao pode chamar o DELETE")
+    }
+
+    @Test
+    fun `id da role suspeito nao entra na URL do DELETE`() {
+        idDaRole = "../../clients"
+        val erro = assertThrows(KeycloakAdminException::class.java) { cliente().removerRole("conferente") }
+        assertTrue(erro.message!!.contains("id da role"))
+        assertTrue(deletes().isEmpty())
+    }
+
+    @Test
+    fun `role sem descricao tambem nao e da tela`() {
+        descricaoDaRole = ""
+        assertThrows(KeycloakAdminException::class.java) { cliente().removerRole("conferente") }
+        assertTrue(deletes().isEmpty())
+    }
+
+    @Test
+    fun `role que nao existe na exclusao devolve false sem chamar o DELETE`() {
+        statusDaConsulta = 404
+        assertFalse(cliente().removerRole("fantasma"))
+        assertTrue(deletes().isEmpty())
+    }
+
+    @Test
+    fun `leitura recusada na exclusao vira excecao`() {
+        statusDaConsulta = 403
+        val erro = assertThrows(KeycloakAdminException::class.java) { cliente().removerRole("conferente") }
+        assertTrue(erro.message!!.contains("403"))
+        assertTrue(deletes().isEmpty())
+    }
+
+    @Test
+    fun `exclusao com uuid velho refaz a busca uma vez e acha o client novo`() {
+        val c = cliente()
+        c.garantirRole("a")
+        uuidInvalido = "uuid-sapvema"
+        clientsJson = """[{"id":"uuid-novo","clientId":"sapvema"}]"""
+
+        assertTrue(c.removerRole("a"))
+
+        assertEquals("/admin/realms/rovema/clients/uuid-novo/roles/a", chamadas.last { it.metodo == "GET" }.caminho)
+        assertEquals("/admin/realms/rovema/roles-by-id/11111111-2222-3333-4444-555555555555", deletes().last().caminho)
+    }
+
+    @Test
+    fun `erro do keycloak na exclusao vira excecao com o status`() {
+        statusDaExclusao = 403
+        val erro = assertThrows(KeycloakAdminException::class.java) { cliente().removerRole("conferente") }
+        assertTrue(erro.message!!.contains("403"))
+    }
+
     @Test
     fun `nome que poderia mudar o caminho da URL e recusado antes de chamar`() {
         val c = cliente()
         listOf("../clients", "a/b", "A", "x y", "").forEach {
             assertThrows(IllegalArgumentException::class.java, { c.garantirRole(it) }, it)
+            assertThrows(IllegalArgumentException::class.java, { c.removerRole(it) }, it)
         }
         assertTrue(chamadas.isEmpty())
     }

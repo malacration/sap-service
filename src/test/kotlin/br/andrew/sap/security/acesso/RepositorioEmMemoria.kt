@@ -12,6 +12,8 @@ class RepositorioEmMemoria : RegrasAcessoRepositorio {
 
     /** Se preenchido, qualquer leitura falha com esta excecao (SAP fora do ar). */
     var falhaNaLeitura: (() -> Exception?)? = null
+    /** Roda logo depois de gravar uma versao: simula outra pessoa mexendo no cadastro entre a gravacao e o Keycloak. */
+    var depoisDeGravar: ((Int) -> Unit)? = null
     var leituras = 0
     var buscas = 0
 
@@ -49,6 +51,7 @@ class RepositorioEmMemoria : RegrasAcessoRepositorio {
             throw RegrasConflitoException("versao $numero ja gravada")
         }
         linhas[numero] = versao
+        depoisDeGravar?.invoke(numero)
     }
 
     /** Insere uma versao "do SAP" com um documento arbitrario (inclusive lixo). */

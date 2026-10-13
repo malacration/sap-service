@@ -99,6 +99,9 @@ class RegrasAcessoService(
 ) {
     private val log = LoggerFactory.getLogger(RegrasAcessoService::class.java)
     private val trava = ReentrantLock()
+
+    /** Serializa a etapa do Keycloak (rede) e a refaz sobre o estado ATUAL do cadastro; nao segura a trava de gravacao no SAP. */
+    private val travaKeycloak = ReentrantLock()
     private val matcher = RulePathMatcher(context)
 
     /** Trocavel nos testes. */
@@ -165,19 +168,67 @@ class RegrasAcessoService(
         return estadoDepoisDeGravar(numero, depois, roleNoKeycloak(antes, depois))
     }
 
-    fun removerPerfil(quem: User, perfil: String, baseVersao: Int, comentario: String?): EstadoAtual {
+    /**
+     * `excluirRoleKeycloak`: alem de tirar o perfil do cadastro, exclui a role de client no Keycloak. E opt-in porque tira o
+     * perfil de TODO usuario que a tem. O SAP e gravado primeiro; falha no Keycloak vira aviso e nao desfaz a exclusao.
+     */
+    fun removerPerfil(quem: User, perfil: String, baseVersao: Int, comentario: String?, excluirRoleKeycloak: Boolean = false): EstadoAtual {
         if (perfil in RegrasValidador.PERFIS_PROTEGIDOS)
             throw RegrasValidacaoException(listOf("O perfil '$perfil' é usado pelo sistema e não pode ser excluído."))
         val (_, depois, numero) = gravarMudanca(quem, baseVersao, ORIGEM_TELA, comentario) { atual ->
             if (perfil !in atual.perfis) throw RegrasNaoEncontradasException("O perfil '$perfil' não existe.")
             atual.copy(perfis = atual.perfis - perfil)
         }
-        // Nunca apaga a role no Keycloak sozinho: tiraria o perfil de todo usuario que o tem, e o realm e do grupo todo.
-        val aviso = if (keycloakLigado)
-            listOf("O perfil '$perfil' saiu do cadastro, mas a role '$perfil' continua no Keycloak. Remova lá se ninguém mais a usa.")
-        else emptyList()
-        return estadoDepoisDeGravar(numero, depois, aviso)
+        return estadoDepoisDeGravar(numero, depois, roleDoPerfilExcluido(perfil, excluirRoleKeycloak))
     }
+
+    private fun roleDoPerfilExcluido(perfil: String, excluir: Boolean): List<String> {
+        if (!keycloakLigado)
+            return if (excluir) listOf("O perfil '$perfil' saiu do cadastro, mas o Keycloak não está ligado neste backend: nenhuma role foi excluída.") else emptyList()
+        if (!excluir)
+            return listOf("O perfil '$perfil' saiu do cadastro, mas a role '$perfil' continua no Keycloak. Remova lá se ninguém mais a usa.")
+        val gateway = keycloak.getIfAvailable()
+            ?: return listOf("O perfil '$perfil' saiu do cadastro. A integração com o Keycloak está desligada: exclua a role '$perfil' lá à mão.")
+        // Operacao destrutiva e rara: segura TAMBEM a trava de gravacao no SAP durante a verificacao e o DELETE, para que uma
+        // restauracao nesta instancia nao entre no meio. (Nao cobre outra instancia gravando ao mesmo tempo; hoje ha uma replica.)
+        // Ordem das travas: gravacao -> keycloak, nunca o contrario.
+        return trava.withLock { travaKeycloak.withLock {
+            // Entre gravar no SAP e chegar aqui o perfil pode ter sido recriado ou restaurado: nesse caso a role e necessaria.
+            when (perfilExisteAgora(perfil)) {
+                true -> return@withLock listOf(
+                    "O perfil '$perfil' saiu do cadastro, mas já foi recriado ou restaurado: a role '$perfil' no Keycloak foi mantida."
+                )
+                null -> return@withLock listOf(
+                    "O perfil '$perfil' saiu do cadastro, mas não foi possível reler o cadastro para confirmar que ele não voltou: a role '$perfil' no Keycloak foi mantida."
+                )
+                false -> {}
+            }
+            excluirRole(gateway, perfil)
+        } }
+    }
+
+    /** O perfil esta no cadastro AGORA? null = nao deu para ler. */
+    private fun perfilExisteAgora(perfil: String): Boolean? =
+        try { lerUltima().documento?.perfis?.containsKey(perfil) } catch (e: Exception) { null }
+
+    private fun excluirRole(gateway: KeycloakRolesGateway, perfil: String): List<String> {
+        return try {
+            if (gateway.removerRole(perfil))
+                listOf(
+                    "A role '$perfil' foi excluída do Keycloak. Quem a tinha deixa de ter este perfil quando o token for renovado " +
+                        "(o token atual de cada pessoa continua válido até expirar)."
+                )
+            else
+                listOf("O perfil '$perfil' saiu do cadastro. A role '$perfil' não existia no Keycloak (nada a excluir).")
+        } catch (e: Exception) {
+            log.warn("Perfil '{}' excluido do cadastro, mas a role nao foi excluida no Keycloak: {}", perfil, motivoSeguro(e), e)
+            listOf("O perfil '$perfil' saiu do cadastro, mas não foi possível excluir a role no Keycloak (${motivoSeguro(e)}). Exclua a role '$perfil' lá.")
+        }
+    }
+
+    /** So a mensagem das nossas excecoes (controlada) chega a tela; qualquer outra fica no log. */
+    private fun motivoSeguro(e: Exception): String =
+        if (e is KeycloakAdminException) (e.message ?: "erro no Keycloak") else "erro inesperado, veja o log do servidor"
 
     fun restaurar(quem: User, numero: Int, baseVersao: Int, comentario: String?): EstadoAtual {
         val antiga = documentoDe(
@@ -372,7 +423,10 @@ class RegrasAcessoService(
      * so vira aviso com o nome exato da role para criar a mao. Sem a integracao ligada, o aviso so aparece se o
      * Keycloak esta em uso (do contrario nao ha onde criar a role).
      */
-    private fun roleNoKeycloak(antes: RegrasDocumento, depois: RegrasDocumento): List<String> {
+    private fun roleNoKeycloak(antes: RegrasDocumento, depois: RegrasDocumento): List<String> =
+        travaKeycloak.withLock { roleNoKeycloakSerializado(antes, depois) }
+
+    private fun roleNoKeycloakSerializado(antes: RegrasDocumento, depois: RegrasDocumento): List<String> {
         val novos = depois.perfis.keys.filter { it !in antes.perfis }.sorted()
         if (novos.isEmpty() || !keycloakLigado) return emptyList()
         val gateway = keycloak.getIfAvailable()
@@ -382,6 +436,8 @@ class RegrasAcessoService(
         val inicio = System.nanoTime()
         fun estourou() = (System.nanoTime() - inicio) / 1_000_000 > orcamentoKeycloakMs
         for (perfil in novos) {
+            // Excluido de novo antes de chegar aqui: nao cria uma role orfa.
+            if (perfilExisteAgora(perfil) == false) continue
             if (motivoDaFalha == null && estourou()) motivoDaFalha = "tempo esgotado falando com o Keycloak"
             // Depois da primeira falha nao insiste nos demais (Keycloak fora do ar ou sem permissao): cada tentativa custaria um timeout.
             if (motivoDaFalha != null) {
@@ -401,8 +457,7 @@ class RegrasAcessoService(
                             "confira quem são essas pessoas."
                     )
             } catch (e: Exception) {
-                // So a mensagem das nossas excecoes (controlada) chega a tela; qualquer outra fica no log.
-                motivoDaFalha = if (e is KeycloakAdminException) (e.message ?: "erro no Keycloak") else "erro inesperado, veja o log do servidor"
+                motivoDaFalha = motivoSeguro(e)
                 log.warn("Perfil '{}' salvo, mas a role nao foi criada no Keycloak: {}", perfil, motivoDaFalha, e)
                 avisos.add(avisoDeFalha(perfil, motivoDaFalha))
             }
