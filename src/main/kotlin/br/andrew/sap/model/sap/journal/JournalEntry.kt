@@ -3,6 +3,7 @@ import br.andrew.sap.model.sap.comercial.ReconciliationListRows
 import br.andrew.sap.model.sap.comercial.ReconciliationRow
 import br.andrew.sap.model.sap.documents.base.DistribuicaoCustoByBranch
 import br.andrew.sap.model.sap.documents.base.Document
+import br.andrew.sap.model.sap.journal.SemRateioNaOrigemException
 import br.andrew.sap.model.sap.documents.base.DocumentLines
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
@@ -50,7 +51,7 @@ class JournalEntry(val journalEntryLines : List<JournalEntryLines>, val memo : S
 
     fun costingCodes(document: Document) {
         val line : DocumentLines = document.DocumentLines.firstOrNull { it.temRateio() }
-            ?: throw Exception("Esse documento nao possuiu nenhuma linha de produto")
+            ?: throw SemRateioNaOrigemException("Esse documento nao possuiu nenhuma linha de produto")
         costingCodes(line.CostingCode!!,line.CostingCode2!!)
     }
 
@@ -79,6 +80,30 @@ class JournalEntry(val journalEntryLines : List<JournalEntryLines>, val memo : S
                 }
             }
         return alterou
+    }
+
+    //ultimo recurso quando a dimensao nao pode ser herdada do documento de origem (recebimento por
+    //conta, NF sem rateio): conta de resultado sem dimensao faz o SAP recusar ate o PATCH que so
+    //marca o lancamento como processado, e ele volta a cada rodada do job. Cada dimensao e
+    //preenchida em separado, e so em conta de resultado, para nao inventar rateio em conta de balanco
+    @JsonIgnore
+    fun preencheCentroCustoPadraoDaFilial(padraoPorFilial: Map<String, DistribuicaoCustoByBranch>): List<String> {
+        val preenchidos = mutableListOf<String>()
+        journalEntryLines
+            //conta mal formada em outra linha nao pode impedir o preenchimento da linha de resultado
+            .filter { runCatching { it.isContaResultado() }.getOrDefault(false) }
+            .forEach { linha ->
+                val padrao = padraoPorFilial[linha.getBPLID().toString()] ?: return@forEach
+                if (linha.costingCode.isNullOrBlank()) {
+                    linha.costingCode = padrao.grupoEconomico
+                    preenchidos += "linha ${linha.Line_ID} grupo ->${padrao.grupoEconomico}"
+                }
+                if (linha.costingCode2.isNullOrBlank()) {
+                    linha.costingCode2 = padrao.centroCusto
+                    preenchidos += "linha ${linha.Line_ID} centro ->${padrao.centroCusto}"
+                }
+            }
+        return preenchidos
     }
 
     /**
