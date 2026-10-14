@@ -623,6 +623,23 @@ class RegrasAcessoServiceTest {
     }
 
     @Test
+    fun `restaurar de uma base ilegivel provisiona so a role do perfil que volta em relacao a ultima versao legivel`() {
+        val kc = KeycloakFalso()
+        val s = servico(keycloak = kc, keycloakLigado = true)
+        val admin1 = "admin" to listOf(RegraDoc("/**", listOf("*")))
+        // v1 tinha o conferente, v2 o apagou (com a role), v3 esta ilegivel: restaurar a v1 faz o conferente voltar
+        repo.inserir(1, RegrasCodec.toJson(RegrasDocumento(perfis = mapOf(admin1, "conferente" to listOf(RegraDoc("/branch", listOf("get")))))))
+        repo.inserir(2, RegrasCodec.toJson(RegrasDocumento(perfis = mapOf(admin1))))
+        repo.inserir(3, "lixo")
+
+        val recuperada = s.restaurar(admin, 1, 3, null)
+
+        assertEquals(4, recuperada.versao)
+        assertEquals(listOf("conferente"), kc.chamadas, "so o perfil que voltou, nao todos")
+        assertTrue(kc.existentes.contains("conferente"))
+    }
+
+    @Test
     fun `sem base legivel ao alcance da busca restaurar e recusado em vez de assumir vazio`() {
         val s = servico()
         repo.inserir(1, RegrasCodec.toJson(RegrasDocumento(perfis = mapOf("admin" to listOf(RegraDoc("/**", listOf("*")))))))

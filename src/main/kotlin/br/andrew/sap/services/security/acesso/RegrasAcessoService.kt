@@ -404,8 +404,9 @@ class RegrasAcessoService(
         if (diff.isEmpty() && validacao.documento.perfis == atual.perfis)
             throw RegrasValidacaoException(listOf("Nada mudou em relação à versão $versaoAtual."))
         gravarVersao(quem, versaoAtual + 1, validacao.documento, origem, comentario, resumoDe(diff))
-        // Sem base legivel nao ha "perfis novos" a provisionar no Keycloak (seria tudo): antes = depois.
-        Triple(if (legivel) atual else validacao.documento, validacao.documento, versaoAtual + 1)
+        // Perfis novos para o Keycloak: os que voltam em relacao a ultima versao LEGIVEL (a propria base quando ela e legivel).
+        // Comparar o restaurado com ele mesmo escondia um perfil que reaparece (ex.: apagado junto com a role).
+        Triple(baseParaProtegidos, validacao.documento, versaoAtual + 1)
     }
 
     /**
