@@ -5,6 +5,7 @@ import br.andrew.sap.model.bank.Payment
 import br.andrew.sap.model.sap.documents.PurchaseInvoice
 import br.andrew.sap.model.sap.documents.base.Document
 import br.andrew.sap.model.sap.journal.OriginalJournal
+import br.andrew.sap.model.sap.journal.SemRateioNaOrigemException
 import br.andrew.sap.services.abstracts.EntitiesService
 import br.andrew.sap.services.bank.IncomingPaymentService
 import org.springframework.stereotype.Service
@@ -54,7 +55,7 @@ class JournalMemoHandle(
             .tryGetValue<Payment>()
 
         val paymentDocEntry : Int = payment.paymentInvoices.firstOrNull()?.docEntry
-            ?: throw IllegalArgumentException("O pagamento relacionado no lancamento contabil deve existir")
+            ?: throw SemRateioNaOrigemException("O pagamento relacionado no lancamento contabil deve existir")
 
         val document = documentService.getById(paymentDocEntry).tryGetValue<Document>()
         lancamento.costingCodes(document)
