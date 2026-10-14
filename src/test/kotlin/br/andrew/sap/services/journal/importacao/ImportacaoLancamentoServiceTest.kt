@@ -253,6 +253,55 @@ class ImportacaoLancamentoServiceTest {
         verify(logService).marcar(any(), eq(ImportacaoLancamentoLog.RECUSADO))
     }
 
+    /** porHash devolve [depois] so a partir do registro do inicio: e a releitura que elege quem envia. */
+    private fun depoisDoRegistro(vararg depois: ImportacaoLancamentoLog) {
+        var registrado = false
+        whenever(logService.registrarInicio(any())).then { registrado = true; Unit }
+        whenever(logService.porHash(any())).thenAnswer { if (registrado) depois.toList() else emptyList<ImportacaoLancamentoLog>() }
+    }
+
+    @Test
+    fun `outra tentativa ENVIANDO registrada ao mesmo tempo - desiste antes de enviar`() {
+        // duas instancias passaram juntas pela trava: depois de registrar, uma enxerga a outra
+        val outra = ImportacaoLancamentoLog.novo("Beltrano", "SalePerson:61", "a.csv", hash(), 2, "30.50".toBigDecimal(), false)
+        depoisDoRegistro(outra)
+        val e = assertThrows<ImportacaoLancamentoException> { importar() }
+        assertEquals(HttpStatus.CONFLICT, e.status)
+        assertTrue(e.message.contains("Outra importação deste mesmo arquivo"), e.message)
+        verifyNoInteractions(batch)
+        val inicio = argumentCaptor<ImportacaoLancamentoLog>()
+        verify(logService).registrarInicio(inicio.capture())
+        verify(logService).marcar(inicio.firstValue.Code!!, ImportacaoLancamentoLog.RECUSADO)
+    }
+
+    @Test
+    fun `importacao do mesmo arquivo que entrou depois da previa - desiste antes de enviar`() {
+        depoisDoRegistro(ImportacaoLancamentoLog(Code = "OUTRA", U_Status = ImportacaoLancamentoLog.IMPORTADO))
+        assertThrows<ImportacaoLancamentoException> { importar(forcar = true) }
+        verifyNoInteractions(batch)
+    }
+
+    @Test
+    fun `sem conseguir reler as tentativas nao envia`() {
+        var registrado = false
+        whenever(logService.registrarInicio(any())).then { registrado = true; Unit }
+        whenever(logService.porHash(any())).thenAnswer {
+            if (registrado) throw ResourceAccessException("SL fora") else emptyList<ImportacaoLancamentoLog>()
+        }
+        val e = assertThrows<ImportacaoLancamentoException> { importar() }
+        assertTrue(e.message.contains("Não foi possível conferir"), e.message)
+        verifyNoInteractions(batch)
+    }
+
+    @Test
+    fun `tentativa antiga e importacao ja vista na previa nao fazem desistir`() {
+        val vista = ImportacaoLancamentoLog(Code = "VISTA", U_Usuario = "Ciclano", U_Status = ImportacaoLancamentoLog.IMPORTADO)
+        val antiga = ImportacaoLancamentoLog(Code = "20260101080000-abcd1234", U_Status = ImportacaoLancamentoLog.ENVIANDO)
+        whenever(logService.porHash(any())).thenReturn(listOf(vista, antiga))
+        whenever(batch.run(any<BatchList>())).thenReturn(listOf(criado(101, 1), criado(102, 2), criado(0, 3)))
+        assertEquals("IMPORTADO", importar(forcar = true).status)
+    }
+
     @Test
     fun `falha ao registrar o inicio nao envia o lote`() {
         whenever(logService.registrarInicio(any())).thenThrow(ResourceAccessException("SL fora"))

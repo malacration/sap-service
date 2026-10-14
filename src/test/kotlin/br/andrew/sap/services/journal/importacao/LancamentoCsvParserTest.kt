@@ -170,16 +170,18 @@ class LancamentoCsvParserTest {
 
     @Test
     fun `arquivo sem cabecalho nao perde o primeiro lancamento calado`() {
-        val leitura = LancamentoCsvParser.ler("2;;05/10/2026;A;B;10,00;H;;\r\n2;;06/10/2026;A;B;20,00;H;;", "UTF-8")
-        assertTrue(leitura.erros.single().contains("cabeçalho"))
-        // primeira linha com data errada tambem e lancamento, nao cabecalho
-        val dataErrada = LancamentoCsvParser.ler("2;;31/02/2026;A;B;10,00;H;;\r\n2;;06/10/2026;A;B;20,00;H;;", "UTF-8")
-        assertTrue(dataErrada.erros.single().contains("cabeçalho"))
-        // primeira linha sem filial ou com filial errada: a data ou o valor denunciam o lancamento
-        for (primeira in listOf(";;05/10/2026;A;B;10,00;H;;", "x;;99/99/9999;A;B;10,00;H;;", "x;;;A;B;10,00;H;;")) {
-            val semFilial = LancamentoCsvParser.ler("$primeira\r\n2;;06/10/2026;A;B;20,00;H;;", "UTF-8")
-            assertTrue(semFilial.erros.single().contains("parece um lançamento"), primeira)
+        // a primeira linha e descartada, entao tem que ser reconhecida como cabecalho: lancamento
+        // nenhum passa, nem os que tem filial, data e valor todos errados (caso do review)
+        for (primeira in listOf(
+            "2;;05/10/2026;A;B;10,00;H;;", "2;;31/02/2026;A;B;10,00;H;;", ";;05/10/2026;A;B;10,00;H;;",
+            "x;;99/99/9999;A;B;10,00;H;;", "x;;;A;B;10,00;H;;", "x;;;D;C;abc;H;;",
+        )) {
+            val semCabecalho = LancamentoCsvParser.ler("$primeira\r\n2;;06/10/2026;A;B;20,00;H;;", "UTF-8")
+            assertTrue(semCabecalho.erros.single().contains("não é um cabeçalho"), primeira)
         }
+        // cabecalho sem o titulo de uma coluna obrigatoria tambem nao serve
+        assertTrue(LancamentoCsvParser.ler("Filial;;Data;Debito;;Valor;Historico;G;CC\r\n2;;06/10/2026;A;B;20,00;H;;", "UTF-8")
+            .erros.single().contains("não é um cabeçalho"))
         // cabecalho de verdade, com digito so no titulo da filial, continua sendo cabecalho
         assertTrue(LancamentoCsvParser.ler("Filial 1;;DATA;D;C;VALOR;H;G;CC\r\n2;;06/10/2026;A;B;20,00;H;;", "UTF-8").erros.isEmpty())
     }

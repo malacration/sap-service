@@ -30,6 +30,8 @@ object LancamentoCsvParser {
     const val TAMANHO_HISTORICO = 254
     private const val COLUNAS_MINIMAS = 9
     private const val COLUNAS_MAXIMAS = 12
+    //filial, data, conta debito, conta credito, valor e historico: as que todo lancamento preenche
+    private val COLUNAS_COM_TITULO = listOf(0, 2, 3, 4, 5, 6)
     private const val ASPAS_SEM_FECHAR = "Aspas sem fechamento na linha. O texto entre aspas não pode ter quebra de linha."
     private const val ASPAS_MALFORMADAS = "Aspas malformadas: depois de fechar as aspas, o campo tem que terminar no ';'."
 
@@ -75,9 +77,10 @@ object LancamentoCsvParser {
 
         val erros = mutableListOf<String>()
         val cabecalho = separar(linhasArquivo.first()).valores
-        if (pareceLancamento(cabecalho))
-            erros += "A primeira linha do arquivo é sempre o cabeçalho e não é importada, mas ela parece um " +
-                "lançamento (tem filial, data ou valor). Inclua a linha de cabeçalho no arquivo."
+        if (!eCabecalho(cabecalho))
+            erros += "A primeira linha do arquivo é sempre o cabeçalho e não é importada, mas ela não é um " +
+                "cabeçalho: precisa ter o título de cada coluna (filial, data, débito, crédito, valor e " +
+                "histórico), sem números ou datas. Inclua a linha de cabeçalho no arquivo."
 
         val linhas = linhasArquivo.withIndex()
             .drop(1)
@@ -151,14 +154,17 @@ object LancamentoCsvParser {
         }
 
     /**
-     * A primeira linha e sempre descartada como cabecalho, entao so pode ser descartada se nao tiver
-     * cara de lancamento: filial numerica, algo com formato de data ou um valor com digitos. Olhar so a
-     * filial deixava passar calado um arquivo sem cabecalho cuja primeira linha vem sem filial; exigir
-     * data valida deixava passar a que tem data errada.
+     * A primeira linha e sempre descartada, entao ela tem que ser reconhecida como cabecalho, e nao so
+     * "nao parecer lancamento": um lancamento com filial, data e valor todos errados (x;;;D;C;abc;H)
+     * escapava de qualquer heuristica por exclusao e sumia calado. Cabecalho e titulo em cada coluna
+     * obrigatoria com conteudo (filial, data, debito, credito, valor e historico) e nenhum deles com cara
+     * de dado. O arquivo de hoje e o modelo da tela tem os titulos todos.
      */
-    private fun pareceLancamento(campos: List<String>): Boolean {
+    private fun eCabecalho(campos: List<String>): Boolean {
         fun campo(i: Int) = campos.getOrElse(i) { "" }.trim()
-        return campo(0).toIntOrNull() != null || pareceData.matches(campo(2)) || pareceValor.matches(campo(5))
+        val titulos = COLUNAS_COM_TITULO.map { campo(it) }
+        return titulos.none { it.isBlank() } &&
+            campo(0).toIntOrNull() == null && !pareceData.matches(campo(2)) && !pareceValor.matches(campo(5))
     }
 
     /**

@@ -92,6 +92,7 @@ class ImportacaoLancamentoService(
             throw ImportacaoLancamentoException(HttpStatus.BAD_GATEWAY,
                 "Não foi possível registrar a importação no SAP e nenhum lançamento foi enviado. Tente de novo.")
         }
+        desistirSeConcorrente(previa, id)
         val lote = BatchList()
         previa.linhas.forEach { lote.add(BatchMethod.POST, it.paraLancamento(), journalEntriesService) }
         lote.add(BatchMethod.PATCH, ImportacaoLancamentoStatus(id, ImportacaoLancamentoLog.IMPORTADO), logService)
@@ -123,6 +124,41 @@ class ImportacaoLancamentoService(
                 "${FORMATO_HORA.format(liberaEm)}.",
         )
     }
+
+    /**
+     * O synchronized so vale dentro da instancia: duas instancias (ou o start-first do deploy) com o
+     * mesmo arquivo podem passar as duas pelo barrarSeEmDuvida antes de qualquer uma registrar o inicio.
+     * Depois de registrar, cada uma rele as linhas do arquivo e desiste se houver outra tentativa
+     * ENVIANDO recente, ou uma importacao que nao estava na previa. Se as duas se virem, as duas
+     * desistem e o usuario tenta de novo; nunca as duas enviam.
+     */
+    private fun desistirSeConcorrente(previa: PreviaImportacaoLancamento, id: String) {
+        val conhecidas = previa.importacoesAnteriores.map { it.id }.toSet()
+        val mensagem = try {
+            val concorrente = logService.porHash(previa.hash).any {
+                it.Code != id && ((it.U_Status == ImportacaoLancamentoLog.ENVIANDO && recente(it)) ||
+                    (it.importado() && it.Code !in conhecidas))
+            }
+            if (!concorrente) return
+            logger.warn("Importacao de lancamentos {}: outra tentativa do mesmo arquivo em andamento, desistindo", id)
+            "Outra importação deste mesmo arquivo começou ao mesmo tempo, então esta não foi enviada. " +
+                "Confira o histórico em alguns minutos e valide o arquivo de novo."
+        } catch (e: Exception) {
+            logger.error("Importacao de lancamentos {}: falha ao conferir tentativas concorrentes", id, e)
+            "Não foi possível conferir se outra importação deste arquivo está em andamento, então nada foi " +
+                "enviado. Tente de novo."
+        }
+        try {
+            logService.marcar(id, ImportacaoLancamentoLog.RECUSADO)
+        } catch (e: Exception) {
+            //fica ENVIANDO: barra o arquivo por ESPERA_DUVIDA, do lado seguro
+            logger.warn("Importacao de lancamentos {}: falha ao marcar RECUSADO", id, e)
+        }
+        throw ImportacaoLancamentoException(HttpStatus.CONFLICT, mensagem)
+    }
+
+    private fun recente(log: ImportacaoLancamentoLog): Boolean =
+        log.inicio()?.let { LocalDateTime.now().isBefore(it.plus(ESPERA_DUVIDA)) } ?: false
 
     //o log segue ENVIANDO no SAP: e ele que barra reenviar o mesmo arquivo enquanto houver duvida
     private fun emDuvida(id: String, mensagem: String) = ResultadoImportacaoLancamento(id, CONFERIR, emptyList(), mensagem)

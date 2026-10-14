@@ -19,7 +19,7 @@ class ImportacaoLancamentoControllerTest {
 
     private val service = mock<ImportacaoLancamentoService>()
     private val mvc = MockMvcBuilders.standaloneSetup(ImportacaoLancamentoController(service)).build()
-    private val csv = "Filial;;Data\r\n2;;05/10/2026;D;C;10,00;H;;".toByteArray(charset("windows-1252"))
+    private val csv = "Filial;Livre;Data;Debito;Credito;Valor;Historico;Grupo;Centro\r\n2;;05/10/2026;D;C;10,00;H;;".toByteArray(charset("windows-1252"))
 
     private fun previa(): PreviaImportacaoLancamento {
         val leitura = LancamentoCsvParser.ler(csv)
