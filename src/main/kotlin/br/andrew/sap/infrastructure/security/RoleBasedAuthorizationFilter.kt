@@ -32,48 +32,23 @@ class RoleBasedAuthorizationFilter(
             filterChain.doFilter(request, response)
     }
 
+    private val matcher = RulePathMatcher(context)
+
     fun isAuthorized(path: String, method : String, authentication: Authentication): Boolean {
         if(authentication !is User)
             throw Exception("Nao foi possivel fazer parse da interface para User")
-        var urlPermitidas : List<Rule> = authentication.roles.flatMap { service.get(it) }
-        return urlPermitidas.any { rule ->
-            matchPath(rule.url, path)
-                    &&
-                    (rule.actions.any { it.equals(method, ignoreCase = true) } || rule.actions.contains("*"))
-        }
+        if (matcher.autoriza(LIBERADAS_A_AUTENTICADOS, method, path) != null)
+            return true
+        val urlPermitidas : List<Rule> = authentication.roles.flatMap { service.get(it) }
+        return matcher.autoriza(urlPermitidas, method, path) != null
     }
 
-    private fun matchPath(pattern: String, path: String): Boolean {
-        val adjustedPattern = normalizePath(pattern)
-        val adjustedPath = normalizePath(path)
-
-        if (adjustedPattern.endsWith("/**")) {
-            return adjustedPath.startsWith(adjustedPattern.removeSuffix("/**"))
-        }
-
-        val regexPattern = adjustedPattern
-            .replace("**", "__DOUBLE_WILDCARD__")
-            .replace("*", "[^/]*")
-            .replace("__DOUBLE_WILDCARD__", ".*")
-            .replace("/$", "(/.*)?")
-        return adjustedPath.matches(Regex(regexPattern))
-    }
-
-    private fun normalizePath(p: String): String {
-        if (p.isEmpty()) return "/"
-        val withLeading = if (p.startsWith("/")) p else "/$p"
-        return removeContext(withLeading.replace(Regex("/+"), "/"))
-    }
-
-    private fun removeContext(path: String): String {
-        val ctxRaw = context.trim()
-        if (ctxRaw.isEmpty()) return path
-        val ctx = "/" + ctxRaw.trim('/')
-        if (path == ctx) return "/"
-        return if (path.startsWith("$ctx/")) {
-            path.removePrefix(ctx).let { if (it.isEmpty()) "/" else it }
-        } else {
-            path
-        }
+    companion object {
+        /**
+         * Liberadas a QUALQUER usuario autenticado, sem precisar estar nas regras de nenhum perfil: o menu de todo
+         * usuario pergunta por elas quais telas pode ver. Caminho exato e metodo exato (sem curinga). Anonimo nao chega
+         * aqui (o filtro so age com usuario autenticado; o Spring Security barra antes, com 403).
+         */
+        val LIBERADAS_A_AUTENTICADOS = listOf(Rule("/acesso/minhas-permissoes", "post"))
     }
 }
