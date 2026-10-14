@@ -282,7 +282,7 @@ class RegrasAcessoService(
      * conflito do Code e segue.
      */
     fun semearSeVazio() {
-        if (repositorio.ultimaVersao() != null) return
+        if (comRetentativaDaTabelaNova { repositorio.ultimaVersao() } != null) return
         val documento = try {
             RegrasYaml.importar(arquivo.textoBruto())
         } catch (e: Exception) {
@@ -300,6 +300,24 @@ class RegrasAcessoService(
         } catch (e: RegrasConflitoException) {
             log.info("Seed das regras de acesso feito por outra instancia")
         }
+    }
+
+    /** Espera base entre as tentativas de ler a tabela recem-criada (cresce a cada tentativa); os testes reduzem. */
+    internal var esperaDaSementeMs: Long = 500
+
+    // A tabela recem-criada as vezes ainda esta propagando no primeiro deploy e o SAP responde "is invalid". A gravacao
+    // (RegrasAcessoStore) e o cache ja reenviam; a primeira leitura do seed tambem, senao o boot cai antes de semear.
+    private fun <T> comRetentativaDaTabelaNova(bloco: () -> T): T {
+        val tentativas = 5
+        repeat(tentativas - 1) { tentativa ->
+            try {
+                return bloco()
+            } catch (e: Exception) {
+                if (e.message?.contains("is invalid") != true) throw e
+                Thread.sleep(esperaDaSementeMs * (tentativa + 1))
+            }
+        }
+        return bloco()
     }
 
     // ------------------------------------------------------------------ simulacao e catalogo

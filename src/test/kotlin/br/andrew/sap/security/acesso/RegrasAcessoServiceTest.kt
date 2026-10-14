@@ -955,6 +955,30 @@ class RegrasAcessoServiceTest {
         assertEquals("memoria:rules.yml", estado.arquivoLocal)
     }
 
+    // ------------------------------------------------------------------ seed com a tabela recem-criada
+
+    @Test
+    fun `o seed tenta de novo a primeira leitura enquanto a tabela nova ainda propaga`() {
+        var falhas = 2
+        repo.falhaNaLeitura = { if (falhas-- > 0) RuntimeException("Entity 'ACESSO_REGRAS' is invalid") else null }
+        val s = servico().also { it.esperaDaSementeMs = 1 }
+        s.semearSeVazio()
+        assertEquals(1, repo.linhas.size)
+    }
+
+    @Test
+    fun `o seed desiste depois de cinco tentativas e nao esconde outros erros`() {
+        repo.falhaNaLeitura = { RuntimeException("Entity 'ACESSO_REGRAS' is invalid") }
+        val s = servico().also { it.esperaDaSementeMs = 1 }
+        assertThrows(RuntimeException::class.java) { s.semearSeVazio() }
+        assertEquals(5, repo.leituras)
+
+        repo.leituras = 0
+        repo.falhaNaLeitura = { RuntimeException("conexao recusada") }
+        assertThrows(RuntimeException::class.java) { s.semearSeVazio() }
+        assertEquals(1, repo.leituras)
+    }
+
     // ------------------------------------------------------------------ cobertura
 
     @Test
