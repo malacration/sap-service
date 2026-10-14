@@ -11,6 +11,7 @@ import br.andrew.sap.services.comercial.ProductTreesService
 import br.andrew.sap.services.calculadora.CalculadoraHanddleService
 import br.andrew.sap.services.calculadora.CalculadoraService
 import br.andrew.sap.services.stock.ResourceService
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageRequest
@@ -37,6 +38,8 @@ class CalculadoraPrecoController(
     private val sessionRegistry: SessionProcessingRegistry,
     @Value("\${ggf.code:GGF00001}") val ggfId : String,
 ) {
+
+    private val logger = LoggerFactory.getLogger(javaClass)
 
     @MessageMapping("/calculadora-preco/get-async")
     fun start(
@@ -83,6 +86,9 @@ class CalculadoraPrecoController(
                     ws.convertAndSendToUser(principal.name, "/queue/calculadora-preco/get-async", resultCompleto, ha.messageHeaders)
                     page = resultado.nextPageable()
                 }while (!resultado.isLast)
+            } catch (e: Exception) {
+                //runAsync engole a excecao: sem este log a falha nao aparecia em lugar nenhum
+                logger.error("Falha no processamento assincrono da calculadora [${principal.name}]", e)
             } finally {
                 if (sessionId != null && cancelToken != null) {
                     sessionRegistry.clear(sessionId, cancelToken)
