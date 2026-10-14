@@ -282,7 +282,7 @@ class RegrasAcessoService(
      * conflito do Code e segue.
      */
     fun semearSeVazio() {
-        if (repositorio.ultimaVersao() != null) return
+        if (comRetentativaDaTabelaNova { repositorio.ultimaVersao() } != null) return
         val documento = try {
             RegrasYaml.importar(arquivo.textoBruto())
         } catch (e: Exception) {
@@ -300,6 +300,24 @@ class RegrasAcessoService(
         } catch (e: RegrasConflitoException) {
             log.info("Seed das regras de acesso feito por outra instancia")
         }
+    }
+
+    /** Espera base entre as tentativas de ler a tabela recem-criada (cresce a cada tentativa); os testes reduzem. */
+    internal var esperaDaSementeMs: Long = 500
+
+    // A tabela recem-criada as vezes ainda esta propagando no primeiro deploy e o SAP responde "is invalid". A gravacao
+    // (RegrasAcessoStore) e o cache ja reenviam; a primeira leitura do seed tambem, senao o boot cai antes de semear.
+    private fun <T> comRetentativaDaTabelaNova(bloco: () -> T): T {
+        val tentativas = 5
+        repeat(tentativas - 1) { tentativa ->
+            try {
+                return bloco()
+            } catch (e: Exception) {
+                if (e.message?.contains("is invalid") != true) throw e
+                Thread.sleep(esperaDaSementeMs * (tentativa + 1))
+            }
+        }
+        return bloco()
     }
 
     // ------------------------------------------------------------------ simulacao e catalogo
@@ -321,7 +339,7 @@ class RegrasAcessoService(
             doc
         }
 
-        val limpo = limparCaminho(caminho)
+        val limpo = RulePathMatcher.limparCaminho(caminho)
         val casou = perfis.asSequence()
             .flatMap { perfil -> documento.perfis[perfil].orEmpty().asSequence().map { perfil to it } }
             .firstOrNull { (_, regra) -> matcher.casa(regra.paraRule(), metodo, limpo) }
@@ -339,7 +357,23 @@ class RegrasAcessoService(
     fun cobertura(url: String, endpoints: List<EndpointConhecido>): List<EndpointConhecido> {
         val padrao = url.trim().replace(Regex("\\{[^/}]*}"), "*")
         if (matcher.problemaDoPadrao(padrao) != null) return emptyList()
-        return endpoints.filter { matcher.matchPath(padrao, it.url) }
+        return endpoints.filter { alcanca(padrao, it.url) }
+    }
+
+    /**
+     * No catalogo, a variavel de caminho do endpoint (chaves em volta do nome) vira um asterisco. Uma regra concreta,
+     * como a do vendedor 137, alcanca esse endpoint, mas casar o padrao com o texto do endpoint como se fosse um caminho
+     * real daria falso: por isso, quando o segmento do endpoint e a variavel, qualquer segmento da regra serve.
+     */
+    private fun alcanca(padrao: String, endpoint: String): Boolean {
+        if (matcher.matchPath(padrao, endpoint)) return true
+        if (!endpoint.contains('*') || padrao.endsWith("/**")) return false
+        val daRegra = padrao.trim('/').split('/')
+        val doEndpoint = endpoint.trim('/').split('/')
+        if (daRegra.size != doEndpoint.size) return false
+        return daRegra.indices.all { i ->
+            doEndpoint[i] == "*" || matcher.matchPath("/" + daRegra[i], "/" + doEndpoint[i])
+        }
     }
 
     // ------------------------------------------------------------------ internos
@@ -370,8 +404,9 @@ class RegrasAcessoService(
         if (diff.isEmpty() && validacao.documento.perfis == atual.perfis)
             throw RegrasValidacaoException(listOf("Nada mudou em relação à versão $versaoAtual."))
         gravarVersao(quem, versaoAtual + 1, validacao.documento, origem, comentario, resumoDe(diff))
-        // Sem base legivel nao ha "perfis novos" a provisionar no Keycloak (seria tudo): antes = depois.
-        Triple(if (legivel) atual else validacao.documento, validacao.documento, versaoAtual + 1)
+        // Perfis novos para o Keycloak: os que voltam em relacao a ultima versao LEGIVEL (a propria base quando ela e legivel).
+        // Comparar o restaurado com ele mesmo escondia um perfil que reaparece (ex.: apagado junto com a role).
+        Triple(baseParaProtegidos, validacao.documento, versaoAtual + 1)
     }
 
     /**
@@ -567,12 +602,6 @@ class RegrasAcessoService(
     private fun conflito(versaoAtual: Int) = RegrasConflitoException(
         "As regras foram alteradas por outra pessoa (agora estão na versão $versaoAtual). Recarregue a tela antes de salvar."
     )
-
-    private fun limparCaminho(caminho: String): String {
-        val semHost = caminho.trim().replace(Regex("^[a-zA-Z][a-zA-Z0-9+.-]*://[^/]+"), "")
-        val semQuery = semHost.substringBefore('#').substringBefore('?')
-        return if (semQuery.startsWith("/")) semQuery else "/$semQuery"
-    }
 
     private fun AcessoRegrasVersao.paraResumo() = VersaoResumo(
         numeroDaVersao(), U_Usuario, U_UsuarioId, U_Data?.take(10), U_Hora, U_Origem, U_Comentario, U_Resumo,

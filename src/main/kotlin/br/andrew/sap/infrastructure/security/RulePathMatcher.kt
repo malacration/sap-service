@@ -155,14 +155,28 @@ class RulePathMatcher(private val context: String = "") {
         }
     }
 
-    private companion object {
-        const val SIMPLES = -1
-        const val DUPLO = -2
-        const val TETO_DO_CACHE = 2000
-        const val ASTERISCO = '*'.code
-        const val BARRA = '/'.code
-        const val PONTO = '.'.code
-        val BARRAS_REPETIDAS = Regex("/+")
-        val PERMITIDOS = setOf('/', '_', '-', '.', '*')
+    companion object {
+        private const val SIMPLES = -1
+        private const val DUPLO = -2
+        private const val TETO_DO_CACHE = 2000
+        private const val ASTERISCO = '*'.code
+        private const val BARRA = '/'.code
+        private const val PONTO = '.'.code
+        private val BARRAS_REPETIDAS = Regex("/+")
+        private val PERMITIDOS = setOf('/', '_', '-', '.', '*')
+        private val ESQUEMA_E_HOST = Regex("^[a-zA-Z][a-zA-Z0-9+.-]*://[^/]+")
+
+        /**
+         * Caminho como o filtro o ve: aceita a URL inteira colada do navegador (descarta esquema, host, query e
+         * fragmento) e garante a barra inicial. Usado pelo simulador e pela consulta de permissoes do menu.
+         */
+        /** "https://host/x": comeca com esquema e host (um "://" na query nao conta). */
+        fun ehUrlCompleta(caminho: String): Boolean = ESQUEMA_E_HOST.containsMatchIn(caminho.trim())
+
+        fun limparCaminho(caminho: String): String {
+            val semHost = caminho.trim().replace(ESQUEMA_E_HOST, "")
+            val semQuery = semHost.substringBefore('#').substringBefore('?')
+            return if (semQuery.startsWith("/")) semQuery else "/$semQuery"
+        }
     }
 }

@@ -99,6 +99,25 @@ class RegrasAcessoHttpTest {
     }
 
     @Test
+    fun `json malformado, parametro obrigatorio ausente e valor que nao e numero respondem 400, nao 500`() {
+        mvc.perform(put("/acesso/regras/perfis/cobranca").principal(admin).contentType(MediaType.APPLICATION_JSON).content("{"))
+            .andExpect(status().isBadRequest)
+            .andExpect(jsonPath("$.erro").value("requisicao_invalida"))
+
+        mvc.perform(delete("/acesso/regras/perfis/cobranca").principal(admin))
+            .andExpect(status().isBadRequest)
+            .andExpect(jsonPath("$.erro").value("requisicao_invalida"))
+            .andExpect(jsonPath("$.mensagem").value(containsString("baseVersao")))
+
+        mvc.perform(delete("/acesso/regras/perfis/cobranca").principal(admin).param("baseVersao", "abc"))
+            .andExpect(status().isBadRequest)
+            .andExpect(jsonPath("$.erro").value("requisicao_invalida"))
+
+        mvc.perform(get("/acesso/regras/versoes/abc").principal(admin))
+            .andExpect(status().isBadRequest)
+    }
+
+    @Test
     fun `quem nao e admin toma 403 com json, nao 500`() {
         mvc.perform(get("/acesso/regras").principal(vendedorAdmin))
             .andExpect(status().isForbidden)

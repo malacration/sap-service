@@ -623,6 +623,23 @@ class RegrasAcessoServiceTest {
     }
 
     @Test
+    fun `restaurar de uma base ilegivel provisiona so a role do perfil que volta em relacao a ultima versao legivel`() {
+        val kc = KeycloakFalso()
+        val s = servico(keycloak = kc, keycloakLigado = true)
+        val admin1 = "admin" to listOf(RegraDoc("/**", listOf("*")))
+        // v1 tinha o conferente, v2 o apagou (com a role), v3 esta ilegivel: restaurar a v1 faz o conferente voltar
+        repo.inserir(1, RegrasCodec.toJson(RegrasDocumento(perfis = mapOf(admin1, "conferente" to listOf(RegraDoc("/branch", listOf("get")))))))
+        repo.inserir(2, RegrasCodec.toJson(RegrasDocumento(perfis = mapOf(admin1))))
+        repo.inserir(3, "lixo")
+
+        val recuperada = s.restaurar(admin, 1, 3, null)
+
+        assertEquals(4, recuperada.versao)
+        assertEquals(listOf("conferente"), kc.chamadas, "so o perfil que voltou, nao todos")
+        assertTrue(kc.existentes.contains("conferente"))
+    }
+
+    @Test
     fun `sem base legivel ao alcance da busca restaurar e recusado em vez de assumir vazio`() {
         val s = servico()
         repo.inserir(1, RegrasCodec.toJson(RegrasDocumento(perfis = mapOf("admin" to listOf(RegraDoc("/**", listOf("*")))))))
@@ -955,6 +972,30 @@ class RegrasAcessoServiceTest {
         assertEquals("memoria:rules.yml", estado.arquivoLocal)
     }
 
+    // ------------------------------------------------------------------ seed com a tabela recem-criada
+
+    @Test
+    fun `o seed tenta de novo a primeira leitura enquanto a tabela nova ainda propaga`() {
+        var falhas = 2
+        repo.falhaNaLeitura = { if (falhas-- > 0) RuntimeException("Entity 'ACESSO_REGRAS' is invalid") else null }
+        val s = servico().also { it.esperaDaSementeMs = 1 }
+        s.semearSeVazio()
+        assertEquals(1, repo.linhas.size)
+    }
+
+    @Test
+    fun `o seed desiste depois de cinco tentativas e nao esconde outros erros`() {
+        repo.falhaNaLeitura = { RuntimeException("Entity 'ACESSO_REGRAS' is invalid") }
+        val s = servico().also { it.esperaDaSementeMs = 1 }
+        assertThrows(RuntimeException::class.java) { s.semearSeVazio() }
+        assertEquals(5, repo.leituras)
+
+        repo.leituras = 0
+        repo.falhaNaLeitura = { RuntimeException("conexao recusada") }
+        assertThrows(RuntimeException::class.java) { s.semearSeVazio() }
+        assertEquals(1, repo.leituras)
+    }
+
     // ------------------------------------------------------------------ cobertura
 
     @Test
@@ -968,5 +1009,21 @@ class RegrasAcessoServiceTest {
         assertEquals(listOf("/sales-person/*"), s.cobertura("/sales-person/{id}", endpoints).map { it.url })
         assertEquals(2, s.cobertura("/sales-person/**", endpoints).size)
         assertTrue(s.cobertura("/sales-person/{", endpoints).isEmpty())
+    }
+
+    @Test
+    fun `cobertura de regra com valor concreto alcanca o endpoint cuja variavel virou asterisco`() {
+        val s = semeado()
+        val endpoints = listOf(
+            br.andrew.sap.services.security.acesso.EndpointConhecido("/sales-person/*", "get"),
+            br.andrew.sap.services.security.acesso.EndpointConhecido("/sales-person/*/business-partners", "get"),
+            br.andrew.sap.services.security.acesso.EndpointConhecido("/sales-person/search", "post"),
+            br.andrew.sap.services.security.acesso.EndpointConhecido("/branch", "get"),
+        )
+        assertEquals(listOf("/sales-person/*"), s.cobertura("/sales-person/137", endpoints).map { it.url })
+        assertEquals(listOf("/sales-person/*/business-partners"), s.cobertura("/sales-person/137/business-partners", endpoints).map { it.url })
+        assertEquals(listOf("/sales-person/*", "/sales-person/search"), s.cobertura("/sales-person/s*", endpoints).map { it.url }.sorted())
+        assertTrue(s.cobertura("/sales-person/137/outra-coisa", endpoints).isEmpty())
+        assertTrue(s.cobertura("/branch/1", endpoints).isEmpty())
     }
 }

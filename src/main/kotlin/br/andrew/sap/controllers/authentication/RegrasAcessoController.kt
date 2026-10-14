@@ -17,12 +17,15 @@ import br.andrew.sap.services.security.acesso.VersaoResumo
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.http.HttpStatus
+import org.springframework.http.converter.HttpMessageNotReadableException
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.Authentication
 import org.springframework.web.bind.annotation.DeleteMapping
+import org.springframework.web.bind.MissingServletRequestParameterException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
@@ -166,6 +169,21 @@ class RegrasAcessoController(
 
     @ExceptionHandler(RegrasNaoEncontradasException::class)
     fun onNaoEncontrado(e: RegrasNaoEncontradasException) = erro(HttpStatus.NOT_FOUND, "nao_encontrado", e.message)
+
+    // Falhas de binding do Spring (JSON malformado, parametro obrigatorio ausente, valor que nao e numero) sao erro de quem
+    // chamou: sem estes handlers o handler global as trata como 500 e manda mensagem ao Telegram.
+
+    @ExceptionHandler(HttpMessageNotReadableException::class)
+    fun onCorpoIlegivel(e: HttpMessageNotReadableException) =
+        erro(HttpStatus.BAD_REQUEST, "requisicao_invalida", "Corpo da requisição inválido ou ilegível.")
+
+    @ExceptionHandler(MissingServletRequestParameterException::class)
+    fun onParametroAusente(e: MissingServletRequestParameterException) =
+        erro(HttpStatus.BAD_REQUEST, "requisicao_invalida", "Parâmetro obrigatório ausente: ${e.parameterName}.")
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException::class)
+    fun onTipoInvalido(e: MethodArgumentTypeMismatchException) =
+        erro(HttpStatus.BAD_REQUEST, "requisicao_invalida", "Valor inválido para '${e.name}'.")
 
     private fun erro(status: HttpStatus, codigo: String, mensagem: String?): ResponseEntity<Map<String, Any?>> =
         ResponseEntity.status(status).body(mapOf("erro" to codigo, "mensagem" to mensagem))
