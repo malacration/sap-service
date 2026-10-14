@@ -71,11 +71,15 @@ lc.centrodecusto.filial=2
 lc.centrodecusto.grupo-economico=500
 lc.centrodecusto.centro-custo=50000205
 # Padrao por filial, no formato filial:grupoEconomico:centroCusto separado por virgula.
-# Escopo unico: lancamento de pagamento ou recebimento (ttVendorPayment/ttReceipt) cuja linha
-# aponte para uma regra de reparticao INATIVADA no SAP - situacao em que o Service Layer recusa
-# qualquer update nesse lancamento, mesmo um PATCH que so marque o UDF de processado
+# Escopo: lancamento de pagamento ou recebimento (ttVendorPayment/ttReceipt), em dois usos:
+# 1) linha que aponte para uma regra de reparticao INATIVADA no SAP - situacao em que o Service
+# Layer recusa qualquer update nesse lancamento, mesmo um PATCH que so marque o UDF de processado
 # ("-5002 Inactive distribution rule"). So a dimensao inativa e trocada; a que continua valida
-# fica como esta. Entrada com campo em branco e ignorada, e filial sem padrao nao e alterada.
+# fica como esta.
+# 2) conta de resultado sem dimensao quando o documento de origem nao tem rateio para herdar
+# (recebimento por conta sem NF, ou NF sem rateio): sem dimensao o SAP tambem recusa o PATCH.
+# So preenche a dimensao em branco, depois da regra de lc.centrodecusto.contas, que tem prioridade.
+# Entrada com campo em branco e ignorada, e filial sem padrao nao e alterada.
 #
 # NAO e usado em nenhum outro cenario. O rateio de pedido de venda, cotacao e NF de compra tem
 # configuracao propria e independente: distibuicao.custo (DistribuicaoCustoByBranchConfig), que
