@@ -339,7 +339,23 @@ class RegrasAcessoService(
     fun cobertura(url: String, endpoints: List<EndpointConhecido>): List<EndpointConhecido> {
         val padrao = url.trim().replace(Regex("\\{[^/}]*}"), "*")
         if (matcher.problemaDoPadrao(padrao) != null) return emptyList()
-        return endpoints.filter { matcher.matchPath(padrao, it.url) }
+        return endpoints.filter { alcanca(padrao, it.url) }
+    }
+
+    /**
+     * No catalogo, a variavel de caminho do endpoint (chaves em volta do nome) vira um asterisco. Uma regra concreta,
+     * como a do vendedor 137, alcanca esse endpoint, mas casar o padrao com o texto do endpoint como se fosse um caminho
+     * real daria falso: por isso, quando o segmento do endpoint e a variavel, qualquer segmento da regra serve.
+     */
+    private fun alcanca(padrao: String, endpoint: String): Boolean {
+        if (matcher.matchPath(padrao, endpoint)) return true
+        if (!endpoint.contains('*') || padrao.endsWith("/**")) return false
+        val daRegra = padrao.trim('/').split('/')
+        val doEndpoint = endpoint.trim('/').split('/')
+        if (daRegra.size != doEndpoint.size) return false
+        return daRegra.indices.all { i ->
+            doEndpoint[i] == "*" || matcher.matchPath("/" + daRegra[i], "/" + doEndpoint[i])
+        }
     }
 
     // ------------------------------------------------------------------ internos

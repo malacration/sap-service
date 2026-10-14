@@ -969,4 +969,20 @@ class RegrasAcessoServiceTest {
         assertEquals(2, s.cobertura("/sales-person/**", endpoints).size)
         assertTrue(s.cobertura("/sales-person/{", endpoints).isEmpty())
     }
+
+    @Test
+    fun `cobertura de regra com valor concreto alcanca o endpoint cuja variavel virou asterisco`() {
+        val s = semeado()
+        val endpoints = listOf(
+            br.andrew.sap.services.security.acesso.EndpointConhecido("/sales-person/*", "get"),
+            br.andrew.sap.services.security.acesso.EndpointConhecido("/sales-person/*/business-partners", "get"),
+            br.andrew.sap.services.security.acesso.EndpointConhecido("/sales-person/search", "post"),
+            br.andrew.sap.services.security.acesso.EndpointConhecido("/branch", "get"),
+        )
+        assertEquals(listOf("/sales-person/*"), s.cobertura("/sales-person/137", endpoints).map { it.url })
+        assertEquals(listOf("/sales-person/*/business-partners"), s.cobertura("/sales-person/137/business-partners", endpoints).map { it.url })
+        assertEquals(listOf("/sales-person/*", "/sales-person/search"), s.cobertura("/sales-person/s*", endpoints).map { it.url }.sorted())
+        assertTrue(s.cobertura("/sales-person/137/outra-coisa", endpoints).isEmpty())
+        assertTrue(s.cobertura("/branch/1", endpoints).isEmpty())
+    }
 }
