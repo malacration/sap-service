@@ -67,6 +67,13 @@ class PreencheCentroCustoPadraoDaFilialTest {
     }
 
     @Test
+    fun `conta mal formada antes da conta de resultado nao esconde a linha de resultado`() {
+        val lancamento = JournalEntry(listOf(linha("", 4), linha("3.1.3.001.00003", 4)), "Recebimento")
+
+        assertTrue(lancamento.hasContaResultado())
+    }
+
+    @Test
     fun `nao altera filial sem padrao configurado`() {
         val resultado = linha("3.1.3.001.00003", 9)
         val lancamento = JournalEntry(listOf(resultado), "Recebimento")

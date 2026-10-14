@@ -58,8 +58,11 @@ class JournalEntry(val journalEntryLines : List<JournalEntryLines>, val memo : S
     //Todo fazer teste de unidade para esse cara
     @JsonIgnore
     fun hasContaResultado(): Boolean {
-        return journalEntryLines.any { it.isContaResultado() }
+        return journalEntryLines.any { it.ehContaResultadoOuFalse() }
     }
+
+    //conta mal formada em outra linha nao pode impedir o job de enxergar a linha de resultado
+    private fun JournalEntryLines.ehContaResultadoOuFalse() = runCatching { isContaResultado() }.getOrDefault(false)
 
     //cada dimensao e preenchida em separado: linha com grupo economico valido e centro de custo
     //vazio mantem o grupo que ja estava la
@@ -90,8 +93,7 @@ class JournalEntry(val journalEntryLines : List<JournalEntryLines>, val memo : S
     fun preencheCentroCustoPadraoDaFilial(padraoPorFilial: Map<String, DistribuicaoCustoByBranch>): List<String> {
         val preenchidos = mutableListOf<String>()
         journalEntryLines
-            //conta mal formada em outra linha nao pode impedir o preenchimento da linha de resultado
-            .filter { runCatching { it.isContaResultado() }.getOrDefault(false) }
+            .filter { it.ehContaResultadoOuFalse() }
             .forEach { linha ->
                 val padrao = padraoPorFilial[linha.getBPLID().toString()] ?: return@forEach
                 if (linha.costingCode.isNullOrBlank()) {
