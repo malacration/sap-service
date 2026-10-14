@@ -14,18 +14,17 @@ import org.springframework.stereotype.Service
 import org.springframework.web.client.HttpClientErrorException
 import java.security.MessageDigest
 import java.time.Duration
-import java.time.Instant
-import java.time.ZoneId
+import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
-import java.util.concurrent.ConcurrentHashMap
 
 /**
  * Importacao de lancamentos contabeis por CSV, com previa. Substitui o curl no /journal/save,
  * que grava linha a linha sem validar: se a linha N falha, as anteriores ja estao no SAP e a
  * resposta nao diz quais entraram.
  *
- * Aqui todos os lancamentos e o log vao num unico changeset do $batch, que o Service Layer
- * aplica como uma transacao: entra o arquivo inteiro ou nada.
+ * Aqui todos os lancamentos vao num unico changeset do $batch, que o Service Layer aplica como uma
+ * transacao: entra o arquivo inteiro ou nada. O log nasce ENVIANDO antes do lote e vira IMPORTADO
+ * dentro do mesmo changeset (ver ImportacaoLancamentoLog).
  */
 @Service
 class ImportacaoLancamentoService(
@@ -41,10 +40,6 @@ class ImportacaoLancamentoService(
     //uma importacao por vez na instancia (o sap-prd-v7 roda com uma replica): duplo clique, ou
     //dois usuarios com o mesmo arquivo, nao passam os dois pela checagem de "ja importado"
     private val trava = Any()
-    //hash do arquivo -> a importacao dele que ficou sem confirmacao (CONFERIR). O SAP pode ainda estar
-    //gravando aquele changeset: reenviar o mesmo arquivo nessa janela duplicaria tudo
-    private class Duvida(val code: String, val desde: Instant)
-    private val emDuvida = ConcurrentHashMap<String, Duvida>()
 
     fun validar(conteudo: ByteArray, arquivo: String?): PreviaImportacaoLancamento {
         val leitura = LancamentoCsvParser.ler(conteudo)
@@ -56,7 +51,7 @@ class ImportacaoLancamentoService(
             validador.validar(leitura.linhas)
 
         val hash = sha256(conteudo)
-        val anteriores = logService.porHash(hash).map {
+        val anteriores = logService.porHash(hash).filter { it.importado() }.map {
             ImportacaoAnterior(it.Code ?: "", it.U_Usuario, it.U_Data?.take(10), it.U_Hora)
         }
         return PreviaImportacaoLancamento(arquivo, hash, leitura.codificacao, leitura.linhas, erros, anteriores)
@@ -90,47 +85,52 @@ class ImportacaoLancamentoService(
             usuario, usuarioId, arquivo, previa.hash, previa.totalLinhas, previa.totalValor, forcarDuplicado
         )
         val id = log.Code!!
+        try {
+            logService.registrarInicio(log)
+        } catch (e: Exception) {
+            logger.error("Importacao de lancamentos {}: falha ao registrar o inicio", id, e)
+            throw ImportacaoLancamentoException(HttpStatus.BAD_GATEWAY,
+                "Não foi possível registrar a importação no SAP e nenhum lançamento foi enviado. Tente de novo.")
+        }
         val lote = BatchList()
         previa.linhas.forEach { lote.add(BatchMethod.POST, it.paraLancamento(), journalEntriesService) }
-        lote.add(BatchMethod.POST, log, logService)
+        lote.add(BatchMethod.PATCH, ImportacaoLancamentoStatus(id, ImportacaoLancamentoLog.IMPORTADO), logService)
 
         logger.info("Importacao de lancamentos {}: usuario={}, arquivo={}, linhas={}, total={}, forcado={}",
             id, usuarioId, arquivo, previa.totalLinhas, previa.totalValor, forcarDuplicado)
         val respostas = try {
             batchService.run(lote)
         } catch (e: Exception) {
-            return@synchronized falhaNoEnvio(id, previa.hash, e)
+            return@synchronized falhaNoEnvio(id, e)
         }
-        return@synchronized conferir(id, previa.hash, respostas, previa.linhas)
+        return@synchronized conferir(id, respostas, previa.linhas)
     }
 
+    /**
+     * Tentativa deste arquivo que ficou ENVIANDO ha menos de ESPERA_DUVIDA: o changeset pode estar em
+     * andamento, e reenviar duplicaria tudo. Consulta o SAP, e nao a memoria, para valer depois de um
+     * restart e em qualquer instancia. Se a tentativa entrou, ela ja e IMPORTADO e cai na confirmacao
+     * de reimportacao; ENVIANDO antigo e tentativa que nao entrou.
+     */
     private fun barrarSeEmDuvida(previa: PreviaImportacaoLancamento) {
-        val duvida = emDuvida[previa.hash] ?: return
-        val liberaEm = duvida.desde.plus(ESPERA_DUVIDA)
-        //so o log DAQUELA tentativa encerra a duvida: num arquivo ja importado antes, o log antigo
-        //sempre esta la e liberaria um terceiro envio. Consulta pelo Code porque importacoesAnteriores
-        //e so a primeira pagina do hash; se a consulta falhar, a duvida continua
-        val entrou = previa.importacoesAnteriores.any { it.id == duvida.code } ||
-            runCatching { logService.porCode(duvida.code) != null }.getOrDefault(false)
-        if (entrou || Instant.now().isAfter(liberaEm)) {
-            emDuvida.remove(previa.hash)
-            return
-        }
+        val desde = logService.emEnvio(previa.hash).mapNotNull { it.inicio() }.maxOrNull() ?: return
+        val liberaEm = desde.plus(ESPERA_DUVIDA)
+        if (LocalDateTime.now().isAfter(liberaEm)) return
         throw ImportacaoLancamentoException(
             HttpStatus.CONFLICT,
-            "Uma importação deste arquivo às ${hora(duvida.desde)} ficou sem confirmação do SAP e ainda pode estar " +
-                "entrando. Confira o histórico e, se ela não aparecer, tente de novo a partir das ${hora(liberaEm)}.",
+            "Uma importação deste arquivo às ${FORMATO_HORA.format(desde)} ficou sem confirmação do SAP e ainda " +
+                "pode estar entrando. Confira o histórico e, se ela não aparecer, tente de novo a partir das " +
+                "${FORMATO_HORA.format(liberaEm)}.",
         )
     }
 
-    private fun marcarEmDuvida(id: String, hash: String, mensagem: String): ResultadoImportacaoLancamento {
-        emDuvida[hash] = Duvida(id, Instant.now())
-        return ResultadoImportacaoLancamento(id, CONFERIR, emptyList(), mensagem)
-    }
+    //o log segue ENVIANDO no SAP: e ele que barra reenviar o mesmo arquivo enquanto houver duvida
+    private fun emDuvida(id: String, mensagem: String) = ResultadoImportacaoLancamento(id, CONFERIR, emptyList(), mensagem)
 
-    private fun hora(instante: Instant) = FORMATO_HORA.format(instante.atZone(ZoneId.systemDefault()))
+    private fun entrou(id: String): Boolean = logService.porCode(id)?.U_Status == ImportacaoLancamentoLog.IMPORTADO
 
-    fun historico(quantidade: Int = 50): List<HistoricoImportacao> = logService.ultimas(quantidade).map {
+    //so o que entrou: ENVIANDO e RECUSADO sao tentativas, e o historico e de importacoes
+    fun historico(quantidade: Int = 50): List<HistoricoImportacao> = logService.ultimas(quantidade).filter { it.importado() }.map {
         HistoricoImportacao(
             id = it.Code ?: "",
             usuario = it.U_Usuario,
@@ -148,12 +148,12 @@ class ImportacaoLancamentoService(
      * Recusa definitiva so quando o SAP respondeu com erro: BatchRecusadoException (o BatchService
      * entendeu o erro do changeset) ou 4xx do $batch inteiro (pedido recusado antes de processar).
      * Timeout, rede, 5xx, corpo vazio ou falha no login nao provam nada: ai a resposta e CONFERIR,
-     * mesmo que o log ainda nao exista - o changeset pode estar em andamento.
+     * mesmo que o log ainda nao esteja IMPORTADO - o changeset pode estar em andamento.
      */
-    private fun falhaNoEnvio(id: String, hash: String, e: Exception): ResultadoImportacaoLancamento {
+    private fun falhaNoEnvio(id: String, e: Exception): ResultadoImportacaoLancamento {
         val recusaDoSap = e is BatchRecusadoException || e is HttpClientErrorException
         val gravou = try {
-            logService.porCode(id) != null
+            entrou(id)
         } catch (releitura: Exception) {
             logger.error("Importacao de lancamentos {}: falha no envio e na releitura do log", id, releitura)
             null
@@ -166,24 +166,30 @@ class ImportacaoLancamentoService(
             }
             gravou == false && recusaDoSap -> {
                 logger.info("Importacao de lancamentos {}: recusada pelo SAP: {}", id, e.message)
+                try {
+                    logService.marcar(id, ImportacaoLancamentoLog.RECUSADO)
+                } catch (marcacao: Exception) {
+                    //fica ENVIANDO: barra o mesmo arquivo por ESPERA_DUVIDA, do lado seguro
+                    logger.warn("Importacao de lancamentos {}: falha ao marcar RECUSADO", id, marcacao)
+                }
                 throw ImportacaoLancamentoException(HttpStatus.UNPROCESSABLE_ENTITY,
                     "O SAP recusou a importação e nenhum lançamento foi gravado: ${e.message}")
             }
             else -> {
                 logger.error("Importacao de lancamentos {}: sem confirmacao do SAP", id, e)
-                marcarEmDuvida(id, hash, "Não foi possível confirmar se a importação entrou (${e.message}). " +
+                emDuvida(id, "Não foi possível confirmar se a importação entrou (${e.message}). " +
                     "Confira o histórico em alguns minutos antes de tentar de novo.")
             }
         }
     }
 
     /**
-     * Resposta inteira entendida (uma por lancamento e a do log, todas com sucesso e com JdtNum): o
+     * Resposta inteira entendida (uma por lancamento e a do status do log, todas com sucesso e com JdtNum): o
      * changeset entrou. Senao so confia relendo o log: resposta que o parser do batch nao reconhece
      * vira lista vazia, e "nenhum erro" passaria por sucesso (ver CobrancaService).
      */
     private fun conferir(
-        id: String, hash: String, respostas: List<BatchResponse>, linhasDoArquivo: List<LinhaLancamento>,
+        id: String, respostas: List<BatchResponse>, linhasDoArquivo: List<LinhaLancamento>,
     ): ResultadoImportacaoLancamento {
         val linhas = linhasDoArquivo.size
         val ordenadas = naOrdemDoLote(respostas, linhas)
@@ -206,7 +212,7 @@ class ImportacaoLancamentoService(
         logger.warn("Importacao de lancamentos {}: resposta do lote nao reconhecida ({} respostas, {} numeros)",
             id, respostas.size, lancamentos.size)
         val gravou = try {
-            logService.porCode(id) != null
+            entrou(id)
         } catch (e: Exception) {
             logger.error("Importacao de lancamentos {}: falha ao reler o log", id, e)
             null
@@ -215,13 +221,13 @@ class ImportacaoLancamentoService(
             ResultadoImportacaoLancamento(id, IMPORTADO, emptyList(),
                 "Importação concluída, mas não foi possível ler os números dos lançamentos. Confira no histórico.")
         else
-            marcarEmDuvida(id, hash, "O SAP respondeu, mas não foi possível confirmar se a importação entrou. " +
+            emDuvida(id, "O SAP respondeu, mas não foi possível confirmar se a importação entrou. " +
                 "Confira o histórico em alguns minutos antes de tentar de novo.")
     }
 
     /**
-     * Respostas na ordem em que as operacoes foram montadas (lancamentos na ordem das linhas, log por
-     * ultimo), pelo Content-ID que o BatchService poe em cada uma (1..N+1) e que o Service Layer devolve
+     * Respostas na ordem em que as operacoes foram montadas (lancamentos na ordem das linhas, status do
+     * log por ultimo), pelo Content-ID que o BatchService poe em cada uma (1..N+1) e que o Service Layer devolve
      * (ver a resposta real em BatchServiceTest). O changeset pode voltar em outra ordem: casar por
      * posicao trocaria o numero de uma linha pelo de outra. Resposta sem Content-ID, incompleta ou com
      * Content-ID inesperado nao e reconhecida (null): a importacao se confirma pelo log, sem numeros.

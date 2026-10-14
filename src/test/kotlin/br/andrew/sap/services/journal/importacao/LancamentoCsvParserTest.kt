@@ -100,12 +100,37 @@ class LancamentoCsvParserTest {
     @Test
     fun `ponto e virgula no historico sem aspas desloca as colunas e vira erro`() {
         val l = linha("2;;05/10/2026;A;B;10,00;Pgto; NF 10;501;CC;R1;R2;R3")
-        assertTrue(l.erros.any { it.contains("no máximo 12") }, l.erros.toString())
+        assertTrue(l.erros.any { it.contains("mais que as 12 do cabeçalho") }, l.erros.toString())
     }
 
     @Test
-    fun `colunas vazias a mais no fim da linha sao ignoradas`() {
-        assertTrue(linha("2;;05/10/2026;A;B;10,00;H;501;CC;;;;;;").erros.isEmpty())
+    fun `linha com mais colunas que o cabecalho e erro mesmo com a sobra vazia`() {
+        // "H;" sem aspas empurra tudo uma coluna: com a ultima referencia vazia, a sobra fica vazia
+        val empurrada = linha("2;;05/10/2026;A;B;10,00;H;;501;CC;R1;R2;")
+        assertTrue(empurrada.erros.single().contains("mais que as 12 do cabeçalho"), empurrada.erros.toString())
+        // colunas vazias dentro do que o cabecalho declara continuam valendo
+        assertTrue(linha("2;;05/10/2026;A;B;10,00;H;501;CC;;;").erros.isEmpty())
+    }
+
+    @Test
+    fun `linha esparsa empurrada alem de um cabecalho curto e erro em vez de perder o centro de custo`() {
+        // caso do review: historico "H;" sem aspas, grupo vazio e centro CC -> CC caia na referencia
+        val leitura = LancamentoCsvParser.ler(
+            "Filial;Livre;Data;Debito;Credito;Valor;Historico;Grupo;Centro\r\n2;;05/10/2026;A;B;10,00;H;;;CC", "UTF-8"
+        )
+        assertTrue(leitura.linhas.single().erros.single().contains("mais que as 9 do cabeçalho"))
+    }
+
+    @Test
+    fun `arquivo real do processo antigo - cabecalho e linhas com 12 colunas - passa`() {
+        val real = LancamentoCsvParser.ler(
+            "\uFEFFCOD FILIAL;Sequencia;DATA;CONTA DEBITO;CONTA CREDITO;VALOR;HISTORICO;FILIAL;CENTRO DE CUSTO;REF 1;REF 2;REF 3\r\n" +
+                "2;1;01/08/2026;4.1.1.003.00002;4.9.1.001.00001;3106,15;Saída de insumos - custo ggf remessa ind.ord. producao 64351;500;50000205;64351;GGF;REMESSA INDUST.",
+            "UTF-8",
+        )
+        assertTrue(real.erros.isEmpty())
+        assertEquals(emptyList<String>(), real.linhas.single().erros)
+        assertEquals("50000205", real.linhas.single().centroCusto)
     }
 
     @Test

@@ -7,12 +7,18 @@ import com.fasterxml.jackson.databind.annotation.JsonNaming
 import java.math.BigDecimal
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import java.time.format.DateTimeParseException
 import java.util.UUID
 
 /**
- * Uma importacao de lancamentos, em @LC_IMPORTACAO. Vai no mesmo changeset dos lancamentos: a
- * linha existe se, e somente se, a importacao entrou. Isso responde "quem importou" (no SAP o
- * UserSign do lancamento e a conta de servico) e e o que impede reimportar o mesmo arquivo.
+ * Uma importacao de lancamentos, em @LC_IMPORTACAO. Responde "quem importou" (no SAP o UserSign do
+ * lancamento e a conta de servico) e e o que impede reimportar o mesmo arquivo.
+ *
+ * A linha nasce ENVIANDO antes do $batch, numa chamada propria, e o PATCH para IMPORTADO vai no
+ * mesmo changeset dos lancamentos: IMPORTADO se, e somente se, a importacao entrou. ENVIANDO
+ * recente e importacao em duvida (o changeset pode estar em andamento), e por estar no SAP, e nao
+ * em memoria, a trava vale depois de um restart e em qualquer instancia. RECUSADO e recusa
+ * comprovada do SAP. Linha sem status e anterior a esse campo e so existia se a importacao entrou.
  *
  * Classe comum, nao data class: o SapGenericException poe toString() na mensagem que vai para o
  * navegador e para o Telegram.
@@ -28,6 +34,7 @@ class ImportacaoLancamentoLog(
     var U_Data: String? = null,
     var U_Hora: String? = null,
     var U_Arquivo: String? = null,
+    var U_Status: String? = null,
     var U_Hash: String? = null,
     var U_Linhas: Int? = null,
     var U_Total: BigDecimal? = null,
@@ -35,7 +42,21 @@ class ImportacaoLancamentoLog(
     //preenchido depois do commit, por PATCH de melhor esforco: o numero so existe na resposta
     var U_Lancamentos: String? = null,
 ) {
+    fun importado(): Boolean = U_Status == null || U_Status == IMPORTADO
+
+    /** Instante em que a tentativa comecou, tirado do Code (yyyyMMddHHmmss-xxxxxxxx). */
+    fun inicio(): LocalDateTime? = Code?.substringBefore('-')?.let {
+        try {
+            LocalDateTime.parse(it, formatoCode)
+        } catch (e: DateTimeParseException) {
+            null
+        }
+    }
+
     companion object {
+        const val ENVIANDO = "ENVIANDO"
+        const val IMPORTADO = "IMPORTADO"
+        const val RECUSADO = "RECUSADO"
         private val formatoCode = DateTimeFormatter.ofPattern("yyyyMMddHHmmss")
 
         /** Code = instante + sufixo aleatorio: ordena por data no historico e nao colide. */
@@ -56,6 +77,7 @@ class ImportacaoLancamentoLog(
                 U_Linhas = linhas,
                 U_Total = total,
                 U_Forcado = if (forcado) "Y" else "N",
+                U_Status = ENVIANDO,
             )
         }
     }

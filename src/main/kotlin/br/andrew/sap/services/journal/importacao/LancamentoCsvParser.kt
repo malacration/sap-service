@@ -72,7 +72,8 @@ object LancamentoCsvParser {
             return LeituraCsv(codificacao, emptyList(), listOf("O arquivo está vazio."))
 
         val erros = mutableListOf<String>()
-        if (pareceLancamento(separar(linhasArquivo.first()).valores))
+        val cabecalho = separar(linhasArquivo.first()).valores
+        if (pareceLancamento(cabecalho))
             erros += "A primeira linha do arquivo é sempre o cabeçalho e não é importada, mas ela começa com " +
                 "uma filial, como um lançamento. Inclua a linha de cabeçalho no arquivo."
 
@@ -82,7 +83,7 @@ object LancamentoCsvParser {
             //o Excel exporta as linhas vazias do fim da planilha como ";;;;;;;;". Linha com problema de
             //aspas fica mesmo vazia: uma aspa solta e resto de campo partido, nao linha em branco
             .filter { (_, campos) -> campos.problema != null || campos.valores.any { it.isNotBlank() } }
-            .map { (numero, campos) -> linha(numero, campos.valores.map { it.trim() }, campos.problema) }
+            .map { (numero, campos) -> linha(numero, campos.valores.map { it.trim() }, campos.problema, cabecalho.size) }
 
         if (linhas.isEmpty() && erros.isEmpty())
             erros += "O arquivo não tem nenhum lançamento além do cabeçalho."
@@ -151,7 +152,7 @@ object LancamentoCsvParser {
     //sem cabecalho cuja primeira linha tem data errada
     private fun pareceLancamento(campos: List<String>): Boolean = campos[0].trim().toIntOrNull() != null
 
-    private fun linha(numero: Int, campos: List<String>, problemaAspas: String?): LinhaLancamento {
+    private fun linha(numero: Int, campos: List<String>, problemaAspas: String?, colunasDoCabecalho: Int): LinhaLancamento {
         fun campo(i: Int) = campos.getOrElse(i) { "" }
         val (valor, erroValor) = valor(campo(5))
         val linha = LinhaLancamento(
@@ -180,7 +181,14 @@ object LancamentoCsvParser {
                 "(da filial até o centro de custo)."
             return linha
         }
-        if (campos.drop(COLUNAS_MAXIMAS).any { it.isNotBlank() })
+        //um ';' sem aspas no historico empurra a linha uma coluna alem do cabecalho, mesmo quando a sobra
+        //fica vazia (o centro de custo vira referencia, por exemplo). O Excel, e o arquivo de hoje,
+        //gravam toda linha com as colunas do cabecalho, entao coluna a mais e sinal de deslocamento
+        if (campos.size > maxOf(colunasDoCabecalho, COLUNAS_MINIMAS))
+            linha.erros += "A linha tem ${campos.size} colunas, mais que as $colunasDoCabecalho do cabeçalho. Se o " +
+                "histórico ou a referência tem ';', coloque o texto entre aspas; se faltam títulos no cabeçalho, " +
+                "inclua as colunas que faltam."
+        else if (campos.drop(COLUNAS_MAXIMAS).any { it.isNotBlank() })
             linha.erros += "A linha tem ${campos.size} colunas; são no máximo $COLUNAS_MAXIMAS. Se o histórico " +
                 "ou a referência tem ';', coloque o texto entre aspas."
 

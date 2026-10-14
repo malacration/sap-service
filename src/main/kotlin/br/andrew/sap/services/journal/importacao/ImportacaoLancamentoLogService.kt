@@ -22,6 +22,22 @@ class ImportacaoLancamentoLogService(env: SapEnvrioment, restTemplate: RestTempl
     fun porHash(hash: String): List<ImportacaoLancamentoLog> =
         get(Filter(Predicate("U_Hash", hash, Condicao.EQUAL))).tryGetValues<ImportacaoLancamentoLog>()
 
+    /** Tentativas deste arquivo que ficaram ENVIANDO: importacao que pode estar em andamento. */
+    fun emEnvio(hash: String): List<ImportacaoLancamentoLog> =
+        get(Filter(
+            Predicate("U_Hash", hash, Condicao.EQUAL),
+            Predicate("U_Status", ImportacaoLancamentoLog.ENVIANDO, Condicao.EQUAL),
+        )).tryGetValues<ImportacaoLancamentoLog>()
+
+    /** Grava a linha ENVIANDO antes do $batch. */
+    fun registrarInicio(log: ImportacaoLancamentoLog) {
+        save(log)
+    }
+
+    fun marcar(code: String, status: String) {
+        update(mapOf("U_Status" to status), "'$code'")
+    }
+
     fun porCode(code: String): ImportacaoLancamentoLog? =
         get(Filter(Predicate("Code", code, Condicao.EQUAL))).tryGetValues<ImportacaoLancamentoLog>().firstOrNull()
 

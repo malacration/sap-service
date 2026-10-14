@@ -48,6 +48,8 @@ class ImportacaoLancamentoConfiguration(
             },
             FieldMd("Total", "Valor Total", "@LC_IMPORTACAO", DbType.db_Float).also { it.subType = DbSubType.st_Sum },
             FieldMd("Forcado", "Reimportação Forçada", "@LC_IMPORTACAO", DbType.db_Alpha).also { it.size = 1 },
+            //ENVIANDO -> IMPORTADO (no changeset dos lancamentos) ou RECUSADO; ver ImportacaoLancamentoLog
+            FieldMd("Status", "Status", "@LC_IMPORTACAO", DbType.db_Alpha).also { it.size = 10 },
             FieldMd("Lancamentos", "Lançamentos", "@LC_IMPORTACAO", DbType.db_Memo),
         ).forEach { userFieldsMDService.findOrCreate(it) }
 

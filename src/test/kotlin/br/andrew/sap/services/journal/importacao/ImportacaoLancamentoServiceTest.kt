@@ -30,7 +30,7 @@ class ImportacaoLancamentoServiceTest {
     private val batch = mock<BatchService>()
     private val service = ImportacaoLancamentoService(ImportacaoLancamentoValidador(cadastros), cadastros, logService, journal, batch, 500)
 
-    private val csv = ("Filial;Tipo;Data;Debito;Credito;Valor;Historico;Grupo;Centro\r\n" +
+    private val csv = ("Filial;Tipo;Data;Debito;Credito;Valor;Historico;Grupo;Centro;Ref1;Ref2;Ref3\r\n" +
         "2;;05/10/2026;D;C;10,00;Primeiro;;\r\n" +
         "2;;06/10/2026;D;C;20,50;Segundo;;").toByteArray()
 
@@ -40,6 +40,8 @@ class ImportacaoLancamentoServiceTest {
         201, "Content-ID: $contentId\r\nHTTP/1.1 201 Created\r\nContent-Type: application/json\r\n\r\n" +
             "{\"JdtNum\": $jdtNum, \"Number\": ${jdtNum + 700000}, \"Memo\": \"x\"}", true, contentId = contentId,
     )
+
+    private fun importado(code: String) = ImportacaoLancamentoLog(Code = code, U_Status = ImportacaoLancamentoLog.IMPORTADO)
 
     private fun importar(hash: String = hash(), forcar: Boolean = false, conteudo: ByteArray = csv) =
         service.importar(conteudo, "a.csv", hash, forcar, "Fulano", "SalePerson:60")
@@ -72,10 +74,9 @@ class ImportacaoLancamentoServiceTest {
     }
 
     @Test
-    fun `importa tudo num changeset so com o log por ultimo e registra os numeros`() {
+    fun `grava o log ENVIANDO antes e o PATCH para IMPORTADO no mesmo changeset dos lancamentos`() {
         val lote = argumentCaptor<BatchList>()
         whenever(batch.run(lote.capture())).thenReturn(listOf(criado(101, 1), criado(102, 2), criado(0, 3)))
-        whenever(logService.porCode(any())).thenAnswer { ImportacaoLancamentoLog(Code = it.arguments[0] as String) }
 
         val resultado = importar()
 
@@ -86,10 +87,24 @@ class ImportacaoLancamentoServiceTest {
             resultado.porLinha.map { Triple(it.linha, it.transacao, it.numero) })
         val itens = lote.firstValue.toList()
         assertEquals(3, itens.size)
-        assertTrue(itens.all { it.method == BatchMethod.POST })
+        assertTrue(itens.take(2).all { it.method == BatchMethod.POST })
         assertEquals(listOf("Primeiro", "Segundo"), itens.take(2).map { (it.payload as JournalEntry).memo })
-        val log = itens.last().payload as ImportacaoLancamentoLog
-        assertSame(logService, itens.last().service)
+
+        // o log nasce ENVIANDO numa chamada antes do lote...
+        val inicio = argumentCaptor<ImportacaoLancamentoLog>()
+        inOrder(logService, batch) {
+            verify(logService).registrarInicio(inicio.capture())
+            verify(batch).run(any<BatchList>())
+        }
+        val log = inicio.firstValue
+        assertEquals(ImportacaoLancamentoLog.ENVIANDO, log.U_Status)
+        // ...e vira IMPORTADO no mesmo changeset: so muda se os lancamentos entrarem
+        val status = itens.last()
+        assertEquals(BatchMethod.PATCH, status.method)
+        assertSame(logService, status.service)
+        val patch = status.payload as ImportacaoLancamentoStatus
+        assertEquals("'${log.Code}'", patch.getId())
+        assertEquals(mapOf("U_Status" to "IMPORTADO"), patch.campos)
         assertEquals("Fulano", log.U_Usuario)
         assertEquals("SalePerson:60", log.U_UsuarioId)
         assertEquals(2, log.U_Linhas)
@@ -107,9 +122,14 @@ class ImportacaoLancamentoServiceTest {
                 U_Linhas = 2, U_Forcado = "Y",
                 U_Lancamentos = "[{\"linha\":2,\"numero\":793886,\"transacao\":1499715},{\"linha\":3,\"numero\":793887,\"transacao\":1499716}]"),
             ImportacaoLancamentoLog(Code = "A", U_Lancamentos = "101, 102"),
-            ImportacaoLancamentoLog(Code = "V"),
+            ImportacaoLancamentoLog(Code = "V", U_Status = ImportacaoLancamentoLog.IMPORTADO),
+            // tentativas nao sao importacoes: ficam fora do historico
+            ImportacaoLancamentoLog(Code = "E", U_Status = ImportacaoLancamentoLog.ENVIANDO),
+            ImportacaoLancamentoLog(Code = "R", U_Status = ImportacaoLancamentoLog.RECUSADO),
         ))
-        val (novo, antigo, semNumeros) = service.historico()
+        val historico = service.historico()
+        assertEquals(listOf("N", "A", "V"), historico.map { it.id })
+        val (novo, antigo, semNumeros) = historico
         assertEquals("2026-10-06", novo.data)
         assertTrue(novo.forcado)
         assertEquals(listOf(Triple(2, 793886, 1499715), Triple(3, 793887, 1499716)),
@@ -130,7 +150,7 @@ class ImportacaoLancamentoServiceTest {
     @Test
     fun `Content-ID inesperado nao e reconhecido e vai para a releitura do log`() {
         whenever(batch.run(any<BatchList>())).thenReturn(listOf(criado(101, 1), criado(102, 7), criado(0, 3)))
-        whenever(logService.porCode(any())).thenAnswer { ImportacaoLancamentoLog(Code = it.arguments[0] as String) }
+        whenever(logService.porCode(any())).thenAnswer { importado(it.arguments[0] as String) }
         val resultado = importar()
         assertEquals("IMPORTADO", resultado.status)
         assertTrue(resultado.porLinha.isEmpty())
@@ -141,7 +161,7 @@ class ImportacaoLancamentoServiceTest {
     fun `resposta sem Content-ID nao casa por posicao - confirma pelo log, sem numeros por linha`() {
         val semId = { jdt: Int -> BatchResponse(201, "HTTP/1.1 201 Created\r\n\r\n{\"JdtNum\": $jdt, \"Number\": 1}", true) }
         whenever(batch.run(any<BatchList>())).thenReturn(listOf(semId(102), semId(101), semId(0)))
-        whenever(logService.porCode(any())).thenAnswer { ImportacaoLancamentoLog(Code = it.arguments[0] as String) }
+        whenever(logService.porCode(any())).thenAnswer { importado(it.arguments[0] as String) }
         val resultado = importar()
         assertEquals("IMPORTADO", resultado.status)
         assertTrue(resultado.porLinha.isEmpty())
@@ -185,18 +205,22 @@ class ImportacaoLancamentoServiceTest {
     @Test
     fun `arquivo ja importado so entra de novo se confirmar a reimportacao`() {
         whenever(logService.porHash(any())).thenReturn(listOf(
-            ImportacaoLancamentoLog(Code = "X", U_Usuario = "Beltrano", U_Data = "2026-10-01T00:00:00Z", U_Hora = "09:00")
+            ImportacaoLancamentoLog(Code = "X", U_Usuario = "Beltrano", U_Data = "2026-10-01T00:00:00Z", U_Hora = "09:00",
+                U_Status = ImportacaoLancamentoLog.IMPORTADO),
+            // tentativa recusada do mesmo arquivo nao conta como importacao anterior
+            ImportacaoLancamentoLog(Code = "R", U_Usuario = "Ciclano", U_Status = ImportacaoLancamentoLog.RECUSADO),
         ))
+        assertEquals(listOf("X"), service.validar(csv, "a.csv").importacoesAnteriores.map { it.id })
         val e = assertThrows<ImportacaoLancamentoException> { importar() }
         assertEquals(HttpStatus.CONFLICT, e.status)
         assertTrue(e.message.contains("Beltrano em 2026-10-01 09:00"))
         verifyNoInteractions(batch)
 
-        val lote = argumentCaptor<BatchList>()
-        whenever(batch.run(lote.capture())).thenReturn(listOf(criado(101, 1), criado(102, 2), criado(0, 3)))
-        whenever(logService.porCode(any())).thenAnswer { ImportacaoLancamentoLog(Code = it.arguments[0] as String) }
+        whenever(batch.run(any<BatchList>())).thenReturn(listOf(criado(101, 1), criado(102, 2), criado(0, 3)))
         assertEquals("IMPORTADO", importar(forcar = true).status)
-        assertEquals("Y", (lote.firstValue.last().payload as ImportacaoLancamentoLog).U_Forcado)
+        val inicio = argumentCaptor<ImportacaoLancamentoLog>()
+        verify(logService).registrarInicio(inicio.capture())
+        assertEquals("Y", inicio.firstValue.U_Forcado)
     }
 
     @Test
@@ -220,13 +244,25 @@ class ImportacaoLancamentoServiceTest {
     }
 
     @Test
-    fun `SAP recusou o lote e o log nao existe - nada gravado`() {
+    fun `SAP recusou o lote - nada gravado e o log vira RECUSADO`() {
         doAnswer { throw BatchRecusadoException("400 - Period is locked") }.whenever(batch).run(any<BatchList>())
-        whenever(logService.porCode(any())).thenReturn(null)
+        whenever(logService.porCode(any())).thenAnswer {
+            ImportacaoLancamentoLog(Code = it.arguments[0] as String, U_Status = ImportacaoLancamentoLog.ENVIANDO)
+        }
         val e = assertThrows<ImportacaoLancamentoException> { importar() }
         assertEquals(HttpStatus.UNPROCESSABLE_ENTITY, e.status)
         assertTrue(e.message.contains("nenhum lançamento foi gravado"))
         assertTrue(e.message.contains("Period is locked"))
+        verify(logService).marcar(any(), eq(ImportacaoLancamentoLog.RECUSADO))
+    }
+
+    @Test
+    fun `falha ao registrar o inicio nao envia o lote`() {
+        whenever(logService.registrarInicio(any())).thenThrow(ResourceAccessException("SL fora"))
+        val e = assertThrows<ImportacaoLancamentoException> { importar() }
+        assertEquals(HttpStatus.BAD_GATEWAY, e.status)
+        assertTrue(e.message.contains("nenhum lançamento foi enviado"))
+        verifyNoInteractions(batch)
     }
 
     @Test
@@ -239,50 +275,49 @@ class ImportacaoLancamentoServiceTest {
     }
 
     @Test
-    fun `timeout sem log ainda nao e recusa - fica em conferencia e barra reenviar o mesmo arquivo`() {
-        // o changeset pode estar em andamento no SAP: o log aparece depois da releitura
+    fun `timeout sem log IMPORTADO ainda nao e recusa - fica em conferencia, com o log ENVIANDO no SAP`() {
+        // o changeset pode estar em andamento no SAP
         whenever(batch.run(any<BatchList>())).thenThrow(ResourceAccessException("Read timed out"))
-        whenever(logService.porCode(any())).thenReturn(null)
+        whenever(logService.porCode(any())).thenAnswer {
+            ImportacaoLancamentoLog(Code = it.arguments[0] as String, U_Status = ImportacaoLancamentoLog.ENVIANDO)
+        }
         val resultado = importar()
         assertEquals("CONFERIR", resultado.status)
+        verify(logService, never()).marcar(any(), any())
+    }
 
-        val e = assertThrows<ImportacaoLancamentoException> { importar(forcar = true) }
+    @Test
+    fun `tentativa ENVIANDO recente barra o mesmo arquivo mesmo depois de um restart`() {
+        // a trava vem do SAP, nao da memoria: um servico novo (restart ou outra instancia) tambem barra
+        val enviando = ImportacaoLancamentoLog.novo("Fulano", "SalePerson:60", "a.csv", hash(), 2, "30.50".toBigDecimal(), false)
+        whenever(logService.emEnvio(any())).thenReturn(listOf(enviando))
+        val reiniciado = ImportacaoLancamentoService(ImportacaoLancamentoValidador(cadastros), cadastros, logService, journal, batch, 500)
+        val e = assertThrows<ImportacaoLancamentoException> {
+            reiniciado.importar(csv, "a.csv", hash(), true, "Fulano", "SalePerson:60")
+        }
         assertEquals(HttpStatus.CONFLICT, e.status)
-        assertTrue(e.message.contains("ainda pode estar entrando"))
-        verify(batch, times(1)).run(any<BatchList>())
+        assertTrue(e.message.contains("ainda pode estar entrando"), e.message)
+        verifyNoInteractions(batch)
+        verify(logService, never()).registrarInicio(any())
     }
 
     @Test
-    fun `so o log da tentativa em duvida libera - o log de uma importacao antiga nao`() {
-        val antigo = ImportacaoLancamentoLog(Code = "ANTIGO", U_Usuario = "Beltrano")
-        whenever(logService.porHash(any())).thenReturn(listOf(antigo))
-        whenever(batch.run(any<BatchList>())).thenThrow(ResourceAccessException("Read timed out"))
-        whenever(logService.porCode(any())).thenReturn(null)
-        val duvida = importar(forcar = true)
-        assertEquals("CONFERIR", duvida.status)
-
-        // reimportacao forcada de novo: o log ANTIGO nao prova nada sobre a tentativa em duvida
-        assertTrue(assertThrows<ImportacaoLancamentoException> { importar(forcar = true) }.message.contains("ainda pode estar entrando"))
-
-        // o log da tentativa apareceu: a duvida acaba e volta a valer a confirmacao de reimportacao
-        whenever(logService.porHash(any())).thenReturn(listOf(antigo, ImportacaoLancamentoLog(Code = duvida.id, U_Usuario = "Fulano")))
-        val e = assertThrows<ImportacaoLancamentoException> { importar() }
-        assertTrue(e.message.contains("já foi importado"), e.message)
-        verify(batch, times(1)).run(any<BatchList>())
+    fun `tentativa ENVIANDO antiga nao trava - ela nao entrou`() {
+        whenever(logService.emEnvio(any())).thenReturn(listOf(ImportacaoLancamentoLog(
+            Code = "20260101080000-abcd1234", U_Status = ImportacaoLancamentoLog.ENVIANDO,
+        )))
+        whenever(batch.run(any<BatchList>())).thenReturn(listOf(criado(101, 1), criado(102, 2), criado(0, 3)))
+        assertEquals("IMPORTADO", importar().status)
     }
 
     @Test
-    fun `log da tentativa em duvida fora da pagina do hash tambem libera`() {
-        // mais de 20 importacoes do mesmo arquivo: o log novo nao vem na primeira pagina do porHash
-        val antigo = ImportacaoLancamentoLog(Code = "ANTIGO", U_Usuario = "Beltrano")
-        whenever(logService.porHash(any())).thenReturn(listOf(antigo))
-        whenever(batch.run(any<BatchList>())).thenThrow(ResourceAccessException("Read timed out"))
-        whenever(logService.porCode(any())).thenReturn(null)
-        val duvida = importar(forcar = true)
-
-        whenever(logService.porCode(duvida.id)).thenReturn(ImportacaoLancamentoLog(Code = duvida.id))
+    fun `tentativa que entrou deixa de ser ENVIANDO e cai na confirmacao de reimportacao`() {
+        whenever(logService.porHash(any())).thenReturn(listOf(
+            ImportacaoLancamentoLog(Code = "X", U_Usuario = "Fulano", U_Status = ImportacaoLancamentoLog.IMPORTADO)
+        ))
         val e = assertThrows<ImportacaoLancamentoException> { importar() }
         assertTrue(e.message.contains("já foi importado"), e.message)
+        verifyNoInteractions(batch)
     }
 
     @Test
@@ -310,9 +345,9 @@ class ImportacaoLancamentoServiceTest {
     }
 
     @Test
-    fun `resposta perdida mas o log existe - a importacao entrou`() {
+    fun `resposta perdida mas o log ja e IMPORTADO - a importacao entrou`() {
         whenever(batch.run(any<BatchList>())).thenThrow(ResourceAccessException("Read timed out"))
-        whenever(logService.porCode(any())).thenAnswer { ImportacaoLancamentoLog(Code = it.arguments[0] as String) }
+        whenever(logService.porCode(any())).thenAnswer { importado(it.arguments[0] as String) }
         val resultado = importar()
         assertEquals("IMPORTADO", resultado.status)
         assertTrue(resultado.lancamentos.isEmpty())
