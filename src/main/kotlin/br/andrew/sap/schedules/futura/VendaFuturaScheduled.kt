@@ -27,6 +27,16 @@ import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
 import java.util.concurrent.TimeUnit
 
+/**
+ * Pedidos de venda futura que viram contrato e sao fechados. A v2 deixa de fora o pedido que ja
+ * tem NF ou entrega (nao cancelada) gerada a partir dele: esse pedido seguiu o fluxo antigo, e
+ * converter fecharia um pedido ja faturado e abriria um contrato para mercadoria ja entregue.
+ *
+ * Arquivo novo, e nao edicao da vendafutura-aberto.sql, porque a view e global na company: a
+ * instancia antiga de producao roda esta mesma rotina e reescreve a v1 a cada boot, o que
+ * desfaria o filtro em silencio. Ver src/main/resources/views/README.md.
+ */
+internal const val VIEW_PEDIDOS_VENDA_FUTURA_ABERTOS = "vendafutura-aberto-v2.sql"
 
 @Component
 @Profile("!test")
@@ -52,7 +62,7 @@ class VendaFuturaScheduled(
     fun execute() {
         filiais.forEach { filial ->
         sqlQueriesService.execute(
-            "vendafutura-aberto.sql",
+            VIEW_PEDIDOS_VENDA_FUTURA_ABERTOS,
             listOf(Parameter("utilizacao",idUtilizacao),
             Parameter("filiais",filial),
             Parameter("startDate","2024-12-09"))
