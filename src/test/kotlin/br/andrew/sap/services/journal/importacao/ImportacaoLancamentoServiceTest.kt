@@ -31,8 +31,8 @@ class ImportacaoLancamentoServiceTest {
     private val service = ImportacaoLancamentoService(ImportacaoLancamentoValidador(cadastros), cadastros, logService, journal, batch, 500)
 
     private val csv = ("Filial;Tipo;Data;Debito;Credito;Valor;Historico;Grupo;Centro;Ref1;Ref2;Ref3\r\n" +
-        "2;;05/10/2026;D;C;10,00;Primeiro;;\r\n" +
-        "2;;06/10/2026;D;C;20,50;Segundo;;").toByteArray()
+        "2;;05/10/2026;D;C;10,00;Primeiro;;;;;\r\n" +
+        "2;;06/10/2026;D;C;20,50;Segundo;;;;;").toByteArray()
 
     private fun hash() = service.validar(csv, "a.csv").hash
 
@@ -58,7 +58,7 @@ class ImportacaoLancamentoServiceTest {
 
     @Test
     fun `resumo por conta soma debito e credito de cada conta com o nome do plano de contas`() {
-        val tres = (String(csv) + "\r\n2;;07/10/2026;C;D;5,00;Terceiro;;").toByteArray()
+        val tres = (String(csv) + "\r\n2;;07/10/2026;C;D;5,00;Terceiro;;;;;").toByteArray()
         val resumo = service.validar(tres, "a.csv").resumoPorConta
         assertEquals(listOf("C", "D"), resumo.map { it.conta })
         val d = resumo.single { it.conta == "D" }
@@ -117,15 +117,12 @@ class ImportacaoLancamentoServiceTest {
 
     @Test
     fun `historico traz os lancamentos que cada importacao gerou`() {
-        whenever(logService.ultimas(any())).thenReturn(listOf(
+        whenever(logService.ultimasImportadas(any())).thenReturn(listOf(
             ImportacaoLancamentoLog(Code = "N", U_Usuario = "Fulano", U_Data = "2026-10-06T00:00:00Z", U_Hora = "15:00",
                 U_Linhas = 2, U_Forcado = "Y",
                 U_Lancamentos = "[{\"linha\":2,\"numero\":793886,\"transacao\":1499715},{\"linha\":3,\"numero\":793887,\"transacao\":1499716}]"),
             ImportacaoLancamentoLog(Code = "A", U_Lancamentos = "101, 102"),
             ImportacaoLancamentoLog(Code = "V", U_Status = ImportacaoLancamentoLog.IMPORTADO),
-            // tentativas nao sao importacoes: ficam fora do historico
-            ImportacaoLancamentoLog(Code = "E", U_Status = ImportacaoLancamentoLog.ENVIANDO),
-            ImportacaoLancamentoLog(Code = "R", U_Status = ImportacaoLancamentoLog.RECUSADO),
         ))
         val historico = service.historico()
         assertEquals(listOf("N", "A", "V"), historico.map { it.id })
@@ -193,7 +190,7 @@ class ImportacaoLancamentoServiceTest {
 
     @Test
     fun `arquivo com erro nao importa nenhuma linha`() {
-        val ruim = (String(csv) + "\r\n2;;31/02/2026;D;C;5,00;Terceiro;;").toByteArray()
+        val ruim = (String(csv) + "\r\n2;;31/02/2026;D;C;5,00;Terceiro;;;;;").toByteArray()
         val e = assertThrows<ImportacaoLancamentoException> {
             importar(hash = service.validar(ruim, "a.csv").hash, conteudo = ruim)
         }
@@ -229,7 +226,7 @@ class ImportacaoLancamentoServiceTest {
         whenever(cadastros.iguais(any(), any(), any())).thenReturn(listOf(
             LancamentoExistente(1499715, "R1", java.time.LocalDate.of(2026, 10, 5), "D", "10.00".toBigDecimal())
         ))
-        val comReferencia = (String(csv).replace("Primeiro;;", "Primeiro;;;R1")).toByteArray()
+        val comReferencia = (String(csv).replace("Primeiro;;;;;", "Primeiro;;;R1;;")).toByteArray()
         val previa = service.validar(comReferencia, "a.csv")
         assertTrue(previa.podeImportar)
         assertEquals(1, previa.linhasJaNoSap)

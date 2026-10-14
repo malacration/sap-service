@@ -40,6 +40,8 @@ object LancamentoCsvParser {
     private val brasileiro = Regex("""(\d{1,3}(\.\d{3})+|\d+),\d+""")
     private val numero = Regex("""\d+(\.\d+)?""")
     private val quebraDeLinha = Regex("\r\n|\n|\r")
+    private val pareceData = Regex("""\d{1,2}/\d{1,2}/\d{2,4}""")
+    private val pareceValor = Regex("""[R$\s.,-]*\d[\dR$\s.,-]*""")
 
     fun ler(bytes: ByteArray): LeituraCsv {
         val (texto, codificacao) = decodificar(bytes)
@@ -74,8 +76,8 @@ object LancamentoCsvParser {
         val erros = mutableListOf<String>()
         val cabecalho = separar(linhasArquivo.first()).valores
         if (pareceLancamento(cabecalho))
-            erros += "A primeira linha do arquivo é sempre o cabeçalho e não é importada, mas ela começa com " +
-                "uma filial, como um lançamento. Inclua a linha de cabeçalho no arquivo."
+            erros += "A primeira linha do arquivo é sempre o cabeçalho e não é importada, mas ela parece um " +
+                "lançamento (tem filial, data ou valor). Inclua a linha de cabeçalho no arquivo."
 
         val linhas = linhasArquivo.withIndex()
             .drop(1)
@@ -148,9 +150,37 @@ object LancamentoCsvParser {
             null
         }
 
-    //cabecalho nunca comeca com numero; exigir tambem data valida deixaria passar calado um arquivo
-    //sem cabecalho cuja primeira linha tem data errada
-    private fun pareceLancamento(campos: List<String>): Boolean = campos[0].trim().toIntOrNull() != null
+    /**
+     * A primeira linha e sempre descartada como cabecalho, entao so pode ser descartada se nao tiver
+     * cara de lancamento: filial numerica, algo com formato de data ou um valor com digitos. Olhar so a
+     * filial deixava passar calado um arquivo sem cabecalho cuja primeira linha vem sem filial; exigir
+     * data valida deixava passar a que tem data errada.
+     */
+    private fun pareceLancamento(campos: List<String>): Boolean {
+        fun campo(i: Int) = campos.getOrElse(i) { "" }.trim()
+        return campo(0).toIntOrNull() != null || pareceData.matches(campo(2)) || pareceValor.matches(campo(5))
+    }
+
+    /**
+     * Com cabecalho de verdade (pelo menos as 9 colunas obrigatorias), toda linha tem que ter exatamente
+     * as colunas dele: e assim que o Excel, o modelo da tela e o arquivo de hoje gravam. Um ';' sem
+     * aspas no historico empurra a linha, e conforme as colunas vazias ela fica com mais OU com menos
+     * colunas que o cabecalho (H;;;CC numa linha de 12: o centro de custo vira referencia).
+     * Cabecalho curto demais nao serve de referencia: ai valem so os limites de 9 e 12.
+     */
+    private fun colunasErradas(quantas: Int, campos: List<String>, colunasDoCabecalho: Int): String? {
+        val aspas = "Se o histórico ou a referência tem ';', coloque o texto entre aspas."
+        return when {
+            colunasDoCabecalho >= COLUNAS_MINIMAS && quantas != colunasDoCabecalho ->
+                "A linha tem $quantas colunas e o cabeçalho tem $colunasDoCabecalho; todas as linhas precisam ter as " +
+                    "colunas do cabeçalho. $aspas"
+            quantas < COLUNAS_MINIMAS ->
+                "A linha tem $quantas colunas; são pelo menos $COLUNAS_MINIMAS (da filial até o centro de custo)."
+            campos.drop(COLUNAS_MAXIMAS).any { it.isNotBlank() } ->
+                "A linha tem $quantas colunas; são no máximo $COLUNAS_MAXIMAS. $aspas"
+            else -> null
+        }
+    }
 
     private fun linha(numero: Int, campos: List<String>, problemaAspas: String?, colunasDoCabecalho: Int): LinhaLancamento {
         fun campo(i: Int) = campos.getOrElse(i) { "" }
@@ -174,23 +204,12 @@ object LancamentoCsvParser {
             linha.erros += it
             return linha
         }
-        //com coluna faltando, os campos seguintes estao todos deslocados: um erro so diz mais
-        //do que "valor invalido", "historico vazio", ... um por coluna
-        if (campos.size < COLUNAS_MINIMAS) {
-            linha.erros += "A linha tem ${campos.size} colunas; são pelo menos $COLUNAS_MINIMAS " +
-                "(da filial até o centro de custo)."
+        //coluna fora do lugar desloca todos os campos seguintes: um erro so diz mais do que "valor
+        //invalido", "historico vazio", ... um por coluna
+        colunasErradas(campos.size, campos, colunasDoCabecalho)?.let {
+            linha.erros += it
             return linha
         }
-        //um ';' sem aspas no historico empurra a linha uma coluna alem do cabecalho, mesmo quando a sobra
-        //fica vazia (o centro de custo vira referencia, por exemplo). O Excel, e o arquivo de hoje,
-        //gravam toda linha com as colunas do cabecalho, entao coluna a mais e sinal de deslocamento
-        if (campos.size > maxOf(colunasDoCabecalho, COLUNAS_MINIMAS))
-            linha.erros += "A linha tem ${campos.size} colunas, mais que as $colunasDoCabecalho do cabeçalho. Se o " +
-                "histórico ou a referência tem ';', coloque o texto entre aspas; se faltam títulos no cabeçalho, " +
-                "inclua as colunas que faltam."
-        else if (campos.drop(COLUNAS_MAXIMAS).any { it.isNotBlank() })
-            linha.erros += "A linha tem ${campos.size} colunas; são no máximo $COLUNAS_MAXIMAS. Se o histórico " +
-                "ou a referência tem ';', coloque o texto entre aspas."
 
         if (linha.filial == null)
             linha.erros += if (campo(0).isBlank()) "Filial não informada." else "Filial inválida: '${campo(0)}'."

@@ -19,15 +19,17 @@ class ImportacaoLancamentoLogService(env: SapEnvrioment, restTemplate: RestTempl
 
     override fun path(): String = "/b1s/v1/LC_IMPORTACAO"
 
+    //getAll segue o nextLink: a primeira pagina (20 linhas, sem ordem) podia deixar de fora justamente
+    //a importacao que entrou, ou a tentativa ENVIANDO que deveria barrar o reenvio
     fun porHash(hash: String): List<ImportacaoLancamentoLog> =
-        get(Filter(Predicate("U_Hash", hash, Condicao.EQUAL))).tryGetValues<ImportacaoLancamentoLog>()
+        getAll(ImportacaoLancamentoLog::class.java, Filter(Predicate("U_Hash", hash, Condicao.EQUAL)))
 
     /** Tentativas deste arquivo que ficaram ENVIANDO: importacao que pode estar em andamento. */
     fun emEnvio(hash: String): List<ImportacaoLancamentoLog> =
-        get(Filter(
+        getAll(ImportacaoLancamentoLog::class.java, Filter(
             Predicate("U_Hash", hash, Condicao.EQUAL),
             Predicate("U_Status", ImportacaoLancamentoLog.ENVIANDO, Condicao.EQUAL),
-        )).tryGetValues<ImportacaoLancamentoLog>()
+        ))
 
     /** Grava a linha ENVIANDO antes do $batch. */
     fun registrarInicio(log: ImportacaoLancamentoLog) {
@@ -41,8 +43,24 @@ class ImportacaoLancamentoLogService(env: SapEnvrioment, restTemplate: RestTempl
     fun porCode(code: String): ImportacaoLancamentoLog? =
         get(Filter(Predicate("Code", code, Condicao.EQUAL))).tryGetValues<ImportacaoLancamentoLog>().firstOrNull()
 
-    fun ultimas(quantidade: Int): List<ImportacaoLancamentoLog> =
-        get(Filter(), OrderBy("Code", Order.DESC), Pageable.ofSize(quantidade)).tryGetValues<ImportacaoLancamentoLog>()
+    /**
+     * As ultimas importacoes que entraram, da mais nova para a mais antiga. Pagina ate juntar a
+     * quantidade: filtrar so depois de cortar em N deixaria o historico vazio atras de N tentativas
+     * recusadas. O filtro e aqui (e nao no $filter) porque linha anterior ao campo Status nao tem
+     * status e tambem conta como importada. Para em MAXIMO_PAGINAS para nao varrer a tabela inteira.
+     */
+    fun ultimasImportadas(quantidade: Int): List<ImportacaoLancamentoLog> {
+        val importadas = mutableListOf<ImportacaoLancamentoLog>()
+        var pagina = get(Filter(), OrderBy("Code", Order.DESC), Pageable.ofSize(quantidade))
+        var lidas = 1
+        while (true) {
+            importadas += pagina.tryGetValues(ImportacaoLancamentoLog::class.java).filter { it.importado() }
+            if (importadas.size >= quantidade || !pagina.hasNext() || lidas >= MAXIMO_PAGINAS) break
+            pagina = next(pagina)
+            lidas++
+        }
+        return importadas.take(quantidade)
+    }
 
     /**
      * Guarda em U_Lancamentos, como JSON, qual lancamento cada linha do arquivo gerou: e o que o
@@ -57,6 +75,7 @@ class ImportacaoLancamentoLogService(env: SapEnvrioment, restTemplate: RestTempl
 
     companion object {
         private val mapper = ObjectMapper()
+        private const val MAXIMO_PAGINAS = 20
 
         /** Le U_Lancamentos; aceita tambem o formato antigo, so as transacoes separadas por virgula. */
         fun lancamentos(texto: String?): List<LancamentoGerado> {

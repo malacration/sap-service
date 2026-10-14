@@ -11,7 +11,14 @@ class LancamentoCsvParserTest {
 
     private val cabecalho = "Filial;Tipo;Data;Debito;Credito;Valor;Historico;Grupo;Centro;Ref1;Ref2;Ref3"
 
-    private fun ler(vararg linhas: String) = LancamentoCsvParser.ler((listOf(cabecalho) + linhas).joinToString("\r\n"), "UTF-8")
+    private fun cabecalhoCom(colunas: Int) = (1..colunas).joinToString(";") { "Col$it" }
+
+    private fun lerCom(colunas: Int, vararg linhas: String) =
+        LancamentoCsvParser.ler((listOf(cabecalhoCom(colunas)) + linhas).joinToString("\r\n"), "UTF-8")
+
+    //o cabecalho acompanha as colunas da linha, como o Excel grava; quem testa coluna errada usa lerCom
+    private fun ler(vararg linhas: String) =
+        lerCom(linhas.firstOrNull()?.let { LancamentoCsvParser.separar(it).valores.size }?.coerceIn(9, 12) ?: 12, *linhas)
 
     private fun linha(texto: String) = ler(texto).linhas.single()
 
@@ -99,26 +106,31 @@ class LancamentoCsvParserTest {
 
     @Test
     fun `ponto e virgula no historico sem aspas desloca as colunas e vira erro`() {
-        val l = linha("2;;05/10/2026;A;B;10,00;Pgto; NF 10;501;CC;R1;R2;R3")
-        assertTrue(l.erros.any { it.contains("mais que as 12 do cabeçalho") }, l.erros.toString())
+        val l = lerCom(12, "2;;05/10/2026;A;B;10,00;Pgto; NF 10;501;CC;R1;R2;R3").linhas.single()
+        assertTrue(l.erros.single().contains("A linha tem 13 colunas e o cabeçalho tem 12"), l.erros.toString())
     }
 
     @Test
     fun `linha com mais colunas que o cabecalho e erro mesmo com a sobra vazia`() {
         // "H;" sem aspas empurra tudo uma coluna: com a ultima referencia vazia, a sobra fica vazia
-        val empurrada = linha("2;;05/10/2026;A;B;10,00;H;;501;CC;R1;R2;")
-        assertTrue(empurrada.erros.single().contains("mais que as 12 do cabeçalho"), empurrada.erros.toString())
+        val empurrada = lerCom(12, "2;;05/10/2026;A;B;10,00;H;;501;CC;R1;R2;").linhas.single()
+        assertTrue(empurrada.erros.single().contains("tem 13 colunas e o cabeçalho tem 12"), empurrada.erros.toString())
         // colunas vazias dentro do que o cabecalho declara continuam valendo
-        assertTrue(linha("2;;05/10/2026;A;B;10,00;H;501;CC;;;").erros.isEmpty())
+        assertTrue(lerCom(12, "2;;05/10/2026;A;B;10,00;H;501;CC;;;").linhas.single().erros.isEmpty())
     }
 
     @Test
-    fun `linha esparsa empurrada alem de um cabecalho curto e erro em vez de perder o centro de custo`() {
-        // caso do review: historico "H;" sem aspas, grupo vazio e centro CC -> CC caia na referencia
-        val leitura = LancamentoCsvParser.ler(
+    fun `linha esparsa empurrada com MENOS colunas que o cabecalho tambem e erro`() {
+        // caso do review: historico "H;" sem aspas, grupo vazio e centro CC numa linha que omitia as
+        // referencias -> 10 colunas sob um cabecalho de 12, e o CC caia na referencia calado
+        val l = lerCom(12, "2;;05/10/2026;D;C;10,00;H;;;CC").linhas.single()
+        assertTrue(l.erros.single().contains("A linha tem 10 colunas e o cabeçalho tem 12"), l.erros.toString())
+        assertNull(l.centroCusto?.takeIf { l.erros.isEmpty() })
+        // o mesmo sob um cabecalho de 9
+        val curto = LancamentoCsvParser.ler(
             "Filial;Livre;Data;Debito;Credito;Valor;Historico;Grupo;Centro\r\n2;;05/10/2026;A;B;10,00;H;;;CC", "UTF-8"
         )
-        assertTrue(leitura.linhas.single().erros.single().contains("mais que as 9 do cabeçalho"))
+        assertTrue(curto.linhas.single().erros.single().contains("A linha tem 10 colunas e o cabeçalho tem 9"))
     }
 
     @Test
@@ -163,6 +175,13 @@ class LancamentoCsvParserTest {
         // primeira linha com data errada tambem e lancamento, nao cabecalho
         val dataErrada = LancamentoCsvParser.ler("2;;31/02/2026;A;B;10,00;H;;\r\n2;;06/10/2026;A;B;20,00;H;;", "UTF-8")
         assertTrue(dataErrada.erros.single().contains("cabeçalho"))
+        // primeira linha sem filial ou com filial errada: a data ou o valor denunciam o lancamento
+        for (primeira in listOf(";;05/10/2026;A;B;10,00;H;;", "x;;99/99/9999;A;B;10,00;H;;", "x;;;A;B;10,00;H;;")) {
+            val semFilial = LancamentoCsvParser.ler("$primeira\r\n2;;06/10/2026;A;B;20,00;H;;", "UTF-8")
+            assertTrue(semFilial.erros.single().contains("parece um lançamento"), primeira)
+        }
+        // cabecalho de verdade, com digito so no titulo da filial, continua sendo cabecalho
+        assertTrue(LancamentoCsvParser.ler("Filial 1;;DATA;D;C;VALOR;H;G;CC\r\n2;;06/10/2026;A;B;20,00;H;;", "UTF-8").erros.isEmpty())
     }
 
     @Test
@@ -179,7 +198,7 @@ class LancamentoCsvParserTest {
 
     @Test
     fun `csv salvo pelo Excel em Windows-1252 nao estraga o acento`() {
-        val bytes = "$cabecalho\r\n2;;05/10/2026;A;B;10,00;Histórico ação;;".toByteArray(charset("windows-1252"))
+        val bytes = "$cabecalho\r\n2;;05/10/2026;A;B;10,00;Histórico ação;;;;;".toByteArray(charset("windows-1252"))
         val leitura = LancamentoCsvParser.ler(bytes)
         assertEquals("Windows-1252", leitura.codificacao)
         assertEquals("Histórico ação", leitura.linhas.single().historico)
@@ -188,10 +207,11 @@ class LancamentoCsvParserTest {
     @Test
     fun `utf-8 com BOM`() {
         val bytes = byteArrayOf(0xEF.toByte(), 0xBB.toByte(), 0xBF.toByte()) +
-            "$cabecalho\n2;;05/10/2026;A;B;10,00;Histórico;;".toByteArray()
+            "$cabecalho\n2;;05/10/2026;A;B;10,00;Histórico;;;;;".toByteArray()
         val leitura = LancamentoCsvParser.ler(bytes)
         assertEquals("UTF-8", leitura.codificacao)
         assertTrue(leitura.erros.isEmpty())
+        assertEquals(emptyList<String>(), leitura.linhas.single().erros)
         assertEquals("Histórico", leitura.linhas.single().historico)
     }
 

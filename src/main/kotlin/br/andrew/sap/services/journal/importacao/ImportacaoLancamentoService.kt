@@ -130,7 +130,7 @@ class ImportacaoLancamentoService(
     private fun entrou(id: String): Boolean = logService.porCode(id)?.U_Status == ImportacaoLancamentoLog.IMPORTADO
 
     //so o que entrou: ENVIANDO e RECUSADO sao tentativas, e o historico e de importacoes
-    fun historico(quantidade: Int = 50): List<HistoricoImportacao> = logService.ultimas(quantidade).filter { it.importado() }.map {
+    fun historico(quantidade: Int = 50): List<HistoricoImportacao> = logService.ultimasImportadas(quantidade).map {
         HistoricoImportacao(
             id = it.Code ?: "",
             usuario = it.U_Usuario,
