@@ -317,3 +317,13 @@ roles:
       actions: ["get"]
     - url: "/trava/regras"
       actions: ["get"]
+
+  # Tela de importacao de lancamentos contabeis (CSV). Nao liberar /journal/** para este perfil:
+  # POST /journal/save grava sem validar e GET /journal/default-memo/* reescreve o historico.
+  contabil_importacao:
+    - url: "/journal/importacao/validar"
+      actions: ["post"]
+    - url: "/journal/importacao"
+      actions: ["post"]
+    - url: "/journal/importacao/historico"
+      actions: ["get"]
