@@ -37,7 +37,18 @@ class RoleBasedAuthorizationFilter(
     fun isAuthorized(path: String, method : String, authentication: Authentication): Boolean {
         if(authentication !is User)
             throw Exception("Nao foi possivel fazer parse da interface para User")
+        if (matcher.autoriza(LIBERADAS_A_AUTENTICADOS, method, path) != null)
+            return true
         val urlPermitidas : List<Rule> = authentication.roles.flatMap { service.get(it) }
         return matcher.autoriza(urlPermitidas, method, path) != null
+    }
+
+    companion object {
+        /**
+         * Liberadas a QUALQUER usuario autenticado, sem precisar estar nas regras de nenhum perfil: o menu de todo
+         * usuario pergunta por elas quais telas pode ver. Caminho exato e metodo exato (sem curinga). Anonimo nao chega
+         * aqui (o filtro so age com usuario autenticado; o Spring Security barra antes, com 403).
+         */
+        val LIBERADAS_A_AUTENTICADOS = listOf(Rule("/acesso/minhas-permissoes", "post"))
     }
 }

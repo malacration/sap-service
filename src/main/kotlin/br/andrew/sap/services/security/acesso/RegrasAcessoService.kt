@@ -321,7 +321,7 @@ class RegrasAcessoService(
             doc
         }
 
-        val limpo = limparCaminho(caminho)
+        val limpo = RulePathMatcher.limparCaminho(caminho)
         val casou = perfis.asSequence()
             .flatMap { perfil -> documento.perfis[perfil].orEmpty().asSequence().map { perfil to it } }
             .firstOrNull { (_, regra) -> matcher.casa(regra.paraRule(), metodo, limpo) }
@@ -567,12 +567,6 @@ class RegrasAcessoService(
     private fun conflito(versaoAtual: Int) = RegrasConflitoException(
         "As regras foram alteradas por outra pessoa (agora estão na versão $versaoAtual). Recarregue a tela antes de salvar."
     )
-
-    private fun limparCaminho(caminho: String): String {
-        val semHost = caminho.trim().replace(Regex("^[a-zA-Z][a-zA-Z0-9+.-]*://[^/]+"), "")
-        val semQuery = semHost.substringBefore('#').substringBefore('?')
-        return if (semQuery.startsWith("/")) semQuery else "/$semQuery"
-    }
 
     private fun AcessoRegrasVersao.paraResumo() = VersaoResumo(
         numeroDaVersao(), U_Usuario, U_UsuarioId, U_Data?.take(10), U_Hora, U_Origem, U_Comentario, U_Resumo,
