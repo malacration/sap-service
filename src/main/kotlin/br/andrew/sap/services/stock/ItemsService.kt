@@ -5,6 +5,10 @@ import br.andrew.sap.infrastructure.odata.Filter
 import br.andrew.sap.infrastructure.odata.NextLink
 import br.andrew.sap.infrastructure.odata.Parameter
 import br.andrew.sap.model.calculadora.LastPrice
+import br.andrew.sap.model.calculadora.CteDaNf
+import br.andrew.sap.model.calculadora.CustoUltimaCompra
+import br.andrew.sap.model.calculadora.NfDoCte
+import br.andrew.sap.model.calculadora.UltimaNfEntrada
 import br.andrew.sap.model.estoque.Item
 import br.andrew.sap.model.calculadora.Produto
 import br.andrew.sap.model.calculadora.ProdutoSelecao
@@ -113,7 +117,23 @@ open class ItemsService(
             Parameter("item",itens),
             Parameter("deposito",deposito),
         )
-        return sqlQueriesService.execute("item-last-prices.sql", parameters)!!.tryGetValues<LastPrice>()
+        val precos = sqlQueriesService.execute("item-last-prices.sql", parameters)!!.tryGetValues<LastPrice>()
+        if (precos.isEmpty()) return precos
+        //ultima NF de entrada do item + frete dos CTes vinculados a ela. Regra do rateio em CustoUltimaCompra
+        val nf = sqlQueriesService.execute("item-ultima-nf-entrada.sql", Parameter("item", itens))!!
+            .tryGetValues<UltimaNfEntrada>().firstOrNull() ?: return precos
+        val ctes = sqlQueriesService.getAll<CteDaNf>("nf-entrada-ctes.sql", listOf(Parameter("docEntry", nf.DocEntry)))
+            .map { cte -> cte to sqlQueriesService.getAll<NfDoCte>("cte-nfs-entrada.sql", listOf(Parameter("cte", cte.DocEntry))) }
+        val custo = CustoUltimaCompra.calcular(nf, ctes)
+        precos.forEach {
+            it.PrecoUltimaNfUnEstoque = custo.precoUnEstoque
+            it.FreteUltimaNf = custo.frete
+            it.FreteUnEstoque = custo.freteUnEstoque
+            it.CustoComFreteUnEstoque = custo.custoComFreteUnEstoque
+            it.UltimaNf = nf
+            it.QtdCtesUltimaNf = ctes.size
+        }
+        return precos
     }
 
 
