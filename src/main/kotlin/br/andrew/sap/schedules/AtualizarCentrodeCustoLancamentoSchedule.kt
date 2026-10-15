@@ -4,6 +4,7 @@ import JournalEntry
 import br.andrew.sap.infrastructure.odata.*
 import br.andrew.sap.model.sap.documents.base.DistribuicaoCustoByBranch
 import br.andrew.sap.model.sap.journal.OriginalJournal
+import br.andrew.sap.model.sap.journal.SemRateioNaOrigemException
 import br.andrew.sap.model.sap.sistema.SapUser
 import br.andrew.sap.services.cadastro.ProfitCenterService
 import br.andrew.sap.services.journal.JournalEntriesService
@@ -88,9 +89,19 @@ class AtualizarCentrodeCustoLancamentoSchedule(
 
                     val ehPagamento = lancamento.OriginalJournal in ORIGENS_PAGAMENTO
 
+                    //recebimento por conta e NF sem rateio nao tem dimensao para herdar; sem ela o SAP
+                    //recusa o PATCH em conta de resultado e o lancamento ficaria pendente para sempre.
+                    //So essa excecao cai no padrao da filial: falha de rede/Service Layer segue para o
+                    //catch de fora e o lancamento tenta herdar de novo na proxima rodada. O lancamento
+                    //nao e alterado quando a heranca lanca
                     val lcComCentro : JournalEntry = if(ehPagamento && lancamento.hasContaResultado()){
                         logger.info("Atualizando centro de custo do lançamento contábil. JdtNum[${lancamento.JdtNum}]")
-                        journalMemoHandle.atribuiCentroCustoEmContasRecebeOuPagar(lancamento)
+                        try {
+                            journalMemoHandle.atribuiCentroCustoEmContasRecebeOuPagar(lancamento)
+                        } catch (ex: SemRateioNaOrigemException) {
+                            logger.warn("Sem dimensao herdada do documento de origem. JdtNum[${lancamento.JdtNum}]: ${ex.message}")
+                            lancamento
+                        }
                     } else lancamento
 
                     val trocas = if(ehPagamento)
@@ -101,6 +112,13 @@ class AtualizarCentrodeCustoLancamentoSchedule(
 
                     if(lcComCentro.preencheCentroCustoDasContas(contas,filial,grupoEconomico,centroCusto))
                         logger.info("Centro de custo padrao aplicado nas contas $contas. JdtNum[${lcComCentro.JdtNum}]")
+
+                    //depois da regra especifica das contas, que tem prioridade, para so ocupar o que sobrou
+                    val padroes = if(ehPagamento)
+                        lcComCentro.preencheCentroCustoPadraoDaFilial(padraoPorFilial)
+                    else listOf()
+                    if(padroes.isNotEmpty())
+                        logger.info("Dimensao padrao da filial aplicada em conta de resultado. JdtNum[${lcComCentro.JdtNum}]: ${padroes.joinToString("; ")}")
 
                     journalEntriesService.update(lcComCentro,lcComCentro.JdtNum.toString())
                 } catch (ex: Exception) {

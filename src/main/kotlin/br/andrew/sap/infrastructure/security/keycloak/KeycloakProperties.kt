@@ -38,6 +38,21 @@ class KeycloakProperties {
      */
     var sapIdClaim: String = "sap_code"
 
+    /**
+     * Cliente de administracao: com [Admin.enabled], criar um perfil na tela de Regras de Acesso cria
+     * tambem a role de client no Keycloak. Precisa de um client confidencial com service account
+     * (client_credentials) e, em realm-management, as roles view-clients e manage-clients.
+     * Desligado por padrao: sem ele a tela so avisa para criar a role la.
+     */
+    var admin: Admin = Admin()
+
+    class Admin {
+        var enabled: Boolean = false
+        var clientId: String = ""
+        var clientSecret: String = ""
+        var timeoutMs: Long = 5000
+    }
+
     /** issuer esperado nos tokens, derivado de [url] + [realm]. */
     fun issuer(): String = "${url.trimEnd('/')}/realms/$realm"
 
