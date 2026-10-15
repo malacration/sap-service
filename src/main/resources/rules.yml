@@ -312,6 +312,14 @@ roles:
     - url: "/installment/**/paid"
       actions: ["get"]
 
+  # tela Relatorios > Calculadora: REST e o pedido de produtos pelo WebSocket
+  # (SEND /calculadora-preco/get-async e checado como GET aqui)
+  calculadora:
+    - url: "/calculadora-preco"
+      actions: ["*"]
+    - url: "/calculadora-preco/**"
+      actions: ["*"]
+
   liberacao_trava:
     - url: "/trava/otp"
       actions: ["get"]
