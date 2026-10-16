@@ -348,6 +348,14 @@ roles:
     - url: "/installment/**/paid"
       actions: ["get"]
 
+  # tela Relatorios > Calculadora: REST e o pedido de produtos pelo WebSocket
+  # (SEND /calculadora-preco/get-async e checado como GET aqui)
+  calculadora:
+    - url: "/calculadora-preco"
+      actions: ["*"]
+    - url: "/calculadora-preco/**"
+      actions: ["*"]
+
   liberacao_trava:
     # Menu Relatorios (sap-reports): o sap-service nao ve essas chamadas; a regra so decide se o item aparece no menu.
     # O que cada um ve DENTRO da tela continua sendo o campo papeis do YAML de cada relatorio no sap-reports.
