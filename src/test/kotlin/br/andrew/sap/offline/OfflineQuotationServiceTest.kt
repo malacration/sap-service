@@ -41,7 +41,8 @@ class OfflineQuotationServiceTest {
         regions,
         localities,
         rules,
-        authorizations
+        authorizations,
+        false
     )
 
     @Test

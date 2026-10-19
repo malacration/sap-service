@@ -3,7 +3,7 @@ package br.andrew.sap.security
 import br.andrew.sap.infrastructure.security.RoleBasedAuthorizationFilter
 import br.andrew.sap.model.authentication.User
 import br.andrew.sap.model.authentication.UserOriginEnum
-import br.andrew.sap.services.security.RuleService
+import br.andrew.sap.services.security.RegrasArquivoService
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -19,7 +19,7 @@ import org.springframework.core.io.DefaultResourceLoader
  */
 class ContratoLocalidadeRulesTest {
 
-    private val autorizacao = RoleBasedAuthorizationFilter(RuleService(DefaultResourceLoader()), "")
+    private val autorizacao = RoleBasedAuthorizationFilter(RegrasArquivoService(DefaultResourceLoader()), "")
 
     private fun usuario(vararg roles: String) =
         User("60", "Fulano", UserOriginEnum.SalePerson, "fulano", "", "", listOf(), roles.toList())

@@ -17,6 +17,7 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.mockito.kotlin.mock
+import org.mockito.kotlin.verifyNoInteractions
 import org.mockito.kotlin.whenever
 import org.springframework.security.core.Authentication
 
@@ -120,6 +121,70 @@ class DocumentForAngularTest {
 
         assertTrue(erro.message!!.contains("'FAZENDA'"), erro.message)
         assertTrue(erro.message!!.contains("nao possui localidade cadastrada"), erro.message)
+    }
+
+    @Test
+    fun `frete manual aceita endereco sem localidade sem consultar regiao`() {
+        val pedido = pedidoDeEntrega("FAZENDA")
+        whenever(auth.principal).thenReturn("55")
+
+        DocumentForAngular(freteManual = true)
+            .prepareToSave(pedido, itemService, businessPartnersService, regiaoService, localidadeService, auth)
+
+        verifyNoInteractions(businessPartnersService, regiaoService)
+    }
+
+    @Test
+    fun `frete manual recusa valor negativo`() {
+        val pedido = pedidoDeEntrega("FAZENDA").also {
+            it.documentAdditionalExpenses.clear()
+            it.documentAdditionalExpenses.add(AdditionalExpenses.frete(-1.0))
+        }
+        whenever(auth.principal).thenReturn("55")
+
+        val erro = assertThrows<Exception> {
+            DocumentForAngular(freteManual = true)
+                .prepareToSave(pedido, itemService, businessPartnersService, regiaoService, localidadeService, auth)
+        }
+
+        assertTrue(erro.message!!.contains("negativo"), erro.message)
+    }
+
+    @Test
+    fun `frete manual recusa negativo mesmo nos casos isentos do calculo`() {
+        val semIncoterms = pedidoComFreteNegativo().also { it.Incoterms = null }
+        val semFrete = pedidoComFreteNegativo().also { it.Incoterms = 9 }
+        val entregaVendaFutura = pedidoComFreteNegativo().also {
+            it.U_venda_futura = 1
+            it.U_entrega_vf = 1
+        }
+        whenever(auth.principal).thenReturn("55")
+
+        for (pedido in listOf(semIncoterms, semFrete, entregaVendaFutura)) {
+            val erro = assertThrows<Exception> {
+                DocumentForAngular(freteManual = true)
+                    .prepareToSave(pedido, itemService, businessPartnersService, regiaoService, localidadeService, auth)
+            }
+            assertTrue(erro.message!!.contains("negativo"), erro.message)
+        }
+    }
+
+    @Test
+    fun `frete manual recusa linha de frete negativa mesmo com soma positiva`() {
+        val pedido = pedidoDeEntrega("FAZENDA").also {
+            it.documentAdditionalExpenses.add(AdditionalExpenses.frete(-50.0))
+        }
+        whenever(auth.principal).thenReturn("55")
+
+        assertThrows<Exception> {
+            DocumentForAngular(freteManual = true)
+                .prepareToSave(pedido, itemService, businessPartnersService, regiaoService, localidadeService, auth)
+        }
+    }
+
+    private fun pedidoComFreteNegativo() = pedidoDeEntrega("FAZENDA").also {
+        it.documentAdditionalExpenses.clear()
+        it.documentAdditionalExpenses.add(AdditionalExpenses.frete(-1.0))
     }
 
     private fun pedidoDeEntrega(shipToCode: String) = OrderSales(

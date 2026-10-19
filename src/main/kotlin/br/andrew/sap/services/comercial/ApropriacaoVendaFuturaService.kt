@@ -18,6 +18,8 @@ import br.andrew.sap.services.batch.BatchService
 import br.andrew.sap.services.documents.InvoiceService
 import br.andrew.sap.services.financeiro.InternalReconciliationsService
 import br.andrew.sap.services.journal.JournalEntriesService
+import br.andrew.sap.services.odbc.OdbcClient
+import br.andrew.sap.services.odbc.SqlResource
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
@@ -35,6 +37,7 @@ class ApropriacaoVendaFuturaService(
     val journalEntriesService: JournalEntriesService,
     val internalReconciliationsService: InternalReconciliationsService,
     val batchService: BatchService,
+    val odbc: OdbcClient,
     @Value("\${venda-futura.adiantamento-item:}") val itemConciliacaoVendaFutura: String,
     @Value("\${venda-futura.sequencia_adiantamento:-1}") val sequenceCode: Int,
     @Value("\${venda-futura.utilizacao.baixa:9}") val usage: Int,
@@ -51,6 +54,16 @@ class ApropriacaoVendaFuturaService(
     ): Document {
         if (itemConciliacaoVendaFutura.isBlank() || contaControle.isBlank() || sequenceCode <= 0)
             throw Exception("Configuração de venda-futura (adiantamento-item/conta-controle/sequencia_adiantamento) ausente neste ambiente")
+
+        // A apropriacao e uma so por entrega. Sem esta checagem, cada VFET da mesma nota gerava a sua:
+        // contrato 342, NF 72733, apropriada duas vezes (72736 e 72737) e o adiantamento do cliente
+        // consumido em dobro. A SBO_SP_VALIDACAO_VENDA_FUTURA (sap-sql) tambem barra no SAP.
+        val existentes = apropriacoesAtivas(invoice)
+        if (existentes.isNotEmpty())
+            throw EntregaJaApropriadaException(
+                "A entrega NF ${invoice.docNum} do contrato [${invoice.U_venda_futura}] ja foi apropriada " +
+                    "(${existentes.joinToString { it.DocNum }}). O lancamento ${journalReclassificado.JdtNum} nao sera apropriado de novo."
+            )
 
         val invoiceApropiacao = Invoice(
             invoice.CardCode, null,
@@ -104,6 +117,13 @@ class ApropriacaoVendaFuturaService(
         return apropriado
     }
 
+    fun apropriacoesAtivas(invoice: Invoice): List<ApropriacaoAtiva> {
+        val nota = invoice.docEntry ?: throw Exception("Nota de entrega sem DocEntry")
+        return odbc.consultar(SqlResource.carregar("odbc/apropriacao-entrega-ativa.sql"), mapOf("nota" to nota), 100).rows.map {
+            ApropriacaoAtiva(it["DocEntry"].toString(), it["DocNum"].toString(), it["Apropriado"].toString().toBigDecimal())
+        }
+    }
+
     private fun reconciliationDebug(
         journalReclassificado: JournalEntry,
         invoice: Invoice,
@@ -124,3 +144,9 @@ class ApropriacaoVendaFuturaService(
             "valor=${row.reconcileAmount}, parceiro=${row.shortName}"
     }
 }
+
+/** Apropriacao de adiantamento nao cancelada que aponta para uma nota de entrega (U_TX_DocEntryRef). */
+data class ApropriacaoAtiva(val DocEntry: String, val DocNum: String, val Apropriado: java.math.BigDecimal)
+
+/** A entrega ja tem apropriacao ativa: apropriar de novo consumiria o adiantamento do cliente em dobro. */
+class EntregaJaApropriadaException(mensagem: String) : Exception(mensagem)

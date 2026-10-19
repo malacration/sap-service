@@ -21,6 +21,7 @@ import br.andrew.sap.services.logistica.RegiaoService
 import br.andrew.sap.services.pricing.ComissaoService
 import br.andrew.sap.services.stock.ItemsService
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
@@ -40,7 +41,8 @@ class QuotationsController(val quotationsService: QuotationsService,
                            val regiaoService : RegiaoService,
     val localidadeService: LocalidadeService,
                            val regraAutorizacaoService: RegraAutorizacaoService,
-                           val autorizacaoService: AutorizacaoService) {
+                           val autorizacaoService: AutorizacaoService,
+                           @Value("\${frete.manual:false}") private val freteManual: Boolean) {
 
     val logger = LoggerFactory.getLogger(QuotationsController::class.java)
 
@@ -61,7 +63,7 @@ class QuotationsController(val quotationsService: QuotationsService,
 
     @PostMapping("angular")
     fun saveForAngular(@RequestBody pedido : Quotation, auth : Authentication): ResponseEntity<Any> {
-        val document = DocumentForAngular().prepareToSave(pedido,itemService,businessPartnersService,regiaoService,localidadeService,auth)
+        val document = DocumentForAngular(freteManual).prepareToSave(pedido,itemService,businessPartnersService,regiaoService,localidadeService,auth)
         val motivo = regraAutorizacaoService.avaliar(document)
         if(motivo != null){
             val autorizacao = autorizacaoService.criar(

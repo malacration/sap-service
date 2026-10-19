@@ -4,6 +4,10 @@ roles:
       actions: ["*"]
 
   vendedor:
+    # Menu Relatorios (sap-reports): o sap-service nao ve essas chamadas; a regra so decide se o item aparece no menu.
+    # O que cada um ve DENTRO da tela continua sendo o campo papeis do YAML de cada relatorio no sap-reports.
+    - url: "/reports/api/v1/relatorios"
+      actions: ["get"]
     - url: "/nextlink"
       actions: ["post"]
     - url: "/item/search"
@@ -68,6 +72,10 @@ roles:
       actions: ["get"]
 
   vendedor_admin:
+    # Menu Relatorios (sap-reports): o sap-service nao ve essas chamadas; a regra so decide se o item aparece no menu.
+    # O que cada um ve DENTRO da tela continua sendo o campo papeis do YAML de cada relatorio no sap-reports.
+    - url: "/reports/api/v1/relatorios"
+      actions: ["get"]
     - url: "/down-payment/contrato-venda-futura/*/pix"
       actions: [ "post" ]
     - url: "/nextlink"
@@ -137,6 +145,10 @@ roles:
       actions: ["post"]
 
   cobranca:
+    # Menu Relatorios (sap-reports): o sap-service nao ve essas chamadas; a regra so decide se o item aparece no menu.
+    # O que cada um ve DENTRO da tela continua sendo o campo papeis do YAML de cada relatorio no sap-reports.
+    - url: "/reports/api/v1/relatorios"
+      actions: ["get"]
     - url: "/cobranca/**"
       actions: ["get", "post"]
     # Remocao de linha do historico. Regra propria em vez de somar "delete" ao /cobranca/**:
@@ -160,8 +172,16 @@ roles:
       actions: ["get"]
     - url: "/sales-person/search"
       actions: ["*"]
+    # A lista de faturas resolve o nome do vendedor de cada linha com GET /sales-person/{id}.
+    # Sem isso o cobrador tomava 403 por linha (a tela cai no codigo, mas suja o console).
+    - url: "/sales-person/*"
+      actions: ["get"]
 
   qualidade:
+    # Menu Relatorios (sap-reports): o sap-service nao ve essas chamadas; a regra so decide se o item aparece no menu.
+    # O que cada um ve DENTRO da tela continua sendo o campo papeis do YAML de cada relatorio no sap-reports.
+    - url: "/reports/api/v1/relatorios"
+      actions: ["get"]
     - url: "/batch-stock/item-code/**"
       actions: ["get"]
     - url: "/reprocessamento/**"
@@ -180,6 +200,10 @@ roles:
       actions: ["*"]
 
   logistica:
+    # Menu Relatorios (sap-reports): o sap-service nao ve essas chamadas; a regra so decide se o item aparece no menu.
+    # O que cada um ve DENTRO da tela continua sendo o campo papeis do YAML de cada relatorio no sap-reports.
+    - url: "/reports/api/v1/relatorios"
+      actions: ["get"]
     - url: "/carregamento"
       actions: ["get", "post"]
     - url: "/carregamento/search"
@@ -214,6 +238,10 @@ roles:
       actions: ["post"]
 
   logistica_faturar:
+    # Menu Relatorios (sap-reports): o sap-service nao ve essas chamadas; a regra so decide se o item aparece no menu.
+    # O que cada um ve DENTRO da tela continua sendo o campo papeis do YAML de cada relatorio no sap-reports.
+    - url: "/reports/api/v1/relatorios"
+      actions: ["get"]
     - url: "/carregamento"
       actions: ["get", "post"]
     - url: "/carregamento/search"
@@ -253,6 +281,10 @@ roles:
     - url: "/item/search"
       actions: ["post"]
   pix:
+    # Menu Relatorios (sap-reports): o sap-service nao ve essas chamadas; a regra so decide se o item aparece no menu.
+    # O que cada um ve DENTRO da tela continua sendo o campo papeis do YAML de cada relatorio no sap-reports.
+    - url: "/reports/api/v1/relatorios"
+      actions: ["get"]
     - url: "/business-partners/search"
       actions: [ "*" ]
     - url: "/branch"
@@ -277,6 +309,10 @@ roles:
       actions: [ "post" ]
 
   pix_admin:
+    # Menu Relatorios (sap-reports): o sap-service nao ve essas chamadas; a regra so decide se o item aparece no menu.
+    # O que cada um ve DENTRO da tela continua sendo o campo papeis do YAML de cada relatorio no sap-reports.
+    - url: "/reports/api/v1/relatorios"
+      actions: ["get"]
     - url: "/business-partners/search"
       actions: [ "*" ]
     - url: "/branch"
@@ -312,7 +348,19 @@ roles:
     - url: "/installment/**/paid"
       actions: ["get"]
 
+  # tela Relatorios > Calculadora: REST e o pedido de produtos pelo WebSocket
+  # (SEND /calculadora-preco/get-async e checado como GET aqui)
+  calculadora:
+    - url: "/calculadora-preco"
+      actions: ["*"]
+    - url: "/calculadora-preco/**"
+      actions: ["*"]
+
   liberacao_trava:
+    # Menu Relatorios (sap-reports): o sap-service nao ve essas chamadas; a regra so decide se o item aparece no menu.
+    # O que cada um ve DENTRO da tela continua sendo o campo papeis do YAML de cada relatorio no sap-reports.
+    - url: "/reports/api/v1/relatorios"
+      actions: ["get"]
     - url: "/trava/otp"
       actions: ["get"]
     - url: "/trava/regras"
@@ -340,3 +388,13 @@ roles:
       actions: ["get"]
     - url: "/sales-person/search"
       actions: ["*"]
+
+  # Tela de importacao de lancamentos contabeis (CSV). Nao liberar /journal/** para este perfil:
+  # POST /journal/save grava sem validar e GET /journal/default-memo/* reescreve o historico.
+  contabil_importacao:
+    - url: "/journal/importacao/validar"
+      actions: ["post"]
+    - url: "/journal/importacao"
+      actions: ["post"]
+    - url: "/journal/importacao/historico"
+      actions: ["get"]

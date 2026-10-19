@@ -34,6 +34,11 @@ keycloak.client-id=front-sap
 # Claim opcional que carrega o codigo SAP do usuario (default: sap_code)
 keycloak.sap-id-claim=sap_code
 
+# ----- Frete -----
+# true = vendedor digita o valor do frete na venda (sem exigir localidade/regiao);
+# false = frete calculado pela tabela de regioes e revalidado no back. Env: FRETE_MANUAL
+frete.manual=false
+
 # ----- Vendas offline / catalogos antecipados -----
 offline.enabled=false
 offline.catalog.ttl-hours=72
@@ -66,11 +71,15 @@ lc.centrodecusto.filial=2
 lc.centrodecusto.grupo-economico=500
 lc.centrodecusto.centro-custo=50000205
 # Padrao por filial, no formato filial:grupoEconomico:centroCusto separado por virgula.
-# Escopo unico: lancamento de pagamento ou recebimento (ttVendorPayment/ttReceipt) cuja linha
-# aponte para uma regra de reparticao INATIVADA no SAP - situacao em que o Service Layer recusa
-# qualquer update nesse lancamento, mesmo um PATCH que so marque o UDF de processado
+# Escopo: lancamento de pagamento ou recebimento (ttVendorPayment/ttReceipt), em dois usos:
+# 1) linha que aponte para uma regra de reparticao INATIVADA no SAP - situacao em que o Service
+# Layer recusa qualquer update nesse lancamento, mesmo um PATCH que so marque o UDF de processado
 # ("-5002 Inactive distribution rule"). So a dimensao inativa e trocada; a que continua valida
-# fica como esta. Entrada com campo em branco e ignorada, e filial sem padrao nao e alterada.
+# fica como esta.
+# 2) conta de resultado sem dimensao quando o documento de origem nao tem rateio para herdar
+# (recebimento por conta sem NF, ou NF sem rateio): sem dimensao o SAP tambem recusa o PATCH.
+# So preenche a dimensao em branco, depois da regra de lc.centrodecusto.contas, que tem prioridade.
+# Entrada com campo em branco e ignorada, e filial sem padrao nao e alterada.
 #
 # NAO e usado em nenhum outro cenario. O rateio de pedido de venda, cotacao e NF de compra tem
 # configuracao propria e independente: distibuicao.custo (DistribuicaoCustoByBranchConfig), que
@@ -112,3 +121,37 @@ fields.trava=true
 nota-fiscal.lote.maximo=200
 # Quantas notas sao buscadas em paralelo na TaxPlus.
 nota-fiscal.lote.paralelismo=4
+
+# Gestao das regras de acesso (o que antes so existia no rules.yml) pela tela
+# Configuracoes > Regras de Acesso. Cada alteracao vira uma versao no UDO ACESSO_REGRAS.
+# Provisiona o UDO, cria a versao 1 a partir do arquivo em uso (so se estiver vazio) e habilita
+# a API /acesso/regras (somente admin). Sozinho NAO muda quem manda no acesso.
+fields.acesso=false
+# Quem manda de verdade no acesso: arquivo (padrao, como sempre foi) ou sap (o cadastro da tela).
+# Trocar para sap exige fields.acesso=true. Se o SAP nao responder no boot, o boot FALHA de
+# proposito (nao cai em silencio para o arquivo, o que reabriria acessos revogados).
+# Antes de voltar para arquivo, exporte da tela e atualize o arquivo: ele nao acompanha o cadastro.
+acesso.regras.fonte=arquivo
+# Arquivo lido quando a fonte e arquivo, e usado como seed. Em producao (swarm) o arquivo montado
+# em /app/rules.yml; assim nao depende do efeito colateral do classpath do JarLauncher.
+acesso.regras.arquivo=classpath:rules.yml
+# Intervalo (ms) da conferencia de versao nova no SAP, quando a fonte e sap.
+acesso.regras.refresh-ms=60000
+
+# Criar a role no Keycloak ao criar um perfil na tela Regras de Acesso. Precisa de um client
+# CONFIDENCIAL com "Service accounts roles" ligado, no mesmo realm, e na aba Service account roles dele
+# as roles de realm-management: view-clients e manage-clients. A role nasce como role de client do
+# keycloak.client-id (a mesma que o login le). Desligado: a tela so avisa para criar a role la a mao.
+# Excluir um perfil na tela NAO apaga a role no Keycloak por padrao (tiraria o perfil de quem o tem). So apaga se a
+# pessoa marcar "excluir tambem a role" (excluirRoleKeycloak=true), e apenas uma role de client criada por esta tela
+# (marcada na descricao); role de realm ou criada a mao nunca e apagada.
+keycloak.admin.enabled=false
+keycloak.admin.client-id=
+keycloak.admin.client-secret=
+keycloak.admin.timeout-ms=5000
+# Tela de importacao de lancamentos contabeis (CSV com previa, /journal/importacao). Provisiona o
+# UDO LC_IMPORTACAO (log de quem importou) e liga os endpoints; usa o sap-odbc (odbc.*) para
+# validar filiais, contas e rateios.
+fields.importacao-lancamento=false
+# Linhas por arquivo. Todas vao num unico changeset do $batch (tudo ou nada).
+journal.importacao.max-linhas=500

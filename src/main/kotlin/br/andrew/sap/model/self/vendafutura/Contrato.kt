@@ -49,6 +49,16 @@ class Contrato(
     @JsonProperty("U_RegiaoCode")
     var U_RegiaoCode : String? = null
 
+    /**
+     * Condicao de pagamento (OCTG.GroupNum) do pedido original. Define o desconto/juros
+     * financeiro dos produtos novos na troca (ver CondicaoPagamentoContratoService).
+     *
+     * Nulo em contrato criado antes deste campo: preenchido sob demanda ao abrir a troca
+     * (POST /contrato-venda-futura/{docEntry}/condicao-pagamento/sanitizar).
+     */
+    @JsonProperty("U_condicaoPagamento")
+    var U_condicaoPagamento : Int? = null
+
     @JsonProperty("U_status")
     var U_status : Status = Status.aberto
 
@@ -146,6 +156,9 @@ class Contrato(
     var SalesEmployeeName: String? = null
     var OrderDocNum: String? = null
     var Bplname: String? = null
+    //so exibicao, como Bplname: preenchido no GET do contrato, nunca vai no PUT (nulo = omitido)
+    @JsonProperty("CondicaoPagamentoNome")
+    var CondicaoPagamentoNome: String? = null
     var TotalProdutosCalculado : Double? = null
 
     override fun getId(): String {
@@ -177,6 +190,23 @@ class Contrato(
         }
     }
 
+    /**
+     * Status para o qual o contrato deve voltar quando uma devolucao ou um cancelamento de nota
+     * desfaz parte das entregas depois de ele ja estar entregue/concluido. Nulo = nada a regredir.
+     *
+     * Volta para aberto, e nao para entregue: se a mercadoria nao esta toda entregue, falta retirada,
+     * e e o aberto que libera retirar de novo. Quando a retirada acontecer, o ConcluiContratosSchedule
+     * leva o contrato adiante pelo caminho normal. Cancelado nunca reabre.
+     *
+     * Caso real: contrato 585 concluido em 07/10 com 12 sacas entregues; em 15/10 a devolucao de 2
+     * sacas deixou 10 entregues e o contrato continuou concluido.
+     */
+    fun statusRegredido(entregas: List<Document>): Status? {
+        if (U_status != Status.entregue && U_status != Status.concluido)
+            return null
+        return if (tudoEntregue(entregas)) null else Status.aberto
+    }
+
     companion object{
         @JsonIgnoreProperties
         fun getAllProperties(): List<String> {
@@ -189,6 +219,7 @@ class Contrato(
                 "U_valorFrete",
                 "U_Localidade",
                 "U_RegiaoCode",
+                "U_condicaoPagamento",
                 "U_status",
                 "DocNum",
                 "DocEntry",

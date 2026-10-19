@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController
 class AuthConfigController(
     private val keycloak: KeycloakProperties,
     @Value("\${offline.enabled:false}") private val offlineEnabled: Boolean,
+    @Value("\${frete.manual:false}") private val freteManual: Boolean,
 ) {
 
     @GetMapping("/config")
@@ -28,9 +29,10 @@ class AuthConfigController(
                     clientId = keycloak.clientId,
                 ),
                 offlineEnabled = offlineEnabled,
+                freteManual = freteManual,
             )
         } else {
-            AuthConfigResponse(mode = "internal", keycloak = null, offlineEnabled = offlineEnabled)
+            AuthConfigResponse(mode = "internal", keycloak = null, offlineEnabled = offlineEnabled, freteManual = freteManual)
         }
     }
 }
@@ -39,6 +41,8 @@ data class AuthConfigResponse(
     val mode: String,
     val keycloak: KeycloakClientConfig?,
     val offlineEnabled: Boolean,
+    /** true = vendedor digita o frete; false = frete calculado pela tabela de regioes. */
+    val freteManual: Boolean,
 )
 
 data class KeycloakClientConfig(
