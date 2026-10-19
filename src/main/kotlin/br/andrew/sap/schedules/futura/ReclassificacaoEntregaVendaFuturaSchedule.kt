@@ -21,6 +21,8 @@ import br.andrew.sap.services.documents.DownPaymentService
 import br.andrew.sap.services.documents.InvoiceService
 import br.andrew.sap.services.fiscal.BankPlusService
 import br.andrew.sap.services.journal.JournalEntriesService
+import br.andrew.sap.services.odbc.OdbcClient
+import br.andrew.sap.services.odbc.SqlResource
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
@@ -45,6 +47,7 @@ class ReclassificacaoEntregaVendaFuturaSchedule(
     val inoviceService : InvoiceService,
     val adiantamentoService : DownPaymentService,
     val estornoService : EstornoReclassificacaoVendaFuturaService,
+    val odbc : OdbcClient,
     @Value("\${venda-futura.filiais:-2}") val filiais : List<Int>,
     @Value("\${venda-futura.adiantamento-item}") val itemConciliacaoVendaFutura : String,
     @Value("\${venda-futura.utilizacao.baixa:79}") val utilizacaoBaixa : Int,
@@ -63,28 +66,60 @@ class ReclassificacaoEntregaVendaFuturaSchedule(
             Predicate("DocumentStatus",DocumentStatus.bost_Open,Condicao.EQUAL),
             Predicate("BPL_IDAssignedToInvoice", filiais, Condicao.IN),
         )
+        // try por nota: uma entrega que falha (inclusive barrada pela SBO_SP_VALIDACAO_VENDA_FUTURA)
+        // nao pode impedir as demais de serem reclassificadas.
         inoviceService.get(entregasFilter).tryGetValues<Invoice>().forEach { invoice ->
-            val filial = invoice.getBPL_IDAssignedToInvoice()
-            val docTotal = invoice.DocTotal?.toDoubleOrNull() ?: throw Exception("valor Documento nao e valido")
-            val cred = JournalEntryLines(
-                invoice.controlAccount?: throw Exception("Lancamento sem conta controle"),
-                0.0,docTotal,
-                filial.toIntOrNull() ?: throw Exception("Lancamento sem filial")).also {
-                it.ShortName = invoice.CardCode
+            try {
+                reclassificar(invoice)
+            } catch (e: Exception) {
+                logger.error("Erro ao reclassificar a entrega NF ${invoice.docNum} do contrato [${invoice.U_venda_futura}]", e)
             }
-            val deb = JournalEntryLines(contaControleRedutoraPassivo,docTotal,0.0,filial.toIntOrNull() ?: throw Exception("Lancamento sem filial")).also {
-                it.ShortName = invoice.CardCode
-            }
+        }
+    }
 
-            val journalEntrie = journalEntriesService
-                .saveOrRecouverReference(
-                    JournalEntry(listOf(cred,deb),"Reclassificação entrega. Mercadoria venda futura [${invoice.U_venda_futura}]. NF Num ${invoice.docNum}").also {
-                        it.TransactionCode = TransactionCodeTypes.VFET.toString()
-                        it.Reference = invoice.docNum
-                    })
-            internalReconciliationsService.save(
-                InternalReconciliationsBuilder(invoice,journalEntrie).build()
-            )
+    private fun reclassificar(invoice: Invoice) {
+        val decisao = DecisaoReclassificacao.de(reclassificacoesAtivas(invoice))
+        val journalEntrie = when (decisao) {
+            is DecisaoReclassificacao.Pular -> {
+                logger.warn("Entrega NF ${invoice.docNum} do contrato [${invoice.U_venda_futura}] aberta, mas ja " +
+                    "reclassificada e conciliada no lancamento ${decisao.transId}. Nao sera reclassificada de novo.")
+                return
+            }
+            is DecisaoReclassificacao.Reutilizar ->
+                journalEntriesService.getById(decisao.transId).tryGetValue<JournalEntry>()
+            DecisaoReclassificacao.Criar ->
+                journalEntriesService.save(novaReclassificacao(invoice)).tryGetValue<JournalEntry>()
+        }
+        internalReconciliationsService.save(
+            InternalReconciliationsBuilder(invoice,journalEntrie).build()
+        )
+    }
+
+    private fun reclassificacoesAtivas(invoice: Invoice): List<ReclassificacaoAtiva> {
+        val params = mapOf(
+            "referencia" to (invoice.docNum ?: throw Exception("Nota sem DocNum")),
+            "memo" to memoReclassificacaoEntrega(invoice),
+        )
+        return odbc.consultar(SqlResource.carregar("odbc/reclassificacao-entrega-ativa.sql"), params, 100).rows.map {
+            ReclassificacaoAtiva(it["TransId"].toString().toBigDecimal().intValueExact(), it["TransCode"].toString())
+        }
+    }
+
+    private fun novaReclassificacao(invoice: Invoice): JournalEntry {
+        val filial = invoice.getBPL_IDAssignedToInvoice()
+        val docTotal = invoice.DocTotal?.toDoubleOrNull() ?: throw Exception("valor Documento nao e valido")
+        val cred = JournalEntryLines(
+            invoice.controlAccount?: throw Exception("Lancamento sem conta controle"),
+            0.0,docTotal,
+            filial.toIntOrNull() ?: throw Exception("Lancamento sem filial")).also {
+            it.ShortName = invoice.CardCode
+        }
+        val deb = JournalEntryLines(contaControleRedutoraPassivo,docTotal,0.0,filial.toIntOrNull() ?: throw Exception("Lancamento sem filial")).also {
+            it.ShortName = invoice.CardCode
+        }
+        return JournalEntry(listOf(cred,deb),memoReclassificacaoEntrega(invoice)).also {
+            it.TransactionCode = TransactionCodeTypes.VFET.toString()
+            it.Reference = invoice.docNum
         }
     }
 
@@ -96,15 +131,21 @@ class ReclassificacaoEntregaVendaFuturaSchedule(
             Predicate("DocDate", "2024-11-05", Condicao.GREAT)
         )
 
+        // try por devolucao: a que falha fica com U_conciliar_automatico = 1 e e tentada de novo na
+        // proxima execucao, sem travar as demais.
         creditnotesservice.get(filter).tryGetValues<Invoice>().forEach { devolucao ->
-            if(!devolucao.DocumentLines.any {
-                it.BaseType != 13 ||
-                it.Usage == utilizacaoBaixa ||
-                it.ItemCode == this.itemConciliacaoVendaFutura}
-            ) {
-                estornoService.estornar(devolucao, estornoService.baseInvoiceEntriesFromDevolucao(devolucao))
+            try {
+                if(!devolucao.DocumentLines.any {
+                    it.BaseType != 13 ||
+                    it.Usage == utilizacaoBaixa ||
+                    it.ItemCode == this.itemConciliacaoVendaFutura}
+                ) {
+                    estornoService.estornar(devolucao, estornoService.baseInvoiceEntriesFromDevolucao(devolucao))
+                }
+                creditnotesservice.update("{ \"U_conciliar_automatico\" : \"0\"}",devolucao.docEntry.toString())
+            } catch (e: Exception) {
+                logger.error("Erro ao estornar a devolucao NF ${devolucao.docNum} do contrato [${devolucao.U_venda_futura}]", e)
             }
-            creditnotesservice.update("{ \"U_conciliar_automatico\" : \"0\"}",devolucao.docEntry.toString())
         }
     }
 }
