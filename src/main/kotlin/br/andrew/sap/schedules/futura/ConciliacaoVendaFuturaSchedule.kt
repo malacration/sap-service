@@ -8,6 +8,7 @@ import br.andrew.sap.model.sap.documents.Invoice
 import br.andrew.sap.model.sap.documents.base.adiantamento.ApropriacaoAdiantamento
 import br.andrew.sap.model.transaction.TransactionCodeTypes
 import br.andrew.sap.services.comercial.ApropriacaoVendaFuturaService
+import br.andrew.sap.services.comercial.EntregaJaApropriadaException
 import br.andrew.sap.services.documents.DownPaymentService
 import br.andrew.sap.services.documents.InvoiceService
 import br.andrew.sap.services.journal.JournalEntriesService
@@ -52,15 +53,22 @@ class ConciliacaoVendaFuturaSchedule(
                         ?: throw Exception("Nao tem numero de referencia. ${journalReclassificado.JdtNum}")
                     val invoiceFilter = Filter(
                         Predicate("U_venda_futura", 0, Condicao.GREAT),
+                        Predicate("U_entrega_vf", "1", Condicao.EQUAL),
                         Predicate("DocNum", ref, Condicao.EQUAL)
                     )
-                    inoviceService.get(invoiceFilter).tryGetValues<Invoice>().forEach { invoice ->
+                    // DocNum se repete entre series/filiais: so a nota cujo memo de reclassificacao e o
+                    // deste lancamento e a entrega dele (mesma chave da trava no SAP).
+                    inoviceService.get(invoiceFilter).tryGetValues<Invoice>()
+                        .filter { memoReclassificacaoEntrega(it) == journalReclassificado.memo }
+                        .forEach { invoice ->
                         val adiantamentos = adiantamentoService.adiantamentosAbertos(invoice)
                         val adiantamentosDisponiveis = ApropriacaoAdiantamento(invoice, adiantamentos).get()
                         if (adiantamentosDisponiveis.isNotEmpty()) {
                             apropriacaoVendaFuturaService.conciliar(invoice, journalReclassificado, adiantamentosDisponiveis)
                         }
                     }
+                }catch (e : EntregaJaApropriadaException){
+                    logger.warn("Reclassificacao sem apropriacao a fazer - estornar o lancamento a mais. {}", e.message)
                 }catch (e : Exception){
                     logger.error("Erro no processamento da conciliação da venda futura! OJDT ${journalReclassificado.JdtNum}",e)
                 }
