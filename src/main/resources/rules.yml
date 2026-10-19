@@ -325,6 +325,12 @@ roles:
       actions: ["get"]
     - url: "/nota-fiscal-lote/status-sefaz"
       actions: ["get"]
+    - url: "/nota-fiscal-lote/formas-pagamento"
+      actions: ["get"]
+    # Troca a forma de pagamento dos documentos do lote (grava no SAP; vincula a forma ao parceiro
+    # quando falta). Mesmo perfil do download, por decisao do usuario.
+    - url: "/nota-fiscal-lote/forma-pagamento"
+      actions: ["post"]
     - url: "/nota-fiscal-lote/download"
       actions: ["post"]
     # Busca de cliente da propria tela, sem o recorte de carteira do /business-partners/search.

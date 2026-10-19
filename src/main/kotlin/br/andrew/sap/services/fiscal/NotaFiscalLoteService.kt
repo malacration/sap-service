@@ -1,9 +1,11 @@
 package br.andrew.sap.services.fiscal
 
+import br.andrew.sap.model.fiscal.ChaveDocumentoLote
 import br.andrew.sap.model.fiscal.NotaFiscalLoteArquivo
 import br.andrew.sap.model.fiscal.NotaFiscalLoteFiltro
 import br.andrew.sap.model.fiscal.NotaFiscalResumo
 import br.andrew.sap.model.fiscal.StatusSefaz
+import br.andrew.sap.model.fiscal.TipoDocumentoLote
 import br.andrew.sap.services.odbc.OdbcClient
 import br.andrew.sap.services.odbc.SqlResource
 import org.slf4j.LoggerFactory
@@ -29,7 +31,8 @@ import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 
 /**
- * Download em lote do DANFE (pdf), do XML e dos boletos das NF-e de saida emitidas para a SEFAZ.
+ * Download em lote do DANFE (pdf), do XML e dos boletos das NF-e de saida emitidas para a SEFAZ,
+ * e dos boletos dos adiantamentos de venda futura (que nao emitem NF-e).
  *
  * A listagem vem do sap-odbc porque precisa da "Process" da TaxPlus (chave de acesso e status
  * na SEFAZ), que o Service Layer nao expoe. DANFE e XML vem da TaxPlus (uma consulta por nota
@@ -57,12 +60,12 @@ class NotaFiscalLoteService(
         // "Selecionar todas do filtro" pede uma pagina do tamanho do teto; acima disso nao baixaria.
         val pagina = if (page.pageSize > maximo) PageRequest.of(page.pageNumber, maximo) else page
         val inicio = pagina.pageNumber * pagina.pageSize
-        val linhas = odbc.consultar(sqlNotas, parametros(filtro, listOf(), inicio, inicio + pagina.pageSize),
+        val linhas = odbc.consultar(sqlNotas, parametros(filtro, listOf(), listOf(), inicio, inicio + pagina.pageSize),
             pagina.pageSize).rows
         // O total vem em toda linha (COUNT(*) OVER ()). Pagina alem da ultima volta vazia e sem
         // total: conta de novo pela primeira linha em vez de inventar a partir do deslocamento.
         val total = linhas.firstOrNull()?.let(::total)
-            ?: if (inicio == 0) 0L else odbc.consultar(sqlNotas, parametros(filtro, listOf(), 0, 1), 1).rows.firstOrNull()?.let(::total) ?: 0L
+            ?: if (inicio == 0) 0L else odbc.consultar(sqlNotas, parametros(filtro, listOf(), listOf(), 0, 1), 1).rows.firstOrNull()?.let(::total) ?: 0L
         return PageImpl(linhas.map { NotaFiscalResumo.from(it) }, pagina, total)
     }
 
@@ -74,7 +77,12 @@ class NotaFiscalLoteService(
         }
     }
 
-    fun parametros(filtro: NotaFiscalLoteFiltro, docEntries: List<Int>, inicio: Int, fim: Int): Map<String, Any?> {
+    /**
+     * [docEntries] sao NF (OINV) e [adiantamentos] sao ODPI. Com as duas vazias e listagem (tudo o
+     * que o filtro pega); com alguma preenchida, cada perna do SQL so traz o que esta na sua lista.
+     */
+    fun parametros(filtro: NotaFiscalLoteFiltro, docEntries: List<Int>, adiantamentos: List<Int>,
+                   inicio: Int, fim: Int): Map<String, Any?> {
         val filiais = filtro.filial.orEmpty()
         // Sem data na tela, faixa larga em vez de filtro opcional: comparar DATE com '' no
         // HANA e erro de conversao, mesmo do lado do OR que nao seria avaliado.
@@ -94,8 +102,12 @@ class NotaFiscalLoteService(
             "dataFinal" to dataFinal,
             "todasFiliais" to if (filiais.isEmpty()) 1 else 0,
             "filiais" to filiais.ifEmpty { listOf(-1) },
-            "todosDocs" to if (docEntries.isEmpty()) 1 else 0,
+            "todosDocs" to if (docEntries.isEmpty() && adiantamentos.isEmpty()) 1 else 0,
             "docEntries" to docEntries.ifEmpty { listOf(-1) },
+            "adiantamentos" to adiantamentos.ifEmpty { listOf(-1) },
+            // :tipo desliga a perna inteira do SQL; :categoria separa NF de saida da NF futura antiga.
+            "tipo" to (filtro.categoria?.tipo?.name ?: ""),
+            "categoria" to (filtro.categoria?.name ?: ""),
             "cardCode" to (filtro.cardCode?.trim() ?: ""),
             "vendedor" to (filtro.salesPersonCode ?: -1),
             "numeroDe" to (filtro.numeroDe ?: -1),
@@ -125,14 +137,15 @@ class NotaFiscalLoteService(
      * os bytes: a memoria fica proporcional as notas em andamento, nao ao lote inteiro (200 notas
      * com DANFE, XML e boletos passam de 40 MB). Quem chama apaga o arquivo depois de enviar.
      */
-    fun zip(docEntries: List<Int>, pdf: Boolean, xml: Boolean, boleto: Boolean = false): NotaFiscalLoteArquivo {
-        val pedidas = docEntries.distinct()
+    fun zip(docEntries: List<Int>, adiantamentos: List<Int>, pdf: Boolean, xml: Boolean,
+            boleto: Boolean = false): NotaFiscalLoteArquivo {
+        val pedidas = chaves(docEntries, adiantamentos)
         if (pedidas.isEmpty())
-            throw Exception("Selecione ao menos uma nota fiscal.")
+            throw Exception("Selecione ao menos um documento.")
         if (!pdf && !xml && !boleto)
             throw Exception("Escolha baixar o DANFE, o XML, o boleto ou mais de um.")
         if (pedidas.size > maximo)
-            throw Exception("O lote aceita no maximo $maximo notas por vez; foram selecionadas ${pedidas.size}.")
+            throw Exception("O lote aceita no maximo $maximo documentos por vez; foram selecionados ${pedidas.size}.")
 
         // O prazo limita os downloads e conta desde ja. A busca das notas e o carregamento da
         // BankPlus sao sincronos e nao sao interrompidos por ele, mas tem limite proprio (timeout
@@ -141,24 +154,24 @@ class NotaFiscalLoteService(
         val prazo = System.nanoTime() + TimeUnit.SECONDS.toNanos(prazoSegundos)
         // Busca de novo em vez de confiar no que veio da tela: so entra NF-e emitida para a
         // SEFAZ, e o nome do arquivo sai do numero da nota.
-        val porDocEntry = buscaNotas(pedidas).associateBy { it.docEntry }
-        val notas = pedidas.mapNotNull { porDocEntry[it] }
+        val porChave = buscaDocumentos(docEntries, adiantamentos).associateBy { it.chave }
+        val notas = pedidas.mapNotNull { porChave[it] }
         // Nome decidido antes do paralelo e na ordem pedida: a nota que termina primeiro nao
         // pega o nome sem sufixo de outra com o mesmo numero.
         val bases = mutableSetOf<String>()
-        val basePorDoc = notas.associate { it.docEntry to nomeUnico(nomeBase(it), bases) }
+        val basePorDoc = notas.associate { it.chave to nomeUnico(nomeBase(it), bases) }
         val bankPlusDisponivel = !boleto || carregaEmpresasBankPlus()
 
         val emPastas = listOf(pdf, xml, boleto).count { it } > 1
         val caminhos = mutableSetOf<String>()
-        val errosPorDoc = mutableMapOf<Int, List<String>>()
-        val avisosPorDoc = mutableMapOf<Int, List<String>>()
+        val errosPorDoc = mutableMapOf<ChaveDocumentoLote, List<String>>()
+        val avisosPorDoc = mutableMapOf<ChaveDocumentoLote, List<String>>()
         var notasSemBoleto = 0
         val arquivo = Files.createTempFile("notas-fiscais-", ".zip")
         try {
             ZipOutputStream(BufferedOutputStream(Files.newOutputStream(arquivo))).use { zip ->
                 baixaEmParalelo(notas, prazo, { nota -> baixa(nota, pdf, xml, boleto, bankPlusDisponivel) }) { resultado ->
-                    val base = basePorDoc.getValue(resultado.nota.docEntry)
+                    val base = basePorDoc.getValue(resultado.nota.chave)
                     resultado.arquivos.forEach { item ->
                         val pasta = if (emPastas) "${item.tipo.pasta}/" else ""
                         val caminho = nomeUnico("$pasta$base${item.sufixo}", caminhos)
@@ -166,13 +179,13 @@ class NotaFiscalLoteService(
                         zip.write(item.conteudo)
                         zip.closeEntry()
                     }
-                    errosPorDoc[resultado.nota.docEntry] = resultado.erros.map { "$base: $it" }
-                    avisosPorDoc[resultado.nota.docEntry] = resultado.avisos.map { "$base: $it" }
+                    errosPorDoc[resultado.nota.chave] = resultado.erros.map { "$base: $it" }
+                    avisosPorDoc[resultado.nota.chave] = resultado.avisos.map { "$base: $it" }
                     if (resultado.semBoleto) notasSemBoleto++
                 }
                 // Na ordem pedida, nao na de conclusao, para o arquivo ser legivel.
                 val erros = pedidas.flatMap { doc ->
-                    if (doc !in porDocEntry) listOf("DocEntry $doc: nota nao encontrada ou nao foi emitida para a SEFAZ")
+                    if (doc !in porChave) listOf(naoEncontrado(doc))
                     else errosPorDoc[doc].orEmpty()
                 }
                 val avisos = pedidas.flatMap { avisosPorDoc[it].orEmpty() }
@@ -196,9 +209,28 @@ class NotaFiscalLoteService(
         closeEntry()
     }
 
-    private fun buscaNotas(docEntries: List<Int>): List<NotaFiscalResumo> {
-        return odbc.consultar(sqlNotas, parametros(NotaFiscalLoteFiltro(), docEntries, 0, docEntries.size),
-            docEntries.size).rows.map { NotaFiscalResumo.from(it) }
+    // Ordem pedida, sem repetir: NF primeiro, depois adiantamentos.
+    fun chaves(docEntries: List<Int>, adiantamentos: List<Int>): List<ChaveDocumentoLote> =
+        docEntries.distinct().map { ChaveDocumentoLote(TipoDocumentoLote.NF, it) } +
+            adiantamentos.distinct().map { ChaveDocumentoLote(TipoDocumentoLote.AD, it) }
+
+    fun naoEncontrado(chave: ChaveDocumentoLote): String = when (chave.tipo) {
+        TipoDocumentoLote.NF -> "NF DocEntry ${chave.docEntry}: nao encontrada ou nao foi emitida para a SEFAZ"
+        TipoDocumentoLote.AD -> "Adiantamento DocEntry ${chave.docEntry}: nao encontrado ou nao e de venda futura"
+    }
+
+    /**
+     * Busca de novo no banco em vez de confiar no que veio da tela: so volta NF-e emitida para a
+     * SEFAZ e adiantamento de venda futura, sem os filtros da tela.
+     */
+    fun buscaDocumentos(docEntries: List<Int>, adiantamentos: List<Int>): List<NotaFiscalResumo> {
+        val nf = docEntries.distinct()
+        val ad = adiantamentos.distinct()
+        if (nf.isEmpty() && ad.isEmpty())
+            return listOf()
+        val quantidade = nf.size + ad.size
+        return odbc.consultar(sqlNotas, parametros(NotaFiscalLoteFiltro(), nf, ad, 0, quantidade),
+            quantidade).rows.map { NotaFiscalResumo.from(it) }
     }
 
     // O cache de empresas da BankPlus e estatico e sem trava: com ele vazio, as tarefas
@@ -231,16 +263,16 @@ class NotaFiscalLoteService(
         }
         val conclusao = ExecutorCompletionService<ResultadoNota>(pool)
         val futuros = notas.associateWith { nota -> conclusao.submit { tarefa(nota) } }
-        val escritas = mutableSetOf<Int>()
+        val escritas = mutableSetOf<ChaveDocumentoLote>()
         try {
             while (escritas.size < notas.size) {
                 val restante = prazo - System.nanoTime()
                 val pronto = (if (restante > 0) conclusao.poll(restante, TimeUnit.NANOSECONDS) else null) ?: break
                 val resultado = pronto.get()
-                escritas.add(resultado.nota.docEntry)
+                escritas.add(resultado.nota.chave)
                 escreve(resultado)
             }
-            for ((nota, futuro) in futuros.filterKeys { it.docEntry !in escritas }) {
+            for ((nota, futuro) in futuros.filterKeys { it.chave !in escritas }) {
                 if (futuro.isDone && !futuro.isCancelled) {
                     escreve(futuro.get())
                 } else {
@@ -259,7 +291,9 @@ class NotaFiscalLoteService(
                       bankPlusDisponivel: Boolean): ResultadoNota {
         val resultado = ResultadoNota(nota)
         try {
-            if (pdf || xml)
+            if ((pdf || xml) && nota.tipo == TipoDocumentoLote.AD)
+                resultado.avisos.add("adiantamento nao emite NF-e: sem DANFE nem XML")
+            else if (pdf || xml)
                 baixaFiscal(nota, pdf, xml, resultado)
             if (boleto && !bankPlusDisponivel)
                 resultado.erros.add("boleto nao buscado: BankPlus indisponivel")
@@ -277,7 +311,7 @@ class NotaFiscalLoteService(
      * controlado; as de HTTP/IO/JSON carregam corpo de resposta e detalhe interno das APIs,
      * que ficam so no log (cada chamada ja loga a excecao inteira).
      */
-    private fun motivo(t: Throwable): String = when {
+    fun motivo(t: Throwable): String = when {
         t.javaClass == Exception::class.java -> t.message ?: "erro sem mensagem"
         t is HttpStatusCodeException -> "HTTP ${t.statusCode.value()}"
         t is JsonProcessingException -> "resposta em formato inesperado"
@@ -317,7 +351,7 @@ class NotaFiscalLoteService(
             return
         }
         val boletos = try {
-            bankPlusService.getBoletosBy(filial.toString(), nota.docEntry.toString(), comPrazo = true)
+            bankPlusService.getBoletosBy(filial.toString(), nota.docEntry.toString(), origemBoleto(nota), comPrazo = true)
         } catch (t: Throwable) {
             logger.warn("Lote NF: falha ao listar boletos do DocEntry ${nota.docEntry} na BankPlus", t)
             resultado.erros.add("consulta de boleto na BankPlus falhou (${motivo(t)})")
@@ -346,11 +380,20 @@ class NotaFiscalLoteService(
         }
     }
 
+    // Na BankPlus o boleto do adiantamento fica numa origem propria, nao na da nota fiscal.
+    fun origemBoleto(nota: NotaFiscalResumo): OrigemBoletoEnum = when (nota.tipo) {
+        TipoDocumentoLote.NF -> OrigemBoletoEnum.notafiscal
+        TipoDocumentoLote.AD -> OrigemBoletoEnum.adiantamento
+    }
+
     private fun nomeBase(nota: NotaFiscalResumo): String {
         val numero = nota.numero?.toString() ?: "doc${nota.docEntry}"
-        val serie = nota.serie?.takeIf { it.isNotBlank() }?.let { "-S$it" } ?: ""
         val cliente = nota.cardCode?.let { "-$it" } ?: ""
-        return "NF$numero$serie$cliente".replace(Regex("[^A-Za-z0-9._-]"), "_")
+        val base = when (nota.tipo) {
+            TipoDocumentoLote.NF -> "NF$numero" + (nota.serie?.takeIf { it.isNotBlank() }?.let { "-S$it" } ?: "")
+            TipoDocumentoLote.AD -> "AD$numero" + (nota.contrato?.let { "-VF$it" } ?: "")
+        }
+        return "$base$cliente".replace(Regex("[^A-Za-z0-9._-]"), "_")
     }
 
     private fun nomeUnico(base: String, usados: MutableSet<String>): String {

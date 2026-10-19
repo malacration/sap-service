@@ -28,12 +28,12 @@ class NotaFiscalLoteSqlTest {
 
     @Test
     fun `listagem manda exatamente os parametros do SQL`() {
-        assertEquals(parametrosDoSql(sql), servico.parametros(NotaFiscalLoteFiltro(), listOf(), 0, 50).keys)
+        assertEquals(parametrosDoSql(sql), servico.parametros(NotaFiscalLoteFiltro(), listOf(), listOf(), 0, 50).keys)
     }
 
     @Test
     fun `download manda exatamente os parametros do SQL`() {
-        assertEquals(parametrosDoSql(sql), servico.parametros(NotaFiscalLoteFiltro(), listOf(1, 2), 0, 2).keys)
+        assertEquals(parametrosDoSql(sql), servico.parametros(NotaFiscalLoteFiltro(), listOf(1, 2), listOf(3), 0, 3).keys)
     }
 
     @Test
@@ -47,6 +47,28 @@ class NotaFiscalLoteSqlTest {
             assertFalse(Regex("\\b$palavra\\b", RegexOption.IGNORE_CASE).containsMatchIn(sql), palavra)
         }
         assertTrue(sql.startsWith("WITH"))
+    }
+
+    @Test
+    fun `formas de pagamento nao tem parametro e so pega recebimento ativo`() {
+        val formas = SqlResource.carregar("odbc/nota-fiscal-lote-formas-pagamento.sql")
+        assertEquals(setOf<String>(), parametrosDoSql(formas))
+        assertTrue(formas.contains("\"Type\" = 'I'") && formas.contains("\"Active\" = 'Y'"))
+        assertFalse(formas.contains("--"))
+    }
+
+    @Test
+    fun `consulta do cadastro do parceiro usa so forma e parceiros`() {
+        val sqlCrd2 = SqlResource.carregar("odbc/nota-fiscal-lote-parceiros-com-forma.sql")
+        assertEquals(setOf("forma", "parceiros"), parametrosDoSql(sqlCrd2))
+        assertFalse(sqlCrd2.contains("--"))
+    }
+
+    @Test
+    fun `adiantamento e so o de venda futura e sem o reconhecimento de devolucao`() {
+        assertTrue(sql.contains("IFNULL(D.\"U_venda_futura\", 0) > 0"))
+        assertTrue(sql.contains("IFNULL(D.\"U_TX_DocEntryRef\", 0) = 0"))
+        assertTrue(sql.contains("D.\"DocEntry\" IN (:adiantamentos)"))
     }
 
     @Test

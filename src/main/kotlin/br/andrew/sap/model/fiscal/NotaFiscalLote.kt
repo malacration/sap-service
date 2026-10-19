@@ -1,19 +1,25 @@
 package br.andrew.sap.model.fiscal
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import java.math.BigDecimal
 import java.nio.file.Path
 
 /**
- * NF-e de saida emitida para a SEFAZ, como sai de odbc/nota-fiscal-lote.sql.
+ * Documento da tela de lote, como sai de odbc/nota-fiscal-lote.sql: NF-e de saida emitida para
+ * a SEFAZ ou adiantamento de venda futura (ver [TipoDocumentoLote]).
  *
  * Os nomes de coluna sao os aliases do SQL. O sap-odbc serializa decimal como string, por
  * isso numero passa sempre por toString/BigDecimal.
  */
 class NotaFiscalResumo(
+    val tipo: TipoDocumentoLote,
+    val categoria: CategoriaDocumentoLote,
     val docEntry: Int,
     val docNum: Int?,
     val numero: Int?,
     val serie: String?,
+    // Adiantamento: DocNum do contrato de venda futura. NF: nulo.
+    val contrato: Int?,
     val data: String?,
     val cardCode: String?,
     val cardName: String?,
@@ -26,17 +32,27 @@ class NotaFiscalResumo(
     val parcelas: Int,
     val vendedorCodigo: Int?,
     val vendedor: String?,
+    // PeyMethod do documento (codigo da OPYM).
+    val formaPagamento: String?,
     val chaveAcesso: String?,
     val statusSefazId: Int?,
     val statusSefaz: String?,
     val statusSap: StatusSapNota?,
 ) {
+    // OINV e ODPI tem DocEntry proprio: so tipo + DocEntry identifica o documento. Fica fora do
+    // JSON: a tela tem um getter `chave` (string) e copiar o objeto por cima dele quebrava a lista.
+    @get:JsonIgnore
+    val chave: ChaveDocumentoLote get() = ChaveDocumentoLote(tipo, docEntry)
+
     companion object {
         fun from(linha: Map<String, Any?>) = NotaFiscalResumo(
+            tipo = TipoDocumentoLote.valueOf(linha.texto("Tipo") ?: "NF"),
+            categoria = CategoriaDocumentoLote.valueOf(linha.texto("Categoria") ?: linha.texto("Tipo") ?: "NF"),
             docEntry = linha.inteiro("DocEntry") ?: throw IllegalStateException("Linha sem DocEntry"),
             docNum = linha.inteiro("DocNum"),
             numero = linha.inteiro("Numero"),
             serie = linha.texto("Serie"),
+            contrato = linha.inteiro("Contrato"),
             data = linha.texto("DocDate")?.take(10),
             cardCode = linha.texto("CardCode"),
             cardName = linha.texto("CardName"),
@@ -48,6 +64,7 @@ class NotaFiscalResumo(
             parcelas = linha.inteiro("Parcelas") ?: 0,
             vendedorCodigo = linha.inteiro("SlpCode")?.takeIf { it != -1 },
             vendedor = linha.texto("SlpName"),
+            formaPagamento = linha.texto("FormaPagamento"),
             chaveAcesso = linha.texto("ChaveAcesso"),
             statusSefazId = linha.inteiro("StatusSefazId"),
             statusSefaz = linha.texto("StatusSefaz"),
@@ -60,8 +77,28 @@ class NotaFiscalResumo(
     }
 }
 
+/**
+ * NF = NF-e de saida (OINV) emitida para a SEFAZ: DANFE, XML e boleto.
+ * AD = adiantamento de venda futura (ODPI com U_venda_futura): nao emite NF-e, so tem boleto.
+ */
+enum class TipoDocumentoLote { NF, AD }
+
+data class ChaveDocumentoLote(val tipo: TipoDocumentoLote, val docEntry: Int)
+
+/**
+ * Para a tela separar os documentos. O tipo (NF/AD) diz a tabela; a categoria separa, dentro das
+ * NF, a de venda futura do PADRAO ANTIGO: simples faturamento (CFOP 5922/6922), fatura de
+ * reserva com as entregas feitas em cima dela - o SAP nao deixa trocar a forma de pagamento nela.
+ */
+enum class CategoriaDocumentoLote(val tipo: TipoDocumentoLote) {
+    NF(TipoDocumentoLote.NF),
+    NF_FUTURA(TipoDocumentoLote.NF),
+    AD(TipoDocumentoLote.AD),
+}
+
 // Mesma regra do "Status SAP" dos relatorios de nota (sql/alertas, "notas com error").
-enum class StatusSapNota { ABERTO, FECHADO, CANCELADO }
+// DEVOLVIDO so existe no adiantamento: estornado por nota de credito (ODPI nao tem /Cancel).
+enum class StatusSapNota { ABERTO, FECHADO, CANCELADO, DEVOLVIDO }
 
 class StatusSefaz(val id: Int, val descricao: String?)
 
@@ -79,10 +116,14 @@ class NotaFiscalLoteFiltro(
     val vencimentoAte: String? = null,
     val statusSap: StatusSapNota? = null,
     val statusSefaz: Int? = null,
+    // Nulo = todas as categorias.
+    val categoria: CategoriaDocumentoLote? = null,
 )
 
 class NotaFiscalLoteRequest(
+    // NF (OINV) e adiantamentos (ODPI) em listas separadas: os DocEntry se repetem entre as tabelas.
     val docEntries: List<Int> = listOf(),
+    val adiantamentos: List<Int> = listOf(),
     val pdf: Boolean = true,
     val xml: Boolean = true,
     val boleto: Boolean = false,
@@ -95,4 +136,44 @@ class NotaFiscalLoteArquivo(
     val notasComErro: Int,
     // Notas sem nenhum boleto no zip (sem boleto na BankPlus ou so cancelado). Nao e erro.
     val notasSemBoleto: Int = 0,
+)
+
+class FormaPagamentoLote(val codigo: String, val descricao: String?)
+
+class TrocaFormaPagamentoRequest(
+    val formaPagamento: String = "",
+    val docEntries: List<Int> = listOf(),
+    val adiantamentos: List<Int> = listOf(),
+)
+
+enum class SituacaoTrocaFormaPagamento {
+    ATUALIZADO,
+    // O SAP recusou porque a forma nao estava no cadastro do parceiro: foi vinculada e a troca repetida.
+    VINCULADO_E_ATUALIZADO,
+    // O documento ja estava com essa forma: nada foi gravado.
+    SEM_MUDANCA,
+    // O SAP nao confirmou o PATCH (o prazo da troca acabou com ele em andamento, ou a conexao caiu
+    // depois do envio): pode ou nao ter gravado.
+    SEM_CONFIRMACAO,
+    ERRO,
+    NAO_ENCONTRADO,
+}
+
+class TrocaFormaPagamentoResultado(
+    val tipo: TipoDocumentoLote,
+    val docEntry: Int,
+    val numero: Int?,
+    val cardCode: String?,
+    val cardName: String? = null,
+    // Nulo quando o documento nao foi encontrado.
+    val categoria: CategoriaDocumentoLote? = null,
+    val formaAnterior: String?,
+    val situacao: SituacaoTrocaFormaPagamento,
+    val mensagem: String? = null,
+    // Saiu de uma forma de boleto e o documento ainda tem boleto ativo na BankPlus: so aviso.
+    val boletoAtivo: Boolean = false,
+    // A troca terminou (ou nem precisou), mas algo ficou por fazer ou conferir: vinculo da forma ao
+    // parceiro que falhou, boleto que nao deu para conferir, prazo que acabou antes das conferencias.
+    // A tela usa para nao dar aviso de sucesso; o detalhe esta na mensagem.
+    val pendencia: Boolean = false,
 )

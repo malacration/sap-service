@@ -9,6 +9,11 @@ import br.andrew.sap.infrastructure.odata.NextLink
 import br.andrew.sap.model.authentication.User
 import br.andrew.sap.model.sap.partner.BusinessPartnerSlin
 import br.andrew.sap.services.cadastro.BusinessPartnersService
+import br.andrew.sap.model.fiscal.FormaPagamentoLote
+import br.andrew.sap.model.fiscal.CategoriaDocumentoLote
+import br.andrew.sap.model.fiscal.TrocaFormaPagamentoRequest
+import br.andrew.sap.model.fiscal.TrocaFormaPagamentoResultado
+import br.andrew.sap.services.fiscal.NotaFiscalLoteFormaPagamentoService
 import br.andrew.sap.services.fiscal.NotaFiscalLoteService
 import org.springframework.core.io.InputStreamResource
 import org.springframework.core.io.Resource
@@ -28,7 +33,8 @@ import java.nio.file.StandardOpenOption
 @RestController
 @RequestMapping("nota-fiscal-lote")
 class NotaFiscalLoteController(val service: NotaFiscalLoteService,
-                               val businessPartnersService: BusinessPartnersService) {
+                               val businessPartnersService: BusinessPartnersService,
+                               val formaPagamentoService: NotaFiscalLoteFormaPagamentoService) {
 
     @GetMapping("")
     fun listar(@RequestParam(required = false) dataInicial: String? = null,
@@ -42,16 +48,28 @@ class NotaFiscalLoteController(val service: NotaFiscalLoteService,
                @RequestParam(required = false) vencimentoAte: String? = null,
                @RequestParam(required = false) statusSap: StatusSapNota? = null,
                @RequestParam(required = false) statusSefaz: Int? = null,
+               @RequestParam(required = false) categoria: CategoriaDocumentoLote? = null,
                page: Pageable): Page<NotaFiscalResumo> {
         return service.listar(NotaFiscalLoteFiltro(
             dataInicial = dataInicial, dataFinal = dataFinal, filial = filial, cardCode = cardCode,
             salesPersonCode = salesPersonCode, numeroDe = numeroDe, numeroAte = numeroAte,
             vencimentoDe = vencimentoDe, vencimentoAte = vencimentoAte,
-            statusSap = statusSap, statusSefaz = statusSefaz), page)
+            statusSap = statusSap, statusSefaz = statusSefaz, categoria = categoria), page)
     }
 
     @GetMapping("status-sefaz")
     fun statusSefaz(): List<StatusSefaz> = service.statusSefaz()
+
+    @GetMapping("formas-pagamento")
+    fun formasPagamento(): List<FormaPagamentoLote> = formaPagamentoService.formas()
+
+    // Grava no SAP (documento e, se preciso, cadastro do parceiro). Um resultado por documento.
+    @PostMapping("forma-pagamento")
+    fun trocarFormaPagamento(@RequestBody request: TrocaFormaPagamentoRequest,
+                             auth: Authentication?): List<TrocaFormaPagamentoResultado> {
+        val usuario = (auth as? User)?.let { "${it.name} (${it.id})" } ?: auth?.name ?: "desconhecido"
+        return formaPagamentoService.trocar(request, usuario)
+    }
 
     // Filtro de cliente da tela. O /business-partners/search recorta pela carteira do vendedor
     // (so admin e vendedor_admin veem todos), e quem tem so este perfil nao acharia o cliente
@@ -66,7 +84,7 @@ class NotaFiscalLoteController(val service: NotaFiscalLoteService,
     // Sem produces fixo: com produces = zip o erro em JSON do ControllerAdvice nao teria conversor.
     @PostMapping("download")
     fun download(@RequestBody request: NotaFiscalLoteRequest): ResponseEntity<Resource> {
-        val arquivo = service.zip(request.docEntries, request.pdf, request.xml, request.boleto)
+        val arquivo = service.zip(request.docEntries, request.adiantamentos, request.pdf, request.xml, request.boleto)
         // DELETE_ON_CLOSE: o conversor do Spring fecha o stream ao terminar de enviar (ou quando
         // o cliente desconecta), e o temporario some junto. Se falhar antes de abrir, apaga aqui.
         val (tamanho, conteudo) = try {

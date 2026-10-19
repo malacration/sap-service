@@ -24,10 +24,10 @@ class NotaFiscalLoteControllerTest {
         val bytes = ByteArray(70_000) { (it % 251).toByte() }
         Files.write(temporario, bytes)
         val service = mock<NotaFiscalLoteService>().also {
-            whenever(it.zip(any(), any(), any(), any())).doReturn(NotaFiscalLoteArquivo("notas.zip", temporario, 2, 3))
+            whenever(it.zip(any(), any(), any(), any(), any())).doReturn(NotaFiscalLoteArquivo("notas.zip", temporario, 2, 3))
         }
 
-        val resposta = NotaFiscalLoteController(service, mock()).download(NotaFiscalLoteRequest(listOf(1)))
+        val resposta = NotaFiscalLoteController(service, mock(), mock()).download(NotaFiscalLoteRequest(listOf(1)))
 
         assertEquals(bytes.size.toLong(), resposta.headers.contentLength)
         assertEquals("2", resposta.headers.getFirst("notas-com-erro"))
@@ -43,10 +43,10 @@ class NotaFiscalLoteControllerTest {
         val temporario = Files.createTempFile("notas-fiscais-", ".zip")
         Files.delete(temporario)
         val service = mock<NotaFiscalLoteService>().also {
-            whenever(it.zip(any(), any(), any(), any())).doReturn(NotaFiscalLoteArquivo("notas.zip", temporario, 0, 0))
+            whenever(it.zip(any(), any(), any(), any(), any())).doReturn(NotaFiscalLoteArquivo("notas.zip", temporario, 0, 0))
         }
         assertThrows(java.nio.file.NoSuchFileException::class.java) {
-            NotaFiscalLoteController(service, mock()).download(NotaFiscalLoteRequest(listOf(1)))
+            NotaFiscalLoteController(service, mock(), mock()).download(NotaFiscalLoteRequest(listOf(1)))
         }
         assertFalse(Files.exists(temporario))
     }

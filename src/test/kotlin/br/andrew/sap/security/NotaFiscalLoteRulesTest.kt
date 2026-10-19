@@ -26,6 +26,9 @@ class NotaFiscalLoteRulesTest {
         assertTrue(autorizacao.isAuthorized("/nota-fiscal-lote", "get", u))
         assertTrue(autorizacao.isAuthorized("/nota-fiscal-lote/download", "post", u))
         assertTrue(autorizacao.isAuthorized("/nota-fiscal-lote/status-sefaz", "get", u))
+        // troca de forma de pagamento: mesmo perfil (decisao do usuario)
+        assertTrue(autorizacao.isAuthorized("/nota-fiscal-lote/formas-pagamento", "get", u))
+        assertTrue(autorizacao.isAuthorized("/nota-fiscal-lote/forma-pagamento", "post", u))
     }
 
     @Test
@@ -45,6 +48,7 @@ class NotaFiscalLoteRulesTest {
             assertFalse(autorizacao.isAuthorized("/nota-fiscal-lote", "get", usuario(perfil)), perfil)
             // busca sem recorte de carteira: vendedor nao pode usar para ver cliente de outro
             assertFalse(autorizacao.isAuthorized("/nota-fiscal-lote/clientes/search", "post", usuario(perfil)), perfil)
+            assertFalse(autorizacao.isAuthorized("/nota-fiscal-lote/forma-pagamento", "post", usuario(perfil)), perfil)
         }
     }
 
