@@ -114,15 +114,22 @@ class NotaFiscalLoteFormaPagamentoService(
             throw Exception("O lote aceita no maximo $maximo documentos por vez; foram selecionados ${pedidas.size}.")
 
         val porChave = lote.buscaDocumentos(request.docEntries, request.adiantamentos).associateBy { it.chave }
-        val encontrados = pedidas.mapNotNull { porChave[it] }
-        val jaTemForma = parceirosComForma(forma, encontrados.mapNotNull { it.cardCode }.distinct())
-        val resultados = trocaPorParceiro(encontrados, forma, usuario, jaTemForma, prazo).associateBy { ChaveResultado(it.tipo, it.docEntry) }
+        // NF de venda futura do padrao antigo o SAP sempre recusa ("Field cannot be updated"): nem tenta.
+        val (naoPermitidos, aTrocar) = pedidas.mapNotNull { porChave[it] }
+            .partition { it.categoria == CategoriaDocumentoLote.NF_FUTURA && it.formaPagamento != forma }
+        val jaTemForma = parceirosComForma(forma, aTrocar.mapNotNull { it.cardCode }.distinct())
+        val resultados = (trocaPorParceiro(aTrocar, forma, usuario, jaTemForma, prazo) + naoPermitidos.map { naoPermitido(it) })
+            .associateBy { ChaveResultado(it.tipo, it.docEntry) }
         return pedidas.map { chave ->
             resultados[ChaveResultado(chave.tipo, chave.docEntry)] ?: TrocaFormaPagamentoResultado(
                 chave.tipo, chave.docEntry, null, null, null, null, null, SituacaoTrocaFormaPagamento.NAO_ENCONTRADO,
                 lote.naoEncontrado(chave))
         }
     }
+
+    private fun naoPermitido(doc: NotaFiscalResumo) =
+        TrocaFormaPagamentoResultado(doc.tipo, doc.docEntry, doc.numero, doc.cardCode, doc.cardName, doc.categoria,
+            doc.formaPagamento, SituacaoTrocaFormaPagamento.NAO_PERMITIDO, NF_FUTURA_SEM_TROCA)
 
     private fun parceirosComForma(forma: String, parceiros: List<String>): Set<String> {
         if (parceiros.isEmpty())
@@ -271,18 +278,13 @@ class NotaFiscalLoteFormaPagamentoService(
 
     /**
      * "Field cannot be updated" no PeyMethod nao diz o porque. Os dois casos vistos no HOMOLOG2
-     * (2026-10-06): NF futura do padrao antigo (fatura de reserva com entrega) e documento fechado.
+     * (2026-10-06): NF futura do padrao antigo (fatura de reserva com entrega), que nem chega aqui
+     * (NAO_PERMITIDO), e documento fechado.
      */
     private fun explicaRecusa(doc: NotaFiscalResumo, mensagem: String?): String? {
-        if (mensagem == null || !mensagem.contains("cannot be updated", ignoreCase = true))
+        if (mensagem == null || !mensagem.contains("cannot be updated", ignoreCase = true) || doc.statusSap == StatusSapNota.ABERTO)
             return null
-        return when {
-            doc.categoria == CategoriaDocumentoLote.NF_FUTURA ->
-                "NF de venda futura do padrao antigo (fatura de reserva com entrega): o SAP nao deixa trocar a forma"
-            doc.statusSap != StatusSapNota.ABERTO ->
-                "documento ${doc.statusSap?.name?.lowercase() ?: "fechado"}: o SAP nao deixa trocar a forma"
-            else -> null
-        }
+        return "documento ${doc.statusSap?.name?.lowercase() ?: "fechado"}: o SAP nao deixa trocar a forma"
     }
 
     private class Vinculo(val vinculou: Boolean, val mensagem: String? = null, val falhou: Boolean = false)
@@ -377,4 +379,9 @@ class NotaFiscalLoteFormaPagamentoService(
     }
 
     private data class ChaveResultado(val tipo: TipoDocumentoLote, val docEntry: Int)
+
+    private companion object {
+        const val NF_FUTURA_SEM_TROCA =
+            "NF de venda futura do padrao antigo (fatura de reserva com entrega): o SAP nao deixa trocar a forma"
+    }
 }

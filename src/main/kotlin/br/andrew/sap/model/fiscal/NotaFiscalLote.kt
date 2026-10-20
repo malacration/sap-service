@@ -20,6 +20,8 @@ class NotaFiscalResumo(
     val serie: String?,
     // Adiantamento: DocNum do contrato de venda futura. NF: nulo.
     val contrato: Int?,
+    // Adiantamento: DocEntry do contrato (U_venda_futura), para o PDF do contrato no lote.
+    val contratoDocEntry: Int? = null,
     val data: String?,
     val cardCode: String?,
     val cardName: String?,
@@ -30,6 +32,11 @@ class NotaFiscalResumo(
     val vencimentoInicial: String?,
     val vencimentoFinal: String?,
     val parcelas: Int,
+    // A parcela desta linha (INV6 / DPI6): na listagem cada parcela e uma linha; no download e na
+    // troca, a primeira. InsTotal = valor original da parcela.
+    val parcela: Int? = null,
+    val valorParcela: BigDecimal? = null,
+    val vencimentoParcela: String? = null,
     val vendedorCodigo: Int?,
     val vendedor: String?,
     // PeyMethod do documento (codigo da OPYM).
@@ -53,6 +60,7 @@ class NotaFiscalResumo(
             numero = linha.inteiro("Numero"),
             serie = linha.texto("Serie"),
             contrato = linha.inteiro("Contrato"),
+            contratoDocEntry = linha.inteiro("ContratoDocEntry"),
             data = linha.texto("DocDate")?.take(10),
             cardCode = linha.texto("CardCode"),
             cardName = linha.texto("CardName"),
@@ -62,6 +70,9 @@ class NotaFiscalResumo(
             vencimentoInicial = linha.texto("VencimentoInicial")?.take(10),
             vencimentoFinal = linha.texto("VencimentoFinal")?.take(10),
             parcelas = linha.inteiro("Parcelas") ?: 0,
+            parcela = linha.inteiro("Parcela"),
+            valorParcela = linha.texto("ValorParcela")?.toBigDecimalOrNull(),
+            vencimentoParcela = linha.texto("VencimentoParcela")?.take(10),
             vendedorCodigo = linha.inteiro("SlpCode")?.takeIf { it != -1 },
             vendedor = linha.texto("SlpName"),
             formaPagamento = linha.texto("FormaPagamento"),
@@ -111,13 +122,17 @@ class NotaFiscalLoteFiltro(
     // Faixa de numero da NF ("Serial"); um lado so tambem vale (de 500 em diante).
     val numeroDe: Int? = null,
     val numeroAte: Int? = null,
-    // Nota entra se QUALQUER parcela vence no intervalo (ver odbc/nota-fiscal-lote.sql).
+    // Por parcela: so as parcelas que vencem no intervalo. Por documento: o documento entra se
+    // QUALQUER parcela vence nele (ver odbc/nota-fiscal-lote.sql).
     val vencimentoDe: String? = null,
     val vencimentoAte: String? = null,
     val statusSap: StatusSapNota? = null,
     val statusSefaz: Int? = null,
     // Nulo = todas as categorias.
     val categoria: CategoriaDocumentoLote? = null,
+    // Uma linha por documento em vez de uma por parcela: o "adicionar todas do filtro" da tela,
+    // que conta e pega documentos (o lote e de documentos).
+    val porDocumento: Boolean = false,
 )
 
 class NotaFiscalLoteRequest(
@@ -127,6 +142,10 @@ class NotaFiscalLoteRequest(
     val pdf: Boolean = true,
     val xml: Boolean = true,
     val boleto: Boolean = false,
+    // PDF do contrato de venda futura de cada adiantamento do lote (um por contrato).
+    val contrato: Boolean = false,
+    // Logo do deploy da tela, em data: URI, para o PDF do contrato (ver ContratoVendaFuturaPdfService).
+    val logo: String? = null,
 )
 
 // O zip fica num arquivo temporario (ver NotaFiscalLoteService.zip); quem envia apaga.
@@ -157,6 +176,9 @@ enum class SituacaoTrocaFormaPagamento {
     SEM_CONFIRMACAO,
     ERRO,
     NAO_ENCONTRADO,
+    // NF de venda futura do padrao antigo (CFOP 5922/6922): o SAP recusa trocar a forma, entao nem
+    // se tenta. Nada foi gravado.
+    NAO_PERMITIDO,
 }
 
 class TrocaFormaPagamentoResultado(
@@ -176,4 +198,39 @@ class TrocaFormaPagamentoResultado(
     // parceiro que falhou, boleto que nao deu para conferir, prazo que acabou antes das conferencias.
     // A tela usa para nao dar aviso de sucesso; o detalhe esta na mensagem.
     val pendencia: Boolean = false,
+)
+
+enum class SituacaoLinhaImportacao {
+    ENCONTRADO,
+    // Achou pelo nosso numero, mas o "Nro beneficiario" da planilha aponta outra nota/parcela, ou
+    // o valor nao bate: entra no lote (o nosso numero manda) com o aviso.
+    DIVERGENTE,
+    // Nosso numero que a BankPlus nao conhece.
+    NAO_ENCONTRADO,
+    // A BankPlus conhece o boleto, mas o documento nao aparece na tela (NF sem NF-e transmitida,
+    // documento de cancelamento, adiantamento que nao e de venda futura).
+    FORA_DA_TELA,
+}
+
+class LinhaImportacaoLote(
+    // Linha da planilha (1-based, como o Excel mostra).
+    val linha: Int,
+    val nossoNumero: String,
+    val beneficiario: String?,
+    val pagador: String?,
+    val valor: java.math.BigDecimal?,
+    val vencimento: String?,
+    // "Situacao" do banco (Normal, Baixado...), como veio.
+    val situacaoBanco: String?,
+    val tipo: TipoDocumentoLote? = null,
+    val docEntry: Int? = null,
+    val parcela: Int? = null,
+    val situacao: SituacaoLinhaImportacao,
+    val mensagem: String? = null,
+)
+
+class ImportacaoLoteResultado(
+    // Documentos para por no lote (sem repeticao: varias parcelas do mesmo documento viram um).
+    val documentos: List<NotaFiscalResumo>,
+    val linhas: List<LinhaImportacaoLote>,
 )

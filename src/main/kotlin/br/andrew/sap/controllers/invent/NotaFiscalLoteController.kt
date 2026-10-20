@@ -15,6 +15,10 @@ import br.andrew.sap.model.fiscal.TrocaFormaPagamentoRequest
 import br.andrew.sap.model.fiscal.TrocaFormaPagamentoResultado
 import br.andrew.sap.services.fiscal.NotaFiscalLoteFormaPagamentoService
 import br.andrew.sap.services.fiscal.NotaFiscalLoteService
+import br.andrew.sap.services.fiscal.NotaFiscalLoteImportacaoService
+import br.andrew.sap.services.fiscal.PlanilhaXlsx
+import jakarta.servlet.http.HttpServletRequest
+import br.andrew.sap.model.fiscal.ImportacaoLoteResultado
 import org.springframework.core.io.InputStreamResource
 import org.springframework.core.io.Resource
 import org.springframework.data.domain.Page
@@ -34,7 +38,8 @@ import java.nio.file.StandardOpenOption
 @RequestMapping("nota-fiscal-lote")
 class NotaFiscalLoteController(val service: NotaFiscalLoteService,
                                val businessPartnersService: BusinessPartnersService,
-                               val formaPagamentoService: NotaFiscalLoteFormaPagamentoService) {
+                               val formaPagamentoService: NotaFiscalLoteFormaPagamentoService,
+                               val importacaoService: NotaFiscalLoteImportacaoService) {
 
     @GetMapping("")
     fun listar(@RequestParam(required = false) dataInicial: String? = null,
@@ -49,16 +54,33 @@ class NotaFiscalLoteController(val service: NotaFiscalLoteService,
                @RequestParam(required = false) statusSap: StatusSapNota? = null,
                @RequestParam(required = false) statusSefaz: Int? = null,
                @RequestParam(required = false) categoria: CategoriaDocumentoLote? = null,
+               @RequestParam(required = false) porDocumento: Boolean? = null,
                page: Pageable): Page<NotaFiscalResumo> {
         return service.listar(NotaFiscalLoteFiltro(
             dataInicial = dataInicial, dataFinal = dataFinal, filial = filial, cardCode = cardCode,
             salesPersonCode = salesPersonCode, numeroDe = numeroDe, numeroAte = numeroAte,
             vencimentoDe = vencimentoDe, vencimentoAte = vencimentoAte,
-            statusSap = statusSap, statusSefaz = statusSefaz, categoria = categoria), page)
+            statusSap = statusSap, statusSefaz = statusSefaz, categoria = categoria,
+            porDocumento = porDocumento == true), page)
     }
 
     @GetMapping("status-sefaz")
     fun statusSefaz(): List<StatusSefaz> = service.statusSefaz()
+
+    // Planilha de titulos do banco (.xlsx, arquivo cru no corpo): devolve os documentos para o lote
+    // e o que aconteceu com cada linha. Nao grava nada. O corpo e lido com teto (nao pelo conversor,
+    // que carregaria tudo antes de alguem conferir o tamanho).
+    @PostMapping("importar-planilha")
+    fun importarPlanilha(request: HttpServletRequest): ImportacaoLoteResultado {
+        val teto = PlanilhaXlsx.TETO_ARQUIVO
+        val grande = IllegalArgumentException("A planilha e grande demais (limite de ${teto / 1024 / 1024} MB).")
+        if (request.contentLengthLong > teto)
+            throw grande
+        val conteudo = request.inputStream.readNBytes(teto + 1)
+        if (conteudo.size > teto)
+            throw grande
+        return importacaoService.importar(conteudo)
+    }
 
     @GetMapping("formas-pagamento")
     fun formasPagamento(): List<FormaPagamentoLote> = formaPagamentoService.formas()
@@ -84,7 +106,7 @@ class NotaFiscalLoteController(val service: NotaFiscalLoteService,
     // Sem produces fixo: com produces = zip o erro em JSON do ControllerAdvice nao teria conversor.
     @PostMapping("download")
     fun download(@RequestBody request: NotaFiscalLoteRequest): ResponseEntity<Resource> {
-        val arquivo = service.zip(request.docEntries, request.adiantamentos, request.pdf, request.xml, request.boleto)
+        val arquivo = service.zip(request.docEntries, request.adiantamentos, request.pdf, request.xml, request.boleto, request.contrato, request.logo)
         // DELETE_ON_CLOSE: o conversor do Spring fecha o stream ao terminar de enviar (ou quando
         // o cliente desconecta), e o temporario some junto. Se falhar antes de abrir, apaga aqui.
         val (tamanho, conteudo) = try {

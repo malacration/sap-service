@@ -32,7 +32,13 @@
 --
 -- VENCIMENTO e por PARCELA (INV6 / DPI6), nao pelo DocDueDate: o DocDueDate e sempre o
 -- vencimento da ULTIMA parcela (conferido no HOMOLOG2 em 2026-10-01: 9.094 de 9.094 notas de
--- 2026). O documento entra se QUALQUER parcela vence no intervalo.
+-- 2026).
+--
+-- :porParcela = 1 (listagem da tela): uma linha por parcela, com valor (InsTotal, o valor
+-- original da parcela) e vencimento dela; o filtro de vencimento vale por parcela. O documento
+-- continua sendo a unidade do lote: a tela junta as linhas pela chave. :porParcela = 0
+-- (download, troca e o "adicionar todas do filtro"): so a primeira parcela, uma linha por
+-- documento, e o documento entra se QUALQUER parcela vence no intervalo.
 --
 -- :numero compara o "Serial" da NF e o DocNum do adiantamento (que nao tem Serial). A
 -- numeracao da NF e por serie/filial: sem filtro de filial vem a de todas as filiais.
@@ -55,6 +61,7 @@ WITH NOTAS AS (
         N."Serial" AS "Numero",
         N."SeriesStr" AS "Serie",
         CAST(NULL AS INTEGER) AS "Contrato",
+        CAST(NULL AS INTEGER) AS "ContratoDocEntry",
         TO_VARCHAR(N."DocDate", 'YYYY-MM-DD') AS "DocDate",
         N."CardCode" AS "CardCode",
         N."CardName" AS "CardName",
@@ -64,6 +71,9 @@ WITH NOTAS AS (
         TO_VARCHAR(PARC."PrimeiroVencimento", 'YYYY-MM-DD') AS "VencimentoInicial",
         TO_VARCHAR(N."DocDueDate", 'YYYY-MM-DD') AS "VencimentoFinal",
         IFNULL(PARC."Parcelas", 0) AS "Parcelas",
+        PA."InstlmntID" AS "Parcela",
+        PA."InsTotal" AS "ValorParcela",
+        TO_VARCHAR(PA."DueDate", 'YYYY-MM-DD') AS "VencimentoParcela",
         N."SlpCode" AS "SlpCode",
         V."SlpName" AS "SlpName",
         N."PeyMethod" AS "FormaPagamento",
@@ -80,10 +90,13 @@ WITH NOTAS AS (
     LEFT JOIN "ProcessStatus" S ON S."ID" = P."StatusId"
     LEFT JOIN OSLP V ON V."SlpCode" = N."SlpCode"
     LEFT JOIN (
-        SELECT I."DocEntry", MIN(I."DueDate") AS "PrimeiroVencimento", COUNT(*) AS "Parcelas"
+        SELECT I."DocEntry", MIN(I."DueDate") AS "PrimeiroVencimento", COUNT(*) AS "Parcelas",
+            MIN(I."InstlmntID") AS "PrimeiraParcela"
         FROM INV6 I
         GROUP BY I."DocEntry"
     ) PARC ON PARC."DocEntry" = N."DocEntry"
+    LEFT JOIN INV6 PA ON PA."DocEntry" = N."DocEntry"
+        AND (:porParcela = 1 OR PA."InstlmntID" = PARC."PrimeiraParcela")
     WHERE (:tipo = '' OR :tipo = 'NF')
       AND N."Model" = 39
       AND N."CANCELED" <> 'C'
@@ -96,11 +109,13 @@ WITH NOTAS AS (
       AND (:vendedor = -1 OR N."SlpCode" = :vendedor)
       AND (:numeroDe = -1 OR N."Serial" >= :numeroDe)
       AND (:numeroAte = -1 OR N."Serial" <= :numeroAte)
-      AND (:todosVencimentos = 1 OR EXISTS (
-            SELECT 1 FROM INV6 VI
-            WHERE VI."DocEntry" = N."DocEntry"
-              AND VI."DueDate" >= :vencimentoDe
-              AND VI."DueDate" <= :vencimentoAte))
+      AND (:todosVencimentos = 1
+           OR (:porParcela = 1 AND PA."DueDate" >= :vencimentoDe AND PA."DueDate" <= :vencimentoAte)
+           OR (:porParcela = 0 AND EXISTS (
+                SELECT 1 FROM INV6 VI
+                WHERE VI."DocEntry" = N."DocEntry"
+                  AND VI."DueDate" >= :vencimentoDe
+                  AND VI."DueDate" <= :vencimentoAte)))
       AND (:statusSefaz = -1 OR P."StatusId" = :statusSefaz)
 
     UNION ALL
@@ -113,6 +128,7 @@ WITH NOTAS AS (
         D."DocNum" AS "Numero",
         CAST(NULL AS NVARCHAR(10)) AS "Serie",
         VF."DocNum" AS "Contrato",
+        D."U_venda_futura" AS "ContratoDocEntry",
         TO_VARCHAR(D."DocDate", 'YYYY-MM-DD') AS "DocDate",
         D."CardCode" AS "CardCode",
         D."CardName" AS "CardName",
@@ -122,6 +138,9 @@ WITH NOTAS AS (
         TO_VARCHAR(PARC."PrimeiroVencimento", 'YYYY-MM-DD') AS "VencimentoInicial",
         TO_VARCHAR(D."DocDueDate", 'YYYY-MM-DD') AS "VencimentoFinal",
         IFNULL(PARC."Parcelas", 0) AS "Parcelas",
+        PA."InstlmntID" AS "Parcela",
+        PA."InsTotal" AS "ValorParcela",
+        TO_VARCHAR(PA."DueDate", 'YYYY-MM-DD') AS "VencimentoParcela",
         D."SlpCode" AS "SlpCode",
         V."SlpName" AS "SlpName",
         D."PeyMethod" AS "FormaPagamento",
@@ -141,10 +160,13 @@ WITH NOTAS AS (
     LEFT JOIN "@AR_CONTRATO_FUTURO" VF ON VF."DocEntry" = D."U_venda_futura"
     LEFT JOIN OSLP V ON V."SlpCode" = D."SlpCode"
     LEFT JOIN (
-        SELECT I."DocEntry", MIN(I."DueDate") AS "PrimeiroVencimento", COUNT(*) AS "Parcelas"
+        SELECT I."DocEntry", MIN(I."DueDate") AS "PrimeiroVencimento", COUNT(*) AS "Parcelas",
+            MIN(I."InstlmntID") AS "PrimeiraParcela"
         FROM DPI6 I
         GROUP BY I."DocEntry"
     ) PARC ON PARC."DocEntry" = D."DocEntry"
+    LEFT JOIN DPI6 PA ON PA."DocEntry" = D."DocEntry"
+        AND (:porParcela = 1 OR PA."InstlmntID" = PARC."PrimeiraParcela")
     WHERE (:tipo = '' OR :tipo = 'AD')
       AND IFNULL(D."U_venda_futura", 0) > 0
       AND IFNULL(D."U_TX_DocEntryRef", 0) = 0
@@ -157,16 +179,18 @@ WITH NOTAS AS (
       AND (:vendedor = -1 OR D."SlpCode" = :vendedor)
       AND (:numeroDe = -1 OR D."DocNum" >= :numeroDe)
       AND (:numeroAte = -1 OR D."DocNum" <= :numeroAte)
-      AND (:todosVencimentos = 1 OR EXISTS (
-            SELECT 1 FROM DPI6 VI
-            WHERE VI."DocEntry" = D."DocEntry"
-              AND VI."DueDate" >= :vencimentoDe
-              AND VI."DueDate" <= :vencimentoAte))
+      AND (:todosVencimentos = 1
+           OR (:porParcela = 1 AND PA."DueDate" >= :vencimentoDe AND PA."DueDate" <= :vencimentoAte)
+           OR (:porParcela = 0 AND EXISTS (
+                SELECT 1 FROM DPI6 VI
+                WHERE VI."DocEntry" = D."DocEntry"
+                  AND VI."DueDate" >= :vencimentoDe
+                  AND VI."DueDate" <= :vencimentoAte)))
 ),
 NUMERADAS AS (
     SELECT
         NOTAS.*,
-        ROW_NUMBER() OVER (ORDER BY "DocDate" DESC, "Tipo" DESC, "DocEntry" DESC) AS "Linha",
+        ROW_NUMBER() OVER (ORDER BY "DocDate" DESC, "Tipo" DESC, "DocEntry" DESC, "Parcela") AS "Linha",
         COUNT(*) OVER () AS "Total"
     FROM NOTAS
     WHERE (:statusSap = '' OR "StatusSap" = :statusSap)

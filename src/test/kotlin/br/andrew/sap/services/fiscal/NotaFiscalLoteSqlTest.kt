@@ -37,6 +37,28 @@ class NotaFiscalLoteSqlTest {
     }
 
     @Test
+    fun `listagem vem por parcela, download e troca um por documento`() {
+        assertEquals(1, servico.parametros(NotaFiscalLoteFiltro(), listOf(), listOf(), 0, 50)["porParcela"])
+        assertEquals(0, servico.parametros(NotaFiscalLoteFiltro(), listOf(1), listOf(), 0, 1)["porParcela"])
+        assertEquals(0, servico.parametros(NotaFiscalLoteFiltro(), listOf(), listOf(3), 0, 1)["porParcela"])
+        // "adicionar todas do filtro": listagem por documento
+        assertEquals(0, servico.parametros(NotaFiscalLoteFiltro(porDocumento = true), listOf(), listOf(), 0, 200)["porParcela"])
+        // as duas pernas trazem a parcela e filtram vencimento por ela
+        assertEquals(2, Regex("PA\\.\"InsTotal\" AS \"ValorParcela\"").findAll(sql).count())
+        assertEquals(2, Regex("PA\\.\"DueDate\" >= :vencimentoDe").findAll(sql).count())
+    }
+
+    @Test
+    fun `linha traz numero, valor e vencimento da parcela`() {
+        val r = br.andrew.sap.model.fiscal.NotaFiscalResumo.from(mapOf("Tipo" to "NF", "DocEntry" to 10, "Parcelas" to 3,
+            "Parcela" to 2, "ValorParcela" to "333.33", "VencimentoParcela" to "2026-11-20T00:00", "DocTotal" to "1000"))
+        assertEquals(2, r.parcela)
+        assertEquals("333.33".toBigDecimal(), r.valorParcela)
+        assertEquals("2026-11-20", r.vencimentoParcela)
+        assertEquals("1000".toBigDecimal(), r.total)
+    }
+
+    @Test
     fun `o que viaja nao tem comentario nem palavra proibida`() {
         assertFalse(sql.contains("--") || sql.contains("/*"))
         val proibidas = listOf("INSERT", "UPDATE", "DELETE", "MERGE", "UPSERT", "TRUNCATE", "DROP", "CREATE",

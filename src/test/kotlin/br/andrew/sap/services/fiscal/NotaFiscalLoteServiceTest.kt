@@ -39,7 +39,7 @@ class NotaFiscalLoteServiceTest {
     // Adiantamento de venda futura como a perna AD do SQL devolve: sem serie, chave nem SEFAZ.
     private fun adiantamento(docEntry: Int, numero: Int, contrato: Int = 412, cardCode: String = "C0001") =
         nota(docEntry, numero, cardCode, serie = null).toMutableMap().also {
-            it["Tipo"] = "AD"; it["Contrato"] = contrato; it["ChaveAcesso"] = null
+            it["Tipo"] = "AD"; it["Contrato"] = contrato; it["ContratoDocEntry"] = contrato + 1000; it["ChaveAcesso"] = null
             it["StatusSefazId"] = null; it["StatusSefaz"] = null; it["StatusSap"] = "ABERTO"
         }
 
@@ -125,8 +125,66 @@ class NotaFiscalLoteServiceTest {
         })
 
     private fun servico(odbc: OdbcClient, tax: TaxNfeService = taxNfe(), maximo: Int = 200, bank: BankPlusService = bankPlus(),
-                        prazoSegundos: Long = 300) =
-        NotaFiscalLoteService(odbc, tax, bank, maximo, 2, prazoSegundos)
+                        prazoSegundos: Long = 300, contratos: ContratoVendaFuturaPdfService? = null) =
+        NotaFiscalLoteService(odbc, tax, bank, maximo, 2, prazoSegundos, contratos)
+
+    private val contratosPedidos = mutableListOf<List<Int>>()
+    private val logosRecebidos = mutableListOf<String?>()
+
+    // PDF falso por contrato (DocEntry); os de [falham] voltam como falha.
+    private fun contratos(falham: Set<Int> = setOf()) = mock(ContratoVendaFuturaPdfService::class.java, Answer { inv ->
+        if (inv.method.name != "gerar") return@Answer null
+        @Suppress("UNCHECKED_CAST")
+        val ids = inv.arguments[0] as List<Int>
+        contratosPedidos.add(ids)
+        logosRecebidos.add(inv.arguments[1] as String?)
+        ids.distinct().associateWith { id ->
+            if (id in falham) Result.failure(Exception("contrato de venda futura $id nao encontrado"))
+            else Result.success(ContratoVendaFuturaPdfService.ContratoPdf(id, id - 1000, "%PDF contrato $id".toByteArray()))
+        }
+    })
+
+    @Test
+    fun `so contrato marcado com lote sem adiantamento e recusado em vez de zip vazio`() {
+        val s = servico(odbc(nota(10, 501)), contratos = contratos())
+        val erro = assertThrows(Exception::class.java) { s.zip(listOf(10), listOf(), pdf = false, xml = false, contrato = true) }
+        assertTrue(erro.message!!.contains("contrato so vem de adiantamento"))
+        assertTrue(contratosPedidos.isEmpty())
+    }
+
+    @Test
+    fun `nome do cliente no arquivo vai sem acento nem simbolo e com ate 40 caracteres`() {
+        assertEquals("Joao_da_Silva_Filhos", NotaFiscalLoteService.nomeCliente(" João da Silva & Filhos "))
+        assertEquals("AGROPECUARIA_SAO_JOSE_LTDA_ME", NotaFiscalLoteService.nomeCliente("AGROPECUÁRIA SÃO JOSÉ LTDA - ME"))
+        assertEquals(40, NotaFiscalLoteService.nomeCliente("A".repeat(60))!!.length)
+        assertEquals(null, NotaFiscalLoteService.nomeCliente("  ---  "))
+        assertEquals(null, NotaFiscalLoteService.nomeCliente(null))
+    }
+
+    @Test
+    fun `contrato sai um PDF por contrato dos adiantamentos, em pasta propria, e NF fica de fora`() {
+        val arquivo = servico(odbc(nota(10, 501), adiantamento(20, 4100, contrato = 412), adiantamento(21, 4101, contrato = 412),
+            adiantamento(22, 4102, contrato = 413)), contratos = contratos())
+            .zip(listOf(10), listOf(20, 21, 22), pdf = true, xml = false, contrato = true, logo = "data:image/png;base64,AAA=")
+        val zip = conteudo(arquivo)
+        assertEquals("%PDF contrato 1412", zip["contrato/VF412.pdf"])
+        assertEquals("%PDF contrato 1413", zip["contrato/VF413.pdf"])
+        assertEquals(2, zip.keys.count { it.startsWith("contrato/") })
+        assertTrue(zip.containsKey("danfe/NF501-S2-C0001-Cliente_C0001.pdf"))
+        assertEquals(listOf(listOf(1412, 1412, 1413)), contratosPedidos)
+        assertEquals(listOf("data:image/png;base64,AAA="), logosRecebidos)
+        assertEquals(0, arquivo.notasComErro)
+    }
+
+    @Test
+    fun `so contrato marcado vai na raiz, e contrato que falha vira erro dos adiantamentos dele`() {
+        val arquivo = servico(odbc(adiantamento(20, 4100, contrato = 412), adiantamento(22, 4102, contrato = 413)),
+            contratos = contratos(falham = setOf(1413))).zip(listOf(), listOf(20, 22), pdf = false, xml = false, contrato = true)
+        val zip = conteudo(arquivo)
+        assertTrue(zip.containsKey("VF412.pdf"), zip.keys.toString())
+        assertTrue(zip["erros.txt"]!!.contains("contrato nao gerado (contrato de venda futura 1413 nao encontrado)"), zip["erros.txt"])
+        assertEquals(1, arquivo.notasComErro)
+    }
 
     // Le o zip do temporario e apaga, como o controller faz ao enviar.
     private fun conteudo(arquivo: NotaFiscalLoteArquivo): Map<String, String> {
@@ -143,9 +201,9 @@ class NotaFiscalLoteServiceTest {
         val arquivo = servico(odbc(nota(10, 501), nota(11, 502, "C0002"))).zip(listOf(10, 11), listOf(), true, true)
 
         val zip = conteudo(arquivo)
-        assertEquals(setOf("danfe/NF501-S2-C0001.pdf", "xml/NF501-S2-C0001.xml",
-            "danfe/NF502-S2-C0002.pdf", "xml/NF502-S2-C0002.xml"), zip.keys)
-        assertEquals("<nfeProc>lote-10</nfeProc>", zip["xml/NF501-S2-C0001.xml"])
+        assertEquals(setOf("danfe/NF501-S2-C0001-Cliente_C0001.pdf", "xml/NF501-S2-C0001-Cliente_C0001.xml",
+            "danfe/NF502-S2-C0002-Cliente_C0002.pdf", "xml/NF502-S2-C0002-Cliente_C0002.xml"), zip.keys)
+        assertEquals("<nfeProc>lote-10</nfeProc>", zip["xml/NF501-S2-C0001-Cliente_C0001.xml"])
         assertEquals(0, arquivo.notasComErro)
         assertTrue(arquivo.nome.matches(Regex("notas-fiscais-\\d{8}-\\d{4}\\.zip")))
     }
@@ -159,7 +217,7 @@ class NotaFiscalLoteServiceTest {
     @Test
     fun `so xml fica na raiz do zip`() {
         val zip = conteudo(servico(odbc(nota(10, 501))).zip(listOf(10), listOf(), false, true))
-        assertEquals(setOf("NF501-S2-C0001.xml"), zip.keys)
+        assertEquals(setOf("NF501-S2-C0001-Cliente_C0001.xml"), zip.keys)
     }
 
     @Test
@@ -169,14 +227,14 @@ class NotaFiscalLoteServiceTest {
             .zip(listOf(10, 11, 12, 99), listOf(), true, true)
 
         val zip = conteudo(arquivo)
-        assertTrue("danfe/NF501-S2-C0001.pdf" in zip && "xml/NF501-S2-C0001.xml" in zip)
-        assertTrue("danfe/NF503-S2-C0001.pdf" in zip)
-        assertFalse("xml/NF503-S2-C0001.xml" in zip)
+        assertTrue("danfe/NF501-S2-C0001-Cliente_C0001.pdf" in zip && "xml/NF501-S2-C0001-Cliente_C0001.xml" in zip)
+        assertTrue("danfe/NF503-S2-C0001-Cliente_C0001.pdf" in zip)
+        assertFalse("xml/NF503-S2-C0001-Cliente_C0001.xml" in zip)
         assertFalse(zip.keys.any { it.contains("NF502") && !it.endsWith(".txt") })
         val erros = zip["erros.txt"]!!
         assertTrue(erros.contains("NF DocEntry 99: nao encontrada ou nao foi emitida para a SEFAZ"), erros)
-        assertTrue(erros.contains("NF502-S2-C0001: consulta na TaxPlus falhou"), erros)
-        assertTrue(erros.contains("NF503-S2-C0001: xml nao baixado"), erros)
+        assertTrue(erros.contains("NF502-S2-C0001-Cliente_C0001: consulta na TaxPlus falhou"), erros)
+        assertTrue(erros.contains("NF503-S2-C0001-Cliente_C0001: xml nao baixado"), erros)
         // 11 sem nada, 12 sem xml, 99 fora da consulta
         assertEquals(3, arquivo.notasComErro)
     }
@@ -184,19 +242,19 @@ class NotaFiscalLoteServiceTest {
     @Test
     fun `nota cancelada tambem baixa`() {
         val zip = conteudo(servico(odbc(nota(10, 501, statusSap = "CANCELADO"))).zip(listOf(10), listOf(), false, true))
-        assertEquals(setOf("NF501-S2-C0001.xml"), zip.keys)
+        assertEquals(setOf("NF501-S2-C0001-Cliente_C0001.xml"), zip.keys)
     }
 
     @Test
     fun `mesmo numero em notas diferentes nao sobrescreve arquivo`() {
         val zip = conteudo(servico(odbc(nota(10, 501), nota(20, 501))).zip(listOf(10, 20), listOf(), true, false))
-        assertEquals(setOf("NF501-S2-C0001.pdf", "NF501-S2-C0001-2.pdf"), zip.keys)
+        assertEquals(setOf("NF501-S2-C0001-Cliente_C0001.pdf", "NF501-S2-C0001-Cliente_C0001-2.pdf"), zip.keys)
     }
 
     @Test
     fun `nota sem numero usa o docEntry`() {
         val zip = conteudo(servico(odbc(nota(10, null, serie = null))).zip(listOf(10), listOf(), true, false))
-        assertEquals(setOf("NFdoc10-C0001.pdf"), zip.keys)
+        assertEquals(setOf("NFdoc10-C0001-Cliente_C0001.pdf"), zip.keys)
     }
 
     @Test
@@ -213,9 +271,9 @@ class NotaFiscalLoteServiceTest {
         val arquivo = servico(odbc(nota(10, 501)), bank = bank).zip(listOf(10), listOf(), true, true, true)
 
         val zip = conteudo(arquivo)
-        assertEquals(setOf("danfe/NF501-S2-C0001.pdf", "xml/NF501-S2-C0001.xml",
-            "boleto/NF501-S2-C0001-parcela1.pdf", "boleto/NF501-S2-C0001-parcela2.pdf"), zip.keys)
-        assertEquals("%PDF boleto 901", zip["boleto/NF501-S2-C0001-parcela1.pdf"])
+        assertEquals(setOf("danfe/NF501-S2-C0001-Cliente_C0001.pdf", "xml/NF501-S2-C0001-Cliente_C0001.xml",
+            "boleto/NF501-S2-C0001-Cliente_C0001-parcela1.pdf", "boleto/NF501-S2-C0001-Cliente_C0001-parcela2.pdf"), zip.keys)
+        assertEquals("%PDF boleto 901", zip["boleto/NF501-S2-C0001-Cliente_C0001-parcela1.pdf"])
         // empresas uma vez antes do paralelo; boletos pela filial da nota (BPLId), como o /invoice/{id}/boletos
         // e sempre pela leitura com prazo, que so o lote usa
         assertEquals(listOf("empresas prazo=true", "boletos filial=2 doc=10 prazo=true"), chamadasBankPlus)
@@ -227,7 +285,7 @@ class NotaFiscalLoteServiceTest {
     fun `so boleto fica na raiz e nem consulta a TaxPlus`() {
         val bank = bankPlus(mapOf(10 to listOf(boleto(900, 1))))
         val zip = conteudo(servico(odbc(nota(10, 501)), bank = bank).zip(listOf(10), listOf(), false, false, true))
-        assertEquals(setOf("NF501-S2-C0001-parcela1.pdf"), zip.keys)
+        assertEquals(setOf("NF501-S2-C0001-Cliente_C0001-parcela1.pdf"), zip.keys)
         assertTrue(chamadasTax.isEmpty())
     }
 
@@ -237,8 +295,8 @@ class NotaFiscalLoteServiceTest {
         val arquivo = servico(odbc(nota(10, 501), nota(11, 502)), bank = bank).zip(listOf(10, 11), listOf(), false, false, true)
 
         val zip = conteudo(arquivo)
-        assertEquals(setOf("NF501-S2-C0001-parcela1.pdf", "avisos.txt"), zip.keys)
-        assertTrue(zip["avisos.txt"]!!.contains("NF502-S2-C0001: sem boleto na BankPlus"))
+        assertEquals(setOf("NF501-S2-C0001-Cliente_C0001-parcela1.pdf", "avisos.txt"), zip.keys)
+        assertTrue(zip["avisos.txt"]!!.contains("NF502-S2-C0001-Cliente_C0001: sem boleto na BankPlus"))
         assertEquals(0, arquivo.notasComErro)
         assertEquals(1, arquivo.notasSemBoleto)
     }
@@ -251,9 +309,9 @@ class NotaFiscalLoteServiceTest {
         val arquivo = servico(odbc(nota(10, 501), nota(11, 502)), bank = bank).zip(listOf(10, 11), listOf(), false, false, true)
 
         val zip = conteudo(arquivo)
-        assertEquals("%PDF boleto 901", zip["NF501-S2-C0001-parcela1.pdf"])
+        assertEquals("%PDF boleto 901", zip["NF501-S2-C0001-Cliente_C0001-parcela1.pdf"])
         assertFalse(zip.keys.any { it.startsWith("NF502") })
-        assertTrue(zip["avisos.txt"]!!.contains("NF502-S2-C0001: boleto cancelado, nao incluido (Cancelado)"))
+        assertTrue(zip["avisos.txt"]!!.contains("NF502-S2-C0001-Cliente_C0001: boleto cancelado, nao incluido (Cancelado)"))
         assertEquals(1, arquivo.notasSemBoleto)
         assertEquals(0, arquivo.notasComErro)
     }
@@ -264,12 +322,12 @@ class NotaFiscalLoteServiceTest {
         val arquivo = servico(odbc(nota(10, 501), nota(11, 502)), bank = bank).zip(listOf(10, 11), listOf(), true, false, true)
 
         val zip = conteudo(arquivo)
-        assertTrue("danfe/NF501-S2-C0001.pdf" in zip)
-        assertTrue("boleto/NF502-S2-C0001-parcela1.pdf" in zip)
-        assertFalse("boleto/NF502-S2-C0001-parcela2.pdf" in zip)
+        assertTrue("danfe/NF501-S2-C0001-Cliente_C0001.pdf" in zip)
+        assertTrue("boleto/NF502-S2-C0001-Cliente_C0001-parcela1.pdf" in zip)
+        assertFalse("boleto/NF502-S2-C0001-Cliente_C0001-parcela2.pdf" in zip)
         val erros = zip["erros.txt"]!!
-        assertTrue(erros.contains("NF501-S2-C0001: consulta de boleto na BankPlus falhou"), erros)
-        assertTrue(erros.contains("NF502-S2-C0001: boleto-parcela2 nao baixado"), erros)
+        assertTrue(erros.contains("NF501-S2-C0001-Cliente_C0001: consulta de boleto na BankPlus falhou"), erros)
+        assertTrue(erros.contains("NF502-S2-C0001-Cliente_C0001: boleto-parcela2 nao baixado"), erros)
         assertEquals(2, arquivo.notasComErro)
         assertEquals(0, arquivo.notasSemBoleto)
     }
@@ -278,7 +336,7 @@ class NotaFiscalLoteServiceTest {
     fun `dois boletos da mesma parcela nao se sobrescrevem`() {
         val bank = bankPlus(mapOf(10 to listOf(boleto(900, 1), boleto(901, 1))))
         val zip = conteudo(servico(odbc(nota(10, 501)), bank = bank).zip(listOf(10), listOf(), false, false, true))
-        assertEquals(setOf("NF501-S2-C0001-parcela1.pdf", "NF501-S2-C0001-parcela1-2.pdf"), zip.keys)
+        assertEquals(setOf("NF501-S2-C0001-Cliente_C0001-parcela1.pdf", "NF501-S2-C0001-Cliente_C0001-parcela1-2.pdf"), zip.keys)
     }
 
     @Test
@@ -289,8 +347,8 @@ class NotaFiscalLoteServiceTest {
         assertEquals(listOf("empresas prazo=true"), chamadasBankPlus)
         val zip = conteudo(arquivo)
         // o DANFE sai; o boleto de cada nota vira erro
-        assertTrue("danfe/NF501-S2-C0001.pdf" in zip && "danfe/NF502-S2-C0001.pdf" in zip)
-        assertTrue(zip["erros.txt"]!!.contains("NF501-S2-C0001: boleto nao buscado: BankPlus indisponivel"), zip["erros.txt"])
+        assertTrue("danfe/NF501-S2-C0001-Cliente_C0001.pdf" in zip && "danfe/NF502-S2-C0001-Cliente_C0001.pdf" in zip)
+        assertTrue(zip["erros.txt"]!!.contains("NF501-S2-C0001-Cliente_C0001: boleto nao buscado: BankPlus indisponivel"), zip["erros.txt"])
         assertEquals(2, arquivo.notasComErro)
     }
 
@@ -309,8 +367,8 @@ class NotaFiscalLoteServiceTest {
 
         assertTrue(segundos < 10, "levou ${segundos}s")
         val zip = conteudo(arquivo)
-        assertTrue("NF501-S2-C0001.pdf" in zip)
-        assertTrue(zip["erros.txt"]!!.contains("NF502-S2-C0001: tempo esgotado"), zip["erros.txt"])
+        assertTrue("NF501-S2-C0001-Cliente_C0001.pdf" in zip)
+        assertTrue(zip["erros.txt"]!!.contains("NF502-S2-C0001-Cliente_C0001: tempo esgotado"), zip["erros.txt"])
         assertEquals(1, arquivo.notasComErro)
     }
 
@@ -319,8 +377,8 @@ class NotaFiscalLoteServiceTest {
         // 10 e 20 tem o mesmo numero; 10 demora, 20 termina antes
         val tax = taxNfe(atrasoMs = mapOf(10 to 300L))
         val zip = conteudo(servico(odbc(nota(10, 501), nota(20, 501)), tax).zip(listOf(10, 20), listOf(), true, false))
-        assertEquals("%PDF lote-10", zip["NF501-S2-C0001.pdf"])
-        assertEquals("%PDF lote-20", zip["NF501-S2-C0001-2.pdf"])
+        assertEquals("%PDF lote-10", zip["NF501-S2-C0001-Cliente_C0001.pdf"])
+        assertEquals("%PDF lote-20", zip["NF501-S2-C0001-Cliente_C0001-2.pdf"])
     }
 
     @Test
@@ -336,8 +394,8 @@ class NotaFiscalLoteServiceTest {
         val tax = taxNfe(falhaInterna = mapOf(11 to IOException("connect 10.117.163.209:5000 recusado")))
         val zip = conteudo(servico(odbc(nota(10, 501), nota(11, 502)), tax, bank = bank).zip(listOf(10, 11), listOf(), true, false, true))
         val erros = zip["erros.txt"]!!
-        assertTrue(erros.contains("NF501-S2-C0001: consulta de boleto na BankPlus falhou (HTTP 500)"), erros)
-        assertTrue(erros.contains("NF502-S2-C0001: consulta na TaxPlus falhou (sem resposta do servico)"), erros)
+        assertTrue(erros.contains("NF501-S2-C0001-Cliente_C0001: consulta de boleto na BankPlus falhou (HTTP 500)"), erros)
+        assertTrue(erros.contains("NF502-S2-C0001-Cliente_C0001: consulta na TaxPlus falhou (sem resposta do servico)"), erros)
         assertFalse(erros.contains("segredo-interno") || erros.contains("10.117"), erros)
     }
 
@@ -346,8 +404,8 @@ class NotaFiscalLoteServiceTest {
         val tax = taxNfe(falhaInterna = mapOf(10 to IllegalStateException("bug")))
         val arquivo = servico(odbc(nota(10, 501), nota(11, 502)), tax).zip(listOf(10, 11), listOf(), true, false)
         val zip = conteudo(arquivo)
-        assertTrue("NF502-S2-C0001.pdf" in zip)
-        assertTrue(zip["erros.txt"]!!.contains("NF501-S2-C0001: consulta na TaxPlus falhou (erro interno (IllegalStateException))"), zip["erros.txt"])
+        assertTrue("NF502-S2-C0001-Cliente_C0001.pdf" in zip)
+        assertTrue(zip["erros.txt"]!!.contains("NF501-S2-C0001-Cliente_C0001: consulta na TaxPlus falhou (erro interno (IllegalStateException))"), zip["erros.txt"])
     }
 
     @Test
@@ -357,8 +415,8 @@ class NotaFiscalLoteServiceTest {
         val arquivo = servico(odbc(adiantamento(77, 5831)), tax, bank = bank).zip(listOf(), listOf(77), true, true, true)
 
         val zip = conteudo(arquivo)
-        assertEquals(setOf("boleto/AD5831-VF412-C0001-parcela1.pdf", "avisos.txt"), zip.keys)
-        assertTrue(zip["avisos.txt"]!!.contains("AD5831-VF412-C0001: adiantamento nao emite NF-e"), zip["avisos.txt"])
+        assertEquals(setOf("boleto/AD5831-VF412-C0001-Cliente_C0001-parcela1.pdf", "avisos.txt"), zip.keys)
+        assertTrue(zip["avisos.txt"]!!.contains("AD5831-VF412-C0001-Cliente_C0001: adiantamento nao emite NF-e"), zip["avisos.txt"])
         assertTrue(chamadasTax.isEmpty())
         assertTrue(chamadasBankPlus.contains("boletos filial=2 doc=77 prazo=true origem=adiantamento"), chamadasBankPlus.toString())
         assertEquals(0, arquivo.notasComErro)
@@ -368,7 +426,7 @@ class NotaFiscalLoteServiceTest {
     fun `NF e adiantamento com o mesmo DocEntry sao documentos diferentes`() {
         val arquivo = servico(odbc(nota(10, 501), adiantamento(10, 5831))).zip(listOf(10), listOf(10), true, false)
         val zip = conteudo(arquivo)
-        assertTrue("NF501-S2-C0001.pdf" in zip, zip.keys.toString())
+        assertTrue("NF501-S2-C0001-Cliente_C0001.pdf" in zip, zip.keys.toString())
         assertTrue(zip["avisos.txt"]!!.contains("AD5831"), zip["avisos.txt"])
         assertEquals(0, arquivo.notasComErro)
         val params = consultas.single().second

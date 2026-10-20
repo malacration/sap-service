@@ -49,6 +49,7 @@ class NotaFiscalLoteService(
     // Teto do lote inteiro. O RestTemplate da BankPlus nao tem timeout de leitura: sem isso uma
     // resposta pendurada prenderia a requisicao para sempre.
     @Value("\${nota-fiscal.lote.prazo-segundos:300}") val prazoSegundos: Long = 300,
+    val contratoPdf: ContratoVendaFuturaPdfService? = null,
 ) {
 
     private val logger = LoggerFactory.getLogger(NotaFiscalLoteService::class.java)
@@ -97,12 +98,15 @@ class NotaFiscalLoteService(
         if (filtro.numeroDe != null && filtro.numeroAte != null && filtro.numeroDe > filtro.numeroAte)
             throw Exception("A NF inicial e maior que a final.")
         val semVencimento = filtro.vencimentoDe.isNullOrBlank() && filtro.vencimentoAte.isNullOrBlank()
+        val listagem = docEntries.isEmpty() && adiantamentos.isEmpty()
         return mapOf(
             "dataInicial" to dataInicial,
             "dataFinal" to dataFinal,
             "todasFiliais" to if (filiais.isEmpty()) 1 else 0,
             "filiais" to filiais.ifEmpty { listOf(-1) },
-            "todosDocs" to if (docEntries.isEmpty() && adiantamentos.isEmpty()) 1 else 0,
+            "todosDocs" to if (listagem) 1 else 0,
+            // Listagem: uma linha por parcela, salvo pedido por documento. Download e troca: uma por documento.
+            "porParcela" to if (listagem && !filtro.porDocumento) 1 else 0,
             "docEntries" to docEntries.ifEmpty { listOf(-1) },
             "adiantamentos" to adiantamentos.ifEmpty { listOf(-1) },
             // :tipo desliga a perna inteira do SQL; :categoria separa NF de saida da NF futura antiga.
@@ -138,12 +142,12 @@ class NotaFiscalLoteService(
      * com DANFE, XML e boletos passam de 40 MB). Quem chama apaga o arquivo depois de enviar.
      */
     fun zip(docEntries: List<Int>, adiantamentos: List<Int>, pdf: Boolean, xml: Boolean,
-            boleto: Boolean = false): NotaFiscalLoteArquivo {
+            boleto: Boolean = false, contrato: Boolean = false, logo: String? = null): NotaFiscalLoteArquivo {
         val pedidas = chaves(docEntries, adiantamentos)
         if (pedidas.isEmpty())
             throw Exception("Selecione ao menos um documento.")
-        if (!pdf && !xml && !boleto)
-            throw Exception("Escolha baixar o DANFE, o XML, o boleto ou mais de um.")
+        if (!pdf && !xml && !boleto && !contrato)
+            throw Exception("Escolha baixar o DANFE, o XML, o boleto, o contrato ou mais de um.")
         if (pedidas.size > maximo)
             throw Exception("O lote aceita no maximo $maximo documentos por vez; foram selecionados ${pedidas.size}.")
 
@@ -156,13 +160,16 @@ class NotaFiscalLoteService(
         // SEFAZ, e o nome do arquivo sai do numero da nota.
         val porChave = buscaDocumentos(docEntries, adiantamentos).associateBy { it.chave }
         val notas = pedidas.mapNotNull { porChave[it] }
+        // So contrato marcado e nenhum adiantamento: o zip sairia vazio, como se tivesse dado certo.
+        if (contrato && !pdf && !xml && !boleto && notas.none { it.tipo == TipoDocumentoLote.AD && it.contratoDocEntry != null })
+            throw Exception("O contrato so vem de adiantamento de venda futura, e o lote nao tem nenhum.")
         // Nome decidido antes do paralelo e na ordem pedida: a nota que termina primeiro nao
         // pega o nome sem sufixo de outra com o mesmo numero.
         val bases = mutableSetOf<String>()
         val basePorDoc = notas.associate { it.chave to nomeUnico(nomeBase(it), bases) }
         val bankPlusDisponivel = !boleto || carregaEmpresasBankPlus()
 
-        val emPastas = listOf(pdf, xml, boleto).count { it } > 1
+        val emPastas = listOf(pdf, xml, boleto, contrato).count { it } > 1
         val caminhos = mutableSetOf<String>()
         val errosPorDoc = mutableMapOf<ChaveDocumentoLote, List<String>>()
         val avisosPorDoc = mutableMapOf<ChaveDocumentoLote, List<String>>()
@@ -183,6 +190,8 @@ class NotaFiscalLoteService(
                     avisosPorDoc[resultado.nota.chave] = resultado.avisos.map { "$base: $it" }
                     if (resultado.semBoleto) notasSemBoleto++
                 }
+                if (contrato)
+                    contratos(notas, logo, emPastas, caminhos, zip, errosPorDoc)
                 // Na ordem pedida, nao na de conclusao, para o arquivo ser legivel.
                 val erros = pedidas.flatMap { doc ->
                     if (doc !in porChave) listOf(naoEncontrado(doc))
@@ -201,6 +210,40 @@ class NotaFiscalLoteService(
         val notasComErro = (pedidas.size - notas.size) + errosPorDoc.values.count { it.isNotEmpty() }
         val nome = "notas-fiscais-${LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-HHmm"))}.zip"
         return NotaFiscalLoteArquivo(nome, arquivo, notasComErro, notasSemBoleto)
+    }
+
+    /**
+     * Um PDF por contrato de venda futura dos adiantamentos do lote ("VF<n>.pdf"; varios
+     * adiantamentos do mesmo contrato geram um so). NF fica de fora em silencio: o contrato so
+     * vem de adiantamento, e a tela ja diz isso. Falha num contrato vira erro dos adiantamentos
+     * dele, sem derrubar o zip.
+     */
+    private fun contratos(notas: List<NotaFiscalResumo>, logo: String?, emPastas: Boolean, caminhos: MutableSet<String>, zip: ZipOutputStream,
+                          errosPorDoc: MutableMap<ChaveDocumentoLote, List<String>>) {
+        val comContrato = notas.filter { it.tipo == TipoDocumentoLote.AD && it.contratoDocEntry != null }
+        if (comContrato.isEmpty())
+            return
+        val gerador = contratoPdf ?: throw IllegalStateException("Gerador do PDF do contrato nao configurado")
+        val resultados = try {
+            gerador.gerar(comContrato.mapNotNull { it.contratoDocEntry }, logo)
+        } catch (t: Throwable) {
+            logger.warn("Lote NF: falha ao buscar os contratos de venda futura", t)
+            comContrato.mapNotNull { it.contratoDocEntry }.associateWith { Result.failure(t) }
+        }
+        val pasta = if (emPastas) "contrato/" else ""
+        resultados.forEach { (docEntry, resultado) ->
+            resultado.onSuccess { pdf ->
+                val caminho = nomeUnico("${pasta}VF${pdf.docNum ?: docEntry}" + (nomeCliente(pdf.cliente)?.let { "-$it" } ?: ""), caminhos)
+                zip.putNextEntry(ZipEntry("$caminho.pdf"))
+                zip.write(pdf.conteudo)
+                zip.closeEntry()
+            }.onFailure { t ->
+                logger.warn("Lote NF: falha no PDF do contrato $docEntry", t)
+                comContrato.filter { it.contratoDocEntry == docEntry }.forEach {
+                    errosPorDoc.merge(it.chave, listOf("${nomeBase(it)}: contrato nao gerado (${if (t.javaClass == Exception::class.java) t.message else motivo(t)})"), List<String>::plus)
+                }
+            }
+        }
     }
 
     private fun ZipOutputStream.texto(nome: String, linhas: List<String>) {
@@ -386,6 +429,8 @@ class NotaFiscalLoteService(
         TipoDocumentoLote.AD -> OrigemBoletoEnum.adiantamento
     }
 
+    // "NF501-S2-C0001-JOAO_DA_SILVA": numero, serie, codigo e nome do cliente (quem abre o zip
+    // procura pelo nome).
     private fun nomeBase(nota: NotaFiscalResumo): String {
         val numero = nota.numero?.toString() ?: "doc${nota.docEntry}"
         val cliente = nota.cardCode?.let { "-$it" } ?: ""
@@ -393,7 +438,7 @@ class NotaFiscalLoteService(
             TipoDocumentoLote.NF -> "NF$numero" + (nota.serie?.takeIf { it.isNotBlank() }?.let { "-S$it" } ?: "")
             TipoDocumentoLote.AD -> "AD$numero" + (nota.contrato?.let { "-VF$it" } ?: "")
         }
-        return "$base$cliente".replace(Regex("[^A-Za-z0-9._-]"), "_")
+        return "$base$cliente".replace(Regex("[^A-Za-z0-9._-]"), "_") + (nomeCliente(nota.cardName)?.let { "-$it" } ?: "")
     }
 
     private fun nomeUnico(base: String, usados: MutableSet<String>): String {
@@ -402,6 +447,13 @@ class NotaFiscalLoteService(
         while (!usados.add(nome))
             nome = "$base-${i++}"
         return nome
+    }
+
+    companion object {
+        // Nome do cliente para nome de arquivo: sem acento, so letra/numero/_ e ate 40 caracteres.
+        fun nomeCliente(nome: String?): String? = nome
+            ?.let { java.text.Normalizer.normalize(it, java.text.Normalizer.Form.NFD).replace(Regex("\\p{M}"), "") }
+            ?.replace(Regex("[^A-Za-z0-9]+"), "_")?.trim('_')?.take(40)?.trimEnd('_')?.ifEmpty { null }
     }
 
     private enum class TipoArquivo(val pasta: String, val extensao: String) {

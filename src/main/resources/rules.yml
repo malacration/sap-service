@@ -375,6 +375,9 @@ roles:
       actions: ["get"]
     - url: "/nota-fiscal-lote/formas-pagamento"
       actions: ["get"]
+    # Monta o lote a partir da planilha de titulos do banco (so le).
+    - url: "/nota-fiscal-lote/importar-planilha"
+      actions: ["post"]
     # Troca a forma de pagamento dos documentos do lote (grava no SAP; vincula a forma ao parceiro
     # quando falta). Mesmo perfil do download, por decisao do usuario.
     - url: "/nota-fiscal-lote/forma-pagamento"

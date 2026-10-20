@@ -4,6 +4,7 @@ import br.andrew.sap.model.bankplus.Boleto
 import br.andrew.sap.model.fiscal.SituacaoTrocaFormaPagamento.ATUALIZADO
 import br.andrew.sap.model.fiscal.SituacaoTrocaFormaPagamento.ERRO
 import br.andrew.sap.model.fiscal.SituacaoTrocaFormaPagamento.NAO_ENCONTRADO
+import br.andrew.sap.model.fiscal.SituacaoTrocaFormaPagamento.NAO_PERMITIDO
 import br.andrew.sap.model.fiscal.SituacaoTrocaFormaPagamento.SEM_CONFIRMACAO
 import br.andrew.sap.model.fiscal.SituacaoTrocaFormaPagamento.SEM_MUDANCA
 import br.andrew.sap.model.fiscal.SituacaoTrocaFormaPagamento.VINCULADO_E_ATUALIZADO
@@ -451,16 +452,44 @@ class NotaFiscalLoteFormaPagamentoServiceTest {
     }
 
     @Test
-    fun `recusa em NF futura antiga e em documento fechado vem explicada`() {
+    fun `recusa em documento fechado vem explicada`() {
         cadastro["C1"] = mutableSetOf("pix-vencimento")
-        recusas["NF-10"] = erroSap("[OINV.PeyMethod] , 'Field cannot be updated (ODBC -1029)'")
         recusas["NF-11"] = erroSap("[OINV.PeyMethod] , 'Field cannot be updated (ODBC -1029)'")
-        val r = troca(servico(doc("NF", 10, "C1", "AVISTA", categoria = "NF_FUTURA"), doc("NF", 11, "C1", "AVISTA", statusSap = "FECHADO")),
-            "pix-vencimento", listOf(10, 11))
-        assertEquals(listOf(ERRO, ERRO), r.map { it.situacao })
-        assertTrue(r[0].mensagem!!.startsWith("NF de venda futura do padrao antigo (fatura de reserva com entrega)"), r[0].mensagem)
-        assertTrue(r[0].mensagem!!.endsWith("'Field cannot be updated (ODBC -1029)'"), r[0].mensagem)
-        assertTrue(r[1].mensagem!!.startsWith("documento fechado: o SAP nao deixa trocar a forma"), r[1].mensagem)
+        val r = troca(servico(doc("NF", 11, "C1", "AVISTA", statusSap = "FECHADO")), "pix-vencimento", listOf(11)).single()
+        assertEquals(ERRO, r.situacao)
+        assertTrue(r.mensagem!!.startsWith("documento fechado: o SAP nao deixa trocar a forma"), r.mensagem)
+        assertTrue(r.mensagem!!.endsWith("'Field cannot be updated (ODBC -1029)'"), r.mensagem)
+    }
+
+    @Test
+    fun `NF de venda futura antiga nem e tentada, e o resto do lote segue`() {
+        cadastro["C1"] = mutableSetOf("pix-vencimento")
+        cadastro["C2"] = mutableSetOf("pix-vencimento")
+        // se fosse tentada, o SAP recusaria
+        recusas["NF-10"] = erroSap("[OINV.PeyMethod] , 'Field cannot be updated (ODBC -1029)'")
+        val r = troca(servico(doc("NF", 10, "C1", "AVISTA", categoria = "NF_FUTURA"), doc("NF", 11, "C1", "AVISTA"),
+            doc("AD", 12, "C2", "AVISTA")), "pix-vencimento", listOf(10, 11), listOf(12))
+        assertEquals(listOf(NAO_PERMITIDO, ATUALIZADO, ATUALIZADO), r.map { it.situacao })
+        assertEquals("NF de venda futura do padrao antigo (fatura de reserva com entrega): o SAP nao deixa trocar a forma", r[0].mensagem)
+        assertEquals(CategoriaDocumentoLote.NF_FUTURA, r[0].categoria)
+        assertEquals(setOf("NF-11=pix-vencimento", "AD-12=pix-vencimento"), patches.toSet())
+        assertTrue(vinculos.isEmpty())
+    }
+
+    @Test
+    fun `NF de venda futura antiga ja com a forma e sem mudanca, nao bloqueio`() {
+        cadastro["C1"] = mutableSetOf("pix-vencimento")
+        val r = troca(servico(doc("NF", 10, "C1", "pix-vencimento", categoria = "NF_FUTURA")), "pix-vencimento", listOf(10)).single()
+        assertEquals(SEM_MUDANCA, r.situacao)
+        assertTrue(patches.isEmpty())
+    }
+
+    @Test
+    fun `lote so de NF de venda futura antiga nao consulta o cadastro nem grava`() {
+        val r = troca(servico(doc("NF", 10, "C1", "AVISTA", categoria = "NF_FUTURA")), "pix-vencimento", listOf(10)).single()
+        assertEquals(NAO_PERMITIDO, r.situacao)
+        assertTrue(consultasCrd2.isEmpty())
+        assertTrue(patches.isEmpty())
     }
 
     @Test
