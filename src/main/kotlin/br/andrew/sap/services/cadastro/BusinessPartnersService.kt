@@ -1,6 +1,5 @@
 package br.andrew.sap.services.cadastro
 import br.andrew.sap.infrastructure.odata.*
-import br.andrew.sap.infrastructure.toInt
 import br.andrew.sap.model.authentication.User
 import br.andrew.sap.model.bank.PaymentMethod
 import br.andrew.sap.model.dto.ContasReceberDto
