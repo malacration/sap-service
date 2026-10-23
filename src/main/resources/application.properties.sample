@@ -115,6 +115,13 @@ trava.otp.length=6
 # Provisiona/semeia o catalogo de regras de trava (UDO TRAVA_REGRA) no boot.
 fields.trava=true
 
+# ----- Download em lote de NF-e (DANFE + XML) -----
+# Os arquivos vem da TaxPlus (taxplus.nfe.*): 1 consulta por nota + 1 chamada por arquivo.
+# Teto de notas por zip; o front usa 200 para a selecao, entao subir aqui pede ajuste la.
+nota-fiscal.lote.maximo=200
+# Quantas notas sao buscadas em paralelo na TaxPlus.
+nota-fiscal.lote.paralelismo=4
+
 # Gestao das regras de acesso (o que antes so existia no rules.yml) pela tela
 # Configuracoes > Regras de Acesso. Cada alteracao vira uma versao no UDO ACESSO_REGRAS.
 # Provisiona o UDO, cria a versao 1 a partir do arquivo em uso (so se estiver vazio) e habilita

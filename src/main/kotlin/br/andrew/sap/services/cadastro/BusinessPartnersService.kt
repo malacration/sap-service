@@ -115,6 +115,19 @@ class BusinessPartnersService(
     }
 
     fun fullSearchTextFallBack(fullText: String, user: User): NextLink<BusinessPartnerSlin> {
+        return fullSearchTextNoEscopo(fullText, user.superVendedor(), user.principal)
+    }
+
+    /**
+     * Busca sem o recorte da carteira do vendedor. Para tela cujo perfil ja enxerga documento de
+     * qualquer cliente (o download em lote de NF-e): ali o recorte so impediria de achar o
+     * cliente no filtro. Nao serve para tela de venda.
+     */
+    fun fullSearchTextTodosClientes(fullText: String, user: User): NextLink<BusinessPartnerSlin> {
+        return fullSearchTextNoEscopo(fullText, Int.MAX_VALUE, user.principal)
+    }
+
+    private fun fullSearchTextNoEscopo(fullText: String, superVendedor: Int, vendedor: Any): NextLink<BusinessPartnerSlin> {
         if (fullText.startsWith("SQLQueries('parceiro-full-search-text.sql')"))
             return sqlQueriesService.nextLink(fullText)!!.tryGetNextValues()
         //Termo em maiusculo: o HANA e case sensitive no LIKE, e o normalizador deixa CardName
@@ -124,9 +137,9 @@ class BusinessPartnersService(
         val busca =
             if (fullText.toDoubleOrNull() == null) fullText.replace("*", "%").uppercase(Locale.ROOT) else CpfCnpj(fullText).getWithMask();
         val parametros = listOf(
-            Parameter("superVendedor", user.superVendedor()),
+            Parameter("superVendedor", superVendedor),
             Parameter("valor", "'%${busca}%'"),
-            Parameter("vendedor", user.principal)
+            Parameter("vendedor", vendedor)
         )
         return sqlQueriesService
             .execute("parceiro-full-search-text.sql", parametros)!!

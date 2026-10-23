@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <style>
+        body { font-family: Arial, sans-serif; font-size: 11pt; line-height: 1.4; margin: 0; }
+        .header { text-align: center; margin-bottom: 14px; }
+        .logo { width: 150px; }
+        h1 { text-align: center; font-size: 20pt; color: #1ba13f; margin: 0 0 16px 0; }
+        .info p { margin: 4px 0; }
+        table.produtos { width: 100%; border-collapse: collapse; margin-top: 14px; }
+        table.produtos th, table.produtos td { border: 1px solid #ccc; padding: 7px; text-align: left; font-size: 10pt; }
+        table.produtos th { background: #f2f2f2; font-weight: bold; }
+        table.produtos td.num { text-align: right; }
+        .condicoes { background-color: #f9f9f9; border: 1px solid #ccc; padding: 12px; margin-top: 18px; }
+        .condicoes h3 { color: #1ba13f; margin: 0 0 8px 0; }
+        .condicoes ol { padding-left: 18px; margin: 0; }
+        .condicoes li { margin-bottom: 12px; text-align: justify; }
+        table.rodape { width: 100%; margin-top: 28px; }
+        table.rodape td { width: 50%; }
+    </style>
+</head>
+<body>
+<div class="header" th:if="${logo}"><img class="logo" th:src="${logo}" alt="Logo"/></div>
+<h1>CONTROLE DE PEDIDO</h1>
+
+<div class="info">
+    <p><strong>Contrato:</strong> <span th:text="${numero}">VF 0</span></p>
+    <p><strong>Nome:</strong> <span th:text="${nome}">Cliente</span></p>
+    <p><strong>Data:</strong> <span th:text="${data}">01/01/2026</span></p>
+    <p>Produtos: <span th:text="${totalProdutos}">R$ 0,00</span></p>
+    <p>Valor Frete: <span th:text="${frete}">R$ 0,00</span></p>
+    <p><strong>Total a Pagar:</strong> <span th:text="${total}">R$ 0,00</span></p>
+</div>
+
+<table class="produtos">
+    <thead>
+    <tr><th>Descrição</th><th>Quantidade</th><th>Preço Negociado</th><th>Total</th></tr>
+    </thead>
+    <tbody>
+    <tr th:each="item : ${itens}">
+        <td th:text="${item.descricao}">Produto</td>
+        <td class="num" th:text="${item.quantidade}">1</td>
+        <td class="num" th:text="${item.preco}">R$ 0,00</td>
+        <td class="num" th:text="${item.total}">R$ 0,00</td>
+    </tr>
+    </tbody>
+</table>
+
+<div class="condicoes">
+    <h3>Cláusulas e condições:</h3>
+    <ol>
+        <li>
+            Este Pedido tem por objeto a venda de nutrição animal, na modalidade futura,
+            conforme as especificações acima, pelo qual o VENDEDOR (Sustennutri Nutrição
+            Animal Ltda CNPJ 09.054.087/0001-54) realiza ao COMPRADOR a venda antecipada
+            do Produto, para posterior entrega, que será realizada no seguinte:
+            <br/><br/>
+            Endereço: __________________________________ Nº: ____________<br/>
+            Bairro: ______________________, Cidade: _____________________
+        </li>
+        <li>
+            O prazo máximo de entrega do Produto será de 180 (cento e oitenta) dias, a
+            partir da data de assinatura deste Pedido, limitado ao ano vigente da assinatura
+            deste instrumento. 2.O COMPRADOR formalizará o pedido de entrega do Produto, e a entrega será
+            realizada no prazo de até 10 (dez) dias da data da solicitação de entrega. 3. Caso o COMPRADOR manifeste interesse de alterar o Produto adquirido, terá
+            o prazo de 30 (trinta) dias para informar ao VENDEDOR qual o Produto a ser
+            entregue, sempre observando que o prazo de 180 (cento e oitenta) dias para
+            entrega do Produto, previsto na Cláusula 2, não poderá ser prorrogado sob
+            hipótese alguma. 4.O inadimplemento, total ou parcial, quanto ao pagamento do preço do Produto,
+            sujeitará o COMPRADOR, independentemente de notificação ou interpelação, à
+            multa de 2% (dois por cento) sobre o valor inadimplido, correção monetária e
+            juros moratórios de 1% (um por cento) ao mês, calculados pro rata die, até o
+            efetivo pagamento. 5. Será observada a legislação quanto às retenções e/ou descontos tributários.
+            6.Este Pedido é firmado em caráter irrevogável e irretratável.
+        </li>
+    </ol>
+</div>
+
+<table class="rodape">
+    <tr>
+        <td>CNPJ/CPF: <span th:text="${cpfCnpj}">000.000.000-00</span></td>
+        <td>ASSINATURA: __________________________</td>
+    </tr>
+</table>
+</body>
+</html>
