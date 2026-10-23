@@ -15,6 +15,9 @@ class Endereco(val rua : String,
 
     var complemento: String? = null
     var localidade: Int? = null
+    //AbsId do municipio (OCNT), que e o que o SAP guarda em County. A integracao do forca de
+    //vendas so manda o nome da cidade e continua caindo nele
+    var codigoMunicipio: String? = null
 
     fun getAddresse(localidade: Int?): Address {
         return Address().also {
@@ -22,7 +25,7 @@ class Endereco(val rua : String,
             it.StreetNo = numero
             it.Block = bairro
             it.City = cidade
-            it.County = cidade
+            it.County = codigoMunicipio?.takeIf { codigo -> codigo.isNotBlank() } ?: cidade
             it.State = estado
             it.ZipCode = cep
             it.Country = pais

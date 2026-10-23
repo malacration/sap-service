@@ -16,11 +16,12 @@ import org.mockito.kotlin.spy
 import org.mockito.kotlin.whenever
 
 /**
- * Acento e preservado no nome da localidade, tanto ao cadastrar quanto ao buscar.
+ * Acento e preservado no nome da localidade ao cadastrar, e a busca continua achando esse nome.
  *
- * Os dois lados precisam concordar: o LIKE do HANA e sensivel a acento do mesmo jeito que a
- * caixa. Se o cadastro guardasse "MANICORE" e a busca mandasse "MANICORÉ" (ou o contrario),
- * nunca casaria. O Code continua sem acento - ele e a chave do UDO.
+ * O LIKE do HANA e sensivel a acento do mesmo jeito que a caixa, mas o Service Layer recusa
+ * parametro com caractere fora do ASCII (704 "Parameter error.") - a busca nao pode mandar o
+ * acento. Cada letra acentuada vai como "_" (curinga de um caractere, Parameter.termoLike):
+ * "MANICOR_" casa com o "MANICORÉ" gravado. O Code continua sem acento - ele e a chave do UDO.
  */
 class LocalidadeAcentoTest {
 
@@ -46,8 +47,8 @@ class LocalidadeAcentoTest {
     }
 
     @Test
-    fun `busca preserva o acento digitado`() {
-        assertEquals("search='%MANICORÉ%'", termoBuscado("manicoré"))
+    fun `busca troca o acento digitado pelo curinga de um caractere`() {
+        assertEquals("search='%MANICOR_%'", termoBuscado("manicoré"))
     }
 
     @Test

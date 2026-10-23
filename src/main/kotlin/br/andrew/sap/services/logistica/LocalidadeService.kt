@@ -72,7 +72,7 @@ class LocalidadeService(val sqlQueriesService : SqlQueriesService, env : SapEnvr
         else
             CpfCnpj(fullText).getWithMask()
         val parametros = listOf(
-            Parameter("search","'%${busca}%'"),
+            Parameter("search","'%${Parameter.termoLike(busca)}%'"),
         )
         return sqlQueriesService
             .execute("search-locality.sql", parametros)!!

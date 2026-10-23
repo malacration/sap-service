@@ -76,7 +76,7 @@ class OrdersService(val sqlQueriesService : SqlQueriesService, env: SapEnvriomen
 
     fun SearchLocality(search: String): NextLink<Localidade>? {
         val titleCase = search.split(" ").joinToString(" ") { it.lowercase().replaceFirstChar { c -> c.uppercase() } }
-        val searchParam = "%${titleCase}%"
+        val searchParam = "%${Parameter.termoLike(titleCase)}%"
         logger.info("SearchLocality: entrada='$search' parametro='$searchParam'")
         val parameters = listOf(
             Parameter("search", searchParam)
