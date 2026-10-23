@@ -125,12 +125,28 @@ class BusinessPartnersService(
             if (fullText.toDoubleOrNull() == null) fullText.replace("*", "%").uppercase(Locale.ROOT) else CpfCnpj(fullText).getWithMask();
         val parametros = listOf(
             Parameter("superVendedor", user.superVendedor()),
-            Parameter("valor", "'%${busca}%'"),
+            Parameter("valor", "'%${Parameter.termoLike(busca)}%'"),
             Parameter("vendedor", user.principal)
         )
         return sqlQueriesService
             .execute("parceiro-full-search-text.sql", parametros)!!
             .tryGetNextValues()
+    }
+
+    /**
+     * CardCode do cliente que ja tem esse CPF/CNPJ, ou null - aqui "nao achou" e a resposta
+     * esperada. Nao usa a parceiro.sql do getByCpfCnpj: ela so olha CardCode 'CLI%'. Esta procura
+     * qualquer cliente (CardType C) e aceita o documento gravado com ou sem mascara.
+     */
+    fun cardCodeDoCpfCnpj(cpfCnpj: String): String? {
+        val documento = CpfCnpj(cpfCnpj)
+        return sqlQueriesService
+            .execute("parceiro-cliente-por-documento.sql", listOf(
+                Parameter("comMascara", "'${documento.getWithMask()}'"),
+                Parameter("semMascara", "'${documento.value}'")))
+            ?.tryGetValues<BusinessPartner>()
+            ?.firstOrNull()
+            ?.cardCode
     }
 
     fun searchBusinessPartners(search: String): List<BusinessPartnerSlin> {
@@ -141,7 +157,7 @@ class BusinessPartnersService(
         //mesma razao do fullSearchTextFallBack: LIKE case sensitive contra nome ja normalizado
         val busca = if (search.toDoubleOrNull() == null) search.replace("*", "%").uppercase(Locale.ROOT) else CpfCnpj(search).getWithMask()
         val parametros = listOf(
-            Parameter("valor", "'%$busca%'")
+            Parameter("valor", "'%${Parameter.termoLike(busca)}%'")
         )
 
         val result: NextLink<BusinessPartnerSlin> = sqlQueriesService
