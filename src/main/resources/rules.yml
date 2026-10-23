@@ -373,6 +373,8 @@ roles:
       actions: ["get"]
     - url: "/nota-fiscal-lote/status-sefaz"
       actions: ["get"]
+    - url: "/nota-fiscal-lote/status-boleto"
+      actions: ["get"]
     - url: "/nota-fiscal-lote/formas-pagamento"
       actions: ["get"]
     # Monta o lote a partir da planilha de titulos do banco (so le).

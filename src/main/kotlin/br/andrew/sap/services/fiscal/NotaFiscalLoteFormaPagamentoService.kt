@@ -92,9 +92,10 @@ class NotaFiscalLoteFormaPagamentoService(
 
     // Formas de recebimento ativas da OPYM. A tela oferece todas, nao so as do parceiro: a que
     // faltar no cadastro e vinculada na troca.
-    fun formas(): List<FormaPagamentoLote> {
-        return odbc.consultar(sqlFormas, mapOf(), 1000).rows.map {
-            FormaPagamentoLote(it["Codigo"].toString(), it["Descricao"]?.toString())
+    // Ativas: as que a troca aceita. [todas] = tambem as inativas, para o filtro da lista.
+    fun formas(todas: Boolean = false): List<FormaPagamentoLote> {
+        return odbc.consultar(sqlFormas, mapOf("somenteAtivas" to if (todas) 0 else 1), 1000).rows.map {
+            FormaPagamentoLote(it["Codigo"].toString(), it["Descricao"]?.toString(), it["Ativa"]?.toString() != "N")
         }
     }
 

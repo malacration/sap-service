@@ -35,6 +35,7 @@ import java.util.concurrent.ThreadPoolExecutor
 class NotaFiscalLoteFormaPagamentoServiceTest {
 
     private val formasAtivas = listOf("AVISTA", "BB-RC-BOL-1199", "pix-vencimento")
+    private val formasPedidas = mutableListOf<Any?>()
 
     private fun doc(tipo: String, docEntry: Int, cardCode: String, forma: String?, numero: Int = docEntry + 500,
                     categoria: String = tipo, statusSap: String = "ABERTO") = mapOf(
@@ -52,8 +53,13 @@ class NotaFiscalLoteFormaPagamentoServiceTest {
         @Suppress("UNCHECKED_CAST")
         val p = inv.arguments[1] as Map<String, Any?>
         Thread.sleep(atrasoOdbc)
-        if (sql.contains("OPYM"))
-            return@Answer QueryResponse(rows = formasAtivas.map { mapOf("Codigo" to it, "Descricao" to "Forma $it") })
+        // so a consulta de formas: a da lista tambem cita a OPYM (nome da forma)
+        if (sql.contains("AS \"Codigo\"")) {
+            formasPedidas.add(p["somenteAtivas"])
+            val todas = formasAtivas.map { mapOf("Codigo" to it, "Descricao" to "Forma $it", "Ativa" to "Y") } +
+                mapOf("Codigo" to "BB-RC-AUTO", "Descricao" to "Inativa", "Ativa" to "N")
+            return@Answer QueryResponse(rows = if (p["somenteAtivas"] == 1) todas.filter { it["Ativa"] == "Y" } else todas)
+        }
         if (sql.contains("CRD2")) {
             consultasCrd2.add(p)
             val com = (p["parceiros"] as List<*>).filter { p["forma"] in cadastro[it].orEmpty() }
@@ -500,7 +506,14 @@ class NotaFiscalLoteFormaPagamentoServiceTest {
     }
 
     @Test
-    fun `formas vem da OPYM de recebimento ativo`() {
-        assertEquals(formasAtivas, servico().formas().map { it.codigo })
+    fun `formas vem da OPYM de recebimento ativo, e com todas tambem as inativas`() {
+        val s = servico()
+        assertEquals(formasAtivas, s.formas().map { it.codigo })
+        val todas = s.formas(todas = true)
+        assertEquals(formasAtivas + "BB-RC-AUTO", todas.map { it.codigo })
+        assertEquals(false, todas.last().ativa)
+        assertEquals(listOf<Any?>(1, 0), formasPedidas)
+        // a troca so aceita as ativas
+        assertThrows(Exception::class.java) { troca(s, "BB-RC-AUTO", listOf(10)) }
     }
 }

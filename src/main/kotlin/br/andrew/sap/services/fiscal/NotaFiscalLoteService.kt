@@ -56,6 +56,7 @@ class NotaFiscalLoteService(
 
     private val sqlNotas by lazy { SqlResource.carregar("odbc/nota-fiscal-lote.sql") }
     private val sqlStatusSefaz by lazy { SqlResource.carregar("odbc/nota-fiscal-lote-status-sefaz.sql") }
+    private val sqlStatusBoleto by lazy { SqlResource.carregar("odbc/nota-fiscal-lote-status-boleto.sql") }
 
     fun listar(filtro: NotaFiscalLoteFiltro, page: Pageable): Page<NotaFiscalResumo> {
         // "Selecionar todas do filtro" pede uma pagina do tamanho do teto; acima disso nao baixaria.
@@ -71,6 +72,13 @@ class NotaFiscalLoteService(
     }
 
     private fun total(linha: Map<String, Any?>): Long = linha["Total"].toString().toBigDecimal().toLong()
+
+    // Mesmo formato do status SEFAZ (id + descricao).
+    fun statusBoleto(): List<StatusSefaz> {
+        return odbc.consultar(sqlStatusBoleto, mapOf(), 1000).rows.map {
+            StatusSefaz(it["Id"].toString().toBigDecimal().toInt(), it["Descricao"]?.toString())
+        }
+    }
 
     fun statusSefaz(): List<StatusSefaz> {
         return odbc.consultar(sqlStatusSefaz, mapOf(), 1000).rows.map {
@@ -112,6 +120,8 @@ class NotaFiscalLoteService(
             // :tipo desliga a perna inteira do SQL; :categoria separa NF de saida da NF futura antiga.
             "tipo" to (filtro.categoria?.tipo?.name ?: ""),
             "categoria" to (filtro.categoria?.name ?: ""),
+            "formaPagamento" to (filtro.formaPagamento?.trim() ?: ""),
+            "boletoStatus" to (filtro.boletoStatus ?: -2),
             "cardCode" to (filtro.cardCode?.trim() ?: ""),
             "vendedor" to (filtro.salesPersonCode ?: -1),
             "numeroDe" to (filtro.numeroDe ?: -1),

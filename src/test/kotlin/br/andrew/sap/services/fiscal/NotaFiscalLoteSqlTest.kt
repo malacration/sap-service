@@ -49,9 +49,38 @@ class NotaFiscalLoteSqlTest {
     }
 
     @Test
+    fun `filtro de forma de pagamento - vazio e todas, traco e sem forma, codigo vai como veio`() {
+        assertEquals("", servico.parametros(NotaFiscalLoteFiltro(), listOf(), listOf(), 0, 50)["formaPagamento"])
+        assertEquals("-", servico.parametros(NotaFiscalLoteFiltro(formaPagamento = br.andrew.sap.model.fiscal.SEM_FORMA_PAGAMENTO), listOf(), listOf(), 0, 50)["formaPagamento"])
+        assertEquals("BB-RC-BOL-1199", servico.parametros(NotaFiscalLoteFiltro(formaPagamento = " BB-RC-BOL-1199 "), listOf(), listOf(), 0, 50)["formaPagamento"])
+        assertTrue(sql.contains("(:formaPagamento = '-' AND IFNULL(\"FormaPagamento\", '') = '')"))
+    }
+
+    @Test
+    fun `filtro de boleto da BankPlus - menos dois e todos, menos um e sem boleto`() {
+        assertEquals(-2, servico.parametros(NotaFiscalLoteFiltro(), listOf(), listOf(), 0, 50)["boletoStatus"])
+        assertEquals(-1, servico.parametros(NotaFiscalLoteFiltro(boletoStatus = br.andrew.sap.model.fiscal.SEM_BOLETO), listOf(), listOf(), 0, 50)["boletoStatus"])
+        assertEquals(3, servico.parametros(NotaFiscalLoteFiltro(boletoStatus = 3), listOf(), listOf(), 0, 50)["boletoStatus"])
+        // boleto mais recente por parcela, nas duas pernas (NF 13, adiantamento 203)
+        assertTrue(sql.contains("ORDER BY B.\"ID\" DESC) AS \"Ordem\""))
+        assertEquals(2, Regex("LEFT JOIN BOLETOS BO ON BO.\"DocType\" = (13|203)").findAll(sql).count())
+        // por documento, vencimento e status do boleto na MESMA parcela (um EXISTS so por perna)
+        assertEquals(2, Regex("(?s)EXISTS \\(\\s*SELECT 1 FROM (INV6|DPI6) VI\\s+LEFT JOIN BOLETOS VB.*?:vencimentoDe.*?:boletoStatus").findAll(sql).count())
+        val statusBoleto = SqlResource.carregar("odbc/nota-fiscal-lote-status-boleto.sql")
+        assertEquals(setOf<String>(), parametrosDoSql(statusBoleto))
+    }
+
+    @Test
     fun `linha traz numero, valor e vencimento da parcela`() {
         val r = br.andrew.sap.model.fiscal.NotaFiscalResumo.from(mapOf("Tipo" to "NF", "DocEntry" to 10, "Parcelas" to 3,
-            "Parcela" to 2, "ValorParcela" to "333.33", "VencimentoParcela" to "2026-11-20T00:00", "DocTotal" to "1000"))
+            "Parcela" to 2, "ValorParcela" to "333.33", "VencimentoParcela" to "2026-11-20T00:00", "DocTotal" to "1000",
+            "NossoNumero" to "35158540000021002", "BoletoStatusId" to 3, "BoletoStatus" to "Confirmado", "BoletoSituacao" to "Normal",
+            "FormaPagamento" to "AVISTA", "FormaPagamentoNome" to "DEPOSITO"))
+        assertEquals("35158540000021002", r.nossoNumero)
+        assertEquals(3, r.boletoStatusId)
+        assertEquals("Confirmado", r.boletoStatus)
+        assertEquals("Normal", r.boletoSituacao)
+        assertEquals("DEPOSITO", r.formaPagamentoNome)
         assertEquals(2, r.parcela)
         assertEquals("333.33".toBigDecimal(), r.valorParcela)
         assertEquals("2026-11-20", r.vencimentoParcela)
@@ -72,10 +101,12 @@ class NotaFiscalLoteSqlTest {
     }
 
     @Test
-    fun `formas de pagamento nao tem parametro e so pega recebimento ativo`() {
+    fun `formas de pagamento so de recebimento, ativas ou todas pelo parametro`() {
         val formas = SqlResource.carregar("odbc/nota-fiscal-lote-formas-pagamento.sql")
-        assertEquals(setOf<String>(), parametrosDoSql(formas))
-        assertTrue(formas.contains("\"Type\" = 'I'") && formas.contains("\"Active\" = 'Y'"))
+        assertEquals(setOf("somenteAtivas"), parametrosDoSql(formas))
+        assertTrue(formas.contains("\"Type\" = 'I'") && formas.contains("(:somenteAtivas = 0 OR \"Active\" = 'Y')"))
+        // a lista traz o nome da forma nas duas pernas
+        assertEquals(2, Regex("LEFT JOIN OPYM FP ON FP.\"PayMethCod\" = [ND].\"PeyMethod\"").findAll(sql).count())
         assertFalse(formas.contains("--"))
     }
 

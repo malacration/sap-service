@@ -35,8 +35,10 @@ class NotaFiscalLoteImportacaoServiceTest {
         val sql = inv.arguments[0] as String
         @Suppress("UNCHECKED_CAST")
         val p = inv.arguments[1] as Map<String, Any?>
-        consultas.add(if (sql.contains("IV_IB_BillOfExchange")) "boletos" else "documentos")
-        if (sql.contains("IV_IB_BillOfExchange"))
+        // so a consulta dos boletos tem :nossosNumeros (a da lista tambem cita IV_IB_BillOfExchange)
+        val ehBoletos = sql.contains(":nossosNumeros")
+        consultas.add(if (ehBoletos) "boletos" else "documentos")
+        if (ehBoletos)
             return@Answer QueryResponse(rows = boletos.filter { it["NossoNumero"] in (p["nossosNumeros"] as List<*>) })
         QueryResponse(rows = naTela.filter {
             val lista = if (it["Tipo"] == "AD") p["adiantamentos"] else p["docEntries"]

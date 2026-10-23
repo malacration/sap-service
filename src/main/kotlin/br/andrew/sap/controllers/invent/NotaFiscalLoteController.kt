@@ -54,18 +54,24 @@ class NotaFiscalLoteController(val service: NotaFiscalLoteService,
                @RequestParam(required = false) statusSap: StatusSapNota? = null,
                @RequestParam(required = false) statusSefaz: Int? = null,
                @RequestParam(required = false) categoria: CategoriaDocumentoLote? = null,
+               @RequestParam(required = false) formaPagamento: String? = null,
+               @RequestParam(required = false) boletoStatus: Int? = null,
                @RequestParam(required = false) porDocumento: Boolean? = null,
                page: Pageable): Page<NotaFiscalResumo> {
         return service.listar(NotaFiscalLoteFiltro(
             dataInicial = dataInicial, dataFinal = dataFinal, filial = filial, cardCode = cardCode,
             salesPersonCode = salesPersonCode, numeroDe = numeroDe, numeroAte = numeroAte,
             vencimentoDe = vencimentoDe, vencimentoAte = vencimentoAte,
-            statusSap = statusSap, statusSefaz = statusSefaz, categoria = categoria,
+            statusSap = statusSap, statusSefaz = statusSefaz, categoria = categoria, formaPagamento = formaPagamento,
+            boletoStatus = boletoStatus,
             porDocumento = porDocumento == true), page)
     }
 
     @GetMapping("status-sefaz")
     fun statusSefaz(): List<StatusSefaz> = service.statusSefaz()
+
+    @GetMapping("status-boleto")
+    fun statusBoleto(): List<StatusSefaz> = service.statusBoleto()
 
     // Planilha de titulos do banco (.xlsx, arquivo cru no corpo): devolve os documentos para o lote
     // e o que aconteceu com cada linha. Nao grava nada. O corpo e lido com teto (nao pelo conversor,
@@ -82,8 +88,10 @@ class NotaFiscalLoteController(val service: NotaFiscalLoteService,
         return importacaoService.importar(conteudo)
     }
 
+    // todas = tambem as inativas (filtro da lista); sem ele, so as que a troca aceita.
     @GetMapping("formas-pagamento")
-    fun formasPagamento(): List<FormaPagamentoLote> = formaPagamentoService.formas()
+    fun formasPagamento(@RequestParam(defaultValue = "false") todas: Boolean): List<FormaPagamentoLote> =
+        formaPagamentoService.formas(todas)
 
     // Grava no SAP (documento e, se preciso, cadastro do parceiro). Um resultado por documento.
     @PostMapping("forma-pagamento")

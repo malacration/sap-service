@@ -26,6 +26,7 @@ class NotaFiscalLoteRulesTest {
         assertTrue(autorizacao.isAuthorized("/nota-fiscal-lote", "get", u))
         assertTrue(autorizacao.isAuthorized("/nota-fiscal-lote/download", "post", u))
         assertTrue(autorizacao.isAuthorized("/nota-fiscal-lote/status-sefaz", "get", u))
+        assertTrue(autorizacao.isAuthorized("/nota-fiscal-lote/status-boleto", "get", u))
         // troca de forma de pagamento: mesmo perfil (decisao do usuario)
         assertTrue(autorizacao.isAuthorized("/nota-fiscal-lote/formas-pagamento", "get", u))
         assertTrue(autorizacao.isAuthorized("/nota-fiscal-lote/forma-pagamento", "post", u))

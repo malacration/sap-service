@@ -41,6 +41,13 @@ class NotaFiscalResumo(
     val vendedor: String?,
     // PeyMethod do documento (codigo da OPYM).
     val formaPagamento: String?,
+    // Descript da OPYM, para a tela mostrar o nome e nao so o codigo.
+    val formaPagamentoNome: String? = null,
+    // Boleto da BankPlus desta parcela (o mais recente): nosso numero, status e situacao. Nulo = sem boleto.
+    val nossoNumero: String? = null,
+    val boletoStatusId: Int? = null,
+    val boletoStatus: String? = null,
+    val boletoSituacao: String? = null,
     val chaveAcesso: String?,
     val statusSefazId: Int?,
     val statusSefaz: String?,
@@ -76,6 +83,11 @@ class NotaFiscalResumo(
             vendedorCodigo = linha.inteiro("SlpCode")?.takeIf { it != -1 },
             vendedor = linha.texto("SlpName"),
             formaPagamento = linha.texto("FormaPagamento"),
+            formaPagamentoNome = linha.texto("FormaPagamentoNome"),
+            nossoNumero = linha.texto("NossoNumero"),
+            boletoStatusId = linha.inteiro("BoletoStatusId"),
+            boletoStatus = linha.texto("BoletoStatus"),
+            boletoSituacao = linha.texto("BoletoSituacao"),
             chaveAcesso = linha.texto("ChaveAcesso"),
             statusSefazId = linha.inteiro("StatusSefazId"),
             statusSefaz = linha.texto("StatusSefaz"),
@@ -113,6 +125,9 @@ enum class StatusSapNota { ABERTO, FECHADO, CANCELADO, DEVOLVIDO }
 
 class StatusSefaz(val id: Int, val descricao: String?)
 
+const val SEM_FORMA_PAGAMENTO = "-"
+const val SEM_BOLETO = -1
+
 class NotaFiscalLoteFiltro(
     val dataInicial: String? = null,
     val dataFinal: String? = null,
@@ -130,6 +145,10 @@ class NotaFiscalLoteFiltro(
     val statusSefaz: Int? = null,
     // Nulo = todas as categorias.
     val categoria: CategoriaDocumentoLote? = null,
+    // PeyMethod (codigo da OPYM). Nulo = todas; SEM_FORMA = documento sem forma de pagamento.
+    val formaPagamento: String? = null,
+    // Status do boleto na BankPlus (IV_IB_BoeStatus). Nulo = todos; SEM_BOLETO = parcela sem boleto.
+    val boletoStatus: Int? = null,
     // Uma linha por documento em vez de uma por parcela: o "adicionar todas do filtro" da tela,
     // que conta e pega documentos (o lote e de documentos).
     val porDocumento: Boolean = false,
@@ -157,7 +176,7 @@ class NotaFiscalLoteArquivo(
     val notasSemBoleto: Int = 0,
 )
 
-class FormaPagamentoLote(val codigo: String, val descricao: String?)
+class FormaPagamentoLote(val codigo: String, val descricao: String?, val ativa: Boolean = true)
 
 class TrocaFormaPagamentoRequest(
     val formaPagamento: String = "",

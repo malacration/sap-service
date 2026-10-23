@@ -47,8 +47,24 @@
 -- Paginacao por ROW_NUMBER em vez de LIMIT/OFFSET com bind; COUNT(*) OVER () traz o total
 -- do filtro na mesma ida ao banco. :tipo desliga a perna inteira (nao varre a outra tabela).
 -- O filtro de status SAP fica em NUMERADAS porque o status e um CASE calculado nas pernas -
--- filtrar depois do ROW_NUMBER quebraria a paginacao.
-WITH NOTAS AS (
+-- filtrar depois do ROW_NUMBER quebraria a paginacao. :formaPagamento (PeyMethod) tambem fica
+-- la, valendo para as duas pernas: '' = todas, '-' = documento sem forma.
+--
+-- BOLETO da BankPlus por parcela: a BankPlus grava os boletos no banco da empresa
+-- (IV_IB_BillOfExchange; DocType 13 = NF, 203 = adiantamento; InstallmentID = parcela). Boleto
+-- cancelado e reemitido deixa mais de uma linha por parcela: vale a mais recente (maior ID), por
+-- isso o CTE BOLETOS com ROW_NUMBER. Status = IV_IB_BoeStatus (Confirmado, Baixado, Cancelado...),
+-- Situation = IV_IB_BillOfExchangeSituation (Normal, Liquidado...). :boletoStatus: -2 = todos,
+-- -1 = sem boleto, senao o ID do status; por parcela vale para a linha, por documento o documento
+-- entra se ALGUMA parcela atende vencimento E status ao mesmo tempo (um EXISTS so: em EXISTS
+-- separados, uma parcela no periodo e outra no status poriam no lote documento que a lista nao mostra).
+WITH BOLETOS AS (
+    SELECT
+        B."DocType", B."DocEntry", B."InstallmentID", B."OurNumber", B."Status", B."Situation",
+        ROW_NUMBER() OVER (PARTITION BY B."DocType", B."DocEntry", B."InstallmentID" ORDER BY B."ID" DESC) AS "Ordem"
+    FROM "IV_IB_BillOfExchange" B
+),
+NOTAS AS (
     SELECT
         'NF' AS "Tipo",
         CASE WHEN EXISTS (
@@ -74,9 +90,14 @@ WITH NOTAS AS (
         PA."InstlmntID" AS "Parcela",
         PA."InsTotal" AS "ValorParcela",
         TO_VARCHAR(PA."DueDate", 'YYYY-MM-DD') AS "VencimentoParcela",
+        BO."OurNumber" AS "NossoNumero",
+        BO."Status" AS "BoletoStatusId",
+        BS."Description" AS "BoletoStatus",
+        BSI."Description" AS "BoletoSituacao",
         N."SlpCode" AS "SlpCode",
         V."SlpName" AS "SlpName",
         N."PeyMethod" AS "FormaPagamento",
+        FP."Descript" AS "FormaPagamentoNome",
         P."KeyNfe" AS "ChaveAcesso",
         P."StatusId" AS "StatusSefazId",
         S."Description" AS "StatusSefaz",
@@ -89,6 +110,7 @@ WITH NOTAS AS (
     INNER JOIN "Process" P ON P."DocEntry" = N."DocEntry" AND P."DocType" = N."ObjType"
     LEFT JOIN "ProcessStatus" S ON S."ID" = P."StatusId"
     LEFT JOIN OSLP V ON V."SlpCode" = N."SlpCode"
+    LEFT JOIN OPYM FP ON FP."PayMethCod" = N."PeyMethod"
     LEFT JOIN (
         SELECT I."DocEntry", MIN(I."DueDate") AS "PrimeiroVencimento", COUNT(*) AS "Parcelas",
             MIN(I."InstlmntID") AS "PrimeiraParcela"
@@ -97,6 +119,10 @@ WITH NOTAS AS (
     ) PARC ON PARC."DocEntry" = N."DocEntry"
     LEFT JOIN INV6 PA ON PA."DocEntry" = N."DocEntry"
         AND (:porParcela = 1 OR PA."InstlmntID" = PARC."PrimeiraParcela")
+    LEFT JOIN BOLETOS BO ON BO."DocType" = 13 AND BO."DocEntry" = N."DocEntry"
+        AND BO."InstallmentID" = PA."InstlmntID" AND BO."Ordem" = 1
+    LEFT JOIN "IV_IB_BoeStatus" BS ON BS."ID" = BO."Status"
+    LEFT JOIN "IV_IB_BillOfExchangeSituation" BSI ON BSI."ID" = BO."Situation"
     WHERE (:tipo = '' OR :tipo = 'NF')
       AND N."Model" = 39
       AND N."CANCELED" <> 'C'
@@ -109,13 +135,16 @@ WITH NOTAS AS (
       AND (:vendedor = -1 OR N."SlpCode" = :vendedor)
       AND (:numeroDe = -1 OR N."Serial" >= :numeroDe)
       AND (:numeroAte = -1 OR N."Serial" <= :numeroAte)
-      AND (:todosVencimentos = 1
-           OR (:porParcela = 1 AND PA."DueDate" >= :vencimentoDe AND PA."DueDate" <= :vencimentoAte)
-           OR (:porParcela = 0 AND EXISTS (
+      AND (:porParcela = 0 OR :todosVencimentos = 1
+           OR (PA."DueDate" >= :vencimentoDe AND PA."DueDate" <= :vencimentoAte))
+      AND (:porParcela = 0 OR :boletoStatus = -2 OR IFNULL(BO."Status", -1) = :boletoStatus)
+      AND (:porParcela = 1 OR (:todosVencimentos = 1 AND :boletoStatus = -2) OR EXISTS (
                 SELECT 1 FROM INV6 VI
+                LEFT JOIN BOLETOS VB ON VB."DocType" = 13 AND VB."DocEntry" = VI."DocEntry"
+                    AND VB."InstallmentID" = VI."InstlmntID" AND VB."Ordem" = 1
                 WHERE VI."DocEntry" = N."DocEntry"
-                  AND VI."DueDate" >= :vencimentoDe
-                  AND VI."DueDate" <= :vencimentoAte)))
+                  AND (:todosVencimentos = 1 OR (VI."DueDate" >= :vencimentoDe AND VI."DueDate" <= :vencimentoAte))
+                  AND (:boletoStatus = -2 OR IFNULL(VB."Status", -1) = :boletoStatus)))
       AND (:statusSefaz = -1 OR P."StatusId" = :statusSefaz)
 
     UNION ALL
@@ -141,9 +170,14 @@ WITH NOTAS AS (
         PA."InstlmntID" AS "Parcela",
         PA."InsTotal" AS "ValorParcela",
         TO_VARCHAR(PA."DueDate", 'YYYY-MM-DD') AS "VencimentoParcela",
+        BO."OurNumber" AS "NossoNumero",
+        BO."Status" AS "BoletoStatusId",
+        BS."Description" AS "BoletoStatus",
+        BSI."Description" AS "BoletoSituacao",
         D."SlpCode" AS "SlpCode",
         V."SlpName" AS "SlpName",
         D."PeyMethod" AS "FormaPagamento",
+        FP."Descript" AS "FormaPagamentoNome",
         CAST(NULL AS NVARCHAR(50)) AS "ChaveAcesso",
         CAST(NULL AS INTEGER) AS "StatusSefazId",
         CAST(NULL AS NVARCHAR(100)) AS "StatusSefaz",
@@ -159,6 +193,7 @@ WITH NOTAS AS (
     FROM ODPI D
     LEFT JOIN "@AR_CONTRATO_FUTURO" VF ON VF."DocEntry" = D."U_venda_futura"
     LEFT JOIN OSLP V ON V."SlpCode" = D."SlpCode"
+    LEFT JOIN OPYM FP ON FP."PayMethCod" = D."PeyMethod"
     LEFT JOIN (
         SELECT I."DocEntry", MIN(I."DueDate") AS "PrimeiroVencimento", COUNT(*) AS "Parcelas",
             MIN(I."InstlmntID") AS "PrimeiraParcela"
@@ -167,6 +202,10 @@ WITH NOTAS AS (
     ) PARC ON PARC."DocEntry" = D."DocEntry"
     LEFT JOIN DPI6 PA ON PA."DocEntry" = D."DocEntry"
         AND (:porParcela = 1 OR PA."InstlmntID" = PARC."PrimeiraParcela")
+    LEFT JOIN BOLETOS BO ON BO."DocType" = 203 AND BO."DocEntry" = D."DocEntry"
+        AND BO."InstallmentID" = PA."InstlmntID" AND BO."Ordem" = 1
+    LEFT JOIN "IV_IB_BoeStatus" BS ON BS."ID" = BO."Status"
+    LEFT JOIN "IV_IB_BillOfExchangeSituation" BSI ON BSI."ID" = BO."Situation"
     WHERE (:tipo = '' OR :tipo = 'AD')
       AND IFNULL(D."U_venda_futura", 0) > 0
       AND IFNULL(D."U_TX_DocEntryRef", 0) = 0
@@ -179,13 +218,16 @@ WITH NOTAS AS (
       AND (:vendedor = -1 OR D."SlpCode" = :vendedor)
       AND (:numeroDe = -1 OR D."DocNum" >= :numeroDe)
       AND (:numeroAte = -1 OR D."DocNum" <= :numeroAte)
-      AND (:todosVencimentos = 1
-           OR (:porParcela = 1 AND PA."DueDate" >= :vencimentoDe AND PA."DueDate" <= :vencimentoAte)
-           OR (:porParcela = 0 AND EXISTS (
+      AND (:porParcela = 0 OR :todosVencimentos = 1
+           OR (PA."DueDate" >= :vencimentoDe AND PA."DueDate" <= :vencimentoAte))
+      AND (:porParcela = 0 OR :boletoStatus = -2 OR IFNULL(BO."Status", -1) = :boletoStatus)
+      AND (:porParcela = 1 OR (:todosVencimentos = 1 AND :boletoStatus = -2) OR EXISTS (
                 SELECT 1 FROM DPI6 VI
+                LEFT JOIN BOLETOS VB ON VB."DocType" = 203 AND VB."DocEntry" = VI."DocEntry"
+                    AND VB."InstallmentID" = VI."InstlmntID" AND VB."Ordem" = 1
                 WHERE VI."DocEntry" = D."DocEntry"
-                  AND VI."DueDate" >= :vencimentoDe
-                  AND VI."DueDate" <= :vencimentoAte)))
+                  AND (:todosVencimentos = 1 OR (VI."DueDate" >= :vencimentoDe AND VI."DueDate" <= :vencimentoAte))
+                  AND (:boletoStatus = -2 OR IFNULL(VB."Status", -1) = :boletoStatus)))
 ),
 NUMERADAS AS (
     SELECT
@@ -195,6 +237,9 @@ NUMERADAS AS (
     FROM NOTAS
     WHERE (:statusSap = '' OR "StatusSap" = :statusSap)
       AND (:categoria = '' OR "Categoria" = :categoria)
+      AND (:formaPagamento = ''
+           OR (:formaPagamento = '-' AND IFNULL("FormaPagamento", '') = '')
+           OR "FormaPagamento" = :formaPagamento)
 )
 SELECT *
 FROM NUMERADAS
