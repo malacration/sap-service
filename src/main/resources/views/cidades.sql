@@ -1,7 +1,8 @@
 SELECT
 	"AbsId",
 	"Country",
-	"Name"
+	"Name",
+	"IbgeCode"
 FROM
     OCNT
 WHERE

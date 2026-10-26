@@ -7,6 +7,10 @@ import br.andrew.sap.infrastructure.odata.Predicate
 import br.andrew.sap.model.sap.sistema.Attachment
 import br.andrew.sap.model.cadastro.ContactOpaque
 import br.andrew.sap.model.authentication.User
+import br.andrew.sap.services.comercial.FormaPagamentoService
+import br.andrew.sap.model.sap.partner.BPBranchAssignment
+import org.springframework.beans.factory.annotation.Value
+import br.andrew.sap.model.authentication.UserOriginEnum
 import br.andrew.sap.model.dto.ContasReceberDto
 import br.andrew.sap.model.enums.YesNo
 import br.andrew.sap.model.forca.Cliente
@@ -56,7 +60,11 @@ class BusinessPartnersController(
     val atualizacao: AtualizacaoCadastralService,
     val anexoController : AttachmentController,
     val otpService: OneTimePasswordService,
-    val salesPersonsService: SalesPersonsService
+    val salesPersonsService: SalesPersonsService,
+    val formaPagamentoService: FormaPagamentoService,
+    //Filiais (BPLId) em que o cliente novo da tela nasce. Sem a propriedade nao vai
+    //BPBranchAssignment e o SAP vincula todas as filiais do banco - inclusive as de outras empresas
+    @Value("\${cadastro.parceiro.filiais:}") val filiaisNovoParceiro : List<Int> = listOf()
 ) {
 
     @GetMapping()
@@ -138,6 +146,54 @@ class BusinessPartnersController(
     @PostMapping("save")
     fun save(@RequestBody bp : Cliente): BusinessPartner {
         return salvar(bp)
+    }
+
+    /**
+     * Cadastro de cliente pela tela (botao Novo parceiro). O POST "" continua sendo o da
+     * integracao do forca de vendas, sem essas travas: URL propria tambem deixa a permissao
+     * desta tela separada nas regras de acesso.
+     */
+    @PostMapping("novo")
+    fun novo(@RequestBody cliente : Cliente, auth : Authentication): BusinessPartner {
+        if(cliente.nome.isBlank())
+            throw Exception("Informe o nome do parceiro")
+        val documento = CpfCnpj(cliente.cpfCnpj)
+        if(!documento.isCpf() && !documento.isCnpj())
+            throw Exception("CPF/CNPJ invalido: informe 11 digitos (CPF) ou 14 (CNPJ)")
+        service.cardCodeDoCpfCnpj(cliente.cpfCnpj)?.let {
+            throw Exception("Ja existe o parceiro $it com o CPF/CNPJ ${documento.getWithMask()}")
+        }
+        val formas = cliente.formasPagamento.orEmpty().map { it.trim() }.filter { it.isNotEmpty() }.distinct()
+        if(formas.isEmpty())
+            throw Exception("Selecione ao menos uma forma de pagamento")
+        //o SAP exige o tipo de logradouro (CRD1.AddrType = TypeOfAddress no Service Layer) em todo
+        //endereco; sem ele a TransactionNotification recusa com "(4) Tipo de Logradouro..."
+        val entrega = cliente.endereco ?: throw Exception("Informe o endereco de entrega")
+        if(entrega.tipoEndereco.isBlank())
+            throw Exception("Informe o tipo de logradouro do endereco de entrega")
+        if(cliente.enderecoCobranca?.tipoEndereco?.isBlank() == true)
+            throw Exception("Informe o tipo de logradouro do endereco de cobranca")
+        //forma fora do portal (U_envia_forca) seria vinculada mas nunca apareceria na tela de venda
+        val liberadas = formaPagamentoService.liberadas().mapNotNull { it.payMethCod }.toSet()
+        val naoLiberadas = formas.filter { it !in liberadas }
+        if(naoLiberadas.isNotEmpty())
+            throw Exception("Forma de pagamento nao liberada para o portal: ${naoLiberadas.joinToString(", ")}")
+        //Sem vendedor escolhido, fica o de quem cadastrou - mas so se o login for de vendedor: o id
+        //de quem nao e vendedor e o codigo de funcionario (KeycloakUserMapper), e usa-lo como SlpCode
+        //gravaria o cliente com o vendedor errado. Nesse caso fica sem vendedor (-1, o padrao do
+        //Cliente) - a tela avisa antes, porque a busca de parceiro dos vendedores filtra pelo vendedor.
+        if(cliente.idVendedor.isNullOrBlank())
+            cliente.idVendedor = if(auth is User && auth.origin == UserOriginEnum.SalePerson) auth.id else null
+        val parceiro = cliente.getBusinessPartner().also { bp ->
+            if(filiaisNovoParceiro.isNotEmpty())
+                bp.bpBranchAssignment = filiaisNovoParceiro.distinct().map { filial ->
+                    BPBranchAssignment().also {
+                        it.bplid = filial.toString()
+                        it.DisabledForBP = Cancelled.tNO
+                    }
+                }
+        }
+        return service.save(parceiro).tryGetValue()
     }
 
     @PutMapping("{cardCode}")

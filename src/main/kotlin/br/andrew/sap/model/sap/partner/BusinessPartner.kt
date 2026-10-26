@@ -111,10 +111,12 @@ class BusinessPartner() {
         BPAddresses = valor
     }
 
-    fun setAddresse(valor : Address) {
+    //O SAP guarda entrega e cobranca como dois enderecos. Sem cobranca informada, ela e copia da
+    //entrega (comportamento de sempre da integracao do forca de vendas)
+    fun setAddresse(valor : Address, cobranca : Address? = null) {
         BPAddresses = listOf(
             valor.also { it.addressType = AddresType.bo_ShipTo },
-            valor.duplicate().also {
+            (cobranca ?: valor.duplicate()).also {
                 it.addressName = null
                 it.addressType = AddresType.bo_BillTo
             }

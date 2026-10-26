@@ -9,6 +9,7 @@ SELECT
 	(SELECT "FirmName"  FROM OMRC WHERE "FirmCode" = -1) AS "MARCA",
 	"OITM"."UserText",
 	"OITW"."OnHand",
+	"OITW"."WhsCode" as "WarehouseCode",
 	"OITM"."PriceUnit"
 FROM
 	"OITM"

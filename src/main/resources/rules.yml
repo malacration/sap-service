@@ -32,6 +32,12 @@ roles:
       actions: ["get"]
     - url: "/forma-pagamento/filial/*/cardcode/*"
       actions: ["get"]
+    - url: "/forma-pagamento/liberadas"
+      actions: ["get"]
+    - url: "/batch-stock/item-code/*/stock/*"
+      actions: ["get"]
+    - url: "/business-partners/novo"
+      actions: ["post"]
     - url: "/quotation/**"
       actions: ["get"]
     - url: "/pedido-venda/listar"
@@ -99,6 +105,10 @@ roles:
     - url: "/sales-person/replace/*/por/*"
       actions: ["*"]
     - url: "/forma-pagamento/filial/*/cardcode/*"
+      actions: ["get"]
+    - url: "/forma-pagamento/liberadas"
+      actions: ["get"]
+    - url: "/batch-stock/item-code/*/stock/*"
       actions: ["get"]
     - url: "/down-payment/contrato-venda-futura/*"
       actions: ["get"]

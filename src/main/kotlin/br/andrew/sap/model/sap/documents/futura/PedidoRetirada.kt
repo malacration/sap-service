@@ -126,15 +126,19 @@ class PedidoRetirada(
         }
     }
 
-    private fun observacaoFooter(contrato: Contrato, numerosBoletos: List<String>): String {
+    /**
+     * Sem numero de boleto - retirada lancada antes de os boletos existirem, ou BankPlus fora - a
+     * observacao cita so o contrato. Ela segue da cotacao para o pedido e a nota, e "nao encontrados"
+     * ficava impresso na nota mesmo depois de os boletos serem emitidos.
+     */
+    fun observacaoFooter(contrato: Contrato, numerosBoletos: List<String>): String {
         val boletos = numerosBoletos
             .filter { it.isNotBlank() }
             .distinct()
             .joinToString(", ")
-            .ifBlank { "nao encontrados" }
-
-        return "Faturamento referente a entrega de mercadorias do contrato Nº ${contrato.DocEntry} " +
-            "com referencia aos boletos numero $boletos."
+        val base = "Faturamento referente a entrega de mercadorias do contrato Nº ${contrato.DocEntry}"
+        return if (boletos.isBlank()) "$base, com referencia aos boletos do contrato."
+            else "$base com referencia aos boletos numero $boletos."
     }
 }
 

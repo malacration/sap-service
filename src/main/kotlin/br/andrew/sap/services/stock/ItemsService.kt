@@ -77,7 +77,7 @@ open class ItemsService(
      */
     fun fullSearchText(keyWord : String, idVendedor : Int, branchId : Int, superVendedor : Int = -1): NextLink<Product> {
         val parameters = listOf(
-            Parameter("search","'%${keyWord.uppercase()}%'"),
+            Parameter("search","'%${Parameter.termoLike(keyWord.uppercase())}%'"),
             Parameter("zero",0),
             Parameter("yes","'Y'"),
             Parameter("vendedor",idVendedor),
@@ -139,7 +139,7 @@ open class ItemsService(
 
     fun fullItemSearch(keyWord: String): NextLink<Product>{
         val parameters = listOf(
-            Parameter("item","'%${keyWord.uppercase()}%'"),
+            Parameter("item","'%${Parameter.termoLike(keyWord.uppercase())}%'"),
             Parameter("zero",0),
         )
         if(keyWord.contains("SQLQueries('search-product.sql')"))
