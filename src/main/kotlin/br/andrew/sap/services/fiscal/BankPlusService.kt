@@ -6,28 +6,45 @@ import br.andrew.sap.model.bankplus.Boleto
 import br.andrew.sap.model.bankplus.Empresa
 import br.andrew.sap.model.sap.documents.Invoice
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.core.ParameterizedTypeReference
+import org.springframework.http.client.SimpleClientHttpRequestFactory
 import org.springframework.http.RequestEntity
 import org.springframework.stereotype.Service
 import org.springframework.web.client.HttpClientErrorException
 import org.springframework.web.client.RestTemplate
+import java.time.Duration
 
 @Service
-class BankPlusService(val envrioment: BankPlusEnvrioment, val restTemplate: RestTemplate) {
+class BankPlusService(val envrioment: BankPlusEnvrioment, val restTemplate: RestTemplate,
+                      @Value("\${bankplus.timeout-leitura-segundos:60}") timeoutLeitura: Long = 60) {
 
     val url = envrioment.host
 
+    // GETs com prazo, so para quem pede (comPrazo = true): o lote de NF-e, que baixa boleto de
+    // ate 200 notas e nao pode ficar preso numa BankPlus pendurada - o RestTemplate compartilhado
+    // nao tem timeout de leitura. Os outros fluxos seguem sem prazo DE PROPOSITO: a baixa de Pix
+    // (AccountsReceivableService) lista os boletos para cancelar depois do pagamento e engole a
+    // falha; desistir em 60s ali deixaria boleto ativo de parcela ja paga.
+    private val leitura = RestTemplate(SimpleClientHttpRequestFactory().also {
+        it.setConnectTimeout(Duration.ofSeconds(10))
+        it.setReadTimeout(Duration.ofSeconds(timeoutLeitura))
+    }).also { it.interceptors.addAll(restTemplate.interceptors) }
+
     private val logger = LoggerFactory.getLogger(BankPlusService::class.java)
+    private fun cliente(comPrazo: Boolean) = if (comPrazo) leitura else restTemplate
+
     fun getBoletosBy(
         idFilial : String,
         docEntry : String,
-        tipoDocumento: OrigemBoletoEnum = OrigemBoletoEnum.notafiscal
+        tipoDocumento: OrigemBoletoEnum = OrigemBoletoEnum.notafiscal,
+        comPrazo: Boolean = false
     ): List<Boleto> {
         val objType = object: ParameterizedTypeReference<List<Boleto>> () {}
-        return getEmpresas()
+        return getEmpresas(comPrazo)
             .filter { it.codigoDaFilial == idFilial }.flatMap {
                 try {
-                    restTemplate.exchange(RequestEntity
+                    cliente(comPrazo).exchange(RequestEntity
                         .get("$url/api/v2/${envrioment.base}/cobranca/${it.id}/${tipoDocumento}/$docEntry/boletos")
                         .header("Authorization",envrioment.token)
                         .build(), objType).body ?: listOf()
@@ -39,10 +56,10 @@ class BankPlusService(val envrioment: BankPlusEnvrioment, val restTemplate: Rest
                 }
             }
     }
-    fun getEmpresas(): List<Empresa> {
+    fun getEmpresas(comPrazo: Boolean = false): List<Empresa> {
         val objType = object: ParameterizedTypeReference<List<Empresa>> () {}
         if(empresas.isEmpty()) {
-            empresas = restTemplate.exchange(
+            empresas = cliente(comPrazo).exchange(
                 RequestEntity
                     .get("$url/api/v2/${envrioment.base}/cobranca/empresas")
                     .header("Authorization", envrioment.token)
@@ -79,8 +96,8 @@ class BankPlusService(val envrioment: BankPlusEnvrioment, val restTemplate: Rest
     }
 
 
-    fun getPdf(id : String): ByteArray? {
-        return restTemplate.exchange(
+    fun getPdf(id : String, comPrazo: Boolean = false): ByteArray? {
+        return cliente(comPrazo).exchange(
             RequestEntity
                 .get("$url/api/v2/${envrioment.base}/cobranca/boletos/${id}/pdf")
                 .header("Authorization", envrioment.token)

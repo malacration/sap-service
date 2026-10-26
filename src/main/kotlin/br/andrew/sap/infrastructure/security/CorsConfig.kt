@@ -41,7 +41,10 @@ class CorsConfig(@Value("\${cors.origins:http://localhost:4200}") corsAppendAllo
         "arquivo",
         "info",
         "cache",
-        "Content-Type")
+        "Content-Type",
+        "Content-Disposition",
+        "notas-com-erro",
+        "notas-sem-boleto")
 
     fun getCorsConfig(): CorsConfiguration {
         val configuration = CorsConfiguration()
