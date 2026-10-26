@@ -11,6 +11,6 @@ FROM
 	LEFT JOIN DSC1 as banco on(forma."DflAccount" = banco."Account")
 	LEFT JOIN OACT contaContabil on(contaContabil."AcctCode" = banco."GLAccount")
 WHERE
-	((contaContabil."BPLId" = :idBranch OR contaContabil."BPLId" IS null)
+	((contaContabil."BPLId" = :idBranch OR contaContabil."BPLId" IS null OR forma."U_gerar_pix" = '1')
 	AND forma."U_envia_forca" = '1'
 	AND clientePagamento."CardCode" = :cardCode)

@@ -12,8 +12,12 @@ import com.fasterxml.jackson.annotation.JsonProperty
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 class BPBranchAssignment {
 
+    //Sem o nome explicito o Jackson tira a maiuscula do getter ("disabledForBP", "bpcode") e o
+    //Service Layer recusa: "Property 'disabledForBP' of 'BPBranchAssignmentItem' is invalid"
+    @get:JsonProperty("BPCode") @set:JsonProperty("BPCode")
     var BPCode : String? = null
     @JsonProperty("BPLID")
     var bplid : String? = null
+    @get:JsonProperty("DisabledForBP") @set:JsonProperty("DisabledForBP")
     var DisabledForBP : Cancelled? = null
 }

@@ -157,3 +157,6 @@ keycloak.admin.timeout-ms=5000
 fields.importacao-lancamento=false
 # Linhas por arquivo. Todas vao num unico changeset do $batch (tudo ou nada).
 journal.importacao.max-linhas=500
+
+# Filiais (BPLId) em que o cliente cadastrado pela tela Novo parceiro e vinculado. Vazio = o SAP vincula todas.
+cadastro.parceiro.filiais=

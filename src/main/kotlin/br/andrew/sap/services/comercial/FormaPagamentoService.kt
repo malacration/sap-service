@@ -17,4 +17,13 @@ class FormaPagamentoService(val sqlQueriesService : SqlQueriesService,) {
             )
             ?.tryGetValues<PaymentMethodDto>()
     }
+
+    /**
+     * Formas liberadas para o portal (U_envia_forca), sem filtro de cliente nem de filial: e a
+     * lista de onde o cadastro de cliente novo escolhe o que vincular em CRD2. Depois de vinculada,
+     * a tela de venda aplica o filtro de filial de sempre (forma-pagamento.sql).
+     */
+    fun liberadas(): List<PaymentMethodDto> {
+        return sqlQueriesService.getAll<PaymentMethodDto>("forma-pagamento-liberadas.sql")
+    }
 }
