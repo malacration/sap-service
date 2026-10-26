@@ -50,6 +50,7 @@ import org.springframework.security.core.Authentication
 import org.springframework.web.bind.annotation.*
 import java.math.BigDecimal
 import java.math.RoundingMode
+import java.time.LocalDate
 
 
 @RestController
@@ -142,14 +143,17 @@ class ContratoVendaFuturaController(
         )).tryGetValues<Contrato>().firstOrNull() ?: throw  Exception("O contrato nao foi encontrado")
         if (service.temTituloVencidoNoContrato(contrato.U_cardCode, contrato.DocEntry!!))
             throw Exception("Retirada não permitida: o cliente possui título deste contrato vencido há mais de 3 dias.")
+        // A retirada pode ser lancada antes de os boletos do contrato existirem: quem barra e o
+        // faturamento - a SBO_SP_VALIDACAO_VENDA_FUTURA (sap-sql) recusa a nota de entrega de contrato
+        // sem adiantamento. Sem boleto a cotacao vence hoje e a observacao nao cita numero.
         val boletos = adiantamentoService.getByContratoVendaFutura(contrato.DocEntry!!)
-        if (boletos.isEmpty())
-            throw Exception("Não existem adiantamentos criados para o contrato ${contrato.DocEntry}. Emita os boletos antes de realizar a retirada.")
-        val boleto = boletos.last()
-        val numerosBoletos = adiantamentoService.getOurNumbersByContratoVendaFutura(contrato.DocEntry!!)
+            .filter { it.Cancelled != Cancelled.tYES }
+        val vencimento = boletos.lastOrNull()?.DocDueDate ?: LocalDate.now().toString()
+        val numerosBoletos = if (boletos.isEmpty()) listOf()
+            else adiantamentoService.getOurNumbersByContratoVendaFutura(contrato.DocEntry!!)
         val enderecoValidado = validaRegiaoDaEntrega(contrato, pedidoRetirada.shipToCode)
         val orderSales = orderService.getById(contrato.U_orderDocEntry).tryGetValue<OrderSales>()
-        val cotacao = pedidoRetirada.parse(contrato,utilizacaoEntregaVendaFutura,boleto.DocDueDate,orderSales,numerosBoletos,
+        val cotacao = pedidoRetirada.parse(contrato,utilizacaoEntregaVendaFutura,vencimento,orderSales,numerosBoletos,
             entregasFaturadas(contrato.DocEntry!!), enderecoValidado)
         return cotacaoController.saveForAngular(cotacao,auth)
     }

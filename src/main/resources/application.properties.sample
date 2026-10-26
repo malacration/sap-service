@@ -107,6 +107,15 @@ odbc.query-timeout-seconds=30
 # Vazio = sem restricao adicional.
 painel-vendas.filiais=
 
+# Necessidade de producao (Relatorios > Necessidade de Produção). Sem estas linhas valem as
+# variaveis de ambiente NECESSIDADE_PRODUCAO_DEPOSITOS_EXCLUIDOS e
+# NECESSIDADE_PRODUCAO_UTILIZACOES_SIMPLES_FATURAMENTO.
+# Depositos que nunca entram na conta (refugo/descarte), separados por virgula. Ex.: 500.08,500.05
+necessidade-producao.depositos-excluidos=
+# Utilizacoes de simples faturamento (OUSG.ID): o pedido delas sai da coluna Pedido e o que falta
+# entregar das notas delas entra em Sem previsao.
+necessidade-producao.utilizacoes-simples-faturamento=16
+
 # OTP de liberacao das travas (TransactionNotification). Deve ser IGUAL ao segredo
 # da funcao HANA fnValidaOtpBypass (repo sap-sql-sovis). Troque em producao.
 trava.otp.secret=TROCAR_ESTE_SEGREDO
