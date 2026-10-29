@@ -67,10 +67,10 @@ class RegraFilialService(
     /**
      * Filial tem que existir no SAP, e e gravada no formato canonico do BPLID ("01" -> "1").
      *
-     * Nao e so cosmetico: a PRIMEIRA linha de um motivo troca "vale em toda filial" por "vale
-     * so nas filiais listadas" (CadastroRegraFilial.ativaPara). Um valor que nao casa com
-     * nenhuma filial real - erro de digitacao, "01" em vez de "1", chamada direta a API -
-     * desligaria a regra em TODAS as filiais em silencio, inclusive controles de credito.
+     * Nao e so cosmetico: a regra so vale nas filiais listadas (CadastroRegraFilial.ativaPara).
+     * Um valor que nao casa com nenhuma filial real - erro de digitacao, "01" em vez de "1",
+     * chamada direta a API - deixaria quem cadastrou achando que ligou a regra, sem ela valer
+     * em lugar nenhum.
      * Fonte: BusinessPlaces do SAP, nao o /branch do front (que pode vir filtrado por usuario).
      */
     private fun filialCadastrada(informada: String): String {
@@ -89,15 +89,12 @@ class CadastroRegraFilial(private val linhas: List<RegraFilial>) {
     /**
      * A regra vale nessa filial?
      *
-     * Motivo sem nenhuma linha cadastrada vale em TODA filial. Esse default existe para o
-     * cadastro entrar sem mudar o comportamento atual: hoje toda regra do motor vale em
-     * qualquer filial, e o contrario (nada cadastrado = regra desligada em todo lugar)
-     * desativaria em silencio, no deploy, controles financeiros que ja estao valendo.
+     * So vale nas filiais cadastradas para o motivo: motivo sem nenhuma linha nao vale em
+     * filial nenhuma. Ligar uma regra e decisao explicita - o default anterior (nada
+     * cadastrado = vale em toda filial) passou a reter pedidos em producao sem ninguem ter
+     * ligado regra nenhuma.
      */
     fun ativaPara(motivo: String, filial: String?): Boolean {
-        val doMotivo = linhas.filter { it.U_motivo == motivo }
-        if (doMotivo.isEmpty())
-            return true
-        return doMotivo.any { it.U_filial == filial }
+        return linhas.any { it.U_motivo == motivo && it.U_filial == filial }
     }
 }

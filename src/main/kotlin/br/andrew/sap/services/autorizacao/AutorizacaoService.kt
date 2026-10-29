@@ -12,6 +12,9 @@ import br.andrew.sap.infrastructure.odata.OData
 import br.andrew.sap.services.documents.OrdersService
 import br.andrew.sap.services.documents.QuotationsService
 import br.andrew.sap.services.security.AuthService
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import com.fasterxml.jackson.annotation.JsonProperty
+import org.springframework.http.RequestEntity
 import org.springframework.stereotype.Service
 import org.springframework.web.client.RestTemplate
 
@@ -24,7 +27,9 @@ class AutorizacaoService(
     restTemplate: RestTemplate,
     authService: AuthService,
     val quotationsService: QuotationsService,
-    val ordersService: OrdersService
+    val ordersService: OrdersService,
+    val autorizadorService: AutorizadorService,
+    private val sequencia: SequenciaAutorizacao,
 ) : EntitiesService<Autorizacao>(env, restTemplate, authService) {
 
     //mesmo mapper (com o KotlinModule configurado certo pros construtores de
@@ -42,6 +47,11 @@ class AutorizacaoService(
         return getById(id).tryGetValue()
     }
 
+    /**
+     * Retem o documento para aprovacao. Motivo sem autorizador cadastrado NAO retem: o documento
+     * ficaria pendente sem ninguem que pudesse decidir. Falha com a explicacao e o documento
+     * nao e criado - quem vende sabe o motivo e quem administra sabe o que cadastrar.
+     */
     fun criar(
         tipoDocumento: String,
         motivo: String,
@@ -49,6 +59,11 @@ class AutorizacaoService(
         solicitante: String,
         offlineId: String? = null
     ): Autorizacao {
+        if (autorizadorService.getTodos().none { it.U_motivo == motivo })
+            throw Exception("Este documento precisa de autorização pelo motivo $motivo, mas não há " +
+                "nenhum autorizador cadastrado para esse motivo. Peça ao administrador para cadastrar " +
+                "um autorizador ou desligar a regra nas filiais.")
+
         val autorizacao = Autorizacao(
             U_tipoDocumento = tipoDocumento,
             U_motivo = motivo,
@@ -59,9 +74,39 @@ class AutorizacaoService(
             it.U_valor = documento.total()
             it.U_solicitante = solicitante
             it.U_offline_id = offlineId
+            //@AUTORIZACAO e bott_MasterData: o service layer recusa POST sem codigo
+            //("Enter valid code [@AUTORIZACAO.Code]") mesmo com ManageSeries no UDO
+            it.Code = proximoCodigo()
+            it.Name = it.Code.toString()
         }
         return save(autorizacao).tryGetValue()
     }
+
+    //Redis (ou contador local) semeado com o maior Code do SAP no startup - ver SequenciaAutorizacao
+    fun proximoCodigo(): Int = sequencia.proximo(::maiorCodigoNoSap)
+
+    /**
+     * Le so o Code ($select): a lista inteira traz o U_payload (o documento serializado) de cada
+     * autorizacao ja feita. Ordenar pelo SAP nao serve: o Code e texto e "9" viria antes de "10".
+     */
+    fun maiorCodigoNoSap(): Int {
+        var odata = codigos()
+        val existentes = odata.tryGetValues<CodigoAutorizacao>().toMutableList()
+        while (odata.hasNext()) {
+            odata = next(odata)
+            existentes.addAll(odata.tryGetValues<CodigoAutorizacao>())
+        }
+        return existentes.mapNotNull { it.Code?.toIntOrNull() }.maxOrNull() ?: 0
+    }
+
+    //aberto para o teste: busca so a coluna Code de todas as autorizacoes
+    internal fun codigos(): OData =
+        exchangeWithValidSession(OData::class.java) { session ->
+            RequestEntity
+                .get(env.host + path() + "?\$select=Code")
+                .header("cookie", session.cookieHeader())
+                .build()
+        }.body ?: OData()
 
     fun aprovar(id: Int, usuario: String): Autorizacao {
         val autorizacao = get(id)
@@ -97,3 +142,6 @@ class AutorizacaoService(
         return get(id)
     }
 }
+
+@JsonIgnoreProperties(ignoreUnknown = true)
+class CodigoAutorizacao(@JsonProperty("Code") val Code: String? = null)

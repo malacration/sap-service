@@ -16,7 +16,7 @@ import org.springframework.context.annotation.Profile
 //@AUTORIZADOR: tabela de roteamento motivo -> usuario, independente (nao e filha de
 //AUTORIZACAO), mesmo espirito do LiberaPara da Comissao.
 //@REGRAFILIAL: em que filiais cada regra esta ativa (motivo -> filial). Motivo sem nenhuma
-//linha vale em toda filial - ver CadastroRegraFilial.ativaPara.
+//linha nao vale em filial nenhuma - ver CadastroRegraFilial.ativaPara.
 @Configuration
 @Profile("!test")
 @ConditionalOnProperty(value = ["fields"], havingValue = "true", matchIfMissing = true)
@@ -88,9 +88,9 @@ class AutorizacaoConfiguration(val userFieldsMDService: UserFieldsMDService,
         }
     }
 
-    //ManageSeries = Y: o Code e auto-numerado pelo SAP - nao ha um "codigo" com
-    //sentido de negocio pra um pedido de autorizacao gerado pela propria aplicacao
-    //(diferente de Regiao/Comissao, cujo Code e digitado por um usuario)
+    //ManageSeries = Y nao basta pro SAP numerar o Code: sem serie configurada no cliente o
+    //service layer recusa o POST ("Enter valid code [@AUTORIZACAO.Code]"). Quem gera o
+    //Code e o AutorizacaoService.criar.
     fun autorizacaoObject(): UserDefinedObject {
         val ud = UserDefinedObject("autorizacao", "Autorizações", "AUTORIZACAO",
             ManageSeries = YesNo.tYES)
