@@ -12,7 +12,7 @@ import com.fasterxml.jackson.databind.annotation.JsonNaming
  * Uma linha por par, mesmo formato de Autorizador (motivo -> usuario). Cadastro
  * independente: nao e filha de Autorizacao nem de Autorizador.
  *
- * Motivo SEM nenhuma linha vale em TODA filial - ver CadastroRegraFilial.ativaPara.
+ * Motivo SEM nenhuma linha nao vale em filial nenhuma - ver CadastroRegraFilial.ativaPara.
  */
 @JsonNaming(PropertyNamingStrategies.UpperCamelCaseStrategy::class)
 @JsonIgnoreProperties(ignoreUnknown = true)

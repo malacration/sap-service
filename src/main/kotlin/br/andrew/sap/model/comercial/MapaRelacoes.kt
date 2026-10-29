@@ -12,6 +12,11 @@ enum class MapaTipoDocumento(val label: String) {
     DEVOLUCAO("Devolução"),
     RECEBIMENTO("Recebimento"),
     LANCAMENTO_CONTABIL("Lançamento Contábil"),
+    //rastreio de lote (RastreioLoteService): as OPs e o lote buscado
+    ORDEM_PRODUCAO("Ordem de Produção"),
+    LOTE("Lote"),
+    //entrega de venda (ODLN) - destino do rastreio de lote
+    ENTREGA("Entrega"),
     OUTRO("Outro")
 }
 
@@ -32,7 +37,9 @@ enum class TipoAresta {
     //DocNum desse documento (nunca o do contrato) - convencao usada por
     //ReclassificacaoEntregaVendaFuturaSchedule (NF, VFET/VFEC) e
     //EstornoReclassificacaoVendaFuturaService (devolucao, VFDV)
-    RECLASSIFICACAO
+    RECLASSIFICACAO,
+    //rastreio de lote: lote consumido -> OP -> lote gerado; MapaEdge.rotulo leva o numero do lote
+    LOTE
 }
 
 //valores de MapaNode.situacao que nao vem direto de um campo do SAP
@@ -59,18 +66,29 @@ data class MapaNode(
     //situacao destacada como etiqueta colorida no card (ver SITUACAO_BADGE no front) -
     //separado de status porque alguns tipos usam os dois (ex.: adiantamento tem
     //DocumentStatus proprio E pode estar pendente de utilizacao)
-    val situacao: String? = null
+    val situacao: String? = null,
+    //linhas extras do card, abaixo do numero (ex.: produto e quantidade da OP no rastreio de lote)
+    val detalhes: List<String> = listOf(),
+    //item do lote (no LOTE do rastreio): o numero do lote so e unico junto do item, e a tela manda os
+    //dois para abrir o nivel seguinte
+    val item: String? = null,
+    //no LOTE do rastreio: a tela pode abrir o destino dele (quem consumiu, quem comprou)
+    val destino: Boolean? = null
 )
 
 data class MapaEdge(
     val id: String,
     val from: String,
     val to: String,
-    val tipo: TipoAresta
+    val tipo: TipoAresta,
+    //texto escrito sobre a aresta (o numero do lote no rastreio)
+    val rotulo: String? = null
 )
 
 class MapaRelacoesResponse(
     val root: String,
     val nodes: List<MapaNode>,
-    val edges: List<MapaEdge>
+    val edges: List<MapaEdge>,
+    //observacao exibida acima do grafo (ex.: lote comprado, sem origem para mostrar)
+    val aviso: String? = null
 )

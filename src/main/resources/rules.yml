@@ -211,6 +211,14 @@ roles:
       actions: ["get"]
     - url: "/reprocessamento/**"
       actions: ["*"]
+    # Menu Producao > Ordens de Producao (listagem e detalhe, somente leitura).
+    - url: "/ordens-producao"
+      actions: ["get"]
+    - url: "/ordens-producao/*"
+      actions: ["get"]
+    # Rastreio de lote: destino (OPs que consumiram, vendas com o cliente). O "*" acima nao passa da barra.
+    - url: "/ordens-producao/rastreio-lote/destino"
+      actions: ["get"]
     - url: "/item/search"
       actions: ["post"]
     - url: "/painel/**"

@@ -51,6 +51,7 @@ class FreteContratoService(
             throw Exception("A localidade ${descreve(codLocalidade)} nao esta vinculada a regiao de frete " +
                 "${regiao.Code} (a vigente da filial $filial) - vincule a localidade a regiao para calcular o frete")
 
+        regiao.validaQuantidadeMinimaEntrega(quantidade)
         return regiao.calcularFrete(local, quantidade)
             ?: throw Exception("Nao foi possivel calcular o frete da localidade ${descreve(codLocalidade)} na " +
                 "regiao ${regiao.Code} - falta a distancia da localidade nessa regiao ou a faixa de preco " +
