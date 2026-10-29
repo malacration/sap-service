@@ -204,12 +204,56 @@ class DocumentForAngularTest {
         it.U_Localidade = localidade
     }
 
-    private fun regiao(localidade: String, distanciaKm: Double) = Regiao().also {
+    private fun regiao(localidade: String, distanciaKm: Double, base: Int = 1) = Regiao().also {
         it.Code = "REGIAO-$localidade"
         it.U_Ativa = "1"
         it.U_Filial = 2
         it.addLocalidade(localidade, distanciaKm)
-        it.addFaixa(qtdeMinima = 1, valorKm = 1.0)
+        it.addFaixa(qtdeMinima = base, valorKm = 1.0)
+    }
+
+    //base 50 a 100km e R$ 1,00 a cada 100km: frete de R$ 1,00 por unidade
+    private fun pedidoEntrega(quantidade: String, frete: Double, quantidadePedido: Double? = null): OrderSales {
+        whenever(auth.principal).thenReturn("55")
+        whenever(businessPartnersService.getById("'CLI001'")).thenReturn(odata(BusinessPartner().also {
+            it.setAddresses(listOf(enderecoEntrega("ENTREGA", 10)))
+        }))
+        whenever(regiaoService.getRegioesByLocalidade("10")).thenReturn(listOf(regiao("10", distanciaKm = 100.0, base = 50)))
+        return OrderSales(
+            CardCode = "CLI001",
+            DocDueDate = "2026-08-14",
+            DocumentLines = listOf(Product("ITEM001", quantidade, "1")),
+            BPL_IDAssignedToInvoice = "2",
+        ).also {
+            it.Incoterms = 1
+            it.shipToCode = "ENTREGA"
+            it.quantidadePedido = quantidadePedido
+            it.documentAdditionalExpenses.add(AdditionalExpenses.frete(frete))
+        }
+    }
+
+    @Test
+    fun `entrega abaixo da base da regiao e recusada com o minimo na mensagem`() {
+        val erro = assertThrows<Exception> {
+            service.prepareToSave(pedidoEntrega("30", 30.0), itemService, businessPartnersService, regiaoService, localidadeService, auth)
+        }
+
+        assertTrue(erro.message!!.contains("mínima para entrega nesta região é 50"), erro.message)
+    }
+
+    @Test
+    fun `documento abaixo da base passa quando o pedido inteiro alcanca o minimo`() {
+        service.prepareToSave(pedidoEntrega("30", 30.0, quantidadePedido = 60.0), itemService, businessPartnersService,
+            regiaoService, localidadeService, auth)
+    }
+
+    @Test
+    fun `quantidade do pedido chega do portal mas nao vai para o SAP`() {
+        val mapper = OData().mapper
+        val pedido = mapper.readValue("""{"CardCode":"C1","DocumentLines":[],"QuantidadePedido":60}""", OrderSales::class.java)
+
+        assertTrue(pedido.quantidadePedido == 60.0)
+        assertTrue(!mapper.writeValueAsString(pedido).contains("QuantidadePedido"))
     }
 
     private fun odata(value: Any): OData {

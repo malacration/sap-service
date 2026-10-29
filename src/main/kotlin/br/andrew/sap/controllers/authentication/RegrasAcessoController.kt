@@ -119,6 +119,14 @@ class RegrasAcessoController(
         return service.simular(corpo.perfis, corpo.metodo, corpo.caminho, corpo.rascunho)
     }
 
+    /** Varias consultas de uma vez (previa do menu): mesma resposta do /simular, uma por consulta, na mesma ordem. */
+    @PostMapping("/simular-lote")
+    fun simularLote(auth: Authentication, @RequestBody corpo: SimularLoteRequest): List<ResultadoSimulacao> {
+        exigirAdmin(auth)
+        val consultas = MinhasPermissoesController.validarConsultas(corpo.consultas, MAXIMO_DE_CONSULTAS_NO_LOTE)
+        return service.simularLote(corpo.perfis, consultas.map { it.metodo to it.caminho }, corpo.rascunho)
+    }
+
     /** Catalogo dos endpoints reais do sistema, no formato das regras (variavel de caminho vira asterisco). */
     @GetMapping("/endpoints")
     fun endpoints(auth: Authentication): List<EndpointConhecido> {
@@ -164,6 +172,9 @@ class RegrasAcessoController(
         .status(HttpStatus.BAD_REQUEST)
         .body(mapOf("erro" to "validacao", "mensagem" to e.erros.joinToString("; "), "erros" to e.erros, "avisos" to e.avisos))
 
+    @ExceptionHandler(PermissaoConsultaInvalida::class)
+    fun onConsultaInvalida(e: PermissaoConsultaInvalida) = erro(HttpStatus.BAD_REQUEST, "consulta_invalida", e.message)
+
     @ExceptionHandler(RegrasConflitoException::class)
     fun onConflito(e: RegrasConflitoException) = erro(HttpStatus.CONFLICT, "conflito", e.message)
 
@@ -201,6 +212,14 @@ data class SalvarPerfilRequest(
 )
 
 data class RestaurarRequest(val baseVersao: Int = 0, val comentario: String? = null)
+
+data class SimularLoteRequest(
+    val perfis: List<String> = emptyList(),
+    val consultas: List<PermissaoConsulta?> = emptyList(),
+    val rascunho: RegrasDocumento? = null,
+)
+
+private const val MAXIMO_DE_CONSULTAS_NO_LOTE = 500
 
 data class SimularRequest(
     val perfis: List<String> = emptyList(),

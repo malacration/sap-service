@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.doReturn
 import org.mockito.kotlin.mock
+import org.mockito.kotlin.never
 import org.mockito.kotlin.spy
 import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
@@ -31,7 +32,7 @@ class RegraAutorizacaoServiceTest {
 
     @Test
     fun `cadastro de filial e lido uma vez por avaliacao, qualquer que seja o numero de regras`() {
-        cadastrado(RegraFilial("B", "2"))
+        cadastrado(RegraFilial("A", "1"), RegraFilial("B", "1"), RegraFilial("C", "1"))
         val service = RegraAutorizacaoService(
             listOf(regra("A", false), regra("B", false), regra("C", true)), regraFilialService)
 
@@ -54,21 +55,24 @@ class RegraAutorizacaoServiceTest {
     }
 
     @Test
-    fun `motivo sem linha cadastrada vale em toda filial`() {
+    fun `motivo sem linha cadastrada nao vale em filial nenhuma`() {
         cadastrado(RegraFilial("OUTRO", "9"))
-        val livre = regra("A", true)
-        val service = RegraAutorizacaoService(listOf(livre), regraFilialService)
+        val semFilial = regra("A", true)
+        val service = RegraAutorizacaoService(listOf(semFilial), regraFilialService)
 
-        assertEquals("A", service.avaliar(documento("1")))
+        assertNull(service.avaliar(documento("1")))
+        assertNull(service.avaliar(documento("9")))
+        verify(semFilial, never()).avalia(org.mockito.kotlin.any())
     }
 
     @Test
-    fun `sem cadastro de filial, regras seguem ativas`() {
+    fun `sem cadastro de filial nenhuma regra retem documento`() {
         cadastrado()
-        val naoBate = regra("A", false)
-        val service = RegraAutorizacaoService(listOf(naoBate), regraFilialService)
+        val bate = regra("A", true)
+        val service = RegraAutorizacaoService(listOf(bate), regraFilialService)
 
         assertNull(service.avaliar(documento("1")))
-        verify(naoBate, times(1)).avalia(org.mockito.kotlin.any())
+        //nem chega a consultar o banco pela regra
+        verify(bate, never()).avalia(org.mockito.kotlin.any())
     }
 }

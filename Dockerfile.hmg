@@ -1,0 +1,14 @@
+FROM eclipse-temurin:21-jdk AS build
+WORKDIR /workspace/app
+COPY . .
+RUN --mount=type=cache,id=pix-portal-rovema-gradle,target=/root/.gradle,sharing=locked chmod +x gradlew && ./gradlew bootJar --no-daemon
+RUN java -Djarmode=layertools -jar build/libs/*.jar extract --destination /extracted
+
+FROM eclipse-temurin:21-jre
+WORKDIR /app
+COPY --from=build /extracted/dependencies/ ./
+COPY --from=build /extracted/spring-boot-loader/ ./
+COPY --from=build /extracted/snapshot-dependencies/ ./
+COPY --from=build /extracted/application/ ./
+EXPOSE 8080
+ENTRYPOINT ["java", "org.springframework.boot.loader.launch.JarLauncher"]

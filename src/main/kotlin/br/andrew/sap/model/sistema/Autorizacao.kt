@@ -5,6 +5,8 @@ import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.PropertyNamingStrategies
 import com.fasterxml.jackson.databind.annotation.JsonNaming
+import com.fasterxml.jackson.databind.annotation.JsonSerialize
+import com.fasterxml.jackson.databind.ser.std.ToStringSerializer
 
 object TipoDocumentoAutorizacao {
     const val COTACAO = "COTACAO"
@@ -29,6 +31,9 @@ class Autorizacao(
     @JsonProperty("U_cardCode") var U_cardCode : String,
     @JsonProperty("U_payload") var U_payload : String,
 ) {
+    //Code do UDO e texto no service layer; vai como "12" e volta convertido para Int. So a
+    //aplicacao gera esse codigo (AutorizacaoService.proximoCodigo), sempre numerico.
+    @get:JsonSerialize(using = ToStringSerializer::class)
     var Code : Int? = null
     var Name : String? = null
 

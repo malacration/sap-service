@@ -4,6 +4,9 @@ roles:
       actions: ["*"]
 
   vendedor:
+    # Tela Clientes > Parceiro Negocio. Permissao so de tela: nenhum endpoint atende esta URL.
+    - url: "/tela/clientes/parceiro-negocio"
+      actions: ["get"]
     # Menu Relatorios (sap-reports): o sap-service nao ve essas chamadas; a regra so decide se o item aparece no menu.
     # O que cada um ve DENTRO da tela continua sendo o campo papeis do YAML de cada relatorio no sap-reports.
     - url: "/reports/api/v1/relatorios"
@@ -78,6 +81,12 @@ roles:
       actions: ["get"]
 
   vendedor_admin:
+    # Tela Relatorios > Analise Pedidos. Permissao so de tela: nenhum endpoint atende esta URL.
+    - url: "/tela/relatorios/analise-pedidos"
+      actions: ["get"]
+    # Tela Clientes > Parceiro Negocio. Permissao so de tela: nenhum endpoint atende esta URL.
+    - url: "/tela/clientes/parceiro-negocio"
+      actions: ["get"]
     # Menu Relatorios (sap-reports): o sap-service nao ve essas chamadas; a regra so decide se o item aparece no menu.
     # O que cada um ve DENTRO da tela continua sendo o campo papeis do YAML de cada relatorio no sap-reports.
     - url: "/reports/api/v1/relatorios"
@@ -155,6 +164,9 @@ roles:
       actions: ["post"]
 
   cobranca:
+    # Tela Clientes > Parceiro Negocio. Permissao so de tela: nenhum endpoint atende esta URL.
+    - url: "/tela/clientes/parceiro-negocio"
+      actions: ["get"]
     # Menu Relatorios (sap-reports): o sap-service nao ve essas chamadas; a regra so decide se o item aparece no menu.
     # O que cada um ve DENTRO da tela continua sendo o campo papeis do YAML de cada relatorio no sap-reports.
     - url: "/reports/api/v1/relatorios"
@@ -188,6 +200,9 @@ roles:
       actions: ["get"]
 
   qualidade:
+    # Tela Relatorios > Analise Pedidos. Permissao so de tela: nenhum endpoint atende esta URL.
+    - url: "/tela/relatorios/analise-pedidos"
+      actions: ["get"]
     # Menu Relatorios (sap-reports): o sap-service nao ve essas chamadas; a regra so decide se o item aparece no menu.
     # O que cada um ve DENTRO da tela continua sendo o campo papeis do YAML de cada relatorio no sap-reports.
     - url: "/reports/api/v1/relatorios"
@@ -196,6 +211,14 @@ roles:
       actions: ["get"]
     - url: "/reprocessamento/**"
       actions: ["*"]
+    # Menu Producao > Ordens de Producao (listagem e detalhe, somente leitura).
+    - url: "/ordens-producao"
+      actions: ["get"]
+    - url: "/ordens-producao/*"
+      actions: ["get"]
+    # Rastreio de lote: destino (OPs que consumiram, vendas com o cliente). O "*" acima nao passa da barra.
+    - url: "/ordens-producao/rastreio-lote/destino"
+      actions: ["get"]
     - url: "/item/search"
       actions: ["post"]
     - url: "/painel/**"
@@ -210,6 +233,12 @@ roles:
       actions: ["*"]
 
   logistica:
+    # Tela Relatorios > Analise Pedidos. Permissao so de tela: nenhum endpoint atende esta URL.
+    - url: "/tela/relatorios/analise-pedidos"
+      actions: ["get"]
+    # Tela Logistica > Localidades. Permissao so de tela: nenhum endpoint atende esta URL.
+    - url: "/tela/logistica/localidades"
+      actions: ["get"]
     # Menu Relatorios (sap-reports): o sap-service nao ve essas chamadas; a regra so decide se o item aparece no menu.
     # O que cada um ve DENTRO da tela continua sendo o campo papeis do YAML de cada relatorio no sap-reports.
     - url: "/reports/api/v1/relatorios"
@@ -256,6 +285,9 @@ roles:
       actions: ["post"]
 
   logistica_faturar:
+    # Tela Logistica > Localidades. Permissao so de tela: nenhum endpoint atende esta URL.
+    - url: "/tela/logistica/localidades"
+      actions: ["get"]
     # Menu Relatorios (sap-reports): o sap-service nao ve essas chamadas; a regra so decide se o item aparece no menu.
     # O que cada um ve DENTRO da tela continua sendo o campo papeis do YAML de cada relatorio no sap-reports.
     - url: "/reports/api/v1/relatorios"
@@ -311,6 +343,9 @@ roles:
     # O que cada um ve DENTRO da tela continua sendo o campo papeis do YAML de cada relatorio no sap-reports.
     - url: "/reports/api/v1/relatorios"
       actions: ["get"]
+    # Tela Financeiro > PIX (PIX avulso). Permissao so de tela: nenhum endpoint atende esta URL.
+    - url: "/tela/financeiro/pix"
+      actions: ["get"]
     - url: "/business-partners/search"
       actions: [ "*" ]
     - url: "/branch"
@@ -338,6 +373,9 @@ roles:
     # Menu Relatorios (sap-reports): o sap-service nao ve essas chamadas; a regra so decide se o item aparece no menu.
     # O que cada um ve DENTRO da tela continua sendo o campo papeis do YAML de cada relatorio no sap-reports.
     - url: "/reports/api/v1/relatorios"
+      actions: ["get"]
+    # Tela Financeiro > PIX (PIX avulso). Permissao so de tela: nenhum endpoint atende esta URL.
+    - url: "/tela/financeiro/pix"
       actions: ["get"]
     - url: "/business-partners/search"
       actions: [ "*" ]

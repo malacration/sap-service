@@ -367,6 +367,15 @@ open class Document(val CardCode : String,
         DocumentLines.forEach{it.atualizaPrecoBase(itemService)}
     }
 
+    /**
+     * Quantidade do pedido inteiro, mandada pelo portal quando o pedido se divide em varios documentos
+     * (um por condicao de pagamento). O minimo de entrega da regiao vale para o pedido, nao para cada
+     * documento (ver DocumentForAngular.validaFreteParaEntrega). So entra: nao vai para o SAP.
+     */
+    @get:JsonIgnore
+    @set:JsonProperty("QuantidadePedido")
+    var quantidadePedido : Double? = null
+
     var frete : Double? = null
         set(value) {
             if(value != null)

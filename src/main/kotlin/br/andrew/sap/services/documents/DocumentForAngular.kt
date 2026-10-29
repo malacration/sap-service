@@ -92,7 +92,11 @@ class DocumentForAngular(private val freteManual: Boolean = false) {
                 "nao esta vinculada a nenhuma regiao de frete ativa da filial $filial - vincule a localidade a uma regiao para calcular o frete")
 
         val quantidade = pedido.DocumentLines.sumOf { it.Quantity.toDoubleOrNull() ?: 0.0 }
-        val freteEsperado = regiao.calcularFrete(codLocalidade.toString(), quantidade)
+        //o minimo de entrega vale para o pedido inteiro: o portal manda o total quando divide o pedido
+        //em documentos. Nunca menos que o proprio documento.
+        val quantidadePedido = maxOf(quantidade, pedido.quantidadePedido ?: 0.0)
+        regiao.validaQuantidadeMinimaEntrega(quantidadePedido)
+        val freteEsperado = regiao.calcularFrete(codLocalidade.toString(), quantidade, quantidadePedido)
             ?: throw Exception("Nao foi possivel calcular o frete da localidade $localidade na regiao ${regiao.Code} - " +
                 "falta a distancia da localidade nessa regiao ou a faixa de preco que cubra $quantidade unidades")
 

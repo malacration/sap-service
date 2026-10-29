@@ -42,7 +42,7 @@ class MinhasPermissoesController(
     @PostMapping("minhas-permissoes")
     fun minhasPermissoes(auth: Authentication, @RequestBody consultas: List<PermissaoConsulta?>): List<PermissaoResposta> {
         val usuario = auth as? User ?: throw PermissaoConsultaInvalida("Usuário não identificado.")
-        val validas = validar(consultas)
+        val validas = validarConsultas(consultas, MAXIMO_DE_CONSULTAS)
         // As liberadas a todo autenticado entram para a resposta bater com o filtro em qualquer caminho perguntado.
         val regras = RoleBasedAuthorizationFilter.LIBERADAS_A_AUTENTICADOS + usuario.roles.flatMap { ruleService.get(it) }
         return validas.map { c ->
@@ -50,20 +50,6 @@ class MinhasPermissoesController(
             val limpo = RulePathMatcher.limparCaminho(c.caminho)
             val uri = if (RulePathMatcher.ehUrlCompleta(c.caminho)) limpo else prefixoDoContexto + limpo
             PermissaoResposta(c.metodo, c.caminho, matcher.autoriza(regras, metodo, uri) != null)
-        }
-    }
-
-    private fun validar(consultas: List<PermissaoConsulta?>): List<PermissaoConsulta> {
-        if (consultas.size > MAXIMO_DE_CONSULTAS)
-            throw PermissaoConsultaInvalida("No máximo $MAXIMO_DE_CONSULTAS consultas por chamada.")
-        return consultas.map { c ->
-            if (c == null)
-                throw PermissaoConsultaInvalida("Consulta vazia na lista: envie {metodo, caminho}.")
-            if (c.metodo.trim().lowercase() !in METODOS)
-                throw PermissaoConsultaInvalida("Método inválido: '${c.metodo.take(20)}' (use get, post, put, patch ou delete).")
-            if (c.caminho.isBlank() || c.caminho.length > TAMANHO_MAXIMO_CAMINHO)
-                throw PermissaoConsultaInvalida("Caminho vazio ou com mais de $TAMANHO_MAXIMO_CAMINHO caracteres.")
-            c
         }
     }
 
@@ -82,6 +68,21 @@ class MinhasPermissoesController(
         const val MAXIMO_DE_CONSULTAS = 100
         const val TAMANHO_MAXIMO_CAMINHO = 300
         private val METODOS = setOf("get", "post", "put", "patch", "delete")
+
+        /** Tambem usada pelo simular-lote da tela de Regras de Acesso: as duas recebem a mesma lista de consultas. */
+        fun validarConsultas(consultas: List<PermissaoConsulta?>, maximo: Int): List<PermissaoConsulta> {
+            if (consultas.size > maximo)
+                throw PermissaoConsultaInvalida("No máximo $maximo consultas por chamada.")
+            return consultas.map { c ->
+                if (c == null)
+                    throw PermissaoConsultaInvalida("Consulta vazia na lista: envie {metodo, caminho}.")
+                if (c.metodo.trim().lowercase() !in METODOS)
+                    throw PermissaoConsultaInvalida("Método inválido: '${c.metodo.take(20)}' (use get, post, put, patch ou delete).")
+                if (c.caminho.isBlank() || c.caminho.length > TAMANHO_MAXIMO_CAMINHO)
+                    throw PermissaoConsultaInvalida("Caminho vazio ou com mais de $TAMANHO_MAXIMO_CAMINHO caracteres.")
+                c
+            }
+        }
     }
 }
 
