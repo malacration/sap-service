@@ -30,6 +30,21 @@ class AdditionalExpensesJsonTest {
     }
 
     @Test
+    fun `vinculo com documento base so sai, nunca e lido do SAP`() {
+        //Despesa de pedido lida do SAP: vinculada a cotacao. Copiar isso para a nota quebra o batch.
+        val doPedido = mapper.readValue(
+            """{"ExpenseCode":1,"LineTotal":940.0,"BaseDocEntry":177801,"BaseDocLine":0,"BaseDocType":23}""",
+            jacksonTypeRef<AdditionalExpenses>())
+        Assertions.assertFalse(mapper.writeValueAsString(doPedido).contains("BaseDoc"))
+
+        val daEntrega = AdditionalExpenses(5, 300.0).also { it.BaseDocEntry = 153135; it.BaseDocLine = 0; it.BaseDocType = 13 }
+        val json = mapper.readTree(mapper.writeValueAsString(daEntrega))
+        Assertions.assertEquals(13, json["BaseDocType"].asInt())
+        Assertions.assertEquals(153135, json["BaseDocEntry"].asInt())
+        Assertions.assertEquals(0, json["BaseDocLine"].asInt())
+    }
+
+    @Test
     fun `TaxCode nunca volta no JSON enviado ao SAP`() {
         val despesa = mapper.readValue(doSap, jacksonTypeRef<AdditionalExpenses>())
 

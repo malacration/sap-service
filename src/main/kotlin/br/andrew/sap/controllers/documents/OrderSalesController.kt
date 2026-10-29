@@ -56,6 +56,7 @@ class OrderSalesController(val ordersService: OrdersService,
     val localidadeService: LocalidadeService,
                            val regraAutorizacaoService: RegraAutorizacaoService,
                            val autorizacaoService: AutorizacaoService,
+                           val carregamentoService: br.andrew.sap.services.logistica.CarregamentoService,
                            @Value("\${pedido-venda.teste.enable:false}") private val pedidoVendaTesteHabilitado: Boolean,
                            @Value("\${frete.manual:false}") private val freteManual: Boolean
 ) {
@@ -208,8 +209,9 @@ class OrderSalesController(val ordersService: OrdersService,
 
     @GetMapping("/findLoadOrders")
     fun findLoadOrders(@RequestParam("U_Ordem_Carregamento") U_Ordem_Carregamento: String): NextLink<OrderSales> {
-        val result = ordersService.FindLoadOrders(U_Ordem_Carregamento)
-        return result ?: NextLink(emptyList(), "")
+        val result = ordersService.FindLoadOrders(U_Ordem_Carregamento) ?: NextLink(emptyList(), "")
+        //Linhas de fatura de reserva vem so na 1a pagina; o front junta todas as paginas.
+        return NextLink(result.content + carregamentoService.faturasDaOrdem(U_Ordem_Carregamento), result.nextLink)
     }
 
     @PostMapping("/findAllLoadOrders")

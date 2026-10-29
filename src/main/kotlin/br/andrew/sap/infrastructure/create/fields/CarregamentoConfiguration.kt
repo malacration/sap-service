@@ -49,6 +49,10 @@ class CarregamentoConfiguration(val userFieldsMDService: UserFieldsMDService,
             FieldMd("motorista","Motorista","@ORD_CARREGAMENTO", DbType.db_Alpha),
             FieldMd("capacidadeCaminhao","Peso Caminhão","@ORD_CARREGAMENTO", DbType.db_Float),
             FieldMd("transportadora","Transportadora","@ORD_CARREGAMENTO", DbType.db_Alpha),
+            //Quem fez e o que fez na ultima gravacao. O log do UDO (@AORD_CARREGAMENTO) guarda cada
+            //versao, entao cada versao diz quem foi: o UserSign e sempre o usuario do Service Layer.
+            FieldMd("usuario","Usuário da última ação","@ORD_CARREGAMENTO", DbType.db_Alpha),
+            FieldMd("acao","Última ação","@ORD_CARREGAMENTO", DbType.db_Alpha),
         ).forEach {
             userFieldsMDService.findOrCreate(it)
         }
@@ -86,6 +90,18 @@ class CarregamentoConfiguration(val userFieldsMDService: UserFieldsMDService,
             FieldMd("precoBase","Preço Base","@ORD_CRG_LINHA", DbType.db_Float),
             FieldMd("comentario","Comentário","@ORD_CRG_LINHA", DbType.db_Alpha),
             FieldMd("fretePorLinha","Frete Por Linha","@ORD_CRG_LINHA", DbType.db_Float),
+
+            //Retirada parcial de fatura de reserva (simples faturamento). baseEntry/quantidade acima
+            //sao SMALLINT (tamanho 6): DocEntry de nota passa de 32767 e gravava NULL, e quantidade
+            //precisa de fracao. Tamanho 11 e o que o SAP cria como INTEGER (ver CobrancaConfiguration).
+            FieldMd("docEntryFatura","Fatura de Reserva","@ORD_CRG_LINHA", DbType.db_Numeric).also {
+                it.size = 11
+                it.editSize = 11
+                it.LinkedSystemObject = LinkedSystemObject.ulInvoices
+            },
+            FieldMd("qtdRetirada","Quantidade Retirada","@ORD_CRG_LINHA", DbType.db_Float).also {
+                it.subType = DbSubType.st_Quantity
+            },
 
             ).forEach {
             userFieldsMDService.findOrCreate(it)
