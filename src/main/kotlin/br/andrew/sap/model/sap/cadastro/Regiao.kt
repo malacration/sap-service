@@ -76,15 +76,38 @@ class Regiao : BatchId {
             .maxByOrNull { it.U_QtdeAte!! }
     }
 
+    /**
+     * Faixa base: a de menor quantidade minima. A quantidade dela e o minimo para a regiao entregar
+     * (ex.: base 50 = so entrega pedido de 50 unidades para cima). null = regiao sem faixa.
+     */
+    fun faixaBase() : RegiaoFaixa? = faixas.filter { it.U_QtdeAte != null }.minByOrNull { it.U_QtdeAte!! }
+
+    fun quantidadeMinimaEntrega() : Int? = faixaBase()?.U_QtdeAte
+
     //mesma formula do simulador de frete no front (Regiao.calcularFrete em
     //regiao.ts) - usada pra revalidar no backend o frete calculado pelo
-    //front antes de gravar a venda (ver DocumentForAngular)
-    fun calcularFrete(codLocal : String, quantidade : Double) : Double? {
+    //front antes de gravar a venda (ver DocumentForAngular).
+    //quantidadePedido: o minimo de entrega vale para o pedido inteiro. Quando o pedido se divide em
+    //documentos (por condicao de pagamento), um documento pode ficar abaixo da base - ele usa a faixa
+    //base, desde que o pedido inteiro a alcance.
+    fun calcularFrete(codLocal : String, quantidade : Double, quantidadePedido : Double = quantidade) : Double? {
         val distancia = getDistancia(codLocal) ?: return null
-        val faixa = encontraFaixa(quantidade) ?: return null
+        val faixa = encontraFaixa(quantidade)
+            ?: faixaBase()?.takeIf { maxOf(quantidade, quantidadePedido) >= it.U_QtdeAte!! }
+            ?: return null
         val valorKm = faixa.U_ValorKm ?: return null
         return ((distancia / 100.0) * valorKm + (U_CustoTransporte ?: 0.0)) * quantidade
     }
+
+    /** Pedido com entrega abaixo da base da regiao: a regiao nao entrega, a venda tem que ser retirada. */
+    fun validaQuantidadeMinimaEntrega(quantidadePedido : Double) {
+        val minima = quantidadeMinimaEntrega() ?: return
+        if(quantidadePedido < minima)
+            throw Exception("A quantidade mínima para entrega nesta região é $minima unidades " +
+                "(o pedido tem ${quantidadeTexto(quantidadePedido)}). Para menos, use Retirada.")
+    }
+
+    private fun quantidadeTexto(valor : Double) = java.math.BigDecimal(valor).stripTrailingZeros().toPlainString()
 
     fun addLocalidade(codLocal : String, distanciaKm : Double) : Regiao {
         if(temLocalidade(codLocal))
@@ -109,10 +132,9 @@ class Regiao : BatchId {
         return this
     }
 
+    //a menor quantidade cadastrada e a base (minimo para entregar) - ver faixaBase
     fun addFaixa(qtdeMinima : Int, valorKm : Double) : Regiao {
         validaQtdeMinima(qtdeMinima)
-        if(qtdeMinima != 1 && faixas.none { it.U_QtdeAte == 1 })
-            throw Exception("Cadastre primeiro a faixa base (quantidade minima 1) antes de adicionar outras faixas")
         if(faixas.any { it.U_QtdeAte == qtdeMinima })
             throw Exception("Ja existe uma faixa com quantidade minima $qtdeMinima")
         validaOrdemPreco(qtdeMinima, valorKm)
@@ -121,13 +143,9 @@ class Regiao : BatchId {
     }
 
     fun removeFaixa(lineId : Int) : Regiao {
-        val faixa = faixas.firstOrNull { it.LineId == lineId }
+        faixas.firstOrNull { it.LineId == lineId }
             ?: throw Exception("Faixa de preco nao encontrada")
-        //a faixa base sustenta o calculo pra qualquer quantidade abaixo do
-        //proximo minimo cadastrado - sem ela o simulador fica sem cobertura
-        //pra quantidades pequenas, entao so pode ser editada, nunca removida
-        if(faixa.U_QtdeAte == 1)
-            throw Exception("A faixa base (quantidade minima 1) nao pode ser removida, apenas modificada")
+        //remover a base e permitido: a proxima faixa vira a base e o minimo de entrega sobe junto
         faixas = faixas.filter { it.LineId != lineId }.toMutableList()
         return this
     }
@@ -136,11 +154,7 @@ class Regiao : BatchId {
         validaQtdeMinima(qtdeMinima)
         val faixa = faixas.firstOrNull { it.LineId == lineId }
             ?: throw Exception("Faixa de preco nao encontrada")
-        //trocar a quantidade minima da faixa base pra um valor != 1 equivale a
-        //remove-la (deixaria quantidades pequenas sem faixa aplicavel), entao
-        //so o valor dela pode ser editado
-        if(faixa.U_QtdeAte == 1 && qtdeMinima != 1)
-            throw Exception("A faixa base (quantidade minima 1) nao pode ter a quantidade alterada, apenas o valor")
+        //mudar a quantidade da base muda o minimo de entrega da regiao (ex.: 1 -> 50)
         if(faixas.any { it.LineId != lineId && it.U_QtdeAte == qtdeMinima })
             throw Exception("Ja existe uma faixa com quantidade minima $qtdeMinima")
         validaOrdemPreco(qtdeMinima, valorKm, lineId)
@@ -151,7 +165,7 @@ class Regiao : BatchId {
 
     private fun validaQtdeMinima(qtdeMinima : Int) {
         if(qtdeMinima < 1)
-            throw Exception("A quantidade minima deve ser pelo menos 1 (a faixa base cobre a partir do primeiro item)")
+            throw Exception("A quantidade minima deve ser pelo menos 1")
     }
 
     /**
@@ -192,9 +206,9 @@ class RegiaoFaixa(var Code : String? = null,
                   var LineId : Int? = null,
                   //o campo no SAP se chama U_QtdeAte mas hoje representa a
                   //QUANTIDADE MINIMA pra faixa valer (obrigatorio, nunca nulo).
-                  //ex.: 1 = faixa base (cobre a partir do 1o item); 100 = so a
-                  //partir de 100 itens. a faixa aplicada e a de maior minimo
-                  //que a quantidade atinge
+                  //ex.: 1 = cobre a partir do 1o item; 100 = so a partir de 100
+                  //itens. a faixa aplicada e a de maior minimo que a quantidade
+                  //atinge; a de menor minimo e a base (minimo para entregar)
                   @JsonProperty("U_QtdeAte")
                   var U_QtdeAte : Int? = null,
                   @JsonProperty("U_ValorKm")
