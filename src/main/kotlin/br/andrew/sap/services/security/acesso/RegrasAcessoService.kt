@@ -327,7 +327,14 @@ class RegrasAcessoService(
      * filtro. `rascunho` testa as alteracoes ainda nao salvas. O caminho pode vir colado do console do
      * navegador (URL completa, com query): host, query e fragmento sao descartados.
      */
-    fun simular(perfis: List<String>, metodo: String, caminho: String, rascunho: RegrasDocumento?): ResultadoSimulacao {
+    fun simular(perfis: List<String>, metodo: String, caminho: String, rascunho: RegrasDocumento?): ResultadoSimulacao =
+        simularLote(perfis, listOf(metodo to caminho), rascunho).single()
+
+    /**
+     * Varias consultas sobre a MESMA versao (uma leitura so do cadastro): a previa do menu pergunta pela chamada
+     * principal e pelas dependencias de todas as telas de uma vez.
+     */
+    fun simularLote(perfis: List<String>, consultas: List<Pair<String, String>>, rascunho: RegrasDocumento?): List<ResultadoSimulacao> {
         var versao: Int? = null
         val documento = if (rascunho != null) {
             val validacao = RegrasValidador.validar(rascunho, matcher)
@@ -338,7 +345,13 @@ class RegrasAcessoService(
             versao = meta.numeroDaVersao()
             doc
         }
+        val valendo = versao?.let { fonteAtiva() == "sap" && cache.getIfAvailable()?.versaoAtual() == it }
+        return consultas.map { (metodo, caminho) -> simularEm(documento, perfis, metodo.trim().lowercase(), caminho, versao, valendo) }
+    }
 
+    private fun simularEm(
+        documento: RegrasDocumento, perfis: List<String>, metodo: String, caminho: String, versao: Int?, valendo: Boolean?,
+    ): ResultadoSimulacao {
         val limpo = RulePathMatcher.limparCaminho(caminho)
         val casou = perfis.asSequence()
             .flatMap { perfil -> documento.perfis[perfil].orEmpty().asSequence().map { perfil to it } }
@@ -349,7 +362,7 @@ class RegrasAcessoService(
             perfisSemRegras = perfis.filter { documento.perfis[it].isNullOrEmpty() },
             caminho = limpo,
             versaoSimulada = versao,
-            valendo = versao?.let { fonteAtiva() == "sap" && cache.getIfAvailable()?.versaoAtual() == it },
+            valendo = valendo,
         )
     }
 

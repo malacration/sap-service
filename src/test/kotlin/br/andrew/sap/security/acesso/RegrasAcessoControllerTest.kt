@@ -3,6 +3,9 @@ package br.andrew.sap.security.acesso
 import br.andrew.sap.controllers.authentication.RegrasAcessoController
 import br.andrew.sap.controllers.authentication.RestaurarRequest
 import br.andrew.sap.controllers.authentication.SalvarPerfilRequest
+import br.andrew.sap.controllers.authentication.PermissaoConsulta
+import br.andrew.sap.controllers.authentication.PermissaoConsultaInvalida
+import br.andrew.sap.controllers.authentication.SimularLoteRequest
 import br.andrew.sap.controllers.authentication.SimularRequest
 import br.andrew.sap.model.authentication.User
 import br.andrew.sap.model.authentication.UserOriginEnum
@@ -12,6 +15,7 @@ import br.andrew.sap.services.security.acesso.RegrasAcessoCache
 import br.andrew.sap.services.security.acesso.RegrasAcessoNegadoException
 import br.andrew.sap.services.security.acesso.RegrasAcessoService
 import br.andrew.sap.services.security.acesso.RegrasConflitoException
+import br.andrew.sap.services.security.acesso.RegrasDocumento
 import br.andrew.sap.services.security.acesso.RegrasNaoEncontradasException
 import br.andrew.sap.services.security.acesso.RegrasValidacaoException
 import br.andrew.sap.services.security.interfaces.RuleService
@@ -94,6 +98,7 @@ class RegrasAcessoControllerTest {
             assertThrows(RegrasAcessoNegadoException::class.java) { c.endpoints(quem) }
             assertThrows(RegrasAcessoNegadoException::class.java) { c.cobertura(quem, "/a") }
             assertThrows(RegrasAcessoNegadoException::class.java) { c.simular(quem, SimularRequest(listOf("admin"), "get", "/a")) }
+            assertThrows(RegrasAcessoNegadoException::class.java) { c.simularLote(quem, SimularLoteRequest(listOf("admin"), listOf(PermissaoConsulta("get", "/a")))) }
             assertThrows(RegrasAcessoNegadoException::class.java) { c.importar(quem, yaml, "mesclar", true, null, null) }
             assertThrows(RegrasAcessoNegadoException::class.java) { c.restaurar(quem, 1, RestaurarRequest(1)) }
             assertThrows(RegrasAcessoNegadoException::class.java) { c.removerPerfil(quem, "cobranca", 1, null) }
@@ -123,6 +128,31 @@ class RegrasAcessoControllerTest {
         assertTrue(c.exportar(admin, null).contains("/sales-person/*"))
         assertTrue(c.arquivo(admin).contains("cobranca"))
         assertTrue(c.simular(admin, SimularRequest(listOf("cobranca"), "get", "/sales-person/137")).autorizado)
+        // metodo como vem do formulario ou colado: o /simular e o lote normalizam igual
+        assertTrue(c.simular(admin, SimularRequest(listOf("cobranca"), " GET ", "/sales-person/137")).autorizado)
+    }
+
+    @Test
+    fun `simular em lote responde cada consulta na ordem e aceita rascunho`() {
+        val c = controller()
+        val consultas = listOf(PermissaoConsulta("get", "/cobranca/titulos"), PermissaoConsulta("post", "/cobranca/titulos/acoes"))
+        val rascunho = RegrasDocumento(perfis = mapOf(
+            "admin" to listOf(RegraDoc("/**", listOf("*"))),
+            "controladoria" to listOf(RegraDoc("/cobranca/**", listOf("get")))))
+
+        val r = c.simularLote(admin, SimularLoteRequest(listOf("controladoria"), consultas, rascunho))
+
+        assertEquals(listOf(true, false), r.map { it.autorizado })
+        assertEquals(listOf("/cobranca/titulos", "/cobranca/titulos/acoes"), r.map { it.caminho })
+        listOf(
+            List(501) { PermissaoConsulta("get", "/a") },
+            listOf(PermissaoConsulta("xyz", "/a")),
+            listOf(PermissaoConsulta("get", " ")),
+            listOf(null),
+        ).forEach { invalidas ->
+            assertThrows(PermissaoConsultaInvalida::class.java) { c.simularLote(admin, SimularLoteRequest(listOf("admin"), invalidas)) }
+        }
+        assertEquals(HttpStatus.BAD_REQUEST, c.onConsultaInvalida(PermissaoConsultaInvalida("x")).statusCode)
     }
 
     // ------------------------------------------------------------------ erros com status proprio
