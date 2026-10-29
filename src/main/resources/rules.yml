@@ -196,6 +196,11 @@ roles:
       actions: ["get"]
     - url: "/reprocessamento/**"
       actions: ["*"]
+    # Menu Producao > Ordens de Producao (listagem e detalhe, somente leitura).
+    - url: "/ordens-producao"
+      actions: ["get"]
+    - url: "/ordens-producao/*"
+      actions: ["get"]
     - url: "/item/search"
       actions: ["post"]
     - url: "/painel/**"
