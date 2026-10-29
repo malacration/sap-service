@@ -45,22 +45,6 @@ class OrdersService(val sqlQueriesService : SqlQueriesService, env: SapEnvriomen
         return get(filter).tryGetPageValues<Document>(page)
     }
 
-    fun fullSearchTextFallBack(dataInicial: String, dataFinal: String, filial: Int, localidade: String,
-                               vendedor : Int?): NextLink<OrderSales>? {
-        val parameters = listOf(
-            Parameter("startDate", dataInicial),
-            Parameter("finalDate", dataFinal),
-            Parameter("filial", filial),
-            Parameter("localidade", localidade),
-            Parameter("vendedor", vendedor?:-2),
-
-                Parameter("vendedorDisable", if(vendedor == null)  -2 else Int.MAX_VALUE)
-        )
-        return sqlQueriesService
-            .execute("pedido-search.sql", parameters)
-            ?.tryGetNextValues()
-    }
-
     fun fullSearchTextFallBack2(nextPage : String): NextLink<OrderSales>? {
         return sqlQueriesService.nextLink(nextPage)!!.tryGetNextValues()
     }

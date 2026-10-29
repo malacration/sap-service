@@ -22,8 +22,10 @@ class PainelIntegradoVendasController(
         @RequestParam("vendedor", required = false) vendedor: String?,
         @RequestParam("agrupador", required = false) agrupador: String?,
         @RequestParam("localidade", required = false) localidade: String?,
-        @RequestParam("incoterms", required = false) incoterms: String?
+        @RequestParam("incoterms", required = false) incoterms: String?,
+        //"pedido" ou "nf-venda-futura"; sem valor traz os dois.
+        @RequestParam("tipo", required = false) tipo: String?
     ): NextLink<PainelIntegradoVendas>? {
-        return painelIntegradoVendasServices.searchExpeditionOrders(dataInicial,dataFinal,filial,cliente,item,vendedor,agrupador,localidade,incoterms)
+        return painelIntegradoVendasServices.searchExpeditionOrders(dataInicial,dataFinal,filial,cliente,item,vendedor,agrupador,localidade,incoterms,tipo)
     }
 }

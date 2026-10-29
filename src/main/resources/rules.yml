@@ -216,11 +216,19 @@ roles:
       actions: ["get"]
     - url: "/carregamento"
       actions: ["get", "post"]
-    - url: "/carregamento/search"
-      actions: ["get"]
-    - url: "/carregamento/estoque-em-carregamento"
+    - url: "/carregamento/estoque-em-carregamento-itens"
       actions: ["get"]
     - url: "/carregamento/notas/*"
+      actions: ["get"]
+    - url: "/carregamento/notas-status/*"
+      actions: ["get"]
+    - url: "/carregamento/*/historico"
+      actions: ["get"]
+    - url: "/carregamento/danfes/*"
+      actions: ["get"]
+    - url: "/carregamento/search-faturas"
+      actions: ["get"]
+    - url: "/carregamento/search-pedidos"
       actions: ["get"]
     - url: "/carregamento/*/logistica"
       actions: ["post"]
@@ -254,11 +262,19 @@ roles:
       actions: ["get"]
     - url: "/carregamento"
       actions: ["get", "post"]
-    - url: "/carregamento/search"
-      actions: ["get"]
-    - url: "/carregamento/estoque-em-carregamento"
+    - url: "/carregamento/estoque-em-carregamento-itens"
       actions: ["get"]
     - url: "/carregamento/notas/*"
+      actions: ["get"]
+    - url: "/carregamento/notas-status/*"
+      actions: ["get"]
+    - url: "/carregamento/*/historico"
+      actions: ["get"]
+    - url: "/carregamento/danfes/*"
+      actions: ["get"]
+    - url: "/carregamento/search-faturas"
+      actions: ["get"]
+    - url: "/carregamento/search-pedidos"
       actions: ["get"]
     - url: "/carregamento/*/logistica"
       actions: ["post"]

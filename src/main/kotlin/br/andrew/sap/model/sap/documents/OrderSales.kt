@@ -36,6 +36,16 @@ class OrderSales(CardCode: String,
     var CostingCode : String? = null
     var CostingCode2 : String? = null
     var BaseLine : Number? = null
+    //13 = linha de fatura de reserva (busca/ordem de carregamento); pedido vem sem.
+    var BaseType : Number? = null
+    //So fatura de reserva: teto da retirada nesta ordem (OpenQty menos outras ordens Abertas).
+    var SaldoFatura : Number? = null
+    //NF de venda futura: frete por unidade sem arredondar, para a tela recalcular o frete ao mudar a retirada.
+    var FreteUnitario : Double? = null
+    //O que resta do frete da NF (frete - DrawnTotal): teto do frete da retirada, como na entrega.
+    var FreteRestante : Double? = null
+    //Cidade do endereco de entrega (busca do carregamento): filtro de cidade e localidade de NF antiga.
+    var CityS : String? = null
     var UomCode : String? = null
     var PrecoNegociado : Double? = null
     var PrecoBase : Double? = null

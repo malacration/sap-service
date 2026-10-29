@@ -17,6 +17,16 @@ class AdditionalExpenses(val expenseCode : Int, var LineTotal : Double){
     var LineNum : Int? = null
     var DistributionRule : String? = null
     var DistributionRule2 : String? = null
+    //Despesa copiada de outro documento (frete da entrega de NF de venda futura: BaseDocType 13). So
+    //sai no JSON, nunca e lido do SAP: a nota do carregamento reaproveita as despesas lidas do pedido,
+    //e o vinculo do pedido com a cotacao (BaseType 23) ia junto - "Documents to be copied are not of
+    //same type". Mesmo truque do TaxCode, ao contrario.
+    @get:JsonProperty("BaseDocEntry") @set:JsonIgnore
+    var BaseDocEntry : Int? = null
+    @get:JsonProperty("BaseDocLine") @set:JsonIgnore
+    var BaseDocLine : Int? = null
+    @get:JsonProperty("BaseDocType") @set:JsonIgnore
+    var BaseDocType : Int? = null
 
     //Codigo de imposto da despesa, determinado pelo SAP. So vem preenchido quando o documento
     //e lido de volta do Service Layer - e o que o DesoneradoService usa para descobrir se essa
