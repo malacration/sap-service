@@ -55,6 +55,10 @@ class OrderSales(CardCode: String,
     var DistribSum: Double? = null
     var Telephone: String? = null
     var Mobil: String? = null
+    //Contato do cliente (cadastro do parceiro, OCRD): celular e, se nao houver, o telefone. So as views da ordem
+    //de carregamento preenchem; a pessoa de contato do pedido (OCPR) nao tem telefone no HOMOLOG2.
+    var ClienteCelular: String? = null
+    var ClienteTelefone: String? = null
 
     override fun toString(): String {
         return "OrderSales(CardCode='$CardCode', Branch='${getBPL_IDAssignedToInvoice()}', docEntry=$docEntry, docNum=$docNum, pedido_forca=$u_id_pedido_forca)"
