@@ -12,7 +12,7 @@ class ResponsePixQrCodeTest{
 
     @Test
     fun descerializacao(){
-        val mapper = ObjectMapper().registerModule(KotlinModule())
+        val mapper = ObjectMapper().registerModule(KotlinModule.Builder().build())
         val obj = mapper.readValue(json, jacksonTypeRef<DataRetonroPixQrCode>())
         Assertions.assertEquals("teste",obj.data.textContent)
     }

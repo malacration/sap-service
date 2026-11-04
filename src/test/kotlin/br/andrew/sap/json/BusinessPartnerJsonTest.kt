@@ -13,7 +13,7 @@ class BusinessPartnerJsonTest {
 
     @Test
     fun test(){
-        val mapper = ObjectMapper().registerModule(KotlinModule())
+        val mapper = ObjectMapper().registerModule(KotlinModule.Builder().build())
         val saida = mapper.writeValueAsString(
             BusinessPartner("windson", BusinessPartnerType.C)
                 .also { it.setCpfCnpj(CpfCnpj("01847004261")) })
@@ -25,7 +25,7 @@ class BusinessPartnerJsonTest {
 
     @Test
     fun teste2(){
-        val mapper = ObjectMapper().registerModule(KotlinModule())
+        val mapper = ObjectMapper().registerModule(KotlinModule.Builder().build())
         val bp = Cliente("windson","27746773001").getUpdateBusinessPartner("CLI0666")
         val saida = mapper.writeValueAsString(bp)
         println(saida)

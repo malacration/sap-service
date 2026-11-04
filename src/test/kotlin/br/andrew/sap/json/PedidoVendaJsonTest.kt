@@ -15,7 +15,7 @@ class PedidoVendaJsonTest {
 
     @Test
     fun test(){
-        val mapper = ObjectMapper().registerModule(KotlinModule())
+        val mapper = ObjectMapper().registerModule(KotlinModule.Builder().build())
         val produtos = listOf<Produto>(Produto("PRO0001",10.5,10.0,0))
         val pedido = PedidoVenda("CLI0001","18",
                 "avista",
@@ -25,25 +25,25 @@ class PedidoVendaJsonTest {
 
     @Test
     fun testeJsonCliente(){
-        val mapper = ObjectMapper().registerModule(KotlinModule())
+        val mapper = ObjectMapper().registerModule(KotlinModule.Builder().build())
         mapper.readValue(json, jacksonTypeRef<PedidoVenda>())
     }
 
     @Test
     fun testeJson2Cliente(){
-        val mapper = ObjectMapper().registerModule(KotlinModule())
+        val mapper = ObjectMapper().registerModule(KotlinModule.Builder().build())
         mapper.readValue(json2, jacksonTypeRef<PedidoVenda>())
     }
 
     @Test
     fun testeJsonSingleToList(){
-        val mapper = ObjectMapper().registerModule(KotlinModule())
+        val mapper = ObjectMapper().registerModule(KotlinModule.Builder().build())
         mapper.readValue(json2, jacksonTypeRef<PedidoVenda>())
     }
 
     @Test
     fun jsonExtend(){
-        val mapper = ObjectMapper().registerModule(KotlinModule())
+        val mapper = ObjectMapper().registerModule(KotlinModule.Builder().build())
         val produtos = listOf<Produto>(Produto("PRO0001",10.5,10.0,0)
                 .also { it.desconto = 100.0 })
         val pedido = PedidoVenda("CLI0001","18",
@@ -58,7 +58,7 @@ class PedidoVendaJsonTest {
 
     @Test
     fun jsonPrecoUnitarioTabela(){
-        val mapper = ObjectMapper().registerModule(KotlinModule())
+        val mapper = ObjectMapper().registerModule(KotlinModule.Builder().build())
         val obj = mapper.readValue(jsonPrecos, jacksonTypeRef<PedidoVenda>())
         val produto = obj.produtos.get(0)
         Assertions.assertEquals(140.0,produto.precoUnitario)
@@ -67,20 +67,20 @@ class PedidoVendaJsonTest {
 
     @Test
     fun jsonParseDataNull(){
-        val mapper = ObjectMapper().registerModule(KotlinModule())
+        val mapper = ObjectMapper().registerModule(KotlinModule.Builder().build())
         val obj = mapper.readValue(jsonDataNull, jacksonTypeRef<PedidoVenda>())
     }
 
     @Test
     fun jsonParIdItem(){
-        val mapper = ObjectMapper().registerModule(KotlinModule())
+        val mapper = ObjectMapper().registerModule(KotlinModule.Builder().build())
         val obj = mapper.readValue(jsonIdItem, jacksonTypeRef<PedidoVenda>())
         Assertions.assertEquals("898",obj.produtos.get(0).idItem)
     }
 
     @Test
     fun json77UnitPrice() {
-        val mapper = ObjectMapper().registerModule(KotlinModule())
+        val mapper = ObjectMapper().registerModule(KotlinModule.Builder().build())
         val obj = mapper.readValue(json77, jacksonTypeRef<PedidoVenda>())
         Assertions.assertEquals(131.67,obj.produtos.get(0).precoUnitario)
         val order = obj.getOrder(Mockito.mock(ItemsService::class.java), ComissaoServiceMock.get())

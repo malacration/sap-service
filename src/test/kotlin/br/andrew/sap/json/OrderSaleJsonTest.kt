@@ -16,7 +16,7 @@ class OrderSaleJsonTest {
 
     @Test
     fun test(){
-        val mapper = ObjectMapper().registerModule(KotlinModule())
+        val mapper = ObjectMapper().registerModule(KotlinModule.Builder().build())
         val produtos = listOf<Product>(Product("PRO0001","10.5","10.0"))
         val pedido = OrderSales("CLI0001", "Date()",produtos,"2").also {
             it.u_id_pedido_forca = "666"
@@ -32,7 +32,7 @@ class OrderSaleJsonTest {
 
     @Test
     fun valuesNull(){
-        val mapper = ObjectMapper().registerModule(KotlinModule())
+        val mapper = ObjectMapper().registerModule(KotlinModule.Builder().build())
         val produtos = listOf<Product>(Product("PRO0001","10.5","10.0"))
         val pedido = OrderSales("CLI0001", "Date()",produtos,"2").also {
             it.DocumentLines.forEach{ it.U_preco_base = null; it.U_preco_negociado = null}
@@ -48,7 +48,7 @@ class OrderSaleJsonTest {
 
     @Test
     fun tryJsonOdataToOrder(){
-        val mapper = ObjectMapper().registerModule(KotlinModule())
+        val mapper = ObjectMapper().registerModule(KotlinModule.Builder().build())
         val file = File("src/test/kotlin/br/andrew/sap/json/draft.json").readBytes()
         val obj = mapper.readValue(String(file), jacksonTypeRef<OData>())
         val order = obj.tryGetValue<OrderSales>()
@@ -60,7 +60,7 @@ class OrderSaleJsonTest {
 
     @Test
     fun tryJsonSqlTest(){
-        val mapper = ObjectMapper().registerModule(KotlinModule())
+        val mapper = ObjectMapper().registerModule(KotlinModule.Builder().build())
         val obj = mapper.readValue(jsonSql, jacksonTypeRef<OData>())
         val data = obj.tryGetValues<DocEntry>()
         Assertions.assertEquals(11993,data[0].DocEntry)

@@ -14,7 +14,7 @@ class DownPaymentsToDrawJson {
         val objeto = DownPaymentsToDraw().also {
             it.grossAmountToDraw = BigDecimal(100)
         }
-        val mapper = ObjectMapper().registerModule(KotlinModule())
+        val mapper = ObjectMapper().registerModule(KotlinModule.Builder().build())
         mapper.writeValueAsString(objeto)
     }
 }

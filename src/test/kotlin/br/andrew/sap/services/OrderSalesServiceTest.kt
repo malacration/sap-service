@@ -20,7 +20,7 @@ class OrderSalesServiceTest {
     @Test
     fun test(){
         val json = "{\"dataEntraga\":\"2023-04-28\",\"observacao\":\"TESTE\",\"idCliente\":\"CLI0003017\",\"desconto\":0,\"produtos\":{\"precoUnitario\":108.9,\"idProduto\":\"PAC0000042\",\"desconto\":10,\"valorTabela\":121,\"quantidade\":5},\"idCondicaoPagamento\":16,\"frete\":10,\"idEmpresa\":2,\"tipoPedido\":9,\"codVendedor\":58,\"idPedido\":106,\"idFormaPagamento\":\"AVISTA\"}"
-        val mapper = ObjectMapper().registerModule(KotlinModule())
+        val mapper = ObjectMapper().registerModule(KotlinModule.Builder().build())
         val pedidoBase = mapper.readValue(json, jacksonTypeRef<PedidoVenda>()).also { it.produtos.forEach { it.listapreco = 5 } }
         val orderBase = pedidoBase.getOrder(
             Mockito.mock(ItemsService::class.java),

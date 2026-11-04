@@ -13,7 +13,7 @@ class DocumentLinesTestsJsonTests {
 
     @Test
     fun tryJsonWithProduct(){
-        val mapper = ObjectMapper().registerModule(KotlinModule())
+        val mapper = ObjectMapper().registerModule(KotlinModule.Builder().build())
         val obj = mapper.readValue(jsonProduct, jacksonTypeRef<OData>())
         val data = obj.tryGetValue<Invoice>()
         Assertions.assertEquals(666,data.docEntry)
@@ -41,7 +41,7 @@ class DocumentLinesTestsJsonTests {
 
     @Test
     fun tryJsonWithService(){
-        val mapper = ObjectMapper().registerModule(KotlinModule())
+        val mapper = ObjectMapper().registerModule(KotlinModule.Builder().build())
         val obj = mapper.readValue(jsonService, jacksonTypeRef<OData>())
         val data = obj.tryGetValue<Invoice>()
         Assertions.assertEquals(333,data.docEntry)

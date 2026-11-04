@@ -14,7 +14,7 @@ class DocumentStatusJsonTest {
 
     @Test
     fun createJson(){
-        val mapper = ObjectMapper().registerModule(KotlinModule())
+        val mapper = ObjectMapper().registerModule(KotlinModule.Builder().build())
         val saida = mapper.writeValueAsString(
             DocumentStatus.bost_Close)
         println(saida)
@@ -23,7 +23,7 @@ class DocumentStatusJsonTest {
     @Test
     fun readJson(){
         val json = "\"bost_Close\""
-        val mapper = ObjectMapper().registerModule(KotlinModule())
+        val mapper = ObjectMapper().registerModule(KotlinModule.Builder().build())
         val obj = mapper.readValue(json, jacksonTypeRef<DocumentStatus>())
         Assertions.assertEquals(obj, DocumentStatus.bost_Close)
     }

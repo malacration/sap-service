@@ -66,7 +66,7 @@ class CarregamentoController(val carregamentoServico: CarregamentoService,
      * (conferido no HOMOLOG2 em 2026-10-27).
      */
     private val SEM_ANEXO = -1
-    val objectMapper = ObjectMapper().registerModule(KotlinModule())
+    val objectMapper = ObjectMapper().registerModule(KotlinModule.Builder().build())
 
 
 
