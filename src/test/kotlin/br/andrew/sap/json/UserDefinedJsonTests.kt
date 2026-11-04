@@ -13,7 +13,7 @@ class UserDefinedJsonTests  {
 
     @Test
     fun test(){
-        val mapper = ObjectMapper().registerModule(KotlinModule())
+        val mapper = ObjectMapper().registerModule(KotlinModule.Builder().build())
         val obj = mapper.readValue(json, jacksonTypeRef<OData>()).tryGetValues<UserDefinedObject>()
     }
     val json = "{\n" +

@@ -31,7 +31,7 @@ class OneTimePasswordAuthenticationFilter(authManager: AuthenticationManager,
 
     override fun attemptAuthentication(request: HttpServletRequest?, response: HttpServletResponse?): Authentication? {
         val json = request!!.reader.lines().collect(Collectors.joining(System.lineSeparator()))
-        val mapper = ObjectMapper().registerModule(KotlinModule())
+        val mapper = ObjectMapper().registerModule(KotlinModule.Builder().build())
         val user = mapper.readValue(json, OtpCpfCnpj::class.java).getUser()
         if(!otpService.checkPassword(user))
             throw Exception("Erro ao validar OTP")

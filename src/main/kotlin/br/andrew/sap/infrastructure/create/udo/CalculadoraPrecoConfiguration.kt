@@ -58,7 +58,7 @@ class CalculadoraPrecoConfiguration(
             FormColumns("DocNum","DocNum",0)
         ))
 
-        ObjectMapper().registerModule(KotlinModule()).writeValueAsString(ud)
+        ObjectMapper().registerModule(KotlinModule.Builder().build()).writeValueAsString(ud)
         return ud;
     }
 }

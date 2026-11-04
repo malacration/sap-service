@@ -35,7 +35,7 @@ class AuthenticationHandler(
         response.characterEncoding = "UTF-8"
         if(user is User) {
             response.writer.print(
-                ObjectMapper().registerModule(KotlinModule()).writeValueAsString(jwtHandler.getToken(user))
+                ObjectMapper().registerModule(KotlinModule.Builder().build()).writeValueAsString(jwtHandler.getToken(user))
             )
         }
         response.writer.flush()

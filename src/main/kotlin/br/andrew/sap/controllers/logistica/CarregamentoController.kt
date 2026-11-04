@@ -51,7 +51,7 @@ class CarregamentoController(val carregamentoServico: CarregamentoService,
                              val sqlQueriesService: SqlQueriesService) {
 
     val logger = LoggerFactory.getLogger(CarregamentoController::class.java)
-    val objectMapper = ObjectMapper().registerModule(KotlinModule())
+    val objectMapper = ObjectMapper().registerModule(KotlinModule.Builder().build())
 
     private data class CloseBatchPayload(private val id: String) : BatchId {
         override fun getId(): String = id

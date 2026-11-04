@@ -32,14 +32,14 @@ class AddressJson {
 
     @Test
     fun testJsonCliente(){
-        val mapper = ObjectMapper().registerModule(KotlinModule())
+        val mapper = ObjectMapper().registerModule(KotlinModule.Builder().build())
         val obj = mapper.readValue(json, Cliente::class.java)
         val addrs = obj.endereco!!.getAddresse(localidade = 123)
     }
 
     @Test
     fun getBussinesPartnerAndAddrs(){
-        val mapper = ObjectMapper().registerModule(KotlinModule())
+        val mapper = ObjectMapper().registerModule(KotlinModule.Builder().build())
         val obj = mapper.readValue(json, Cliente::class.java)
         val bussinesParte = obj.getBusinessPartner()
         val addrs1 = bussinesParte.getAddresses().get(0)
@@ -58,7 +58,7 @@ class AddressJson {
 
     @Test
     fun test(){
-        val mapper = ObjectMapper().registerModule(KotlinModule())
+        val mapper = ObjectMapper().registerModule(KotlinModule.Builder().build())
         val saida = mapper.writeValueAsString(
             BusinessPartner().also { it.attachmentEntry = 666 })
         println(saida)

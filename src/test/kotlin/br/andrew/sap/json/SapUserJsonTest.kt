@@ -12,7 +12,7 @@ class SapUserJsonTest {
 
     @Test
     fun test(){
-        val mapper = ObjectMapper().registerModule(KotlinModule())
+        val mapper = ObjectMapper().registerModule(KotlinModule.Builder().build())
         val sapUser = mapper.readValue(json,jacksonTypeRef<OData>()).tryGetValue<SapUser>()
         Assertions.assertEquals(162,sapUser.internalKey)
     }

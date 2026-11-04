@@ -18,7 +18,7 @@ class InstallmentJsonTests {
     fun teste() {
         val json = "{\"DueDate\":\"2025-01-15\",\"Total\":1200}"
         val mapper = ObjectMapper()
-            .registerModule(KotlinModule())
+            .registerModule(KotlinModule.Builder().build())
             .registerModule(JavaTimeModule())
             .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
         val obj = mapper.readValue(json, jacksonTypeRef<Installment>())
@@ -30,7 +30,7 @@ class InstallmentJsonTests {
     fun dataWithTz() {
         val json = "{\"DueDate\":\"2025-03-05T00:00:00Z\",\"Total\":1200}"
         val mapper = ObjectMapper()
-            .registerModule(KotlinModule())
+            .registerModule(KotlinModule.Builder().build())
             .registerModule(JavaTimeModule())
             .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
         val obj = mapper.readValue(json, jacksonTypeRef<Installment>())

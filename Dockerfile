@@ -1,12 +1,12 @@
-FROM eclipse-temurin:21-jdk as build
+FROM eclipse-temurin:25-jdk as build
 VOLUME ~/.gradle /root/.gradle
 WORKDIR /workspace/app
 COPY ./ ./
 RUN ./gradlew assemble
 RUN rm /workspace/app/build/libs/*-plain.jar> /dev/null
-RUN java -Djarmode=layertools -jar /workspace/app/build/libs/*.jar extract --destination /extracted
+RUN java -Djarmode=tools -jar /workspace/app/build/libs/*.jar extract --layers --launcher --destination /extracted
 
-FROM eclipse-temurin:21-jre
+FROM eclipse-temurin:25-jre
 VOLUME /tmp
 ARG EXTRACTED=/extracted
 WORKDIR /app

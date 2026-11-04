@@ -15,7 +15,7 @@ import org.junit.jupiter.api.Test
  */
 class AdditionalExpensesJsonTest {
 
-    private val mapper = ObjectMapper().registerModule(KotlinModule())
+    private val mapper = ObjectMapper().registerModule(KotlinModule.Builder().build())
 
     private val doSap = """
         {"ExpenseCode":1,"LineTotal":1500.0,"TaxCode":"ICM00","LineNum":0,"DistributionMethod":"aedm_RowTotal"}

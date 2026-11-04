@@ -11,7 +11,7 @@ class RomaneioEntradaInsumoJsonTest {
 
     @Test
     fun test(){
-        val mapper = ObjectMapper().registerModule(KotlinModule())
+        val mapper = ObjectMapper().registerModule(KotlinModule.Builder().build())
         val obj = mapper.readValue(json, jacksonTypeRef<List<RomaneioEntradaInsumo>>())
     }
 
