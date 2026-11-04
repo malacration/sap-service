@@ -14,6 +14,10 @@ import java.math.BigDecimal
 class BatchesGroupByItemCode {
 
     var DocEntry : Int? = null
+    //13 = DocEntry e de fatura de reserva; sem valor = pedido (o front antigo nao manda).
+    var BaseType : Int? = null
+    //Linha da NF de venda futura: a mesma NF pode ter o item em mais de uma linha.
+    var BaseLine : Int? = null
     var ItemCode : String? = null
     var Batches: List<BatchStock>? = null
 

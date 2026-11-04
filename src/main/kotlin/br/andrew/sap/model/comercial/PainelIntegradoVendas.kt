@@ -22,5 +22,9 @@ class PainelIntegradoVendas(
     val Name : String?,
     val Incoterms :String?,
     val EstoqueMinimo: BigDecimal?,
-    val EmOrdemDeCarregamento: String?
+    val EmOrdemDeCarregamento: String?,
+    val DocEntry: Int? = null,
+    //"NF venda futura" nas linhas de fatura de reserva; pedido vem sem.
+    val Tipo: String? = null,
+    val WhsCode: String? = null,
 )

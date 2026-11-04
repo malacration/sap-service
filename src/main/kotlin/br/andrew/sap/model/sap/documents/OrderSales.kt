@@ -36,6 +36,16 @@ class OrderSales(CardCode: String,
     var CostingCode : String? = null
     var CostingCode2 : String? = null
     var BaseLine : Number? = null
+    //13 = linha de fatura de reserva (busca/ordem de carregamento); pedido vem sem.
+    var BaseType : Number? = null
+    //So fatura de reserva: teto da retirada nesta ordem (OpenQty menos outras ordens Abertas).
+    var SaldoFatura : Number? = null
+    //NF de venda futura: frete por unidade sem arredondar, para a tela recalcular o frete ao mudar a retirada.
+    var FreteUnitario : Double? = null
+    //O que resta do frete da NF (frete - DrawnTotal): teto do frete da retirada, como na entrega.
+    var FreteRestante : Double? = null
+    //Cidade do endereco de entrega (busca do carregamento): filtro de cidade e localidade de NF antiga.
+    var CityS : String? = null
     var UomCode : String? = null
     var PrecoNegociado : Double? = null
     var PrecoBase : Double? = null
@@ -45,6 +55,10 @@ class OrderSales(CardCode: String,
     var DistribSum: Double? = null
     var Telephone: String? = null
     var Mobil: String? = null
+    //Contato do cliente (cadastro do parceiro, OCRD): celular e, se nao houver, o telefone. So as views da ordem
+    //de carregamento preenchem; a pessoa de contato do pedido (OCPR) nao tem telefone no HOMOLOG2.
+    var ClienteCelular: String? = null
+    var ClienteTelefone: String? = null
 
     override fun toString(): String {
         return "OrderSales(CardCode='$CardCode', Branch='${getBPL_IDAssignedToInvoice()}', docEntry=$docEntry, docNum=$docNum, pedido_forca=$u_id_pedido_forca)"

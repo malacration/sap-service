@@ -10,8 +10,13 @@ import com.fasterxml.jackson.databind.annotation.JsonNaming
 data class CarregamentoDto(
         val ordemCarregamento: Carregamento,
         val pedidos : List<Int>,
-        val pedidosRemover : List<Int> = listOf()
+        val pedidosRemover : List<Int> = listOf(),
+        //null = front antigo, nao mexe nas retiradas da ordem; lista vazia = remove todas.
+        val faturasReserva : List<RetiradaFatura>? = null
 )
+
+/** Quanto retirar de uma linha de fatura de reserva (OINV isIns = 'Y') nesta ordem. */
+data class RetiradaFatura(val docEntry : Int, val lineNum : Int, val quantidade : Double)
 
 
 class PedidoLinha(val docEntry : Int, val lineNum : Int){
