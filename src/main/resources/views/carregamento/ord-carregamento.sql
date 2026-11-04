@@ -16,11 +16,14 @@ SELECT
     e."SlpName",
    "T1"."DistribSum",
     e."Telephone",
-    e."Mobil"
+    e."Mobil",
+    k."Cellular" AS "ClienteCelular",
+    k."Phone1" AS "ClienteTelefone"
 FROM RDR1 "T1"
     JOIN ORDR "T0" ON "T0"."DocEntry" = "T1"."DocEntry"
     JOIN "OBPL" b ON "T0"."BPLId" = b."BPLId"
     LEFT JOIN "CRD1" c ON c."CardCode" = "T0"."CardCode" AND c."Address" = 'ENTREGA'
     LEFT JOIN "@RO_LOCAIS" d ON d."Code" = c."U_Localidade"
     LEFT JOIN "OSLP" e ON e."SlpCode" = "T0"."SlpCode"
+    LEFT JOIN "OCRD" k ON k."CardCode" = "T0"."CardCode"
     WHERE "T1"."U_ORD_CARREGAMENTO" = :U_ORD_CARREGAMENTO

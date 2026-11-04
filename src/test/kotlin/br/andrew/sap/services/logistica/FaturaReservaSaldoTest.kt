@@ -156,4 +156,13 @@ class FaturaReservaSaldoTest {
         assertEquals(BigDecimal("0.0010000000"), unitario)
         assertEquals(BigDecimal("0.70"), CarregamentoService.freteProporcional(BigDecimal("1"), BigDecimal("700"), BigDecimal("1000")))
     }
+
+    @Test
+    fun `views da ordem trazem o contato do cliente (celular e telefone do cadastro) para o itinerario`() {
+        listOf("ord-carregamento.sql", "ord-carregamento-faturas.sql").forEach { nome ->
+            val sql = Files.readString(Path.of("src/main/resources/views/carregamento/$nome"))
+            assertTrue(sql.contains("\"ClienteCelular\"") && sql.contains("\"ClienteTelefone\""), "$nome sem o contato do cliente")
+            assertTrue(sql.contains("LEFT JOIN \"OCRD\""), "$nome precisa de LEFT JOIN: cliente sem cadastro de telefone nao some da ordem")
+        }
+    }
 }
