@@ -167,3 +167,9 @@ journal.importacao.max-linhas=500
 
 # Filiais (BPLId) em que o cliente cadastrado pela tela Novo parceiro e vinculado. Vazio = o SAP vincula todas.
 cadastro.parceiro.filiais=
+
+# Agenda do e-mail de inadimplencia dos vendedores (tela Configuracoes > E-mail de inadimplencia).
+# Fica no UDO AGENDA_RELATORIO; true cria a tabela no boot. Sem o UDO vale a agenda padrao (segunda 07:00).
+fields.agenda-relatorio=false
+# So a copia PADRAO (separada por virgula), usada enquanto a tela nao tiver gravado nada. report.enable=true liga o envio.
+report.inadimplencia.cc=
