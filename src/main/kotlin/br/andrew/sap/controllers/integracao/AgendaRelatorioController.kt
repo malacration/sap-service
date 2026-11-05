@@ -37,9 +37,16 @@ class AgendaRelatorioController(private val service: AgendaRelatorioService) {
 
     /** Envio assincrono: 202 se iniciou, 409 se ja tem um em andamento. O resultado aparece em `ultimoStatus`. */
     @PostMapping("enviar")
-    fun enviar(@RequestParam(required = false) slpCode: Int?): ResponseEntity<Void> =
-        if (service.enviarAgora(slpCode)) ResponseEntity.accepted().build()
+    fun enviar(@RequestParam(required = false) slpCode: Int?, @RequestParam(required = false) destino: String?): ResponseEntity<Void> {
+        // destino = envio de teste: o relatorio do vendedor vai so para esse e-mail, sem copia
+        val teste = destino?.trim()?.takeIf { it.isNotEmpty() }
+        if (teste != null) {
+            if (slpCode == null) throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Informe o vendedor para o envio de teste.")
+            if (!AgendaConfig.emailValido(teste)) throw ResponseStatusException(HttpStatus.BAD_REQUEST, "E-mail de teste invalido: $teste")
+        }
+        return if (service.enviarAgora(slpCode, teste)) ResponseEntity.accepted().build()
         else ResponseEntity.status(HttpStatus.CONFLICT).build()
+    }
 }
 
 data class AgendaDto(

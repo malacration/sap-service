@@ -13,14 +13,14 @@ class ParcelasAbertoService(private val odbc: OdbcClient) {
 
     /**
      * Parcelas de nota fiscal e boletos de adiantamento de venda futura, vencidos ha mais de tres
-     * dias e em aberto, do vendedor. Vai pelo sap-odbc (e nao pelo SQLQueries) porque os dois tipos
+     * dias e em aberto, do vendedor, do mais vencido para o menos. Vai pelo sap-odbc (e nao pelo SQLQueries) porque os dois tipos
      * saem de um UNION ALL, que o SQLQueries nao aceita.
      */
     fun getAllBySql(slpCode : Int) : List<ParcelasAberto> {
         val params = mapOf("slpCode" to slpCode, "data" to LocalDate.now().minusDays(3).toString())
         return odbc.consultar(sql, params, MAX_LINHAS).rows
             .map(::paraParcela)
-            .sortedBy { "${it.CardCode}-${it.Serial}-${it.InstlmntID}" }
+            .sortedWith(compareBy({ it.DueDate }, { it.CardCode }, { it.Serial }, { it.InstlmntID }))
     }
 
     private fun paraParcela(linha: Map<String, Any?>) = ParcelasAberto(
@@ -37,7 +37,10 @@ class ParcelasAbertoService(private val odbc: OdbcClient) {
         U_StatusCobranca = linha["U_StatusCobranca"]?.toString(),
         U_AgenteCobrador = linha["U_AgenteCobrador"]?.toString(),
         PaidToDate = BigDecimal(linha["PaidToDate"].toString()),
-    ).also { it.tipo = if (linha["Tipo"] == "AD") "Adiantamento VF" else "NF" }
+    ).also {
+        it.tipo = if (linha["Tipo"] == "AD") "Fatura" else "NF"
+        it.contrato = linha["Contrato"]?.toString()
+    }
 
     companion object {
         const val MAX_LINHAS = 10000

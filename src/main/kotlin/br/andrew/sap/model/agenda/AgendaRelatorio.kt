@@ -61,7 +61,11 @@ data class AgendaConfig(
 
     companion object {
         const val JANELA_MINUTOS = 60L
+        private val HORA = Regex("^([01]\\d|2[0-3]):[0-5]\\d$")
+        private val ULTIMA_HORA = LocalTime.of(23, 0)
         private val EMAIL = Regex("^[^@\\s,;]+@[^@\\s,;]+\\.[^@\\s,;]+$")
+
+        fun emailValido(email: String) = EMAIL.matches(email.trim())
 
         fun de(e: AgendaRelatorio) = AgendaConfig(
             ativo = e.U_Ativo != "N",
@@ -75,7 +79,10 @@ data class AgendaConfig(
         /** Valida o que o usuario digitou; devolve a mensagem de erro ou null se estiver tudo certo. */
         fun validar(dias: List<Int>, hora: String, copia: List<String>): String? {
             if (dias.isEmpty() || dias.any { it !in 1..7 }) return "Escolha ao menos um dia da semana."
-            if (runCatching { LocalTime.parse(hora) }.isFailure) return "Hora invalida, use HH:mm."
+            // U_Hora tem 5 posicoes: "07:00:30" passaria no parse e estouraria no SAP
+            if (!HORA.matches(hora)) return "Hora invalida, use HH:mm."
+            // a janela de 60 minutos nao atravessa a meia-noite (o dia do envio e o da hora marcada)
+            if (LocalTime.parse(hora) > ULTIMA_HORA) return "Use uma hora ate 23:00: a janela de envio nao passa da meia-noite."
             copia.firstOrNull { !EMAIL.matches(it.trim()) }?.let { return "E-mail invalido em copia: $it" }
             // U_Copia tem 254 posicoes no SAP
             if (copia.joinToString(",") { it.trim() }.length > 254) return "Lista de e-mails em copia grande demais (maximo 254 caracteres)."

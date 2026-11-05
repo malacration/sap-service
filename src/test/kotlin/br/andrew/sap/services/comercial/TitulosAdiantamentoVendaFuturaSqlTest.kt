@@ -29,7 +29,9 @@ class TitulosAdiantamentoVendaFuturaSqlTest {
         assertTrue(ramos[0].contains("FROM OINV NS"))
         assertTrue(ramos[1].contains("FROM ODPI T0"))
         assertTrue(ramos[1].contains("INNER JOIN \"@AR_CONTRATO_FUTURO\" VF ON VF.\"DocEntry\" = T0.\"U_venda_futura\""))
-        assertFalse(ramos[0].contains("@AR_CONTRATO_FUTURO"))
+        // na nota o contrato so informa o numero: LEFT JOIN, nunca corta a nota sem contrato
+        assertTrue(ramos[0].contains("LEFT JOIN \"@AR_CONTRATO_FUTURO\" VF ON VF.\"DocEntry\" = NS.\"U_venda_futura\""))
+        assertFalse(ramos[0].contains("INNER JOIN \"@AR_CONTRATO_FUTURO\""))
     }
 
     @Test
@@ -49,6 +51,8 @@ class TitulosAdiantamentoVendaFuturaSqlTest {
     fun `adiantamento cancelado ou ja encerrado nao entra`() {
         assertTrue(ramos[1].contains("T0.\"CANCELED\" = 'N'"))
         assertTrue(ramos[1].contains("T0.\"DocStatus\" = 'O'"))
+        // adiantamento de reconhecimento de devolucao (U_TX_DocEntryRef) nao e cobranca
+        assertTrue(ramos[1].contains("IFNULL(T0.\"U_TX_DocEntryRef\", 0) = 0"))
     }
 
     @Test
@@ -77,7 +81,7 @@ class TitulosAdiantamentoVendaFuturaSqlTest {
 
         assertEquals(listOf("CLI1-400-1", "CLI1-77-2", "CLI2-506-1"), parcelas.map { "${it.CardCode}-${it.Serial}-${it.InstlmntID}" })
         val ad = parcelas[1]
-        assertEquals("Adiantamento VF", ad.tipo)
+        assertEquals("Fatura", ad.tipo)
         assertEquals("NF", parcelas[0].tipo)
         assertEquals(BigDecimal("70.00"), ad.saldo)
         assertEquals("02/03/2026", ad.getdueDateFormated())
@@ -88,10 +92,28 @@ class TitulosAdiantamentoVendaFuturaSqlTest {
         assertTrue(params.firstValue["data"].toString().matches(Regex("\\d{4}-\\d{2}-\\d{2}")))
     }
 
-    private fun linha(cliente: String, tipo: String, serial: Int, parcela: Int, pago: String = "0") = mapOf<String, Any?>(
+    @Test
+    fun `ordena pelo vencimento, o mais vencido primeiro, e traz o numero do contrato`() {
+        val odbc = mock<OdbcClient>()
+        whenever(odbc.consultar(any(), any(), eq(ParcelasAbertoService.MAX_LINHAS))).thenReturn(
+            QueryResponse(rows = listOf(
+                linha("CLI1", "NF", 1, 1, venc = "2026-10-20"),
+                linha("CLI9", "AD", 2, 1, venc = "2026-09-01", contrato = 55),
+                linha("CLI5", "NF", 3, 1, venc = "2026-10-05"),
+            ))
+        )
+
+        val parcelas = ParcelasAbertoService(odbc).getAllBySql(151)
+
+        assertEquals(listOf("20260901", "20261005", "20261020"), parcelas.map { it.DueDate })
+        assertEquals("55", parcelas[0].contrato)
+        assertEquals(null, parcelas[1].contrato)
+    }
+
+    private fun linha(cliente: String, tipo: String, serial: Int, parcela: Int, pago: String = "0", venc: String = "2026-03-02", contrato: Int? = null) = mapOf<String, Any?>(
         "BPLName" to "Filial", "CardCode" to cliente, "CardName" to "Nome", "SlpName" to "Vend",
         "Tipo" to tipo, "Serial" to serial, "InstlmntID" to parcela, "InsTotal" to "100.00",
-        "DueDate" to "2026-03-02T00:00", "DocTotal" to "100.00", "PaidToDate" to pago,
+        "DueDate" to venc + "T00:00", "Contrato" to contrato, "DocTotal" to "100.00", "PaidToDate" to pago,
         "U_StatusCobranca" to null, "U_AgenteCobrador" to null,
     )
 }

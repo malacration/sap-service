@@ -19,9 +19,11 @@ SELECT
     NS."DocTotal"  AS "DocTotal",
     P."PaidToDate" AS "PaidToDate",
     C."U_Status"   AS "U_StatusCobranca",
-    C."U_Cobrador" AS "U_AgenteCobrador"
+    C."U_Cobrador" AS "U_AgenteCobrador",
+    VF."DocNum"    AS "Contrato"
 FROM OINV NS
     INNER JOIN INV6 P ON P."DocEntry" = NS."DocEntry"
+    LEFT JOIN "@AR_CONTRATO_FUTURO" VF ON VF."DocEntry" = NS."U_venda_futura"
     INNER JOIN OSLP V ON V."SlpCode" = NS."SlpCode"
     LEFT JOIN "@COB_TITULO" C
          ON C."U_Tipo" = 'NF' AND C."U_DocEntry" = NS."DocEntry" AND C."U_InstlmntID" = P."InstlmntID"
@@ -46,7 +48,8 @@ SELECT
     T0."DocTotal"  AS "DocTotal",
     P."PaidToDate" AS "PaidToDate",
     C."U_Status"   AS "U_StatusCobranca",
-    C."U_Cobrador" AS "U_AgenteCobrador"
+    C."U_Cobrador" AS "U_AgenteCobrador",
+    VF."DocNum"    AS "Contrato"
 FROM ODPI T0
     INNER JOIN DPI6 P ON P."DocEntry" = T0."DocEntry"
     INNER JOIN "@AR_CONTRATO_FUTURO" VF ON VF."DocEntry" = T0."U_venda_futura"
@@ -56,6 +59,7 @@ FROM ODPI T0
 WHERE
     T0."CANCELED" = 'N'
     AND T0."DocStatus" = 'O'
+    AND IFNULL(T0."U_TX_DocEntryRef", 0) = 0
     AND T0."BPLId" IN (2,4,11,17,18,12)
     AND P."InsTotal" > 0
     AND P."DueDate" <= :data

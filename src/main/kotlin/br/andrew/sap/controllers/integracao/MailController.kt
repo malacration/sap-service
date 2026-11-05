@@ -7,6 +7,8 @@ import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
+import org.springframework.http.HttpStatus
+import org.springframework.web.server.ResponseStatusException
 import org.thymeleaf.TemplateEngine
 import org.thymeleaf.context.Context
 import br.andrew.sap.services.integracao.MailService
@@ -14,7 +16,6 @@ import br.andrew.sap.services.cadastro.SalesPersonsService
 import br.andrew.sap.services.comercial.ParcelasAbertoService
 import br.andrew.sap.services.integracao.MyMailMessage
 import br.andrew.sap.services.integracao.AgendaRelatorioService
-import br.andrew.sap.services.integracao.RelatorioInadimplenciaService
 
 @RestController
 @RequestMapping("mail")
@@ -22,7 +23,6 @@ class MailController(val mailService: MailService,
                      val templateEngine : TemplateEngine,
                      val salesService : SalesPersonsService,
                      val service: ParcelasAbertoService,
-                     val relatorio: RelatorioInadimplenciaService,
                      val agenda: AgendaRelatorioService) {
 
 
@@ -46,7 +46,7 @@ class MailController(val mailService: MailService,
 
     @GetMapping("/enviar")
     fun enviarInadimplencia() {
-        relatorio.enviar(agenda.obter().copia)
+        if (!agenda.enviarAgora(null)) throw ResponseStatusException(HttpStatus.CONFLICT, "Ja existe um envio em andamento.")
     }
 
 }

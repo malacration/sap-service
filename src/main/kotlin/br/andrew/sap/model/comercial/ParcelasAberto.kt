@@ -30,6 +30,9 @@ class ParcelasAberto(
     var tipo: String = "NF"
 
     @get:JsonIgnore
+    var contrato: String? = null
+
+    @get:JsonIgnore
     val saldo: BigDecimal
         get() = InsTotal.subtract(PaidToDate)
 

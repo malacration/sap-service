@@ -72,4 +72,22 @@ class AgendaConfigTest {
         assertNotNull(AgendaConfig.validar(listOf(1), "07:00", listOf("a@x.com b@x.com")))
         assertNotNull(AgendaConfig.validar(listOf(1), "07:00", List(30) { "pessoa$it@empresa.com.br" }))
     }
+
+    @Test
+    fun `hora com segundos ou fora de HH-mm e recusada e depois das 23h tambem`() {
+        assertNull(AgendaConfig.validar(listOf(1), "07:00", listOf()))
+        assertNull(AgendaConfig.validar(listOf(1), "23:00", listOf()))
+        assertNotNull(AgendaConfig.validar(listOf(1), "07:00:30", listOf()))
+        assertNotNull(AgendaConfig.validar(listOf(1), "7:00", listOf()))
+        assertNotNull(AgendaConfig.validar(listOf(1), "24:00", listOf()))
+        assertNotNull(AgendaConfig.validar(listOf(1), "23:30", listOf()))
+    }
+
+    @Test
+    fun `PATCH parcial do estado nao carrega a configuracao`() {
+        val json = com.fasterxml.jackson.databind.ObjectMapper()
+            .writeValueAsString(AgendaRelatorio(U_Ativo = null, U_UltimoEnvio = "2026-10-26T07:00:00", U_UltimoStatus = "ok"))
+        assertTrue(json.contains("U_UltimoEnvio") && json.contains("U_UltimoStatus"))
+        listOf("U_Ativo", "U_Dias", "U_Hora", "U_Copia").forEach { assertFalse(json.contains(it), "$it nao devia ir") }
+    }
 }

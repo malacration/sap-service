@@ -1,5 +1,6 @@
 package br.andrew.sap.services.integracao
 
+import br.andrew.sap.model.sap.cadastro.SalePerson
 import br.andrew.sap.model.telegram.TipoMensagem
 import br.andrew.sap.services.cadastro.SalesPersonsService
 import br.andrew.sap.services.comercial.ParcelasAbertoService
@@ -49,8 +50,10 @@ class RelatorioInadimplenciaService(
     }
 
     /** @param slpCode so esse vendedor; null = todos os marcados. O vendedor precisa estar marcado para receber. */
-    fun enviar(copia: List<String>, slpCode: Int? = null): ResultadoEnvio {
-        val vendedores = salesService.getEnviaRelatorio().filter { slpCode == null || it.SalesEmployeeCode == slpCode }
+    fun enviar(copia: List<String>, slpCode: Int? = null, destino: String? = null): ResultadoEnvio {
+        // Teste (destino): qualquer vendedor serve, marcado ou nao; o e-mail vai so para o destino.
+        val vendedores = if (destino != null) listOf(salesService.getById(slpCode!!).tryGetValue<SalePerson>())
+        else salesService.getEnviaRelatorio().filter { slpCode == null || it.SalesEmployeeCode == slpCode }
         if (slpCode != null && vendedores.isEmpty())
             throw Exception("O vendedor $slpCode nao esta marcado para receber o relatorio de inadimplencia (U_envia_relatorio).")
         val enviados = AtomicInteger()
@@ -61,8 +64,8 @@ class RelatorioInadimplenciaService(
                 val titulos = parcelas.getAllBySql(vendedor.SalesEmployeeCode)
                 val body = templateEngine.process("relatorio-inadiplencia", Context().also { it.setVariables(mapOf("titulos" to titulos)) })
                 val data = SimpleDateFormat("dd/MM/yyy").format(Date())
-                val titulo = "Relatório de Inadimplência do vendedor ${vendedor.SalesEmployeeName} - ${data}"
-                mailService.sendEmail(MyMailMessage(listOf(EmailAdrres(vendedor.getEmailAddress())), titulo, body, From.COMERCIAL, emCopia), true)
+                val titulo = "${if (destino != null) "[TESTE] " else ""}Relatório de Inadimplência do vendedor ${vendedor.SalesEmployeeName} - ${data}"
+                mailService.sendEmail(MyMailMessage(listOf(EmailAdrres(destino ?: vendedor.getEmailAddress())), titulo, body, From.COMERCIAL, emCopia), true)
                 telegramMsg.send("${titulo} enviado com sucesso", TipoMensagem.eventos)
                 enviados.incrementAndGet()
             } catch (e: Exception) {

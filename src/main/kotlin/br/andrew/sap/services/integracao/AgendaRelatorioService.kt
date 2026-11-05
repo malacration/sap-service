@@ -15,6 +15,7 @@ import org.springframework.web.client.RestTemplate
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import java.time.temporal.ChronoUnit
 
 /**
  * Agenda do e-mail de inadimplencia (UDO AGENDA_RELATORIO). Sem registro no SAP, ou com o UDO fora do ar,
@@ -26,6 +27,7 @@ class AgendaRelatorioService(
     env: SapEnvrioment, restTemplate: RestTemplate, authService: AuthService,
     private val relatorio: RelatorioInadimplenciaService,
     @Value("\${report.inadimplencia.cc:}") private val copiaPadrao: List<String> = listOf(),
+    @Value("\${fields.agenda-relatorio:false}") private val udoProvisionado: Boolean = false,
 ) : EntitiesService<AgendaRelatorio>(env, restTemplate, authService) {
 
     private val logger = LoggerFactory.getLogger(AgendaRelatorioService::class.java)
@@ -45,46 +47,58 @@ class AgendaRelatorioService(
         get(Filter(Predicate("Code", CODIGO, Condicao.EQUAL))).tryGetValues<AgendaRelatorio>()
             .firstOrNull()?.let(AgendaConfig::de) ?: padrao()
 
-    /** Leitura do agendador: nunca falha, cai na agenda padrao. */
-    private fun obterTolerante(): AgendaConfig =
-        try { obter() } catch (e: Exception) {
-            logger.warn("Agenda do relatorio de inadimplencia indisponivel no SAP, usando a padrao: {}", e.message)
-            padrao()
+    /** Flag desligada = UDO nao existe, vale a agenda padrao. Flag ligada e leitura falhando = erro. */
+    private fun obterOuPadrao(): AgendaConfig =
+        try { obter() } catch (e: Exception) { if (udoProvisionado) throw e else padrao() }
+
+    /** Leitura do agendador: sem saber se o usuario desativou o envio, nao envia (a tela mostra o erro). */
+    private fun obterTolerante(): AgendaConfig? =
+        try { obterOuPadrao() } catch (e: Exception) {
+            logger.warn("Agenda do relatorio de inadimplencia ilegivel no SAP, nada sera enviado neste ciclo: {}", e.message)
+            null
         }
 
     fun salvar(config: AgendaConfig): AgendaConfig {
         val existe = get(Filter(Predicate("Code", CODIGO, Condicao.EQUAL))).tryGetValues<AgendaRelatorio>().isNotEmpty()
         val entidade = config.paraEntidade(CODIGO)
-        if (existe) update(entidade, CODIGO) else save(entidade)
+        if (existe) {
+            // o estado da execucao e do agendador: um PUT lento nao devolve o ultimo envio antigo
+            entidade.U_UltimoEnvio = null
+            entidade.U_UltimoStatus = null
+            update(entidade, CODIGO)
+        } else save(entidade)
         return obter()
     }
 
     /** Chamado a cada minuto; envia quando a agenda manda e ainda nao enviou hoje. */
     fun verificar(agora: LocalDateTime = LocalDateTime.now()) {
         if (diaEnviado == agora.toLocalDate()) return
-        val config = obterTolerante()
+        val config = obterTolerante() ?: return
         if (!config.deveEnviar(agora)) return
         val iniciou = relatorio.emSegundoPlano {
             diaEnviado = agora.toLocalDate()
-            tentarGravar(config.copy(ultimoEnvio = agora, ultimoStatus = "Envio em andamento"))
+            gravarEstado(agora, "Envio em andamento")
             val status = executar(config.copia, null, "Agendado")
-            tentarGravar(config.copy(ultimoEnvio = agora, ultimoStatus = status))
+            gravarEstado(agora, status)
         }
         if (!iniciou) logger.info("Envio do relatorio de inadimplencia ja em andamento, aguardando.")
     }
 
     /** Dispara o envio na hora, para todos ou para um vendedor. false = ja tem um envio rodando. */
-    fun enviarAgora(slpCode: Int?): Boolean = relatorio.emSegundoPlano {
-        val config = obterTolerante()
-        val status = executar(config.copia, slpCode, "Manual")
-        // Envio manual nao mexe em ultimoEnvio: nao pode impedir o envio agendado do dia.
-        tentarGravar(config.copy(ultimoStatus = status))
+    fun enviarAgora(slpCode: Int?, destino: String? = null): Boolean {
+        val config = obterOuPadrao() // agenda ilegivel = erro para quem clicou, nao um 202 que nao envia nada
+        return relatorio.emSegundoPlano {
+            val status = if (destino == null) executar(config.copia, slpCode, "Manual")
+            else executar(emptyList(), slpCode, "Teste para $destino", destino)
+            // Envio manual nao mexe em ultimoEnvio: nao pode impedir o envio agendado do dia.
+            gravarEstado(null, status)
+        }
     }
 
-    private fun executar(copia: List<String>, slpCode: Int?, origem: String): String {
+    private fun executar(copia: List<String>, slpCode: Int?, origem: String, destino: String? = null): String {
         val quando = LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM HH:mm"))
         return try {
-            val r = relatorio.enviar(copia, slpCode)
+            val r = relatorio.enviar(copia, slpCode, destino)
             "$origem $quando: ${r.enviados} enviado(s), ${r.erros} com erro"
         } catch (e: Exception) {
             logger.error("Falha no envio do relatorio de inadimplencia", e)
@@ -92,8 +106,16 @@ class AgendaRelatorioService(
         }
     }
 
-    private fun tentarGravar(config: AgendaConfig) {
-        try { salvar(config) } catch (e: Exception) {
+    /** Grava so o estado da execucao (PATCH parcial): uma edicao da agenda feita durante o envio nao e desfeita. */
+    private fun gravarEstado(ultimoEnvio: LocalDateTime?, status: String) {
+        try {
+            val existe = get(Filter(Predicate("Code", CODIGO, Condicao.EQUAL))).tryGetValues<AgendaRelatorio>().isNotEmpty()
+            if (existe) {
+                update(AgendaRelatorio(U_Ativo = null, U_UltimoEnvio = ultimoEnvio?.truncatedTo(ChronoUnit.SECONDS)?.toString(), U_UltimoStatus = status), CODIGO)
+            } else {
+                save(padrao().copy(ultimoEnvio = ultimoEnvio, ultimoStatus = status).paraEntidade(CODIGO))
+            }
+        } catch (e: Exception) {
             logger.warn("Nao foi possivel gravar o estado da agenda do relatorio no SAP: {}", e.message)
         }
     }
