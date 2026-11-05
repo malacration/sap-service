@@ -12,7 +12,7 @@ class InternalReconciliationsJsonTests {
 
     @Test
     fun test(){
-        val mapper = ObjectMapper().registerModule(KotlinModule())
+        val mapper = ObjectMapper().registerModule(KotlinModule.Builder().build())
         val internal = InternalReconciliations()
         val json = mapper.writeValueAsString(internal)
         println(json)

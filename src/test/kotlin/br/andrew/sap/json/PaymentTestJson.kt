@@ -11,7 +11,7 @@ class PaymentTestJson {
 
     @Test
     fun test(){
-        val mapper = ObjectMapper().registerModule(KotlinModule())
+        val mapper = ObjectMapper().registerModule(KotlinModule.Builder().build())
         val saida = mapper.writeValueAsString(
             Payment().also {
                 it.setBPID("666")

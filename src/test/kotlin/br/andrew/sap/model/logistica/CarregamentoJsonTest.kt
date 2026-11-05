@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test
  */
 class CarregamentoJsonTest {
 
-    private val mapper = ObjectMapper().registerModule(KotlinModule())
+    private val mapper = ObjectMapper().registerModule(KotlinModule.Builder().build())
 
     private val doSap = """
         {"DocEntry":9,"U_nameOrdem":"x","U_Status":"Aberto","U_filial":2,"U_placa":null,"U_motorista":null,

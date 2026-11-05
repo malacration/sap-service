@@ -11,7 +11,7 @@ class ContratoJsonTests {
 
     @Test
     fun test(){
-        val mapper = ObjectMapper().registerModule(KotlinModule())
+        val mapper = ObjectMapper().registerModule(KotlinModule.Builder().build())
         val contrato = Contrato(1,"code", mutableListOf(),666,"windson",2,100.0,SimpleDateFormat("dd/MM/yyyy").parse("05/08/1992"))
         val json = mapper.writeValueAsString(contrato)
         println(json)

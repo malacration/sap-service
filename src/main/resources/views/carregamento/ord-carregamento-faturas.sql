@@ -20,6 +20,8 @@ SELECT
     0 AS "DistribSum",
     e."Telephone",
     e."Mobil",
+    k."Cellular" AS "ClienteCelular",
+    k."Phone1" AS "ClienteTelefone",
     i."LineNum" AS "BaseLine",
     i."WhsCode" AS "WarehouseCode",
     13 AS "BaseType"
@@ -30,5 +32,6 @@ FROM "@ORD_CRG_LINHA" l
     LEFT JOIN "INV12" r ON r."DocEntry" = o."DocEntry"
     LEFT JOIN "@RO_LOCAIS" d ON d."Code" = r."U_LocalidadeS"
     LEFT JOIN "OSLP" e ON e."SlpCode" = o."SlpCode"
+    LEFT JOIN "OCRD" k ON k."CardCode" = o."CardCode"
     WHERE l."DocEntry" = :U_ORD_CARREGAMENTO
     AND l."U_baseType" = 13

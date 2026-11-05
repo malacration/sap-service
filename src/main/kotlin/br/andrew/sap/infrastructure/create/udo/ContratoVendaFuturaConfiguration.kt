@@ -149,7 +149,7 @@ class ContratoVendaFuturaConfiguration(val userFieldsMDService: UserFieldsMDServ
 //            FindColumns("U_valorFrete","Valor Frete"),
 //        ))
 
-        ObjectMapper().registerModule(KotlinModule()).writeValueAsString(ud)
+        ObjectMapper().registerModule(KotlinModule.Builder().build()).writeValueAsString(ud)
         return ud;
     }
 }

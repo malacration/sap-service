@@ -10,7 +10,7 @@ class FieldMdJsonTest {
 
     @Test
     fun test(){
-        val mapper = ObjectMapper().registerModule(KotlinModule())
+        val mapper = ObjectMapper().registerModule(KotlinModule.Builder().build())
         val teste = mapper.writeValueAsString(FieldMd("windson","deswindson","table"))
         Assertions.assertTrue(teste.contains("\"Type\":\"db_Alpha\""))
     }

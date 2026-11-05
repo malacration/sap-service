@@ -33,7 +33,7 @@ class RestTemplateConfig {
                 .loadTrustMaterial(null, acceptingTrustStrategy)
                 .build()
         val sslsf = SSLConnectionSocketFactory(sslContext, NoopHostnameVerifier.INSTANCE)
-        val socketFactoryRegistry: Registry<ConnectionSocketFactory> = RegistryBuilder.create < ConnectionSocketFactory ? > ()
+        val socketFactoryRegistry: Registry<ConnectionSocketFactory> = RegistryBuilder.create<ConnectionSocketFactory>()
                 .register("https", sslsf)
                 .register("http", PlainConnectionSocketFactory())
                 .build()

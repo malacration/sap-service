@@ -34,11 +34,17 @@ docker run malacration/sap-service
 
 Para building e execução é necessario:
 
-- [JDK 19+](http://www.oracle.com/technetwork/java)
+- JDK 25 LTS (build e execução), Kotlin 2.4.21 e Gradle 9.8.2 pelo wrapper.
 
 ## Para executar localmente
 
 ```shell
-./gradlew install
+./gradlew test bootJar
 ./gradlew bootRun
 ```
+
+## Compatibilidade da atualização
+
+Spring Boot permanece em 3.5.16 para preservar os contratos Jackson 2 e a integração SOAP Axis/SoftExpert. A migração para Boot 4 exige uma revisão separada dessas integrações; a linha 3.5 já encerrou o suporte comunitário. Bibliotecas legadas dessa integração permanecem como exceção conhecida.
+
+A validação local da atualização executou 1.354 testes sem falhas e gerou o JAR com Java 25. Operações em SAP e SoftExpert reais precisam de homologação com esses serviços.

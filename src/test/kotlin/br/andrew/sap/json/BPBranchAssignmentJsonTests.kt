@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test
 class BPBranchAssignmentJsonTests  {
     @Test
     fun test(){
-        val mapper = ObjectMapper().registerModule(KotlinModule())
+        val mapper = ObjectMapper().registerModule(KotlinModule.Builder().build())
         val bplid = BPBranchAssignment().also { it.bplid = "2" }
         Assertions.assertEquals("{\"BPLID\":\"2\"}",mapper.writeValueAsString(bplid))
     }

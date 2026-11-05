@@ -32,7 +32,7 @@ class ClienteJsonTest {
             "}"
     @Test
     fun testeJsonCliente(){
-        val mapper = ObjectMapper().registerModule(KotlinModule())
+        val mapper = ObjectMapper().registerModule(KotlinModule.Builder().build())
         val obj = mapper.readValue(json, jacksonTypeRef<Cliente>())
         val bp = obj.getBusinessPartner()
         Assertions.assertEquals("5555555",bp.phone1)

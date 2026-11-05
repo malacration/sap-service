@@ -33,7 +33,7 @@ class UserPasswordAuthenticationFilter(authManager: AuthenticationManager,
 
     override fun attemptAuthentication(request: HttpServletRequest?, response: HttpServletResponse?): Authentication? {
         val json = request!!.reader.lines().collect(Collectors.joining(System.lineSeparator()))
-        val mapper = ObjectMapper().registerModule(KotlinModule())
+        val mapper = ObjectMapper().registerModule(KotlinModule.Builder().build())
         val userPassword = mapper.readValue(json, UserPassword::class.java)
         return getAuthenticationManager().authenticate(service.login(userPassword))
     }

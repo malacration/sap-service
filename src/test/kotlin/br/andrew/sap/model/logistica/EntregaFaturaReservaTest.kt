@@ -16,7 +16,7 @@ import java.math.BigDecimal
  */
 class EntregaFaturaReservaTest {
 
-    private val mapper = ObjectMapper().registerModule(KotlinModule())
+    private val mapper = ObjectMapper().registerModule(KotlinModule.Builder().build())
 
     private fun linha(lineNum: Int = 0, cfop: String = "6922", openQty: String = "550") = LinhaFaturaReserva(
         "CLI0006212", 2, 7, "11261009054087000154550020000060221653602385", lineNum, "PAC0000242",

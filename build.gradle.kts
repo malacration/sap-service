@@ -1,11 +1,11 @@
-import org.jetbrains.kotlin.ir.backend.js.compile
+import javax.inject.Inject
 
 plugins {
 	id("jacoco")
-	id("org.springframework.boot") version "3.5.4"
+	id("org.springframework.boot") version "3.5.16"
 	id("io.spring.dependency-management") version "1.1.7"
-	kotlin("jvm") version "2.0.0"
-	kotlin("plugin.spring") version "2.0.0"
+	kotlin("jvm") version "2.4.21"
+	kotlin("plugin.spring") version "2.4.21"
 }
 
 group = "br.andrew.sap"
@@ -13,7 +13,7 @@ version = if (project.hasProperty("version")) project.property("version") as Str
 
 java {
 	toolchain {
-		languageVersion = JavaLanguageVersion.of(21)
+		languageVersion = JavaLanguageVersion.of(25)
 	}
 }
 
@@ -23,8 +23,6 @@ repositories {
 }
 
 dependencies {
-	implementation("com.aventrix.jnanoid:jnanoid:2.0.0")
-
 	implementation("com.aventrix.jnanoid:jnanoid:2.0.0")
 
 	implementation("org.springframework.boot:spring-boot-starter")
@@ -39,12 +37,13 @@ dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-mail")
 	implementation("org.springframework.boot:spring-boot-starter-thymeleaf")
 
-	implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.1.0")
-	implementation("org.springdoc:springdoc-openapi-ui:1.7.0")
+	// springdoc 2.8.x e a linha compativel com Boot 3.5 (3.x exige Boot 4).
+	// springdoc-openapi-ui 1.x (Boot 2) removido: nao era usado e duplicava swagger-ui.
+	implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.17")
 
-	implementation("io.jsonwebtoken:jjwt-api:0.12.4")
-	implementation("io.jsonwebtoken:jjwt-impl:0.12.4")
-	implementation("io.jsonwebtoken:jjwt-jackson:0.12.4")
+	implementation("io.jsonwebtoken:jjwt-api:0.12.7")
+	implementation("io.jsonwebtoken:jjwt-impl:0.12.7")
+	implementation("io.jsonwebtoken:jjwt-jackson:0.12.7")
 
 	implementation("com.squareup.okhttp3:okhttp:4.12.0")
 
@@ -54,15 +53,16 @@ dependencies {
 	implementation("biz.paluch.logging:logstash-gelf:1.15.1")
 
 	implementation("io.micrometer:micrometer-tracing-bridge-brave")
-	implementation("com.github.ben-manes.caffeine:caffeine:3.2.0")
+	implementation("com.github.ben-manes.caffeine:caffeine")
 
 
-	implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.16.1")
-	implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.18.2")
-	implementation("com.fasterxml.jackson.core:jackson-databind:2.16.1")
+	// Versoes do Jackson 2 gerenciadas pelo BOM do Boot (antes fixadas em 2.16/2.18 misturadas).
+	implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
+	implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310")
+	implementation("com.fasterxml.jackson.core:jackson-databind")
 	implementation("org.jetbrains.kotlin:kotlin-reflect")
 
-	implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
+	implementation("org.jetbrains.kotlin:kotlin-stdlib")
 
 	developmentOnly("org.springframework.boot:spring-boot-devtools")
 
@@ -76,21 +76,21 @@ dependencies {
 		exclude("commons-logging")
 	}
 
-	implementation("org.apache.commons:commons-lang3:3.18.0")
-	implementation("org.apache.commons:commons-text:1.14.0")
-	implementation("org.apache.tika:tika-core:3.2.2")
-	implementation("org.apache.httpcomponents.client5:httpclient5:5.4.2")
+	implementation("org.apache.commons:commons-lang3:3.20.0")
+	implementation("org.apache.commons:commons-text:1.15.0")
+	implementation("org.apache.tika:tika-core:3.3.3")
+	implementation("org.apache.httpcomponents.client5:httpclient5")
 
-	implementation("org.jetbrains.kotlinx:kotlinx-serialization-json-jvm:1.7.0")
-	implementation("com.itextpdf:itext-core:8.0.2")
-	implementation("com.itextpdf:html2pdf:5.0.2")
+	implementation("org.jetbrains.kotlinx:kotlinx-serialization-json-jvm:1.12.0")
+	implementation("com.itextpdf:itext-core:8.0.5")
+	implementation("com.itextpdf:html2pdf:5.0.5")
 
 
 
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
 
-	testImplementation("org.mockito:mockito-core:5.3.0")
-	testImplementation("org.mockito.kotlin:mockito-kotlin:5.3.1")
+	testImplementation("org.mockito:mockito-core")
+	testImplementation("org.mockito.kotlin:mockito-kotlin:5.4.0")
 
 
 }
@@ -98,11 +98,18 @@ dependencies {
 
 val wsdlDir = "$projectDir/src/generated/java"
 
+// Gradle 9 removeu Project.javaexec; ExecOperations e o substituto oficial.
+interface InjectedExecOps {
+	@get:Inject
+	val execOps: ExecOperations
+}
+
 tasks.register("import-ws") {
 	val packgePrefix = "br.andrew.sap"
+	val injected = project.objects.newInstance<InjectedExecOps>()
 	fileTree("src/main/resources/wsdl").forEach{ file ->
 		doLast {
-			javaexec {
+			injected.execOps.javaexec {
 				mainClass.set("org.apache.axis.wsdl.WSDL2Java")
 //				configurations.implementation.get().isCanBeResolved = true
 				classpath = files(
@@ -128,8 +135,8 @@ tasks.named("jacocoTestReport", JacocoReport::class) {
 		html.required.set(true)
 		xml.required.set(true)
 		csv.required.set(false)
-		html.outputLocation.set(file("$buildDir/jacocoHtml"))
-		xml.outputLocation.set(file("$buildDir/jacoco.xml"))
+		html.outputLocation.set(layout.buildDirectory.dir("jacocoHtml"))
+		xml.outputLocation.set(layout.buildDirectory.file("jacoco.xml"))
 	}
 
 	classDirectories.from(
@@ -142,7 +149,7 @@ tasks.named("jacocoTestReport", JacocoReport::class) {
 			}
 		})
 	)
-	executionData.from(files("${project.buildDir}/jacoco/test.exec"))
+	executionData.from(layout.buildDirectory.file("jacoco/test.exec"))
 }
 
 

@@ -16,7 +16,7 @@ import org.springframework.web.client.RestTemplate
 class TaxNfeService(val envrioment: TaxNfeEnvrioment, val restTemplate: RestTemplate) {
 
     private val client = OkHttpClient()
-    private val mapper = ObjectMapper().registerModule(KotlinModule())
+    private val mapper = ObjectMapper().registerModule(KotlinModule.Builder().build())
 
     fun consultar(docEntry: Int, tipoDocumento: Int): DocumentoFiscal {
         val url = "${envrioment.host}/api/v3/${envrioment.base}/invent/docs/consultar".toHttpUrl()
