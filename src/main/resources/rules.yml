@@ -467,3 +467,7 @@ roles:
       actions: ["post"]
     - url: "/journal/importacao/historico"
       actions: ["get"]
+
+  lancamento_retorno:
+    - url: "/lancamento-retorno/**"
+      actions: ["get", "post", "put"]
