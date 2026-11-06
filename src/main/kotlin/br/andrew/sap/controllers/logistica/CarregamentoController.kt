@@ -15,6 +15,7 @@ import br.andrew.sap.model.sap.documents.base.Document
 import br.andrew.sap.services.*
 import br.andrew.sap.services.abstracts.SqlQueriesService
 import br.andrew.sap.services.batch.BatchList
+import br.andrew.sap.services.batch.BatchItem
 import br.andrew.sap.services.batch.BatchMethod
 import br.andrew.sap.services.batch.BatchResponse
 import br.andrew.sap.services.batch.BatchService
@@ -177,24 +178,24 @@ class CarregamentoController(val carregamentoServico: CarregamentoService,
             val pedidosParaAdicionar = dto.pedidos.filter { it !in vinculadosAtualmente }
             val pedidosParaRemover = vinculadosAtualmente.filter { it !in dto.pedidos }
 
-            val tripleAdicionar = pedidosParaAdicionar.map {
+            val itensAdicionar = pedidosParaAdicionar.map {
                 val order = pedidoVendaService.getById(it.toString()).tryGetValue<OrderSales>()
                 val pedidosUpdate = PedidoUpdate(
                     order.DocEntry.toString(),
                     order.DocumentLines.map { line -> PedidoUpdateLine(line.DocEntry!!,line.LineNum!!,ordemCriada.DocEntry?.toString()) },
                     order.docNum
                 )
-                Triple(BatchMethod.PATCH,pedidosUpdate,pedidoVendaService)
+                BatchItem(BatchMethod.PATCH, pedidosUpdate, pedidoVendaService, descricao = descricaoPedido(order))
             }
 
-            val tripleRemover = pedidosParaRemover.map {
+            val itensRemover = pedidosParaRemover.map {
                 val order = pedidoVendaService.getById(it.toString()).tryGetValue<OrderSales>()
                 val pedidosUpdate = PedidoUpdate(
                     order.DocEntry.toString(),
                     order.DocumentLines.map { line -> PedidoUpdateLine(line.DocEntry!!,line.LineNum!!,null) },
                     order.docNum
                 )
-                Triple(BatchMethod.PATCH,pedidosUpdate,pedidoVendaService)
+                BatchItem(BatchMethod.PATCH, pedidosUpdate, pedidoVendaService, descricao = descricaoPedido(order))
             }
 
             //Retiradas antes de vincular pedido: se o saldo da NF nao bastar, nenhum pedido fica preso
@@ -202,8 +203,8 @@ class CarregamentoController(val carregamentoServico: CarregamentoService,
             if (dto.faturasReserva != null && (!isNewOrder || dto.faturasReserva.isNotEmpty()))
                 carregamentoServico.salvarRetiradas(ordemCriada.DocEntry!!, dto.faturasReserva)
 
-            if (tripleAdicionar.isNotEmpty() || tripleRemover.isNotEmpty())
-                batchService.run(BatchList().addAll(tripleAdicionar).addAll(tripleRemover))
+            if (itensAdicionar.isNotEmpty() || itensRemover.isNotEmpty())
+                batchService.run(BatchList().also { lista -> (itensAdicionar + itensRemover).forEach { lista.add(it) } })
             registrarAcao(ordemCriada.DocEntry!!, usuario, if (isNewOrder) "Criada" else "Alterada")
         }catch (e : Exception){
             if(isNewOrder){
@@ -343,7 +344,7 @@ class CarregamentoController(val carregamentoServico: CarregamentoService,
             documento.DocDueDate = null
 
             lotesParaFaturamento.add(pedido to documento)
-            invoiceBatchList.add(BatchMethod.POST, documento, invoiceService)
+            invoiceBatchList.add(BatchItem(BatchMethod.POST, documento, invoiceService, descricao = descricaoPedido(pedido)))
             val orderId = pedido.DocEntry ?: pedido.docEntry?.toString()
                 ?: throw IllegalStateException("DocEntry do pedido nao encontrado para fechamento")
             pedidosParaFechar.add(orderId)
@@ -364,13 +365,14 @@ class CarregamentoController(val carregamentoServico: CarregamentoService,
                 else -> lotesDaLinha.getBachesBy(linha)
             }
         }
-        entregas.forEach {
-            it.U_faturadoOrdemCarregamento = docEntry
-            if (!copiarAnexo) it.AttachmentEntry = SEM_ANEXO
-            it.getOrCreateTaxExtension().Vehicle = carregamento.U_placa
-            it.getOrCreateTaxExtension().Carrier = carregamento.U_transportadora
-            it.ClosingRemarks = "Motorista: ${carregamento.U_motorista}. Ordem: ${carregamento.DocEntry}"
-            invoiceBatchList.add(BatchMethod.POST, it, deliveryService)
+        entregas.forEach { (entrega, numeroNF) ->
+            entrega.U_faturadoOrdemCarregamento = docEntry
+            if (!copiarAnexo) entrega.AttachmentEntry = SEM_ANEXO
+            entrega.getOrCreateTaxExtension().Vehicle = carregamento.U_placa
+            entrega.getOrCreateTaxExtension().Carrier = carregamento.U_transportadora
+            entrega.ClosingRemarks = "Motorista: ${carregamento.U_motorista}. Ordem: ${carregamento.DocEntry}"
+            invoiceBatchList.add(BatchItem(BatchMethod.POST, entrega, deliveryService,
+                descricao = "NF de venda futura ${numeroNF ?: "?"}"))
         }
 
         val resposta = try {
@@ -566,6 +568,8 @@ class CarregamentoController(val carregamentoServico: CarregamentoService,
         return PaginaDocumentos(linhas.filter { it.DocEntry?.toIntOrNull() in daPagina },
             documentos.size > (pagina + 1) * DOCUMENTOS_POR_PAGINA)
     }
+
+    private fun descricaoPedido(pedido: OrderSales) = "Pedido ${pedido.docNum ?: pedido.DocEntry}"
 
     data class PaginaDocumentos(val content: List<OrderSales>, val temMais: Boolean)
 

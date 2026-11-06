@@ -114,19 +114,29 @@ class BatchService(val rest : RestTemplate,
             rest.exchange(request.body(body), String::class.java).body
         }
         val resposta = BatchRespondeHandler().parseBatchResponse(retorno!!)
-        val erros = resposta.withIndex().filter { !it.value.success }
-        if (erros.isNotEmpty()) {
-            val mensagem = erros.joinToString("\n") { indexedResponse ->
-                val response = indexedResponse.value
-                val erro = if ((response.errorMessage ?: "").contains("awaiting approval"))
-                    "documento está aguardando aprovação e não pode ser alterado"
-                else
-                    response.errorMessage ?: response.body ?: "Erro ${response.statusCode}"
-                "${response.statusCode} - $erro"
-            }
-            throw BatchRecusadoException(mensagem)
-        }
+        val erros = resposta.filter { !it.success }
+        if (erros.isNotEmpty())
+            throw BatchRecusadoException(mensagemDeErro(erros, batchGroups.filter { it.isNotEmpty() }))
         return resposta
+    }
+
+    /**
+     * O SAP devolve o Content-ID do item recusado, que e a posicao dele no changeset (1, 2, ...).
+     * shortcut: o Content-ID recomeca em cada changeset e a resposta nao diz de qual veio, entao a
+     * descricao so entra com um changeset so; com varios, a mensagem sai sem ela.
+     */
+    internal fun mensagemDeErro(erros: List<BatchResponse>, grupos: List<BatchList>): String {
+        val itens = grupos.singleOrNull()?.toList()
+        return erros.joinToString("\n") { response ->
+            val erro = if ((response.errorMessage ?: "").contains("awaiting approval"))
+                "documento está aguardando aprovação e não pode ser alterado"
+            else
+                response.errorMessage ?: response.body ?: "Erro ${response.statusCode}"
+            //Sem Content-ID na resposta so da pra afirmar qual foi quando o lote tem um item so.
+            val item = if (response.contentId == null) itens?.singleOrNull() else itens?.getOrNull(response.contentId - 1)
+            val descricao = item?.descricao
+            (descricao?.let { "$it: " } ?: "") + "${response.statusCode} - $erro"
+        }
     }
 
 

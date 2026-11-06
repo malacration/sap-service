@@ -174,7 +174,8 @@ class CarregamentoService(val batchService: BatchService, val pedidoVendaService
     }
 
     /** Uma entrega (ODLN) por fatura de reserva da ordem. Regras em [EntregaFaturaReserva]. */
-    fun entregasDaOrdem(carregamento: Carregamento, lotes: (Int, Product) -> List<BatchStock>): List<Delivery> {
+    /** Cada entrega com o DocNum da NF de venda futura de origem (para o erro dizer qual foi). */
+    fun entregasDaOrdem(carregamento: Carregamento, lotes: (Int, Product) -> List<BatchStock>): List<Pair<Delivery, Int?>> {
         val mapper = jacksonObjectMapper()
         return carregamento.retiradasDeFatura()
             .groupBy { it.U_docEntryFatura ?: throw Exception("Retirada sem NF de venda futura na ordem ${carregamento.DocEntry}") }
@@ -188,7 +189,7 @@ class CarregamentoService(val batchService: BatchService, val pedidoVendaService
                 EntregaFaturaReserva.montar(docEntryFatura, fatura, retiradas, seqCode) { lotes(docEntryFatura, it) }.also {
                     it.comments = observacaoComOrdem(carregamento.DocEntry!!, fatura.first().Observacao,
                         fatura.first().NumeroNF?.let { n -> "Based On A/R Invoices $n." })
-                }
+                } to fatura.first().NumeroNF
             }
     }
 
