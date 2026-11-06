@@ -15,4 +15,6 @@ data class BatchItem(
     val payload: Any,
     val service: EntitiesService<*>,
     val headers: Map<String, String> = emptyMap(),
+    // Vai na frente do erro quando o SAP recusa este item (ex.: "Pedido 80123"), pra tela dizer qual foi.
+    val descricao: String? = null,
 )
