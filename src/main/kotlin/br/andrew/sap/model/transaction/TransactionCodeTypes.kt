@@ -11,7 +11,8 @@ enum class TransactionCodeTypes(val description : String) {
     VFDV("Dev. Venda futura"),
     AROU("Outros"),
     CanC("Cancelled"),
-    VFEC("Ent. VF Conciliado");
+    VFEC("Ent. VF Conciliado"),
+    DDES("Dupl. Descontada");
 
     fun get() : TransactionCode{
         return TransactionCode(this.toString(),this.description)
