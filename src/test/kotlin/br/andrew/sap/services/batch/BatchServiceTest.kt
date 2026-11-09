@@ -4,6 +4,7 @@ import br.andrew.sap.model.sistema.SapEnvrioment
 import br.andrew.sap.services.security.AuthService
 import br.andrew.sap.services.cadastro.BusinessPartnersService
 import br.andrew.sap.services.abstracts.EntitiesService
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -100,5 +101,28 @@ class BatchServiceTest {
         val http = BatchMethod.CLOSE.getHttp(service, payload)
 
         assertTrue(http == "POST /b1s/v1/Orders(130939)/Close")
+    }
+
+    @Test
+    fun `erro do batch diz qual item o SAP recusou`() {
+        // Ordem de carregamento: "(17) ... titulo vencido" sem dizer o pedido obrigava a testar um a um.
+        val service = BatchService(mock(), mock(), mock(), mock())
+        val orders = mock<EntitiesService<*>>()
+        val lista = BatchList()
+            .add(BatchItem(BatchMethod.PATCH, BatchPayload("1"), orders, descricao = "Pedido 80123"))
+            .add(BatchItem(BatchMethod.PATCH, BatchPayload("2"), orders, descricao = "Pedido 80124"))
+        val erro = BatchResponse(400, null, false, "-1", "(17) Não é permitido realizar venda para cliente com titulo vencido", contentId = 2)
+
+        assertEquals("Pedido 80124: 400 - (17) Não é permitido realizar venda para cliente com titulo vencido",
+            service.mensagemDeErro(listOf(erro), listOf(lista)))
+        // Sem descricao, Content-ID fora da lista ou mais de um changeset: mensagem de antes.
+        assertEquals("400 - x", service.mensagemDeErro(listOf(erro.copy(errorMessage = "x", contentId = 9)), listOf(lista)))
+        assertEquals("400 - x", service.mensagemDeErro(listOf(erro.copy(errorMessage = "x")), listOf(lista, lista)))
+        assertEquals("400 - x", service.mensagemDeErro(listOf(erro.copy(errorMessage = "x", contentId = null)), listOf(lista)))
+        // Resposta sem Content-ID num lote de um item: so pode ter sido ele.
+        val umItem = BatchList().add(BatchItem(BatchMethod.PATCH, BatchPayload("1"), orders, descricao = "Pedido 80123"))
+        assertEquals("Pedido 80123: 400 - x", service.mensagemDeErro(listOf(erro.copy(errorMessage = "x", contentId = null)), listOf(umItem)))
+        // Content-ID presente e desconhecido nao cai no fallback.
+        assertEquals("400 - x", service.mensagemDeErro(listOf(erro.copy(errorMessage = "x", contentId = 99)), listOf(umItem)))
     }
 }

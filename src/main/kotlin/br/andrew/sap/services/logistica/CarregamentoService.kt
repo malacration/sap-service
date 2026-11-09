@@ -174,7 +174,8 @@ class CarregamentoService(val batchService: BatchService, val pedidoVendaService
     }
 
     /** Uma entrega (ODLN) por fatura de reserva da ordem. Regras em [EntregaFaturaReserva]. */
-    fun entregasDaOrdem(carregamento: Carregamento, lotes: (Int, Product) -> List<BatchStock>): List<Delivery> {
+    /** Cada entrega com o DocNum da NF de venda futura de origem (para o erro dizer qual foi). */
+    fun entregasDaOrdem(carregamento: Carregamento, lotes: (Int, Product) -> List<BatchStock>): List<Pair<Delivery, Int?>> {
         val mapper = jacksonObjectMapper()
         return carregamento.retiradasDeFatura()
             .groupBy { it.U_docEntryFatura ?: throw Exception("Retirada sem NF de venda futura na ordem ${carregamento.DocEntry}") }
@@ -188,7 +189,7 @@ class CarregamentoService(val batchService: BatchService, val pedidoVendaService
                 EntregaFaturaReserva.montar(docEntryFatura, fatura, retiradas, seqCode) { lotes(docEntryFatura, it) }.also {
                     it.comments = observacaoComOrdem(carregamento.DocEntry!!, fatura.first().Observacao,
                         fatura.first().NumeroNF?.let { n -> "Based On A/R Invoices $n." })
-                }
+                } to fatura.first().NumeroNF
             }
     }
 
@@ -196,6 +197,8 @@ class CarregamentoService(val batchService: BatchService, val pedidoVendaService
      * Pedidos da busca do carregamento pelo sap-odbc (odbc/carregamento-pedidos.sql), paginados por
      * pedido. Pelo odbc porque o SQLQueries nao aceita IFNULL(...) LIKE: sem filtro de localidade ou
      * cidade, pedido sem localidade/cidade tambem aparece. Devolve a pagina e se ha mais.
+     * Pedido sem frete lancado (TotalExpns = 0) fica fora: e retirada. Nao usa o Incoterms porque na base ele
+     * contradiz o frete em ~10% dos pedidos (analise de 2026-11-06, ultimos 6 meses).
      */
     fun searchPedidos(dataInicial: String, dataFinal: String, filial: Int, localidade: String, vendedor: Int?,
                       cidade: String?, pagina: Int, porPagina: Int): Pair<List<OrderSales>, Boolean> {
