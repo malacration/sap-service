@@ -24,7 +24,8 @@ class MailService(val mailSender: JavaMailSender,
     }
 }
 
-class MyMailMessage(val to : List<EmailAdrres>, val subject : String, val body : String, val from : From = From.DEFAULT){
+class MyMailMessage(val to : List<EmailAdrres>, val subject : String, val body : String, val from : From = From.DEFAULT,
+                    val cc : List<EmailAdrres> = listOf()){
 
     constructor(to : String, subject : String, body : String, from : From = From.DEFAULT)
             : this(listOf(EmailAdrres(to)), subject, body, from)
@@ -34,6 +35,8 @@ class MyMailMessage(val to : List<EmailAdrres>, val subject : String, val body :
             it.replyTo = From.getFrom(from)?.toString()
             it.from = From.getFrom(from)?.toString()
             it.setTo(*to.map { it.email }.toTypedArray())
+            if(cc.isNotEmpty())
+                it.setCc(*cc.map { it.email }.toTypedArray())
             it.subject = subject
             it.text = body
         }
@@ -44,6 +47,8 @@ class MyMailMessage(val to : List<EmailAdrres>, val subject : String, val body :
             if(From.getFrom(from) != null)
                 it.setFrom(From.getFrom(from)!!.getInternetAddress())
             it.setTo(mutableListOf<String>(*to.map { it.email }.toTypedArray()).toTypedArray())
+            if(cc.isNotEmpty())
+                it.setCc(cc.map { it.email }.toTypedArray())
             it.setSubject(subject)
             it.setText(body, true)
         }.mimeMessage

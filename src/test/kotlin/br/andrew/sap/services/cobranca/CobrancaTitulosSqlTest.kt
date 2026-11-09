@@ -404,7 +404,8 @@ class CobrancaTitulosAdiantamentoSqlTest {
 
 class TitulosEmailSqlTest {
 
-    private val sql = Files.readString(Path.of("src/main/resources/views/titulos.sql"))
+    private val sql = Files.readString(Path.of("src/main/resources/odbc/titulos-inadimplencia-vendedor.sql"))
+        .replace(Regex("\\s+"), " ")
 
     @Test
     fun `email semanal passa a ler o status e o cobrador da UDT de cobranca`() {
