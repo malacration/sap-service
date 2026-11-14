@@ -1,5 +1,6 @@
 package br.andrew.sap.model.sap.documents.futura
 
+import br.andrew.sap.model.sap.documents.DocumentTypes
 import br.andrew.sap.model.sap.documents.Quotation
 import br.andrew.sap.model.sap.documents.base.Document
 import br.andrew.sap.model.sap.documents.base.DocumentLines
@@ -80,15 +81,22 @@ class PedidoRetirada(
      *
      * Residual nao positivo (contrato ja cobrou todo o frete, ou cobrou a maior) devolve null:
      * a nota sai sem despesa de frete e nada trava - nao se lanca despesa adicional negativa.
+     *
+     * Devolucao que estorna adiantamento (linha com base 203) fica de fora: a linha do adiantamento
+     * tem quantidade = valor e preco 1, e somada como "itens devolvidos" inflava a base residual e
+     * zerava o frete (contrato 699). A SBO_SP_VALIDACAO_VENDA_FUTURA aplica o mesmo filtro.
      */
     fun freteResidual(contrato: Contrato, quantidadeRetirada: BigDecimal, entregasFaturadas: List<Document>): Double? {
         if(contrato.U_valorFrete <= 0)
             return null
 
-        val freteJaFaturado = entregasFaturadas.fold(BigDecimal.ZERO) { acc, doc ->
+        val entregas = entregasFaturadas.filter { doc ->
+            doc.DocumentLines.none { it.BaseType == DocumentTypes.oDownPayments.value }
+        }
+        val freteJaFaturado = entregas.fold(BigDecimal.ZERO) { acc, doc ->
             acc.plus(doc.freteDespesaAdicional().multiply(BigDecimal(doc.sinalNoContrato())))
         }
-        val quantidadeJaFaturada = entregasFaturadas.fold(BigDecimal.ZERO) { acc, doc ->
+        val quantidadeJaFaturada = entregas.fold(BigDecimal.ZERO) { acc, doc ->
             acc.plus(doc.quantidadeProdutos().multiply(BigDecimal(doc.sinalNoContrato())))
         }
 
