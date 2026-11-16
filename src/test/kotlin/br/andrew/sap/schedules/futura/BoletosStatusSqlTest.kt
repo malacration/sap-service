@@ -19,7 +19,8 @@ class BoletosStatusSqlTest {
     }
 
     // Status do boleto na tela: devolucao (nota de credito nao cancelada) vira "Cancelado (devolvido)",
-    // recebimento (contas a receber nao cancelado) vira "Pago". Ambos sao subconsultas para nao duplicar linhas.
+    // recebimento (contas a receber nao cancelado) vira "Pago". GROUP BY + MAX para nao duplicar linhas:
+    // o SQLQueries do Service Layer recusa subconsulta no SELECT ("Invalid SQL syntax", testado no HOMOLOG).
     @Test
     fun `devolucao e recebimento ignoram documentos cancelados`() {
         val sql = Files.readString(
@@ -30,5 +31,6 @@ class BoletosStatusSqlTest {
         assertTrue(sql.contains("\"ORCT\".\"Canceled\" = 'N'"))
         assertTrue(sql.contains("as \"Recebimento\""))
         assertTrue(!sql.contains("DISTINCT"))
+        assertTrue(!sql.contains("(SELECT"))
     }
 }
