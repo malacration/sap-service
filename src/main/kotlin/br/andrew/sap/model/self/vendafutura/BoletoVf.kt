@@ -17,6 +17,7 @@ class BoletoVf {
     var DocDueDate : String? = ""
     var DocTotal : String? = ""
     var devolucao : String? = ""
+    var recebimento : String? = ""
     var DocStatus : String? = ""
     var InstallmentId : Int? = null
     var U_QrCodePix : String? = null

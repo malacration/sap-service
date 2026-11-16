@@ -1,15 +1,16 @@
-SELECT DISTINCT
+
+SELECT
 	"ODPI"."DocEntry",
 	"ODPI"."DocNum",
 	"ODPI"."DocDueDate",
 	"ODPI"."DocTotal",
-	"RIN1"."DocEntry" as "Devolucao",
+	(SELECT MAX("ORIN"."DocEntry") FROM "RIN1" INNER JOIN "ORIN" ON "ORIN"."DocEntry" = "RIN1"."DocEntry"
+		WHERE "ORIN"."CANCELED" = 'N' AND "RIN1"."BaseType" = 203 AND "RIN1"."BaseEntry" = "ODPI"."DocEntry") as "Devolucao",
+	(SELECT MAX("ORCT"."DocEntry") FROM "RCT2" INNER JOIN "ORCT" ON "ORCT"."DocEntry" = "RCT2"."DocNum"
+		WHERE "ORCT"."Canceled" = 'N' AND "RCT2"."InvType" = '203' AND "RCT2"."DocEntry" = "ODPI"."DocEntry") as "Recebimento",
 	"ODPI"."DocStatus"
 FROM
 	"ODPI"
-	INNER JOIN "DPI1" on("ODPI"."DocEntry" = "DPI1"."DocEntry")
-	LEFT JOIN "RIN1" ON ("RIN1"."BaseEntry" = "DPI1"."DocEntry" AND "RIN1"."BaseLine" = "DPI1"."LineNum" AND "RIN1"."BaseType" = 203)
-	LEFT JOIN "ORIN" ON ("ORIN"."DocEntry" = "RIN1"."DocEntry" AND "ORIN".CANCELED = 'N')
 WHERE
 	"ODPI"."U_venda_futura" = :idVendaFutura
 ORDER BY "ODPI"."DocDueDate"
