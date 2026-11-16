@@ -13,8 +13,10 @@ import org.junit.jupiter.api.Test
 import org.mockito.Mockito.mock
 import org.mockito.stubbing.Answer
 import org.springframework.web.client.ResourceAccessException
+import java.io.ByteArrayInputStream
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
+import java.util.zip.ZipInputStream
 
 class CarregamentoBoletoServiceTest {
 
@@ -34,7 +36,7 @@ class CarregamentoBoletoServiceTest {
 
     // boletos por DocEntry; geraFalha = "doc=X parcela=Y" que a BankPlus recusa
     private fun bankPlus(boletos: Map<Int, List<Boleto>> = mapOf(), listaFalha: Set<Int> = setOf(),
-                         geraFalha: Set<String> = setOf(), aoListar: () -> Unit = {}) =
+                         geraFalha: Set<String> = setOf(), aoListar: () -> Unit = {}, pdfInvalido: Set<Int> = setOf()) =
         mock(BankPlusService::class.java, Answer { inv ->
             when (inv.method.name) {
                 "getBoletosBy" -> {
@@ -54,6 +56,11 @@ class CarregamentoBoletoServiceTest {
                     synchronized(gerados) { gerados.add(chave) }
                     if (chave in geraFalha) throw Exception("BankPlus recusou")
                     ByteArray(0)
+                }
+                "getPdf" -> {
+                    assertEquals(true, inv.arguments[1], "pdf sempre com prazo")
+                    val id = (inv.arguments[0] as String).toInt()
+                    if (id in pdfInvalido) "<html>erro</html>".toByteArray() else "%PDF boleto $id".toByteArray()
                 }
                 else -> null
             }
@@ -132,5 +139,44 @@ class CarregamentoBoletoServiceTest {
         // terminou: a trava solta e a ordem pode gerar de novo
         s.gerar(10, listOf(nota(1)))
         assertEquals(listOf("doc=1 parcela=1", "doc=1 parcela=1"), gerados)
+    }
+
+    private fun entradas(zip: ByteArray): Map<String, String> {
+        val r = linkedMapOf<String, String>()
+        ZipInputStream(ByteArrayInputStream(zip)).use { z ->
+            generateSequence { z.nextEntry }.forEach { r[it.name] = String(z.readBytes()) }
+        }
+        return r
+    }
+
+    @Test
+    fun `zip leva um pdf por boleto ativo`() {
+        val zip = servico(bankPlus(mapOf(1 to listOf(boleto(1), boleto(2))))).zip(listOf(nota(1, parcelas = 2)))
+        assertEquals(mapOf("boleto-nota-5001-parcela1.pdf" to "%PDF boleto 100", "boleto-nota-5001-parcela2.pdf" to "%PDF boleto 200"),
+            entradas(zip))
+    }
+
+    @Test
+    fun `boleto cancelado fica fora do zip`() {
+        val zip = servico(bankPlus(mapOf(1 to listOf(boleto(1, "Cancelado"), boleto(2))))).zip(listOf(nota(1, parcelas = 2)))
+        assertEquals(listOf("boleto-nota-5001-parcela2.pdf"), entradas(zip).keys.toList())
+    }
+
+    @Test
+    fun `pdf invalido vai para erros txt`() {
+        val zip = servico(bankPlus(mapOf(1 to listOf(boleto(1))), pdfInvalido = setOf(100))).zip(listOf(nota(1)))
+        val e = entradas(zip)
+        assertEquals(listOf("erros.txt"), e.keys.toList())
+        assertTrue(e["erros.txt"]!!.contains("NF 5001 parcela 1"), e["erros.txt"])
+    }
+
+    @Test
+    fun `nota sem boleto vai para erros txt sem derrubar as outras`() {
+        val zip = servico(bankPlus(mapOf(2 to listOf(boleto(1))), listaFalha = setOf(3)))
+            .zip(listOf(nota(1), nota(2), nota(3)))
+        val e = entradas(zip)
+        assertEquals(listOf("boleto-nota-5002-parcela1.pdf", "erros.txt"), e.keys.toList())
+        assertTrue(e["erros.txt"]!!.contains("NF 5001: sem boleto na BankPlus"), e["erros.txt"])
+        assertTrue(e["erros.txt"]!!.contains("NF 5003: consulta na BankPlus falhou"), e["erros.txt"])
     }
 }

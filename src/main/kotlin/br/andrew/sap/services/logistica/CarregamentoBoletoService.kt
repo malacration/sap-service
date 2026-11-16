@@ -7,7 +7,10 @@ import br.andrew.sap.services.fiscal.BankPlusService
 import br.andrew.sap.services.fiscal.OrigemBoletoEnum
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
+import java.io.ByteArrayOutputStream
 import java.util.concurrent.ConcurrentHashMap
+import java.util.zip.ZipEntry
+import java.util.zip.ZipOutputStream
 
 /**
  * Boletos BankPlus das NFs geradas pela ordem de carregamento, para o usuario nao precisar entrar
@@ -68,6 +71,48 @@ class CarregamentoBoletoService(val bankPlus: BankPlusService, val boletoIds: Bo
             ResultadoBoleto(nome, SituacaoBoleto.GERADO, "parcela(s) ${faltam.joinToString()} gerada(s)")
         else
             ResultadoBoleto(nome, SituacaoBoleto.ERRO, erros.joinToString("; "))
+    }
+
+    /**
+     * Zip com o pdf de cada boleto ativo das notas, no molde do CarregamentoService.danfes: o que
+     * falhar vai para erros.txt sem derrubar o resto.
+     * shortcut: monta em memoria; uma ordem tem poucas notas.
+     */
+    fun zip(notas: List<Document>): ByteArray {
+        val saida = ByteArrayOutputStream()
+        val erros = mutableListOf<String>()
+        ZipOutputStream(saida).use { zip ->
+            notas.forEach { nota ->
+                val nome = "NF ${nota.SequenceSerial ?: nota.docNum}"
+                val boletos = try {
+                    ativos(bankPlus.getBoletosBy(nota.getBPL_IDAssignedToInvoice(), nota.docEntry.toString(),
+                        OrigemBoletoEnum.notafiscal, comPrazo = true))
+                } catch (t: Throwable) {
+                    logger.warn("Carregamento: falha ao consultar boletos da NF ${nota.docEntry} na BankPlus", t)
+                    erros += "$nome: consulta na BankPlus falhou (${t.message})"
+                    return@forEach
+                }
+                if (boletos.isEmpty()) erros += "$nome: sem boleto na BankPlus"
+                boletos.sortedBy { it.numeroDaParcela ?: 0 }.forEach { b ->
+                    try {
+                        val pdf = bankPlus.getPdf(b.id.toString(), comPrazo = true) ?: ByteArray(0)
+                        if (!String(pdf.copyOfRange(0, minOf(pdf.size, 4))).startsWith("%PDF"))
+                            throw Exception("BankPlus não devolveu um pdf")
+                        zip.putNextEntry(ZipEntry("boleto-nota-${nota.SequenceSerial ?: nota.docNum}-parcela${b.numeroDaParcela}.pdf"))
+                        zip.write(pdf)
+                        zip.closeEntry()
+                    } catch (t: Throwable) {
+                        erros += "$nome parcela ${b.numeroDaParcela}: boleto não baixado (${t.message})"
+                    }
+                }
+            }
+            if (erros.isNotEmpty()) {
+                zip.putNextEntry(ZipEntry("erros.txt"))
+                zip.write(erros.joinToString("\n").toByteArray())
+                zip.closeEntry()
+            }
+        }
+        return saida.toByteArray()
     }
 
     companion object {

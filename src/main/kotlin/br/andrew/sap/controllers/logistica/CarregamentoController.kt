@@ -603,6 +603,14 @@ class CarregamentoController(val carregamentoServico: CarregamentoService,
         return resultado
     }
 
+    @GetMapping("/boletos/{idCarregamento}")
+    fun boletos(@PathVariable idCarregamento: Int): ResponseEntity<ByteArray> =
+        ResponseEntity.ok()
+            .contentType(MediaType.parseMediaType("application/zip"))
+            .header(HttpHeaders.CONTENT_DISPOSITION,
+                ContentDisposition.attachment().filename("boletos-ordem-$idCarregamento.zip").build().toString())
+            .body(boletoService.zip(getNotasByCarregamentos(idCarregamento).filter { it.docObjectCode == DocumentTypes.oInvoices }))
+
     companion object {
         const val DOCUMENTOS_POR_PAGINA = 30
     }
