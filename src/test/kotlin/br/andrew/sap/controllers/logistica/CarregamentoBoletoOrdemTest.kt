@@ -102,11 +102,11 @@ class CarregamentoBoletoOrdemTest {
         CarregamentoBoletoService(bankPlus, BoletoIdsConfig(listOf("BB-RC-BOL-1199", "BB-RC-BL-126455")), odbcTudoAberto()), true)
 
     // INV6: toda parcela em aberto (Status 'O').
-    private fun odbcTudoAberto() = Mockito.mock(br.andrew.sap.services.odbc.OdbcClient::class.java, Answer { inv ->
+    private fun odbcTudoAberto(pagas: Set<Int> = setOf()) = Mockito.mock(br.andrew.sap.services.odbc.OdbcClient::class.java, Answer { inv ->
         if (inv.method.name != "consultar") return@Answer null
         @Suppress("UNCHECKED_CAST")
         val docs = (inv.arguments[1] as Map<String, Any?>)["docEntries"] as List<Int>
-        br.andrew.sap.services.odbc.QueryResponse(rows = docs.flatMap { d -> (1..12).map { mapOf("DocEntry" to d, "InstlmntID" to it) } })
+        br.andrew.sap.services.odbc.QueryResponse(rows = docs.filter { it !in pagas }.flatMap { d -> (1..12).map { mapOf("DocEntry" to d, "InstlmntID" to it) } })
     })
 
     @Test
@@ -123,7 +123,7 @@ class CarregamentoBoletoOrdemTest {
         ), resultado.associate { it.nota to it.situacao })
         assertEquals("parcela 2: HTTP 400 - Sacado sem endereco", resultado.first { it.nota == "NF 5004" }.mensagem)
         verify(carregamentoService).update(mapOf("U_usuario" to "desconhecido",
-            "U_acao" to "Boletos: 2 nota(s) gerada(s), 1 já tinha(m), 1 com erro"), "$ordem")
+            "U_acao" to "Boletos: 2 nota(s) gerada(s), 1 já tinha(m), 0 já paga(s), 1 com erro"), "$ordem")
     }
 
     @Test
@@ -166,6 +166,19 @@ class CarregamentoBoletoOrdemTest {
         controller.gerarBoletos(ordem, usuario)
 
         verify(carregamentoService).update(mapOf("U_usuario" to "MARIA DA SILVA",
-            "U_acao" to "Boletos: 2 nota(s) gerada(s), 1 já tinha(m), 1 com erro"), "$ordem")
+            "U_acao" to "Boletos: 2 nota(s) gerada(s), 1 já tinha(m), 0 já paga(s), 1 com erro"), "$ordem")
+    }
+
+    @Test
+    fun `nota ja paga aparece no historico`() {
+        // pedido E (1005) quitado no SAP
+        val comPaga = CarregamentoController(carregamentoService, mock(), invoiceService, deliveryService,
+            mock(), mock(), mock(), mock(), mock(), mock(),
+            CarregamentoBoletoService(bankPlus, BoletoIdsConfig(listOf("BB-RC-BOL-1199", "BB-RC-BL-126455")), odbcTudoAberto(pagas = setOf(1005))), true)
+
+        comPaga.gerarBoletos(ordem, null)
+
+        verify(carregamentoService).update(mapOf("U_usuario" to "desconhecido",
+            "U_acao" to "Boletos: 2 nota(s) gerada(s), 0 já tinha(m), 1 já paga(s), 1 com erro"), "$ordem")
     }
 }

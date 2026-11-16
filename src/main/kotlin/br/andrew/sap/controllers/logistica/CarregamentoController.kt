@@ -601,7 +601,7 @@ class CarregamentoController(val carregamentoServico: CarregamentoService,
         val resultado = boletoService.gerar(id, notas)
         val conta = resultado.groupingBy { it.situacao }.eachCount()
         registrarAcao(id, nomeUsuario(auth), ("Boletos: ${conta[SituacaoBoleto.GERADO] ?: 0} nota(s) gerada(s), " +
-            "${conta[SituacaoBoleto.JA_TINHA] ?: 0} já tinha(m), ${conta[SituacaoBoleto.ERRO] ?: 0} com erro").take(254))
+            "${conta[SituacaoBoleto.JA_TINHA] ?: 0} já tinha(m), ${conta[SituacaoBoleto.JA_PAGA] ?: 0} já paga(s), ${conta[SituacaoBoleto.ERRO] ?: 0} com erro").take(254))
         return resultado
     }
 
