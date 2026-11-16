@@ -4,7 +4,10 @@ import br.andrew.sap.infrastructure.BoletoIdsConfig
 import br.andrew.sap.model.bankplus.Boleto
 import br.andrew.sap.model.sap.documents.base.Document
 import br.andrew.sap.services.fiscal.BankPlusService
+import br.andrew.sap.model.sap.documents.DocumentTypes
 import br.andrew.sap.services.fiscal.OrigemBoletoEnum
+import br.andrew.sap.services.fiscal.motivoFalha
+import org.springframework.web.client.HttpClientErrorException
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import java.io.ByteArrayOutputStream
@@ -52,7 +55,7 @@ class CarregamentoBoletoService(val bankPlus: BankPlusService, val boletoIds: Bo
                 .mapNotNull { it.numeroDaParcela }.toSet()
         } catch (t: Throwable) {
             logger.warn("Carregamento: falha ao consultar boletos da NF $docEntry na BankPlus", t)
-            return ResultadoBoleto(nome, SituacaoBoleto.ERRO, "consulta na BankPlus falhou: ${t.message}")
+            return ResultadoBoleto(nome, SituacaoBoleto.ERRO, "consulta na BankPlus falhou (${motivoFalha(t)})")
         }
         val faltam = parcelas.filter { it !in comBoleto }
         if (faltam.isEmpty())
@@ -60,11 +63,13 @@ class CarregamentoBoletoService(val bankPlus: BankPlusService, val boletoIds: Bo
 
         val erros = faltam.mapNotNull { parcela ->
             try {
-                bankPlus.geraBoletos(filial.toInt(), docEntry, parcela, OrigemBoletoEnum.notafiscal)
+                bankPlus.geraBoletos(filial.toInt(), docEntry, parcela, OrigemBoletoEnum.notafiscal, comPrazo = true)
                 null
             } catch (t: Throwable) {
                 logger.warn("Carregamento: falha ao gerar boleto da NF $docEntry parcela $parcela", t)
-                "parcela $parcela: ${t.message}"
+                // 4xx = validacao da BankPlus, util para quem esta na tela (tela interna, nao vai para o zip)
+                val recusa = (t as? HttpClientErrorException)?.responseBodyAsString?.take(200)?.let { " $it" } ?: ""
+                "parcela $parcela: ${motivoFalha(t)}$recusa"
             }
         }
         return if (erros.isEmpty())
@@ -89,7 +94,7 @@ class CarregamentoBoletoService(val bankPlus: BankPlusService, val boletoIds: Bo
                         OrigemBoletoEnum.notafiscal, comPrazo = true))
                 } catch (t: Throwable) {
                     logger.warn("Carregamento: falha ao consultar boletos da NF ${nota.docEntry} na BankPlus", t)
-                    erros += "$nome: consulta na BankPlus falhou (${t.message})"
+                    erros += "$nome: consulta na BankPlus falhou (${motivoFalha(t)})"
                     return@forEach
                 }
                 if (boletos.isEmpty()) erros += "$nome: sem boleto na BankPlus"
@@ -102,7 +107,7 @@ class CarregamentoBoletoService(val bankPlus: BankPlusService, val boletoIds: Bo
                         zip.write(pdf)
                         zip.closeEntry()
                     } catch (t: Throwable) {
-                        erros += "$nome parcela ${b.numeroDaParcela}: boleto não baixado (${t.message})"
+                        erros += "$nome parcela ${b.numeroDaParcela}: boleto não baixado (${motivoFalha(t)})"
                     }
                 }
             }
@@ -116,6 +121,11 @@ class CarregamentoBoletoService(val bankPlus: BankPlusService, val boletoIds: Bo
     }
 
     companion object {
+        // So NF valendo: entrega de venda futura nao tem boleto e o documento de cancelamento
+        // (CancelStatus csCancellationDocument) pode herdar a UDF da ordem - ver CancelStatus.
+        fun notasComBoleto(docs: List<Document>) =
+            docs.filter { it.docObjectCode == DocumentTypes.oInvoices && it.CancelStatus?.cancelado() != true }
+
         // "Cancelado" e "Aguardando Cancelamento" nao contam: a parcela fica sem boleto valido.
         fun ativos(boletos: List<Boleto>) = boletos.filter { !(it.statusDescricao ?: "").contains("cancel", ignoreCase = true) }
     }

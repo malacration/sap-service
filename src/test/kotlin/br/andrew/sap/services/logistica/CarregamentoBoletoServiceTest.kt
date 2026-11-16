@@ -12,6 +12,12 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.mock
 import org.mockito.stubbing.Answer
+import br.andrew.sap.model.enums.CancelStatus
+import br.andrew.sap.model.sap.documents.DocumentTypes
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.springframework.http.HttpHeaders
+import org.springframework.http.HttpStatus
+import org.springframework.web.client.HttpClientErrorException
 import org.springframework.web.client.ResourceAccessException
 import java.io.ByteArrayInputStream
 import java.util.concurrent.CountDownLatch
@@ -36,7 +42,8 @@ class CarregamentoBoletoServiceTest {
 
     // boletos por DocEntry; geraFalha = "doc=X parcela=Y" que a BankPlus recusa
     private fun bankPlus(boletos: Map<Int, List<Boleto>> = mapOf(), listaFalha: Set<Int> = setOf(),
-                         geraFalha: Set<String> = setOf(), aoListar: () -> Unit = {}, pdfInvalido: Set<Int> = setOf()) =
+                         geraFalha: Set<String> = setOf(), aoListar: () -> Unit = {}, pdfInvalido: Set<Int> = setOf(),
+                         geraRecusa: Set<String> = setOf()) =
         mock(BankPlusService::class.java, Answer { inv ->
             when (inv.method.name) {
                 "getBoletosBy" -> {
@@ -46,15 +53,18 @@ class CarregamentoBoletoServiceTest {
                     assertEquals(true, inv.arguments[3], "listagem sempre com prazo")
                     aoListar()
                     val doc = (inv.arguments[1] as String).toInt()
-                    if (doc in listaFalha) throw ResourceAccessException("Read timed out")
+                    if (doc in listaFalha) throw ResourceAccessException("I/O error on GET request for \"https://bankplus.interno/api/v2/x/cobranca\": Read timed out")
                     boletos[doc] ?: listOf<Boleto>()
                 }
                 "geraBoletos" -> {
                     assertEquals(2, inv.arguments[0])
                     assertEquals(OrigemBoletoEnum.notafiscal, inv.arguments[3])
+                    assertEquals(true, inv.arguments.getOrNull(4), "geracao com prazo: POST pendurado nao pode prender a trava")
                     val chave = "doc=${inv.arguments[1]} parcela=${inv.arguments[2]}"
                     synchronized(gerados) { gerados.add(chave) }
                     if (chave in geraFalha) throw Exception("BankPlus recusou")
+                    if (chave in geraRecusa) throw HttpClientErrorException.create(HttpStatus.BAD_REQUEST, "Bad Request",
+                        HttpHeaders(), "{\"mensagem\":\"NF-e nao autorizada\"}".toByteArray(), null)
                     ByteArray(0)
                 }
                 "getPdf" -> {
@@ -111,7 +121,8 @@ class CarregamentoBoletoServiceTest {
     fun `falha da BankPlus numa nota nao derruba a outra`() {
         val r = servico(bankPlus(listaFalha = setOf(1))).gerar(10, listOf(nota(1), nota(2)))
         assertEquals(listOf(SituacaoBoleto.ERRO, SituacaoBoleto.GERADO), r.map { it.situacao })
-        assertTrue(r[0].mensagem.contains("Read timed out"), r[0].mensagem)
+        assertTrue(r[0].mensagem.contains("sem resposta do servico"), r[0].mensagem)
+        assertFalse(r[0].mensagem.contains("https://"), "URL interna nao vai para a tela: ${r[0].mensagem}")
         assertEquals(listOf("doc=2 parcela=1"), gerados)
     }
 
@@ -177,6 +188,22 @@ class CarregamentoBoletoServiceTest {
         val e = entradas(zip)
         assertEquals(listOf("boleto-nota-5002-parcela1.pdf", "erros.txt"), e.keys.toList())
         assertTrue(e["erros.txt"]!!.contains("NF 5001: sem boleto na BankPlus"), e["erros.txt"])
-        assertTrue(e["erros.txt"]!!.contains("NF 5003: consulta na BankPlus falhou"), e["erros.txt"])
+        assertTrue(e["erros.txt"]!!.contains("NF 5003: consulta na BankPlus falhou (sem resposta do servico)"), e["erros.txt"])
+        assertFalse(e["erros.txt"]!!.contains("https://"), "URL interna nao vai para o zip do cliente")
+    }
+
+    @Test
+    fun `recusa da BankPlus mostra o motivo dela`() {
+        val r = servico(bankPlus(geraRecusa = setOf("doc=1 parcela=1"))).gerar(10, listOf(nota(1)))
+        assertEquals(SituacaoBoleto.ERRO, r.single().situacao)
+        assertTrue(r.single().mensagem.contains("HTTP 400") && r.single().mensagem.contains("NF-e nao autorizada"), r.single().mensagem)
+    }
+
+    @Test
+    fun `so NF valendo entra - entrega e documento de cancelamento ficam fora`() {
+        fun doc(entry: Int, tipo: DocumentTypes, cancel: CancelStatus?) = nota(entry).also { it.docObjectCode = tipo; it.CancelStatus = cancel }
+        val docs = listOf(doc(1, DocumentTypes.oInvoices, CancelStatus.csNo), doc(2, DocumentTypes.oInvoices, CancelStatus.csCancellationDocument),
+            doc(3, DocumentTypes.oDeliveryNotes, CancelStatus.csNo), doc(4, DocumentTypes.oInvoices, null))
+        assertEquals(listOf(1, 4), CarregamentoBoletoService.notasComBoleto(docs).map { it.docEntry })
     }
 }

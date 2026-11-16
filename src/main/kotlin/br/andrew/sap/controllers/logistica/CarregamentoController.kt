@@ -595,7 +595,7 @@ class CarregamentoController(val carregamentoServico: CarregamentoService,
     /** Gera na BankPlus os boletos que faltam nas NFs da ordem (entrega de venda futura nao tem boleto). */
     @PostMapping("/{id}/boletos")
     fun gerarBoletos(@PathVariable id: Int, auth: Authentication?): List<ResultadoBoleto> {
-        val notas = getNotasByCarregamentos(id).filter { it.docObjectCode == DocumentTypes.oInvoices }
+        val notas = CarregamentoBoletoService.notasComBoleto(getNotasByCarregamentos(id))
         val resultado = boletoService.gerar(id, notas)
         val conta = resultado.groupingBy { it.situacao }.eachCount()
         registrarAcao(id, nomeUsuario(auth), ("Boletos: ${conta[SituacaoBoleto.GERADO] ?: 0} nota(s) gerada(s), " +
@@ -609,7 +609,7 @@ class CarregamentoController(val carregamentoServico: CarregamentoService,
             .contentType(MediaType.parseMediaType("application/zip"))
             .header(HttpHeaders.CONTENT_DISPOSITION,
                 ContentDisposition.attachment().filename("boletos-ordem-$idCarregamento.zip").build().toString())
-            .body(boletoService.zip(getNotasByCarregamentos(idCarregamento).filter { it.docObjectCode == DocumentTypes.oInvoices }))
+            .body(boletoService.zip(CarregamentoBoletoService.notasComBoleto(getNotasByCarregamentos(idCarregamento))))
 
     companion object {
         const val DOCUMENTOS_POR_PAGINA = 30
