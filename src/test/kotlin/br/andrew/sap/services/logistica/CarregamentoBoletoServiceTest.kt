@@ -6,6 +6,8 @@ import br.andrew.sap.model.sap.documents.base.Document
 import br.andrew.sap.model.sap.documents.base.Installment
 import br.andrew.sap.services.fiscal.BankPlusService
 import br.andrew.sap.services.fiscal.OrigemBoletoEnum
+import br.andrew.sap.services.odbc.OdbcClient
+import br.andrew.sap.services.odbc.QueryResponse
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -79,8 +81,18 @@ class CarregamentoBoletoServiceTest {
             }
         })
 
-    private fun servico(bank: BankPlusService = bankPlus()) =
-        CarregamentoBoletoService(bank, BoletoIdsConfig(listOf("BB-RC-BOL-1199", "BB-RC-BL-126455")))
+    // INV6 em aberto (Status 'O'): toda parcela 1..12 das notas pedidas, menos as pagas ("doc/parcela").
+    private fun odbc(pagas: Set<String> = setOf(), falha: Boolean = false) =
+        mock(OdbcClient::class.java, Answer { inv ->
+            if (inv.method.name != "consultar") return@Answer null
+            if (falha) throw br.andrew.sap.services.odbc.OdbcException("erro_odbc", "Nao foi possivel consultar os dados.")
+            @Suppress("UNCHECKED_CAST")
+            val docs = (inv.arguments[1] as Map<String, Any?>)["docEntries"] as List<Int>
+            QueryResponse(rows = docs.flatMap { d -> (1..12).filter { "$d/$it" !in pagas }.map { p -> mapOf("DocEntry" to d, "InstlmntID" to p) } })
+        })
+
+    private fun servico(bank: BankPlusService = bankPlus(), odbc: OdbcClient = odbc()) =
+        CarregamentoBoletoService(bank, BoletoIdsConfig(listOf("BB-RC-BOL-1199", "BB-RC-BL-126455")), odbc)
 
     @Test
     fun `nota com forma fora de boleto ids e pulada`() {
@@ -231,5 +243,37 @@ class CarregamentoBoletoServiceTest {
         assertEquals(SituacaoBoleto.ERRO, r.single().situacao)
         assertTrue(r.single().mensagem.contains("chave de acesso e/ou o status do documento NF-E"), r.single().mensagem)
         assertFalse(r.single().mensagem.contains("{"), "so o texto, sem o JSON: ${r.single().mensagem}")
+    }
+
+    // Parcela paga por PIX ANTES do primeiro boleto nao tem boleto cancelado que a proteja: so o INV6 diz.
+    @Test
+    fun `parcela ja paga nao recebe boleto`() {
+        val r = servico(odbc = odbc(pagas = setOf("1/1"))).gerar(10, listOf(nota(1, parcelas = 2)))
+        assertEquals(listOf("doc=1 parcela=2"), gerados)
+        assertEquals(SituacaoBoleto.GERADO, r.single().situacao)
+        assertTrue(r.single().mensagem.contains("parcela(s) 1 já paga(s)"), r.single().mensagem)
+    }
+
+    @Test
+    fun `nota toda paga nao chama a BankPlus`() {
+        val r = servico(odbc = odbc(pagas = setOf("1/1"))).gerar(10, listOf(nota(1)))
+        assertEquals(SituacaoBoleto.JA_PAGA, r.single().situacao)
+        assertEquals(listOf<String>(), gerados)
+    }
+
+    @Test
+    fun `sem conferir as parcelas pagas nao gera nada`() {
+        val e = assertThrows(Exception::class.java) { servico(odbc = odbc(falha = true)).gerar(10, listOf(nota(1))) }
+        assertTrue(e.message!!.contains("parcelas pagas"), e.message)
+        assertEquals(listOf<String>(), gerados)
+        // a trava foi solta
+        servico().gerar(10, listOf(nota(1)))
+    }
+
+    @Test
+    fun `dois boletos ativos da mesma parcela entram os dois no zip`() {
+        val outro = Boleto().also { it.id = 999; it.numeroDaParcela = 1; it.statusDescricao = "Confirmado" }
+        val zip = servico(bankPlus(mapOf(1 to listOf(boleto(1), outro)))).zip(listOf(nota(1)))
+        assertEquals(listOf("boleto-nota-5001-parcela1.pdf", "boleto-nota-5001-parcela1-999.pdf"), entradas(zip).keys.toList())
     }
 }

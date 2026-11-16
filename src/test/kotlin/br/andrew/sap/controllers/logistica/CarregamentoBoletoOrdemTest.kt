@@ -99,7 +99,15 @@ class CarregamentoBoletoOrdemTest {
 
     private val controller = CarregamentoController(carregamentoService, mock(), invoiceService, deliveryService,
         mock(), mock(), mock(), mock(), mock(), mock(),
-        CarregamentoBoletoService(bankPlus, BoletoIdsConfig(listOf("BB-RC-BOL-1199", "BB-RC-BL-126455"))), true)
+        CarregamentoBoletoService(bankPlus, BoletoIdsConfig(listOf("BB-RC-BOL-1199", "BB-RC-BL-126455")), odbcTudoAberto()), true)
+
+    // INV6: toda parcela em aberto (Status 'O').
+    private fun odbcTudoAberto() = Mockito.mock(br.andrew.sap.services.odbc.OdbcClient::class.java, Answer { inv ->
+        if (inv.method.name != "consultar") return@Answer null
+        @Suppress("UNCHECKED_CAST")
+        val docs = (inv.arguments[1] as Map<String, Any?>)["docEntries"] as List<Int>
+        br.andrew.sap.services.odbc.QueryResponse(rows = docs.flatMap { d -> (1..12).map { mapOf("DocEntry" to d, "InstlmntID" to it) } })
+    })
 
     @Test
     fun `ordem com varios pedidos gera so o que falta e registra no historico`() {

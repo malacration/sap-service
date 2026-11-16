@@ -7,6 +7,8 @@ import br.andrew.sap.services.fiscal.BankPlusService
 import br.andrew.sap.model.sap.documents.DocumentTypes
 import br.andrew.sap.services.fiscal.OrigemBoletoEnum
 import br.andrew.sap.services.fiscal.motivoFalha
+import br.andrew.sap.services.odbc.OdbcClient
+import br.andrew.sap.services.odbc.SqlResource
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.web.client.HttpStatusCodeException
 import org.slf4j.LoggerFactory
@@ -24,7 +26,7 @@ import java.util.zip.ZipOutputStream
  * "E boleto" = forma de pagamento da nota em boleto.ids (a mesma lista da tela de faturas).
  */
 @Service
-class CarregamentoBoletoService(val bankPlus: BankPlusService, val boletoIds: BoletoIdsConfig) {
+class CarregamentoBoletoService(val bankPlus: BankPlusService, val boletoIds: BoletoIdsConfig, val odbc: OdbcClient) {
 
     private val logger = LoggerFactory.getLogger(CarregamentoBoletoService::class.java)
 
@@ -36,21 +38,40 @@ class CarregamentoBoletoService(val bankPlus: BankPlusService, val boletoIds: Bo
         if (!gerando.add(idOrdem))
             throw Exception("Os boletos desta ordem já estão sendo gerados; aguarde terminar.")
         try {
-            return notas.map { gerar(it) }
+            val abertas = parcelasEmAberto(notas)
+            return notas.map { gerar(it, abertas) }
         } finally {
             gerando.remove(idOrdem)
         }
     }
 
-    private fun gerar(nota: Document): ResultadoBoleto {
+    // Uma consulta para a ordem toda. Sem ela nao da para saber o que ja foi pago: nao gera nada.
+    private fun parcelasEmAberto(notas: List<Document>): Set<Pair<Int, Int>> {
+        val docEntries = notas.mapNotNull { it.docEntry }.distinct()
+        if (docEntries.isEmpty()) return emptySet()
+        return try {
+            odbc.consultar(SqlResource.carregar("odbc/carregamento-parcelas-abertas.sql"), mapOf("docEntries" to docEntries), 5000).rows
+                .map { it["DocEntry"].toString().toInt() to it["InstlmntID"].toString().toInt() }.toSet()
+        } catch (t: Throwable) {
+            logger.warn("Carregamento: falha ao consultar as parcelas em aberto (INV6)", t)
+            throw Exception("Não foi possível conferir as parcelas pagas no SAP; nenhum boleto foi gerado. Tente de novo.")
+        }
+    }
+
+    private fun gerar(nota: Document, abertas: Set<Pair<Int, Int>>): ResultadoBoleto {
         val nome = "NF ${nota.SequenceSerial ?: nota.docNum}"
         if (nota.paymentMethod !in boletoIds.ids)
             return ResultadoBoleto(nome, SituacaoBoleto.NAO_E_BOLETO,
                 "forma de pagamento ${nota.paymentMethod ?: "vazia"} não é boleto")
-        val parcelas = nota.documentInstallments?.mapNotNull { it.InstallmentId }.orEmpty()
-        if (parcelas.isEmpty())
-            return ResultadoBoleto(nome, SituacaoBoleto.ERRO, "nota sem parcela no SAP")
         val docEntry = nota.docEntry ?: return ResultadoBoleto(nome, SituacaoBoleto.ERRO, "nota sem DocEntry")
+        val todas = nota.documentInstallments?.mapNotNull { it.InstallmentId }.orEmpty()
+        if (todas.isEmpty())
+            return ResultadoBoleto(nome, SituacaoBoleto.ERRO, "nota sem parcela no SAP")
+        val pagas = todas.filter { (docEntry to it) !in abertas }
+        val parcelas = todas - pagas.toSet()
+        val avisoPagas = pagas.takeIf { it.isNotEmpty() }?.let { "; parcela(s) ${it.joinToString()} já paga(s)" } ?: ""
+        if (parcelas.isEmpty())
+            return ResultadoBoleto(nome, SituacaoBoleto.JA_PAGA, "parcela(s) ${pagas.joinToString()} já paga(s), sem boleto a gerar")
         val filial = nota.getBPL_IDAssignedToInvoice()
 
         val boletos = try {
@@ -61,11 +82,11 @@ class CarregamentoBoletoService(val bankPlus: BankPlusService, val boletoIds: Bo
         }
         val ativas = ativos(boletos).mapNotNull { it.numeroDaParcela }.toSet()
         val canceladas = parcelas.filter { p -> p !in ativas && boletos.any { it.numeroDaParcela == p } }
-        val aviso = canceladas.takeIf { it.isNotEmpty() }
-            ?.let { "; parcela(s) ${it.joinToString()} com boleto cancelado, não reemitida(s) (pode ter sido paga por PIX)" } ?: ""
+        val aviso = avisoPagas + (canceladas.takeIf { it.isNotEmpty() }
+            ?.let { "; parcela(s) ${it.joinToString()} com boleto cancelado, não reemitida(s) (pode ter sido paga por PIX)" } ?: "")
         val faltam = parcelas.filter { it !in ativas && it !in canceladas }
         if (faltam.isEmpty())
-            return ResultadoBoleto(nome, SituacaoBoleto.JA_TINHA, "já tinha boleto em todas as parcelas$aviso")
+            return ResultadoBoleto(nome, SituacaoBoleto.JA_TINHA, "já tinha boleto nas parcelas em aberto$aviso")
 
         val erros = faltam.mapNotNull { parcela ->
             try {
@@ -90,6 +111,7 @@ class CarregamentoBoletoService(val bankPlus: BankPlusService, val boletoIds: Bo
     fun zip(notas: List<Document>): ByteArray {
         val saida = ByteArrayOutputStream()
         val erros = mutableListOf<String>()
+        val usados = mutableSetOf<String>()
         ZipOutputStream(saida).use { zip ->
             notas.forEach { nota ->
                 val nome = "NF ${nota.SequenceSerial ?: nota.docNum}"
@@ -107,7 +129,10 @@ class CarregamentoBoletoService(val bankPlus: BankPlusService, val boletoIds: Bo
                         val pdf = bankPlus.getPdf(b.id.toString(), comPrazo = true) ?: ByteArray(0)
                         if (!String(pdf.copyOfRange(0, minOf(pdf.size, 4))).startsWith("%PDF"))
                             throw Exception("BankPlus não devolveu um pdf")
-                        zip.putNextEntry(ZipEntry("boleto-nota-${nota.SequenceSerial ?: nota.docNum}-parcela${b.numeroDaParcela}.pdf"))
+                        // Dois boletos ativos da mesma parcela (ou NF de mesmo numero em outra filial): o id desempata.
+                        val base = "boleto-nota-${nota.SequenceSerial ?: nota.docNum}-parcela${b.numeroDaParcela}"
+                        val nomeArquivo = if (usados.add("$base.pdf")) "$base.pdf" else "$base-${b.id}.pdf".also { usados.add(it) }
+                        zip.putNextEntry(ZipEntry(nomeArquivo))
                         zip.write(pdf)
                         zip.closeEntry()
                     } catch (t: Throwable) {
@@ -152,4 +177,4 @@ class CarregamentoBoletoService(val bankPlus: BankPlusService, val boletoIds: Bo
 
 data class ResultadoBoleto(val nota: String, val situacao: SituacaoBoleto, val mensagem: String)
 
-enum class SituacaoBoleto { GERADO, JA_TINHA, NAO_E_BOLETO, ERRO }
+enum class SituacaoBoleto { GERADO, JA_TINHA, JA_PAGA, NAO_E_BOLETO, ERRO }
