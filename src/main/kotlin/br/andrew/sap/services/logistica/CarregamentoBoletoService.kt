@@ -7,7 +7,8 @@ import br.andrew.sap.services.fiscal.BankPlusService
 import br.andrew.sap.model.sap.documents.DocumentTypes
 import br.andrew.sap.services.fiscal.OrigemBoletoEnum
 import br.andrew.sap.services.fiscal.motivoFalha
-import org.springframework.web.client.HttpClientErrorException
+import com.fasterxml.jackson.databind.ObjectMapper
+import org.springframework.web.client.HttpStatusCodeException
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import java.io.ByteArrayOutputStream
@@ -72,9 +73,7 @@ class CarregamentoBoletoService(val bankPlus: BankPlusService, val boletoIds: Bo
                 null
             } catch (t: Throwable) {
                 logger.warn("Carregamento: falha ao gerar boleto da NF $docEntry parcela $parcela", t)
-                // 4xx = validacao da BankPlus, util para quem esta na tela (tela interna, nao vai para o zip)
-                val recusa = (t as? HttpClientErrorException)?.responseBodyAsString?.take(200)?.let { " $it" } ?: ""
-                "parcela $parcela: ${motivoFalha(t)}$recusa"
+                "parcela $parcela: ${motivoFalha(t)}${recusaBankPlus(t)?.let { " - $it" } ?: ""}"
             }
         }
         return if (erros.isEmpty())
@@ -126,6 +125,21 @@ class CarregamentoBoletoService(val bankPlus: BankPlusService, val boletoIds: Bo
     }
 
     companion object {
+        private val json = ObjectMapper()
+
+        /**
+         * Motivo que a BankPlus mandou, para a tela (interna; o zip nao usa). Ela recusa regra de
+         * negocio ate com 500 - ex.: NF-e sem chave de acesso: {"error": "Não foi possível identificar
+         * a chave de acesso..."}. Corpo que nao e esse JSON so aparece em 4xx (5xx pode ser stack).
+         */
+        fun recusaBankPlus(t: Throwable): String? {
+            val http = t as? HttpStatusCodeException ?: return null
+            val corpo = http.responseBodyAsString
+            val texto = runCatching { json.readTree(corpo) }.getOrNull()
+                ?.let { no -> listOf("error", "mensagem", "message").firstNotNullOfOrNull { no.path(it).textValue() } }
+            return (texto ?: corpo.takeIf { http.statusCode.is4xxClientError })?.trim()?.take(200)?.takeIf { it.isNotEmpty() }
+        }
+
         // So NF valendo: entrega de venda futura nao tem boleto e o documento de cancelamento
         // (CancelStatus csCancellationDocument) pode herdar a UDF da ordem - ver CancelStatus.
         fun notasComBoleto(docs: List<Document>) =

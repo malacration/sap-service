@@ -113,7 +113,7 @@ class CarregamentoBoletoOrdemTest {
             "NF 5004" to SituacaoBoleto.ERRO,
             "NF 5005" to SituacaoBoleto.JA_TINHA,
         ), resultado.associate { it.nota to it.situacao })
-        assertEquals("parcela 2: HTTP 400 {\"mensagem\":\"Sacado sem endereco\"}", resultado.first { it.nota == "NF 5004" }.mensagem)
+        assertEquals("parcela 2: HTTP 400 - Sacado sem endereco", resultado.first { it.nota == "NF 5004" }.mensagem)
         verify(carregamentoService).update(mapOf("U_usuario" to "desconhecido",
             "U_acao" to "Boletos: 2 nota(s) gerada(s), 1 já tinha(m), 1 com erro"), "$ordem")
     }

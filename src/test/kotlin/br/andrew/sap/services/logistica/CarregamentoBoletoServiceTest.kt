@@ -43,7 +43,7 @@ class CarregamentoBoletoServiceTest {
     // boletos por DocEntry; geraFalha = "doc=X parcela=Y" que a BankPlus recusa
     private fun bankPlus(boletos: Map<Int, List<Boleto>> = mapOf(), listaFalha: Set<Int> = setOf(),
                          geraFalha: Set<String> = setOf(), aoListar: () -> Unit = {}, pdfInvalido: Set<Int> = setOf(),
-                         geraRecusa: Set<String> = setOf()) =
+                         geraRecusa: Set<String> = setOf(), geraSemNfe: Set<String> = setOf()) =
         mock(BankPlusService::class.java, Answer { inv ->
             when (inv.method.name) {
                 "getBoletosBy" -> {
@@ -65,6 +65,9 @@ class CarregamentoBoletoServiceTest {
                     if (chave in geraFalha) throw Exception("BankPlus recusou")
                     if (chave in geraRecusa) throw HttpClientErrorException.create(HttpStatus.BAD_REQUEST, "Bad Request",
                         HttpHeaders(), "{\"mensagem\":\"NF-e nao autorizada\"}".toByteArray(), null)
+                    if (chave in geraSemNfe) throw org.springframework.web.client.HttpServerErrorException.create(HttpStatus.INTERNAL_SERVER_ERROR,
+                        "Internal Server Error", HttpHeaders(),
+                        "{\"error\":\"Não foi possível identificar a chave de acesso e/ou o status do documento NF-E de [DocEntry:${inv.arguments[1]}]\"}".toByteArray(), null)
                     ByteArray(0)
                 }
                 "getPdf" -> {
@@ -218,5 +221,15 @@ class CarregamentoBoletoServiceTest {
         val docs = listOf(doc(1, DocumentTypes.oInvoices, CancelStatus.csNo), doc(2, DocumentTypes.oInvoices, CancelStatus.csCancellationDocument),
             doc(3, DocumentTypes.oDeliveryNotes, CancelStatus.csNo), doc(4, DocumentTypes.oInvoices, null))
         assertEquals(listOf(1, 4), CarregamentoBoletoService.notasComBoleto(docs).map { it.docEntry })
+    }
+
+    // Caso real do HOMOLOG (2026-11-16): a BankPlus recusa com 500 e {"error": ...} enquanto a NF-e nao
+    // tem chave de acesso. "HTTP 500" sozinho nao diz ao usuario o que fazer.
+    @Test
+    fun `recusa 500 da BankPlus mostra o motivo dela`() {
+        val r = servico(bankPlus(geraSemNfe = setOf("doc=1 parcela=1"))).gerar(10, listOf(nota(1)))
+        assertEquals(SituacaoBoleto.ERRO, r.single().situacao)
+        assertTrue(r.single().mensagem.contains("chave de acesso e/ou o status do documento NF-E"), r.single().mensagem)
+        assertFalse(r.single().mensagem.contains("{"), "so o texto, sem o JSON: ${r.single().mensagem}")
     }
 }
