@@ -148,4 +148,16 @@ class CarregamentoBoletoOrdemTest {
         ), entradas.keys.toList())
         assertEquals("NF 5003: sem boleto na BankPlus", entradas["erros.txt"])
     }
+
+    // Login pelo Keycloak: userName = preferred_username (o CPF); o nome de quem fez vai em _name.
+    @Test
+    fun `historico grava o nome de quem fez e nao o CPF`() {
+        val usuario = br.andrew.sap.model.authentication.User("175", "MARIA DA SILVA",
+            br.andrew.sap.model.authentication.UserOriginEnum.SalePerson, "12345678900", null, null, listOf(2), listOf("admin"))
+
+        controller.gerarBoletos(ordem, usuario)
+
+        verify(carregamentoService).update(mapOf("U_usuario" to "MARIA DA SILVA",
+            "U_acao" to "Boletos: 2 nota(s) gerada(s), 1 já tinha(m), 1 com erro"), "$ordem")
+    }
 }

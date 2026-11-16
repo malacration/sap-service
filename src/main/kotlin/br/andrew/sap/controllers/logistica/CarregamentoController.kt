@@ -437,9 +437,11 @@ class CarregamentoController(val carregamentoServico: CarregamentoService,
 
     private fun acaoComErro(acao: String, e: Exception) = "$acao: ${e.message}".take(254)
 
-    //Login de quem usa a tela; o UserSign do SAP e sempre o usuario do Service Layer.
+    //Nome de quem usa a tela; o UserSign do SAP e sempre o usuario do Service Layer. No Keycloak o
+    //userName e o preferred_username (CPF): o nome vem em _name (claim "name").
     private fun nomeUsuario(auth: Authentication?): String =
-        (auth as? User)?.userName?.takeIf { it.isNotBlank() } ?: auth?.name?.takeIf { it.isNotBlank() } ?: "desconhecido"
+        (auth as? User)?._name?.takeIf { it.isNotBlank() } ?: (auth as? User)?.userName?.takeIf { it.isNotBlank() }
+            ?: auth?.name?.takeIf { it.isNotBlank() } ?: "desconhecido"
 
 
     private fun logSelecaoIncompletaDeLote(docEntry: Int, pedido: OrderSales, line: br.andrew.sap.model.sap.documents.base.DocumentLines) {
