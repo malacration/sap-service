@@ -95,11 +95,24 @@ class CarregamentoBoletoServiceTest {
         assertEquals("NF 5001", r.single().nota)
     }
 
+    // O boleto e cancelado quando a parcela e paga por PIX (AccountsReceivableService.cancelBoletos):
+    // reemitir cobraria de novo uma parcela ja paga.
     @Test
-    fun `boleto cancelado conta como sem boleto`() {
-        servico(bankPlus(mapOf(1 to listOf(boleto(1, "Cancelado")), 2 to listOf(boleto(1, "Aguardando Cancelamento")))))
+    fun `parcela com boleto cancelado nao e reemitida`() {
+        val r = servico(bankPlus(mapOf(1 to listOf(boleto(1, "Cancelado")), 2 to listOf(boleto(1, "Aguardando Cancelamento")))))
             .gerar(10, listOf(nota(1), nota(2)))
-        assertEquals(listOf("doc=1 parcela=1", "doc=2 parcela=1"), gerados)
+        assertEquals(listOf<String>(), gerados)
+        assertEquals(listOf(SituacaoBoleto.JA_TINHA, SituacaoBoleto.JA_TINHA), r.map { it.situacao })
+        assertTrue(r[0].mensagem.contains("parcela(s) 1 com boleto cancelado"), r[0].mensagem)
+    }
+
+    @Test
+    fun `gera a parcela sem boleto e avisa da cancelada`() {
+        val r = servico(bankPlus(mapOf(1 to listOf(boleto(1), boleto(2, "Cancelado"))))).gerar(10, listOf(nota(1, parcelas = 3)))
+        assertEquals(listOf("doc=1 parcela=3"), gerados)
+        assertEquals(SituacaoBoleto.GERADO, r.single().situacao)
+        assertTrue(r.single().mensagem.contains("parcela(s) 3 gerada(s)"), r.single().mensagem)
+        assertTrue(r.single().mensagem.contains("parcela(s) 2 com boleto cancelado"), r.single().mensagem)
     }
 
     @Test

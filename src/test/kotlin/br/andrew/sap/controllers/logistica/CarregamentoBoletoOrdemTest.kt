@@ -55,7 +55,7 @@ class CarregamentoBoletoOrdemTest {
 
     private val notas = listOf(
         doc(1001, "BB-RC-BOL-1199", 3),                 // pedido A: 3 parcelas, nenhum boleto
-        doc(1002, "BB-RC-BL-126455", 2),                // pedido B: parcela 1 ativa, parcela 2 cancelada
+        doc(1002, "BB-RC-BL-126455", 3),                // pedido B: parcela 1 ativa, 2 cancelada (paga por PIX), 3 sem boleto
         doc(1003, "PIX-RC", 1),                         // pedido C: PIX
         doc(1004, "BB-RC-BOL-1199", 2),                 // pedido D: BankPlus recusa a parcela 2
         doc(1005, "BB-RC-BOL-1199", 2),                 // pedido E: ja tinha tudo
@@ -105,7 +105,7 @@ class CarregamentoBoletoOrdemTest {
     fun `ordem com varios pedidos gera so o que falta e registra no historico`() {
         val resultado = controller.gerarBoletos(ordem, null)
 
-        assertEquals(listOf("1001/1", "1001/2", "1001/3", "1002/2", "1004/1", "1004/2"), gerados)
+        assertEquals(listOf("1001/1", "1001/2", "1001/3", "1002/3", "1004/1", "1004/2"), gerados)
         assertEquals(mapOf(
             "NF 5001" to SituacaoBoleto.GERADO,
             "NF 5002" to SituacaoBoleto.GERADO,
@@ -141,7 +141,7 @@ class CarregamentoBoletoOrdemTest {
 
         assertEquals(listOf(
             "boleto-nota-5001-parcela1.pdf", "boleto-nota-5001-parcela2.pdf", "boleto-nota-5001-parcela3.pdf",
-            "boleto-nota-5002-parcela1.pdf", "boleto-nota-5002-parcela2.pdf",
+            "boleto-nota-5002-parcela1.pdf", "boleto-nota-5002-parcela3.pdf",
             "boleto-nota-5004-parcela1.pdf",
             "boleto-nota-5005-parcela1.pdf", "boleto-nota-5005-parcela2.pdf",
             "erros.txt",

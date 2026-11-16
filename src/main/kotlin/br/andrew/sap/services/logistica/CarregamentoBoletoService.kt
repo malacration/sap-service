@@ -17,7 +17,9 @@ import java.util.zip.ZipOutputStream
 
 /**
  * Boletos BankPlus das NFs geradas pela ordem de carregamento, para o usuario nao precisar entrar
- * no SAP. Gera por parcela so o que ainda nao tem boleto ativo: clicar de novo nao duplica.
+ * no SAP. Gera por parcela so o que nunca teve boleto: clicar de novo nao duplica. Parcela com boleto
+ * cancelado NAO e reemitida: o boleto e cancelado quando a parcela e paga por PIX
+ * (AccountsReceivableService.cancelBoletos), e reemitir cobraria de novo.
  * "E boleto" = forma de pagamento da nota em boleto.ids (a mesma lista da tela de faturas).
  */
 @Service
@@ -50,16 +52,19 @@ class CarregamentoBoletoService(val bankPlus: BankPlusService, val boletoIds: Bo
         val docEntry = nota.docEntry ?: return ResultadoBoleto(nome, SituacaoBoleto.ERRO, "nota sem DocEntry")
         val filial = nota.getBPL_IDAssignedToInvoice()
 
-        val comBoleto = try {
-            ativos(bankPlus.getBoletosBy(filial, docEntry.toString(), OrigemBoletoEnum.notafiscal, comPrazo = true))
-                .mapNotNull { it.numeroDaParcela }.toSet()
+        val boletos = try {
+            bankPlus.getBoletosBy(filial, docEntry.toString(), OrigemBoletoEnum.notafiscal, comPrazo = true)
         } catch (t: Throwable) {
             logger.warn("Carregamento: falha ao consultar boletos da NF $docEntry na BankPlus", t)
             return ResultadoBoleto(nome, SituacaoBoleto.ERRO, "consulta na BankPlus falhou (${motivoFalha(t)})")
         }
-        val faltam = parcelas.filter { it !in comBoleto }
+        val ativas = ativos(boletos).mapNotNull { it.numeroDaParcela }.toSet()
+        val canceladas = parcelas.filter { p -> p !in ativas && boletos.any { it.numeroDaParcela == p } }
+        val aviso = canceladas.takeIf { it.isNotEmpty() }
+            ?.let { "; parcela(s) ${it.joinToString()} com boleto cancelado, não reemitida(s) (pode ter sido paga por PIX)" } ?: ""
+        val faltam = parcelas.filter { it !in ativas && it !in canceladas }
         if (faltam.isEmpty())
-            return ResultadoBoleto(nome, SituacaoBoleto.JA_TINHA, "já tinha boleto em todas as parcelas")
+            return ResultadoBoleto(nome, SituacaoBoleto.JA_TINHA, "já tinha boleto em todas as parcelas$aviso")
 
         val erros = faltam.mapNotNull { parcela ->
             try {
@@ -73,9 +78,9 @@ class CarregamentoBoletoService(val bankPlus: BankPlusService, val boletoIds: Bo
             }
         }
         return if (erros.isEmpty())
-            ResultadoBoleto(nome, SituacaoBoleto.GERADO, "parcela(s) ${faltam.joinToString()} gerada(s)")
+            ResultadoBoleto(nome, SituacaoBoleto.GERADO, "parcela(s) ${faltam.joinToString()} gerada(s)$aviso")
         else
-            ResultadoBoleto(nome, SituacaoBoleto.ERRO, erros.joinToString("; "))
+            ResultadoBoleto(nome, SituacaoBoleto.ERRO, erros.joinToString("; ") + aviso)
     }
 
     /**
