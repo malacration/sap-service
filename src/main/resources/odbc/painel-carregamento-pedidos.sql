@@ -1,6 +1,11 @@
+-- Painel integrado de vendas, pedidos sem agrupamento.
+-- Antiga view pedidos-sem-agrupamento-carregamento.sql do Service Layer, pelo sap-odbc para filtrar pela mesma lista de utilizacoes
+-- da busca da ordem de carregamento (:utilizacoes, de carregamento.utilizacoes, padrao 9).
+-- :sinaisFrete  sinais de TotalExpns aceitos: 1 com frete, 0 sem frete (retirada), -1,0,1 todos.
+-- DocDate em YYYYMMDD: o formato que o SQLQueries devolvia e que o front le.
 SELECT
     P."DocEntry",
-    P."DocDate",
+    TO_VARCHAR(P."DocDate", 'YYYYMMDD') AS "DocDate",
     P."CardCode",
     P."CardName",
     V."SlpCode",
@@ -31,14 +36,15 @@ LEFT JOIN "@RO_LOCAIS" LOCAIS
     ON LOCAIS."Code" = EE."U_LocalidadeS"
 WHERE
     P."DocStatus" = 'O'
-    AND L."Usage" = 9
+    AND L."Usage" IN (:utilizacoes)
     AND P."DocDate" >= :startDate
     AND P."DocDate" <= :finalDate
     AND P."BPLId" = :branch
+    AND SIGN(IFNULL(P."TotalExpns", 0)) IN (:sinaisFrete)
     AND EE."U_LocalidadeS" LIKE :localidade
     AND EE."Incoterms" LIKE :incoterms
     AND L."ItemCode" LIKE :search
-    AND V."SlpCode" LIKE :salesPerson
+    AND (V."SlpCode" = :vendedor OR V."SlpCode" > :vendedorDisable)
     AND P."CardCode" LIKE :partner
 ORDER BY
     P."DocDate" DESC

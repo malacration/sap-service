@@ -542,10 +542,14 @@ class CarregamentoController(val carregamentoServico: CarregamentoService,
                       @RequestParam("localidade", required = false) localidadeFiltro: String?,
                       @RequestParam("vendedor", required = false) vendedor: Int?,
                       @RequestParam("cidade", required = false) cidade: String?,
-                      @RequestParam("pagina", defaultValue = "0") pagina: Int): PaginaDocumentos {
+                      @RequestParam("pagina", defaultValue = "0") pagina: Int,
+                      @RequestParam("frete", required = false) frete: String?): ResponseEntity<Any> {
+        // O handler global transforma qualquer excecao em 500: frete invalido responde 400 aqui.
+        val sinaisFrete = CarregamentoService.sinaisFrete(frete)
+            ?: return ResponseEntity.badRequest().body(mapOf("mensagem" to "Filtro de frete inválido: use com, sem ou todos."))
         val (pedidos, temMais) = carregamentoServico.searchPedidos(dataInicial ?: "1900-01-01", dataFinal ?: "2100-12-31",
-            filial, localidadeFiltro?.takeIf { it.isNotBlank() } ?: "%", vendedor, cidade, pagina, DOCUMENTOS_POR_PAGINA)
-        return PaginaDocumentos(pedidos, temMais)
+            filial, localidadeFiltro?.takeIf { it.isNotBlank() } ?: "%", vendedor, cidade, pagina, DOCUMENTOS_POR_PAGINA, sinaisFrete)
+        return ResponseEntity.ok(PaginaDocumentos(pedidos, temMais))
     }
 
     /**

@@ -116,6 +116,11 @@ necessidade-producao.depositos-excluidos=
 # entregar das notas delas entra em Sem previsao.
 necessidade-producao.utilizacoes-simples-faturamento=16
 
+# Ordem de carregamento: utilizacoes (OUSG.ID) da linha do pedido que entram na busca de pedidos,
+# separadas por virgula. A variavel de ambiente CARREGAMENTO_UTILIZACOES preenche esta mesma chave e
+# vale mais que esta linha. Sem nenhuma das duas, ou com valor vazio, vale 9.
+carregamento.utilizacoes=9
+
 # OTP de liberacao das travas (TransactionNotification). Deve ser IGUAL ao segredo
 # da funcao HANA fnValidaOtpBypass (repo sap-sql-sovis). Troque em producao.
 trava.otp.secret=TROCAR_ESTE_SEGREDO
