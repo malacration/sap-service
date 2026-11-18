@@ -231,9 +231,10 @@ class CarregamentoService(val batchService: BatchService, val pedidoVendaService
     fun historico(idOrdem: Int): List<Map<String, Any?>> =
         agruparHistorico(odbc.consultar(SqlResource.carregar("odbc/carregamento-historico.sql"), mapOf("ordem" to idOrdem), 1000).rows)
 
-    /** Notas e entregas da ordem com o status da NF-e na TaxPlus (odbc/carregamento-notas-status.sql). */
+    /** Notas e entregas da ordem com o status da NF-e na TaxPlus e dos boletos na BankPlus (odbc/carregamento-notas-status.sql). */
     fun statusNotas(idOrdem: Int): List<Map<String, Any?>> =
-        odbc.consultar(SqlResource.carregar("odbc/carregamento-notas-status.sql"), mapOf("ordem" to idOrdem), 1000).rows
+        marcaBoleto(odbc.consultar(SqlResource.carregar("odbc/carregamento-notas-status.sql"), mapOf("ordem" to idOrdem), 1000).rows,
+            br.andrew.sap.infrastructure.BoletoIdsConfig.ids)
 
     /**
      * Zip com o DANFE de cada nota/entrega da ordem. Sem chave (nao foi para a SEFAZ) ou falha na
@@ -351,6 +352,10 @@ class CarregamentoService(val batchService: BatchService, val pedidoVendaService
     }
 
     companion object {
+        /** EhBoleto: a forma da NF esta em boleto.ids (a lista que so o back conhece). Entrega (15) nao tem boleto. */
+        fun marcaBoleto(linhas: List<Map<String, Any?>>, boletoIds: List<String>): List<Map<String, Any?>> =
+            linhas.map { it + ("EhBoleto" to ((it["DocType"] as? Number)?.toInt() == 13 && it["FormaPagamento"] in boletoIds)) }
+
         //Data e hora (minuto) entram na chave: dois salvamentos iguais em minutos diferentes nao se juntam.
         private val CAMPOS_HISTORICO = listOf("Status", "Usuario", "Acao", "Placa", "Motorista", "Transportadora",
             "Capacidade", "UpdateDate", "UpdateTime")
