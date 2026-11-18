@@ -506,13 +506,7 @@ class ContratoVendaFuturaController(
         if(entregas.size > 0)
             throw Exception("Existe entregas programadas para esse contrato, cancele elas para realizar a troca!")
 
-        //A troca recalcula o frete, e sem localidade nao ha destino para resolver a regiao.
-        //Contrato criado antes dessa funcionalidade precisa receber a localidade primeiro
-        //(PUT /contrato-venda-futura/{docEntry}/localidade). A retirada nao passa por aqui:
-        //ela confia no U_valorFrete ja atribuido e segue funcionando em contrato legado.
-        if(contrato.U_Localidade == null)
-            throw Exception("O contrato ${contrato.DocEntry} nao possui localidade de entrega. " +
-                "Informe a localidade antes de realizar a troca - ela e necessaria para recalcular o frete.")
+        garanteLocalidadeDoFrete(contrato)
 
         //Produto novo tem que vir com o desconto/juros da condicao do pedido original. Contrato
         //legado sem a condicao e recusado aqui - o front sanitiza ao abrir a troca.
@@ -546,5 +540,28 @@ class ContratoVendaFuturaController(
         }
         logger.info("Enviando ao sap o pedido de troca para o contrato ${contrato.getId()}")
         return batchService.run(bathcList)
+    }
+
+    /**
+     * A troca recalcula o frete, e sem localidade nao ha destino para resolver a regiao.
+     *
+     * Contrato sem frete (U_valorFrete zero) nao trava: ele continua sem frete depois da troca.
+     * Contrato com frete e sem localidade nasceu assim porque o schedule engole a falha ao
+     * resolver o destino; aqui ele e resolvido do mesmo jeito (endereco de entrega do pedido
+     * original) e vai gravado pelo PUT do contrato no batch da troca.
+     */
+    fun garanteLocalidadeDoFrete(contrato: Contrato) {
+        if(contrato.U_valorFrete == 0.0 || contrato.U_Localidade != null)
+            return
+        try {
+            val pedido = orderService.getById(contrato.U_orderDocEntry).tryGetValue<OrderSales>()
+            val localidade = freteContratoService.localidadeDoEndereco(
+                contrato.U_cardCode, pedido.shipToCode, AddresType.bo_ShipTo)
+            contrato.U_RegiaoCode = freteContratoService.regiaoVigente(contrato.U_filial).Code
+            contrato.U_Localidade = localidade
+        } catch (e: Exception) {
+            throw Exception("O contrato ${contrato.DocEntry} nao possui localidade de entrega e nao foi " +
+                "possivel resolve-la pelo pedido ${contrato.U_orderDocEntry}: ${e.message}")
+        }
     }
 }
