@@ -19,6 +19,7 @@ import br.andrew.sap.services.batch.BatchItem
 import br.andrew.sap.services.batch.BatchMethod
 import br.andrew.sap.services.batch.BatchResponse
 import br.andrew.sap.services.batch.BatchService
+import br.andrew.sap.services.batch.BatchRecusadoException
 import br.andrew.sap.services.documents.InvoiceService
 import br.andrew.sap.services.documents.DeliveryService
 import br.andrew.sap.services.documents.OrdersService
@@ -39,7 +40,10 @@ import org.springframework.security.core.Authentication
 import org.springframework.web.bind.annotation.*
 import java.math.BigDecimal
 import java.util.Date
+import br.andrew.sap.services.logistica.CarregamentoBoletoService
 import br.andrew.sap.services.logistica.CarregamentoService
+import br.andrew.sap.services.logistica.ResultadoBoleto
+import br.andrew.sap.services.logistica.SituacaoBoleto
 import br.andrew.sap.services.integracao.TelegramRequestService
 import br.andrew.sap.model.sap.comercial.DocEntry
 import br.andrew.sap.model.sap.documents.base.DocumentLines
@@ -56,6 +60,7 @@ class CarregamentoController(val carregamentoServico: CarregamentoService,
                              val telegramService : TelegramRequestService,
                              val applicationEventPublisher: ApplicationEventPublisher,
                              val sqlQueriesService: SqlQueriesService,
+                             val boletoService: CarregamentoBoletoService,
                              @Value("\${carregamento.copiar-anexo:true}") val copiarAnexo: Boolean) {
 
     val logger = LoggerFactory.getLogger(CarregamentoController::class.java)
@@ -308,6 +313,8 @@ class CarregamentoController(val carregamentoServico: CarregamentoService,
         val lotesParaFaturamento = mutableListOf<Pair<OrderSales, Document>>()
         val invoiceBatchList = BatchList()
         val pedidosParaFechar = mutableListOf<String>()
+        //Uma consulta para todos os pedidos da ordem; so quem tem PIX pago ganha abatimento na nota.
+        val pixPagos = carregamentoServico.pixPagosPorPedido(pedidos.mapNotNull { it.DocEntry?.toIntOrNull() })
 
         pedidos.forEach { pedido ->
             val bplId = pedido.getBPL_IDAssignedToInvoice()
@@ -336,6 +343,7 @@ class CarregamentoController(val carregamentoServico: CarregamentoService,
             documento.getOrCreateTaxExtension().Carrier = carregamento.U_transportadora
             documento.ClosingRemarks = "Motorista: ${carregamento.U_motorista}. Ordem: ${carregamento.DocEntry}"
             documento.U_faturadoOrdemCarregamento = docEntry
+            pixPagos[pedido.DocEntry?.toIntOrNull()]?.let { pix -> documento.downPaymentsToDraw = pix.map { CarregamentoService.abatimentoDoPix(it) } }
             //Com Comments preenchido o SAP nao acrescenta o "Based On ..." que poria sozinho.
             documento.comments = CarregamentoService.observacaoComOrdem(docEntry, pedido.comments,
                 pedido.docNum?.let { "Based On Sales Orders $it." })
@@ -377,7 +385,11 @@ class CarregamentoController(val carregamentoServico: CarregamentoService,
 
         val resposta = try {
             batchService.run(invoiceBatchList)
-        } catch (e: Exception) {
+        } catch (original: Exception) {
+            val descricaoDosPedidos = pedidos.mapNotNull { p -> p.DocEntry?.toIntOrNull()?.let { it to descricaoPedido(p) } }.toMap()
+            val e = if (original is BatchRecusadoException)
+                BatchRecusadoException(CarregamentoService.comPedidoDoPix(original.message ?: "", pixPagos, descricaoDosPedidos))
+            else original
             logger.error("Erro ao finalizar notas do carregamento $docEntry: ${e.message}", e)
             registrarAcao(docEntry, usuario, acaoComErro("Geração de notas recusada", e))
             lotesParaFaturamento.forEach { (pedido, documento) ->
@@ -433,9 +445,11 @@ class CarregamentoController(val carregamentoServico: CarregamentoService,
 
     private fun acaoComErro(acao: String, e: Exception) = "$acao: ${e.message}".take(254)
 
-    //Login de quem usa a tela; o UserSign do SAP e sempre o usuario do Service Layer.
+    //Nome de quem usa a tela; o UserSign do SAP e sempre o usuario do Service Layer. No Keycloak o
+    //userName e o preferred_username (CPF): o nome vem em _name (claim "name").
     private fun nomeUsuario(auth: Authentication?): String =
-        (auth as? User)?.userName?.takeIf { it.isNotBlank() } ?: auth?.name?.takeIf { it.isNotBlank() } ?: "desconhecido"
+        (auth as? User)?._name?.takeIf { it.isNotBlank() } ?: (auth as? User)?.userName?.takeIf { it.isNotBlank() }
+            ?: auth?.name?.takeIf { it.isNotBlank() } ?: "desconhecido"
 
 
     private fun logSelecaoIncompletaDeLote(docEntry: Int, pedido: OrderSales, line: br.andrew.sap.model.sap.documents.base.DocumentLines) {
@@ -587,6 +601,25 @@ class CarregamentoController(val carregamentoServico: CarregamentoService,
             .header(HttpHeaders.CONTENT_DISPOSITION,
                 ContentDisposition.attachment().filename("danfes-ordem-$idCarregamento.zip").build().toString())
             .body(carregamentoServico.danfes(idCarregamento))
+
+    /** Gera na BankPlus os boletos que faltam nas NFs da ordem (entrega de venda futura nao tem boleto). */
+    @PostMapping("/{id}/boletos")
+    fun gerarBoletos(@PathVariable id: Int, auth: Authentication?): List<ResultadoBoleto> {
+        val notas = CarregamentoBoletoService.notasComBoleto(getNotasByCarregamentos(id))
+        val resultado = boletoService.gerar(id, notas)
+        val conta = resultado.groupingBy { it.situacao }.eachCount()
+        registrarAcao(id, nomeUsuario(auth), ("Boletos: ${conta[SituacaoBoleto.GERADO] ?: 0} nota(s) gerada(s), " +
+            "${conta[SituacaoBoleto.JA_TINHA] ?: 0} já tinha(m), ${conta[SituacaoBoleto.JA_PAGA] ?: 0} já paga(s), ${conta[SituacaoBoleto.ERRO] ?: 0} com erro").take(254))
+        return resultado
+    }
+
+    @GetMapping("/boletos/{idCarregamento}")
+    fun boletos(@PathVariable idCarregamento: Int): ResponseEntity<ByteArray> =
+        ResponseEntity.ok()
+            .contentType(MediaType.parseMediaType("application/zip"))
+            .header(HttpHeaders.CONTENT_DISPOSITION,
+                ContentDisposition.attachment().filename("boletos-ordem-$idCarregamento.zip").build().toString())
+            .body(boletoService.zip(CarregamentoBoletoService.notasComBoleto(getNotasByCarregamentos(idCarregamento))))
 
     companion object {
         const val DOCUMENTOS_POR_PAGINA = 30

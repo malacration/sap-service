@@ -100,11 +100,12 @@ class OrderSalesController(val ordersService: OrdersService,
                @RequestParam status: DocumentStatus?,
                @RequestParam filial: Int?,
                @RequestParam cliente: String?,
-               @RequestParam data: String?
+               @RequestParam data: String?,
+               @RequestParam docNum: Int?
     ): ResponseEntity<NextLink<OrderSalesListItem>> {
         if (auth !is User)
             return ResponseEntity.noContent().build()
-        return ResponseEntity.ok(ordersService.listar(auth, status, filial, cliente, data))
+        return ResponseEntity.ok(ordersService.listar(auth, status, filial, cliente, data, docNum))
     }
 
     @GetMapping("{docEntry}/linhas")
