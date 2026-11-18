@@ -13,9 +13,10 @@ import org.springframework.core.io.DefaultResourceLoader
  * Le o rules.yml de verdade. O filtro e default-deny, e a regra ampla de contrato de venda
  * futura so concede "get" - endpoint novo de escrita fica 403 sem uma regra propria.
  *
- * A troca recusa contrato antigo sem U_Localidade e manda o usuario atribuir no
+ * A troca resolve a localidade pelo pedido original e so recusa contrato com frete quando essa
+ * resolucao falha - contrato sem frete nunca e recusado. Nesse caso o usuario atribui no
  * PUT /contrato-venda-futura/{docEntry}/localidade. Sem essa permissao, quem pode trocar nao
- * conseguia cumprir o pre-requisito da propria troca sem chamar um administrador.
+ * conseguia destravar a propria troca sem chamar um administrador.
  */
 class ContratoLocalidadeRulesTest {
 
