@@ -5,6 +5,7 @@ import br.andrew.sap.model.sistema.SapEnvrioment
 import br.andrew.sap.model.sap.cadastro.Branch
 import br.andrew.sap.services.abstracts.EntitiesService
 import br.andrew.sap.services.abstracts.SqlQueriesService
+import org.springframework.cache.annotation.Cacheable
 import org.springframework.stereotype.Service
 import org.springframework.web.client.RestTemplate
 import br.andrew.sap.services.security.AuthService
@@ -23,10 +24,14 @@ class BussinessPlaceService(
         return getAll(BussinessPlace::class.java)
     }
 
+    // Cache curto: o login via Keycloak chama a cada requisicao, e uma filial
+    // liberada no SAP precisa aparecer em poucos minutos.
+    @Cacheable("filiais-vendedor")
     fun getFilialBySalesPerson(idVendedor : Int): List<Branch> {
         return sqlQuerysServices.execute("filiais-vendedor.sql",Parameter("vendedor",idVendedor))!!.tryGetValues<Branch>()
     }
 
+    @Cacheable("filiais-colaborador")
     fun getFilialByEmployee(idColaborador : Int): List<Branch> {
         return sqlQuerysServices.execute("filiais-colaborador.sql",Parameter("colaborador",idColaborador))!!.tryGetValues<Branch>()
     }
