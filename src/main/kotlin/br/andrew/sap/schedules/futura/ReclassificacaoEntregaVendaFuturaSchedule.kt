@@ -105,7 +105,14 @@ class ReclassificacaoEntregaVendaFuturaSchedule(
         }
     }
 
-    private fun novaReclassificacao(invoice: Invoice): JournalEntry {
+    /**
+     * Vence junto com o ultimo boleto do contrato, nao no dia da entrega: a linha a debito fica em
+     * aberto no parceiro ate a apropriacao, e com o vencimento do dia o cliente aparecia vencido
+     * sem estar. Contrato sem boleto fica sem vencimento (o SAP usa a data do lancamento).
+     */
+    internal fun novaReclassificacao(invoice: Invoice): JournalEntry {
+        val vencimento = adiantamentoService.getLastInstallment(
+            invoice.U_venda_futura ?: throw Exception("Entrega sem contrato de venda futura"))
         val filial = invoice.getBPL_IDAssignedToInvoice()
         val docTotal = invoice.DocTotal?.toDoubleOrNull() ?: throw Exception("valor Documento nao e valido")
         val cred = JournalEntryLines(
@@ -120,6 +127,8 @@ class ReclassificacaoEntregaVendaFuturaSchedule(
         return JournalEntry(listOf(cred,deb),memoReclassificacaoEntrega(invoice)).also {
             it.TransactionCode = TransactionCodeTypes.VFET.toString()
             it.Reference = invoice.docNum
+            it.DueDate = vencimento
+            it.journalEntryLines.forEach { linha -> linha.DueDate = vencimento }
         }
     }
 
