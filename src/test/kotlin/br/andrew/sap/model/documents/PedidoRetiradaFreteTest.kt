@@ -135,6 +135,26 @@ class PedidoRetiradaFreteTest {
         Assertions.assertEquals(5295.74, freteDa(c, 94454.0, listOf(nota, devolucao)))
     }
 
+    /**
+     * Devolucao que estorna adiantamento do contrato: a linha do adiantamento tem quantidade =
+     * valor e preco 1, entao ela nao pode entrar no rateio como "itens devolvidos".
+     *
+     * Contrato 699: frete 3.000,00 sobre 400 itens, nota anterior de 52 com 390,00 de frete e um
+     * adiantamento de 23.997,79 estornado por devolucao. A retirada dos 348 restantes saiu com
+     * 37,31 de frete (2.610 x 348 / (348 + 23.997,79)) no lugar de 2.610,00.
+     */
+    @Test
+    fun devolucaoDeAdiantamentoNaoEntraNoRateio() {
+        val c = contrato(52.494464, 400.0, 3000.0)
+        val nota = faturado(52.0, 390.0)
+        val linhaAdiantamento = Product("A", "23997.79", "1", 0)
+            .also { it.BaseType = DocumentTypes.oDownPayments.value }
+        val devolucaoAdiantamento = Document("C0001", null, listOf(linhaAdiantamento), "2")
+            .also { it.docObjectCode = DocumentTypes.oCreditNotes }
+
+        Assertions.assertEquals(2610.00, freteDa(c, 348.0, listOf(nota, devolucaoAdiantamento)))
+    }
+
     /** Contrato que ja cobrou todo o frete: nota sai sem despesa de frete, sem travar. */
     @Test
     fun freteResidualEsgotadoNaoGeraDespesa() {
