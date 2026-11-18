@@ -40,7 +40,10 @@ import org.springframework.security.core.Authentication
 import org.springframework.web.bind.annotation.*
 import java.math.BigDecimal
 import java.util.Date
+import br.andrew.sap.services.logistica.CarregamentoBoletoService
 import br.andrew.sap.services.logistica.CarregamentoService
+import br.andrew.sap.services.logistica.ResultadoBoleto
+import br.andrew.sap.services.logistica.SituacaoBoleto
 import br.andrew.sap.services.integracao.TelegramRequestService
 import br.andrew.sap.model.sap.comercial.DocEntry
 import br.andrew.sap.model.sap.documents.base.DocumentLines
@@ -57,6 +60,7 @@ class CarregamentoController(val carregamentoServico: CarregamentoService,
                              val telegramService : TelegramRequestService,
                              val applicationEventPublisher: ApplicationEventPublisher,
                              val sqlQueriesService: SqlQueriesService,
+                             val boletoService: CarregamentoBoletoService,
                              @Value("\${carregamento.copiar-anexo:true}") val copiarAnexo: Boolean) {
 
     val logger = LoggerFactory.getLogger(CarregamentoController::class.java)
@@ -441,9 +445,11 @@ class CarregamentoController(val carregamentoServico: CarregamentoService,
 
     private fun acaoComErro(acao: String, e: Exception) = "$acao: ${e.message}".take(254)
 
-    //Login de quem usa a tela; o UserSign do SAP e sempre o usuario do Service Layer.
+    //Nome de quem usa a tela; o UserSign do SAP e sempre o usuario do Service Layer. No Keycloak o
+    //userName e o preferred_username (CPF): o nome vem em _name (claim "name").
     private fun nomeUsuario(auth: Authentication?): String =
-        (auth as? User)?.userName?.takeIf { it.isNotBlank() } ?: auth?.name?.takeIf { it.isNotBlank() } ?: "desconhecido"
+        (auth as? User)?._name?.takeIf { it.isNotBlank() } ?: (auth as? User)?.userName?.takeIf { it.isNotBlank() }
+            ?: auth?.name?.takeIf { it.isNotBlank() } ?: "desconhecido"
 
 
     private fun logSelecaoIncompletaDeLote(docEntry: Int, pedido: OrderSales, line: br.andrew.sap.model.sap.documents.base.DocumentLines) {
@@ -595,6 +601,25 @@ class CarregamentoController(val carregamentoServico: CarregamentoService,
             .header(HttpHeaders.CONTENT_DISPOSITION,
                 ContentDisposition.attachment().filename("danfes-ordem-$idCarregamento.zip").build().toString())
             .body(carregamentoServico.danfes(idCarregamento))
+
+    /** Gera na BankPlus os boletos que faltam nas NFs da ordem (entrega de venda futura nao tem boleto). */
+    @PostMapping("/{id}/boletos")
+    fun gerarBoletos(@PathVariable id: Int, auth: Authentication?): List<ResultadoBoleto> {
+        val notas = CarregamentoBoletoService.notasComBoleto(getNotasByCarregamentos(id))
+        val resultado = boletoService.gerar(id, notas)
+        val conta = resultado.groupingBy { it.situacao }.eachCount()
+        registrarAcao(id, nomeUsuario(auth), ("Boletos: ${conta[SituacaoBoleto.GERADO] ?: 0} nota(s) gerada(s), " +
+            "${conta[SituacaoBoleto.JA_TINHA] ?: 0} já tinha(m), ${conta[SituacaoBoleto.JA_PAGA] ?: 0} já paga(s), ${conta[SituacaoBoleto.ERRO] ?: 0} com erro").take(254))
+        return resultado
+    }
+
+    @GetMapping("/boletos/{idCarregamento}")
+    fun boletos(@PathVariable idCarregamento: Int): ResponseEntity<ByteArray> =
+        ResponseEntity.ok()
+            .contentType(MediaType.parseMediaType("application/zip"))
+            .header(HttpHeaders.CONTENT_DISPOSITION,
+                ContentDisposition.attachment().filename("boletos-ordem-$idCarregamento.zip").build().toString())
+            .body(boletoService.zip(CarregamentoBoletoService.notasComBoleto(getNotasByCarregamentos(idCarregamento))))
 
     companion object {
         const val DOCUMENTOS_POR_PAGINA = 30

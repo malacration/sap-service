@@ -337,7 +337,7 @@ class NotaFiscalLoteFormaPagamentoService(
      * Toda troca que mudou a forma confere a BankPlus: o boleto emitido continua valendo e ninguem
      * no sap-service o cancela. Nao depende da forma anterior ser de boleto - depois de um boleto ->
      * Pix, uma troca Pix -> outra ainda tem o boleto antigo ativo - nem da lista boleto.ids, que nao
-     * tem todas as formas de boleto (a do Sicoob, por exemplo). Nulo = sem boleto ativo.
+     * tem todas as formas de boleto (a BB-RC-BL-720X, por exemplo). Nulo = sem boleto ativo.
      */
     private fun avisoBoleto(doc: NotaFiscalResumo): AvisoBoleto? {
         val filial = doc.filialId ?: return AvisoBoleto("nao deu para conferir boleto: documento sem filial", naoConferido = true)

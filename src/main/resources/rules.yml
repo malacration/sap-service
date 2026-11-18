@@ -255,6 +255,10 @@ roles:
       actions: ["get"]
     - url: "/carregamento/danfes/*"
       actions: ["get"]
+    - url: "/carregamento/*/boletos"
+      actions: ["post"]
+    - url: "/carregamento/boletos/*"
+      actions: ["get"]
     - url: "/carregamento/search-faturas"
       actions: ["get"]
     - url: "/carregamento/search-pedidos"
@@ -303,6 +307,10 @@ roles:
     - url: "/carregamento/*/historico"
       actions: ["get"]
     - url: "/carregamento/danfes/*"
+      actions: ["get"]
+    - url: "/carregamento/*/boletos"
+      actions: ["post"]
+    - url: "/carregamento/boletos/*"
       actions: ["get"]
     - url: "/carregamento/search-faturas"
       actions: ["get"]
