@@ -100,6 +100,13 @@ class BusinessPartnersController(
         return service.searchBusinessPartners(search)
     }
 
+    //Fornecedores (CardType S), sem recorte de carteira: busca de transportadora da ordem de carregamento.
+    //Mesma consulta do search-vendedor, que apesar do nome tambem so traz fornecedor (parceiro-limitado-cpf.sql).
+    @GetMapping("search-fornecedor")
+    fun searchFornecedor(@RequestParam search: String): List<BusinessPartnerSlin> {
+        return service.searchBusinessPartners(search)
+    }
+
     @GetMapping("/key/{hashcode}")
     fun getPnByHashUpdate(@PathVariable hashcode : String): BusinessPartner {
         return service.get(Filter(Predicate("U_keyUpdate","$hashcode",Condicao.EQUAL)))
