@@ -1,56 +1,70 @@
 package br.andrew.sap.services.comercial
 import br.andrew.sap.infrastructure.odata.NextLink
+import br.andrew.sap.infrastructure.odata.OData
 import br.andrew.sap.infrastructure.odata.Parameter
 import br.andrew.sap.model.comercial.PainelIntegradoVendas
 import br.andrew.sap.services.abstracts.SqlQueriesService
 import br.andrew.sap.services.logistica.CarregamentoService
+import br.andrew.sap.services.logistica.CarregamentoUtilizacoes
+import br.andrew.sap.services.odbc.OdbcClient
+import br.andrew.sap.services.odbc.SqlResource
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
 
 @Service
 class PainelIntegradoVendasService(
-    private val sqlQueriesService: SqlQueriesService
+    private val sqlQueriesService: SqlQueriesService,
+    private val odbc: OdbcClient,
+    private val utilizacoes: CarregamentoUtilizacoes,
 ) {
     fun searchExpeditionOrders(
         dataInicial: String,
         dataFinal: String,
-        filial: String,
+        filial: Int,
         cliente: String?,
         item: String?,
-        vendedor: String?,
+        vendedor: Int?,
         agrupador: String?,
         localidade:String?,
         incoterms:String?,
         tipo: String? = null,
+        sinaisFrete: List<Int> = listOf(-1, 0, 1),
     ): NextLink<PainelIntegradoVendas> {
 
         val clienteSearch   = cliente?.let   { "%$it%" } ?: "%"
         val itemSearch      = item?.let      { "%$it%" } ?: "%"
-        val vendedorSearch  = vendedor?.let  { "%$it%" } ?: "%"
         val localidaSearch  = localidade?.let{ "%$it%" } ?: "%"
         val incotermsSearch = incoterms?.let { "%$it%" } ?: "%"
 
         val params = listOf(
             Parameter("startDate",   dataInicial),
             Parameter("finalDate",   dataFinal),
-            Parameter("branch",      filial),
+            Parameter("branch",      filial.toString()),
             Parameter("partner",     clienteSearch),
             Parameter("search",      itemSearch),
-            Parameter("salesPerson", vendedorSearch),
             Parameter("localidade",  localidaSearch),
             Parameter("incoterms",   incotermsSearch)
-        )
+        ) + parametrosVendedor(vendedor)
 
-        val sqlFile = when (agrupador) {
-            "cliente"  -> "pedidos-agrupado-cliente-carregamento.sql"
-            "item"     -> "pedidos-agrupado-item-carregamento.sql"
-            "vendedor" -> "pedidos-agrupado-vendedor-carregamento.sql"
-            else       -> "pedidos-sem-agrupamento-carregamento.sql"
-        }
-
-        val all = if (tipo == "nf-venda-futura") emptyList() else sqlQueriesService.getAll<PainelIntegradoVendas>(sqlFile, params)
+        val all = if (tipo == "nf-venda-futura") emptyList() else pedidos(agrupador, parametrosOdbc(params, filial, utilizacoes.lista, sinaisFrete))
         val faturas = if (tipo == "pedido") emptyList() else faturasDeVendaFutura(params)
         return NextLink(content = all + agrupar(faturas, agrupador), nextLink = "")
+    }
+
+    /*
+     * Pedidos pelo sap-odbc (odbc/painel-carregamento-pedidos*.sql) para filtrar pelas mesmas utilizacoes
+     * da busca da ordem de carregamento. O SQLQueries paginava sem teto; aqui acima de 10000 linhas o
+     * OdbcClient recusa (resultado_truncado) em vez de mostrar recorte.
+     */
+    private fun pedidos(agrupador: String?, params: Map<String, Any?>): List<PainelIntegradoVendas> {
+        val sqlFile = when (agrupador) {
+            "cliente"  -> "odbc/painel-carregamento-pedidos-por-cliente.sql"
+            "item"     -> "odbc/painel-carregamento-pedidos-por-item.sql"
+            "vendedor" -> "odbc/painel-carregamento-pedidos-por-vendedor.sql"
+            else       -> "odbc/painel-carregamento-pedidos.sql"
+        }
+        return odbc.consultar(SqlResource.carregar(sqlFile), params, 10000).rows
+            .map { OData(LinkedHashMap(it)).tryGetValue<PainelIntegradoVendas>() }
     }
 
     /*
@@ -64,6 +78,20 @@ class PainelIntegradoVendasService(
 
     companion object {
         const val TIPO_FATURA = "NF venda futura"
+
+        /** Codigo exato do vendedor, no mesmo esquema de CarregamentoService.searchPedidos (sem vendedor = todos). */
+        internal fun parametrosVendedor(vendedor: Int?): List<Parameter> = listOf(
+            Parameter("vendedor", vendedor ?: -2),
+            Parameter("vendedorDisable", if (vendedor == null) -2 else Int.MAX_VALUE),
+        )
+
+        /** JDBC sem conversao implicita: filial vai como Int. sinaisFrete: ver CarregamentoService.sinaisFrete. */
+        internal fun parametrosOdbc(params: List<Parameter>, filial: Int, utilizacoes: List<Int>, sinaisFrete: List<Int>): Map<String, Any?> =
+            params.associate { it.key to it.value } + mapOf(
+                "branch" to filial,
+                "utilizacoes" to utilizacoes,
+                "sinaisFrete" to sinaisFrete,
+            )
 
         internal fun linhasDeFatura(rows: List<Map<String, Any?>>): List<PainelIntegradoVendas> =
             rows.groupBy { it["DocEntry"].toString() to it["BaseLine"].toString() }

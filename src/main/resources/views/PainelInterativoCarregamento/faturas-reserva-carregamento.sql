@@ -36,7 +36,7 @@ WHERE P."isIns" = 'Y'
     AND (EE."U_LocalidadeS" LIKE :localidade OR IFNULL(EE."U_LocalidadeS", '') = '')
     AND EE."Incoterms" LIKE :incoterms
     AND L."ItemCode" LIKE :search
-    AND V."SlpCode" LIKE :salesPerson
+    AND (V."SlpCode" = :vendedor OR V."SlpCode" > :vendedorDisable)
     AND P."CardCode" LIKE :partner
 ORDER BY
     P."DocDate" DESC

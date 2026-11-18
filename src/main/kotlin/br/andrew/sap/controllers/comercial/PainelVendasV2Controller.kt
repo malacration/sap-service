@@ -59,13 +59,16 @@ class PainelVendasV2Controller(private val service: PainelVendasV2Service) {
      * restringir o periodo, em vez de exibir um recorte silencioso dos dados.
      */
     @ExceptionHandler(OdbcException::class)
-    fun onOdbc(ex: OdbcException): ResponseEntity<Map<String, String?>> {
-        val corpo = mutableMapOf<String, String?>("erro" to ex.codigo, "mensagem" to ex.message)
-        // So aparece quando ha causa tecnica segura de exibir. A tela mostra
-        // isso como "detalhes tecnicos", recolhido por padrao.
-        ex.detalhe?.let { corpo["detalhe"] = it }
-        return ResponseEntity
-            .status(if (ex.codigo == "resultado_truncado") HttpStatus.UNPROCESSABLE_ENTITY else HttpStatus.BAD_GATEWAY)
-            .body(corpo)
-    }
+    fun onOdbc(ex: OdbcException) = respostaOdbc(ex)
+}
+
+/** Tambem usado pelo PainelIntegradoVendasController. */
+internal fun respostaOdbc(ex: OdbcException): ResponseEntity<Map<String, String?>> {
+    val corpo = mutableMapOf<String, String?>("erro" to ex.codigo, "mensagem" to ex.message)
+    // So aparece quando ha causa tecnica segura de exibir. A tela mostra
+    // isso como "detalhes tecnicos", recolhido por padrao.
+    ex.detalhe?.let { corpo["detalhe"] = it }
+    return ResponseEntity
+        .status(if (ex.codigo == "resultado_truncado") HttpStatus.UNPROCESSABLE_ENTITY else HttpStatus.BAD_GATEWAY)
+        .body(corpo)
 }

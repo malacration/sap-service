@@ -38,7 +38,8 @@ import java.util.zip.ZipOutputStream
 import java.math.RoundingMode
 
 @Service
-class CarregamentoService(val batchService: BatchService, val pedidoVendaService : OrdersService, val sqlQueriesService : SqlQueriesService, val odbc: OdbcClient, val taxNfeService: TaxNfeService, env: SapEnvrioment, restTemplate: RestTemplate, authService: AuthService) :
+class CarregamentoService(val batchService: BatchService, val pedidoVendaService : OrdersService, val sqlQueriesService : SqlQueriesService, val odbc: OdbcClient, val taxNfeService: TaxNfeService, env: SapEnvrioment, restTemplate: RestTemplate, authService: AuthService,
+    private val utilizacoes: CarregamentoUtilizacoes) :
     EntitiesService<Carregamento>(env, restTemplate, authService) {
 
     override fun path(): String {
@@ -211,22 +212,13 @@ class CarregamentoService(val batchService: BatchService, val pedidoVendaService
      * Pedidos da busca do carregamento pelo sap-odbc (odbc/carregamento-pedidos.sql), paginados por
      * pedido. Pelo odbc porque o SQLQueries nao aceita IFNULL(...) LIKE: sem filtro de localidade ou
      * cidade, pedido sem localidade/cidade tambem aparece. Devolve a pagina e se ha mais.
-     * Pedido sem frete lancado (TotalExpns = 0) fica fora: e retirada. Nao usa o Incoterms porque na base ele
-     * contradiz o frete em ~10% dos pedidos (analise de 2026-11-06, ultimos 6 meses).
+     * Frete escolhido na tela (ver sinaisFrete): com frete lancado (TotalExpns > 0, padrao), sem frete (retirada) ou todos.
+     * Nao usa o Incoterms porque na base ele contradiz o frete em ~10% dos pedidos (analise de 2026-11-06, ultimos 6 meses).
      */
     fun searchPedidos(dataInicial: String, dataFinal: String, filial: Int, localidade: String, vendedor: Int?,
-                      cidade: String?, pagina: Int, porPagina: Int): Pair<List<OrderSales>, Boolean> {
-        val rows = odbc.consultar(SqlResource.carregar("odbc/carregamento-pedidos.sql"), mapOf(
-            "startDate" to dataInicial,
-            "finalDate" to dataFinal,
-            "localidade" to localidade,
-            "cidade" to "%${semAcento(cidade).uppercase()}%",
-            "filial" to filial,
-            "vendedor" to (vendedor ?: -2),
-            "vendedorDisable" to (if (vendedor == null) -2 else Int.MAX_VALUE),
-            "inicio" to pagina * porPagina,
-            "fim" to (pagina + 1) * porPagina,
-        ), 10000).rows
+                      cidade: String?, pagina: Int, porPagina: Int, sinaisFrete: List<Int>): Pair<List<OrderSales>, Boolean> {
+        val rows = odbc.consultar(SqlResource.carregar("odbc/carregamento-pedidos.sql"), parametrosPedidos(dataInicial,
+            dataFinal, filial, localidade, vendedor, cidade, pagina, porPagina, utilizacoes.lista, sinaisFrete), 10000).rows
         val total = rows.firstOrNull()?.get("TotalDocumentos")?.toString()?.toIntOrNull() ?: 0
         return rows.map { OData(LinkedHashMap(it)).tryGetValue<OrderSales>() } to (total > (pagina + 1) * porPagina)
     }
@@ -454,6 +446,32 @@ class CarregamentoService(val batchService: BatchService, val pedidoVendaService
         /** Filtro de cidade da busca: contem, sem acento e sem caixa. Sem filtro passa tudo. */
         internal fun cidadeConfere(cidade: String?, filtro: String?): Boolean =
             filtro.isNullOrBlank() || semAcento(cidade).contains(semAcento(filtro))
+
+        internal fun parametrosPedidos(dataInicial: String, dataFinal: String, filial: Int, localidade: String, vendedor: Int?,
+                                       cidade: String?, pagina: Int, porPagina: Int, utilizacoes: List<Int>, sinaisFrete: List<Int>) = mapOf(
+            "startDate" to dataInicial,
+            "finalDate" to dataFinal,
+            "localidade" to localidade,
+            "cidade" to "%${semAcento(cidade).uppercase()}%",
+            "filial" to filial,
+            "vendedor" to (vendedor ?: -2),
+            "vendedorDisable" to (if (vendedor == null) -2 else Int.MAX_VALUE),
+            "inicio" to pagina * porPagina,
+            "fim" to (pagina + 1) * porPagina,
+            "utilizacoes" to utilizacoes,
+            "sinaisFrete" to sinaisFrete,
+        )
+
+        /**
+         * Filtro de frete: sinais de TotalExpns aceitos; valor desconhecido = null.
+         * Vazio = [semValor]: "com" na busca do carregamento (regra antiga, front sem o parametro), "todos" no painel.
+         */
+        fun sinaisFrete(frete: String?, semValor: String = "com"): List<Int>? = when (frete?.trim().orEmpty().ifEmpty { semValor }) {
+            "com" -> listOf(1)
+            "sem" -> listOf(0)
+            "todos" -> listOf(-1, 0, 1)
+            else -> null
+        }
 
         internal fun semAcento(texto: String?) =
             Normalizer.normalize(texto ?: "", Normalizer.Form.NFD).replace(Regex("\\p{M}"), "").lowercase()
