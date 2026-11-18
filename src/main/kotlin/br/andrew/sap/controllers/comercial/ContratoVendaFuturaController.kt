@@ -467,7 +467,8 @@ class ContratoVendaFuturaController(
      * Atribui a localidade de entrega a um contrato que nasceu sem ela (criado antes do frete por
      * regiao, ou com o endereco do pedido sem localidade cadastrada).
      *
-     * Existe para destravar a troca: sem destino nao ha regiao, sem regiao nao ha frete novo.
+     * E o caminho manual quando a troca nao consegue resolver a localidade sozinha pelo pedido
+     * original: sem destino nao ha regiao, sem regiao nao ha frete novo.
      * A gravacao acontece fora do batch da troca de proposito - se a pessoa desistir da troca
      * depois, a localidade fica registrada mesmo assim, porque o destino do contrato e verdade
      * independente de a troca ter acontecido.
