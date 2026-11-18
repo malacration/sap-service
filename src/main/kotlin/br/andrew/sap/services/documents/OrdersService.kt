@@ -70,7 +70,10 @@ class OrdersService(val sqlQueriesService : SqlQueriesService, env: SapEnvriomen
             ?.tryGetNextValues()
     }
 
-    fun listar(auth: User, status: DocumentStatus?, filial: Int?, cliente: String?, data: String?): NextLink<OrderSalesListItem> {
+    fun listar(auth: User, status: DocumentStatus?, filial: Int?, cliente: String?, data: String?, docNum: Int? = null): NextLink<OrderSalesListItem> {
+        //buscando um pedido pelo numero, a data e o status da tela nao podem esconder ele
+        val status = if (docNum != null) null else status
+        val data = if (docNum != null) null else data
         val statusDb = when (status) {
             DocumentStatus.bost_Open -> "O"
             DocumentStatus.bost_Close -> "C"
@@ -92,8 +95,11 @@ class OrdersService(val sqlQueriesService : SqlQueriesService, env: SapEnvriomen
             Parameter("cliente", cliente ?: "-1"),
             Parameter("clienteIsFilter", clienteIsFilter),
             Parameter("data", data ?: "2000-01-01"),
+            Parameter("docNum", docNum ?: -1),
+            Parameter("docNumIsFilter", if (docNum != null) -1 else Int.MAX_VALUE),
         )
-        return sqlQueriesService.execute("pedidos-listar.sql", parameters)
+        //v2 = v1 + :docNum; a v1 fica congelada para a API antiga (ver views/README.md)
+        return sqlQueriesService.execute("pedidos-listar-v2.sql", parameters)
             ?.tryGetNextValues<OrderSalesListItem>() ?: NextLink(emptyList(), "")
     }
 

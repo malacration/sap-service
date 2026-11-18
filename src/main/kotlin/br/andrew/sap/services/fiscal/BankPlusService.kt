@@ -69,10 +69,11 @@ class BankPlusService(val envrioment: BankPlusEnvrioment, val restTemplate: Rest
         return empresas;
     }
 
-    fun geraBoletos(idFilial : Int, entryId : Int, parcela : Int, tipoDocumento : OrigemBoletoEnum): ByteArray {
+    // comPrazo: a ordem de carregamento segura uma trava durante a geracao; o adiantamento segue sem prazo.
+    fun geraBoletos(idFilial : Int, entryId : Int, parcela : Int, tipoDocumento : OrigemBoletoEnum, comPrazo: Boolean = false): ByteArray {
         val empresa = getEmpresas().firstOrNull { it.codigoDaFilial == idFilial.toString() } ?:throw Exception("Filial nao encontrada")
         val url = "$url/api/v2/${envrioment.base}/cobranca/${empresa.codigoDaFilial}/${tipoDocumento}/$entryId/boletos?parcela=$parcela&impresso=S"
-        return restTemplate.exchange(
+        return cliente(comPrazo).exchange(
             RequestEntity.post(url)
                 .header("Authorization", envrioment.token)
                 .build(),ByteArray::class.java)

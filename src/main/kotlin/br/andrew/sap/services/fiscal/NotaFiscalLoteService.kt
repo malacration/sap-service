@@ -359,18 +359,8 @@ class NotaFiscalLoteService(
         return resultado
     }
 
-    /**
-     * O que vai para o erros.txt. Excecao lancada por este codigo (Exception pura) tem texto
-     * controlado; as de HTTP/IO/JSON carregam corpo de resposta e detalhe interno das APIs,
-     * que ficam so no log (cada chamada ja loga a excecao inteira).
-     */
-    fun motivo(t: Throwable): String = when {
-        t.javaClass == Exception::class.java -> t.message ?: "erro sem mensagem"
-        t is HttpStatusCodeException -> "HTTP ${t.statusCode.value()}"
-        t is JsonProcessingException -> "resposta em formato inesperado"
-        t is ResourceAccessException || t is IOException -> "sem resposta do servico"
-        else -> "erro interno (${t.javaClass.simpleName})"
-    }
+    // Ver motivoFalha (fim do arquivo).
+    fun motivo(t: Throwable): String = motivoFalha(t)
 
     private fun baixaFiscal(nota: NotaFiscalResumo, pdf: Boolean, xml: Boolean, resultado: ResultadoNota) {
         val documento = try {
@@ -478,4 +468,17 @@ class NotaFiscalLoteService(
         val avisos = mutableListOf<String>()
         var semBoleto = false
     }
+}
+
+/**
+ * O que vai para o erros.txt / para a tela. Excecao lancada por este codigo (Exception pura) tem texto
+ * controlado; as de HTTP/IO/JSON carregam corpo de resposta e detalhe interno das APIs,
+ * que ficam so no log (cada chamada ja loga a excecao inteira).
+ */
+fun motivoFalha(t: Throwable): String = when {
+    t.javaClass == Exception::class.java -> t.message ?: "erro sem mensagem"
+    t is HttpStatusCodeException -> "HTTP ${t.statusCode.value()}"
+    t is JsonProcessingException -> "resposta em formato inesperado"
+    t is ResourceAccessException || t is IOException -> "sem resposta do servico"
+    else -> "erro interno (${t.javaClass.simpleName})"
 }
