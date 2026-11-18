@@ -19,6 +19,7 @@ import br.andrew.sap.services.batch.BatchItem
 import br.andrew.sap.services.batch.BatchMethod
 import br.andrew.sap.services.batch.BatchResponse
 import br.andrew.sap.services.batch.BatchService
+import br.andrew.sap.services.batch.BatchRecusadoException
 import br.andrew.sap.services.documents.InvoiceService
 import br.andrew.sap.services.documents.DeliveryService
 import br.andrew.sap.services.documents.OrdersService
@@ -308,6 +309,8 @@ class CarregamentoController(val carregamentoServico: CarregamentoService,
         val lotesParaFaturamento = mutableListOf<Pair<OrderSales, Document>>()
         val invoiceBatchList = BatchList()
         val pedidosParaFechar = mutableListOf<String>()
+        //Uma consulta para todos os pedidos da ordem; so quem tem PIX pago ganha abatimento na nota.
+        val pixPagos = carregamentoServico.pixPagosPorPedido(pedidos.mapNotNull { it.DocEntry?.toIntOrNull() })
 
         pedidos.forEach { pedido ->
             val bplId = pedido.getBPL_IDAssignedToInvoice()
@@ -336,6 +339,7 @@ class CarregamentoController(val carregamentoServico: CarregamentoService,
             documento.getOrCreateTaxExtension().Carrier = carregamento.U_transportadora
             documento.ClosingRemarks = "Motorista: ${carregamento.U_motorista}. Ordem: ${carregamento.DocEntry}"
             documento.U_faturadoOrdemCarregamento = docEntry
+            pixPagos[pedido.DocEntry?.toIntOrNull()]?.let { pix -> documento.downPaymentsToDraw = pix.map { CarregamentoService.abatimentoDoPix(it) } }
             //Com Comments preenchido o SAP nao acrescenta o "Based On ..." que poria sozinho.
             documento.comments = CarregamentoService.observacaoComOrdem(docEntry, pedido.comments,
                 pedido.docNum?.let { "Based On Sales Orders $it." })
@@ -377,7 +381,11 @@ class CarregamentoController(val carregamentoServico: CarregamentoService,
 
         val resposta = try {
             batchService.run(invoiceBatchList)
-        } catch (e: Exception) {
+        } catch (original: Exception) {
+            val descricaoDosPedidos = pedidos.mapNotNull { p -> p.DocEntry?.toIntOrNull()?.let { it to descricaoPedido(p) } }.toMap()
+            val e = if (original is BatchRecusadoException)
+                BatchRecusadoException(CarregamentoService.comPedidoDoPix(original.message ?: "", pixPagos, descricaoDosPedidos))
+            else original
             logger.error("Erro ao finalizar notas do carregamento $docEntry: ${e.message}", e)
             registrarAcao(docEntry, usuario, acaoComErro("Geração de notas recusada", e))
             lotesParaFaturamento.forEach { (pedido, documento) ->

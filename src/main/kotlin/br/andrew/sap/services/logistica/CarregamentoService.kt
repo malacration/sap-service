@@ -7,6 +7,7 @@ import br.andrew.sap.model.logistica.PedidoUpdateLine
 import br.andrew.sap.model.sap.comercial.DocEntry
 import br.andrew.sap.model.sap.sistema.SequenceCode
 import br.andrew.sap.model.sap.documents.OrderSales
+import br.andrew.sap.model.sap.documents.base.adiantamento.DownPaymentsToDraw
 import br.andrew.sap.services.abstracts.EntitiesService
 import br.andrew.sap.services.abstracts.SqlQueriesService
 import br.andrew.sap.services.batch.BatchList
@@ -48,6 +49,19 @@ class CarregamentoService(val batchService: BatchService, val pedidoVendaService
     fun estoqueEmCarregamentoPorItem(): Map<String, Double> =
         odbc.consultar(SqlResource.carregar("odbc/estoque-em-carregamento.sql"), emptyMap(), 10000).rows
             .associate { it["ItemCode"].toString() to decimal(it["Quantidade"]).toDouble() }
+
+    /**
+     * PIX pago de cada pedido, numa consulta so (odbc/carregamento-pix-pago.sql). Pedido sem PIX pago nao
+     * aparece no mapa. Mesmos criterios da trava SBO_SP_VALIDACAO_FINANCEIRA.
+     */
+    fun pixPagosPorPedido(pedidos: List<Int>): Map<Int, List<PixPagoDoPedido>> {
+        if (pedidos.isEmpty()) return emptyMap()
+        return odbc.consultar(SqlResource.carregar("odbc/carregamento-pix-pago.sql"), mapOf("pedidos" to pedidos), 10000).rows
+            .groupBy { it["Pedido"].toString().toInt() }
+            .mapValues { (_, pix) ->
+                pix.map { PixPagoDoPedido(it["DocEntry"].toString().toInt(), it["DocNum"].toString().toInt(), decimal(it["Saldo"])) }
+            }
+    }
 
     fun docEntryPedido(idOrdemCarregamento: Int): List<DocEntry> {
         val parameters = listOf(
@@ -396,6 +410,29 @@ class CarregamentoService(val batchService: BatchService, val pedidoVendaService
 
         internal fun decimal(valor: Any?) = BigDecimal(valor?.toString() ?: "0")
 
+        /** Abate o saldo inteiro do adiantamento: a trava de PIX pago recusa a nota que abate menos. */
+        internal fun abatimentoDoPix(pix: PixPagoDoPedido) = DownPaymentsToDraw().also {
+            it.docEntry = pix.docEntry
+            it.grossAmountToDraw = pix.saldo
+        }
+
+        private val ADIANTAMENTO_DA_TRAVA = Regex("usar o adiantamento (\\d+)")
+        private val PEDIDO_DO_PREFIXO = Regex("^Pedido \\S+: ", RegexOption.MULTILINE)
+
+        /**
+         * Erro da trava de PIX pago com o pedido certo. O prefixo "Pedido X:" vem da posicao que o SAP devolve
+         * no lote e, com varias notas num changeset so, ja apontou um pedido sem PIX. A trava cita o numero do
+         * adiantamento, que e o dono verdadeiro: troca o prefixo por ele, ou tira o prefixo se nao achar o dono.
+         * Outro erro volta como veio.
+         */
+        internal fun comPedidoDoPix(mensagem: String, pixPagos: Map<Int, List<PixPagoDoPedido>>, descricaoDoPedido: Map<Int, String>): String {
+            val adiantamento = ADIANTAMENTO_DA_TRAVA.find(mensagem)?.groupValues?.get(1)?.toIntOrNull() ?: return mensagem
+            val semPrefixo = mensagem.replace(PEDIDO_DO_PREFIXO, "")
+            val pedido = pixPagos.entries.firstOrNull { (_, pix) -> pix.any { it.docNum == adiantamento } }?.key
+            val descricao = pedido?.let { descricaoDoPedido[it] } ?: return semPrefixo
+            return "$descricao: $semPrefixo"
+        }
+
         /** Saldo de cada linha de fatura: OpenQty menos o que ordens Abertas ja reservaram. */
         internal fun comSaldo(linhas: List<Map<String, Any?>>): List<Pair<Map<String, Any?>, BigDecimal>> =
             linhas.groupBy { chaveLinha(it) }.values.map { daLinha ->
@@ -421,3 +458,6 @@ class CarregamentoService(val batchService: BatchService, val pedidoVendaService
             decimal(linha["PesoLinha"]).multiply(quantidade).divide(decimal(linha["QtdFatura"]), 4, RoundingMode.HALF_UP)
     }
 }
+
+/** Adiantamento de PIX pago de um pedido: saldo ainda sem abater em nota. */
+data class PixPagoDoPedido(val docEntry: Int, val docNum: Int, val saldo: BigDecimal)
