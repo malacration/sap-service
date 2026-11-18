@@ -136,4 +136,24 @@ class TrocaComFreteTest {
 
         assertEquals(200.0, contrato.U_valorFrete)
     }
+
+    /** Contrato negociado sem frete continua sem frete, mesmo sem localidade. */
+    @Test
+    fun `contrato sem frete e sem localidade troca e segue sem frete`() {
+        val contrato = contrato(quantidade = 20.0, frete = 0.0, localidade = null)
+
+        contrato.troca(trocaDeItem(20.0, 5.0), itemService, comissaoService, freteService(regiao("VIGENTE")))
+
+        assertEquals(0.0, contrato.U_valorFrete)
+    }
+
+    /** Ter localidade nao basta: recalcular passaria a cobrar frete que nao foi negociado. */
+    @Test
+    fun `contrato sem frete com localidade nao recalcula`() {
+        val contrato = contrato(quantidade = 20.0, frete = 0.0)
+
+        contrato.troca(trocaDeItem(20.0, 5.0), itemService, comissaoService, freteService(regiao("VIGENTE")))
+
+        assertEquals(0.0, contrato.U_valorFrete)
+    }
 }
