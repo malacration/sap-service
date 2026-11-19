@@ -132,22 +132,23 @@ class DownPaymentService(env: SapEnvrioment,
         val statusSql = sqlQueriesService.execute("boletos-status.sql",parametros)
             ?.tryGetValues<BoletoVf>()
             ?: listOf()
-        val devolucaoPorDocNum = statusSql
+        val statusPorDocNum = statusSql
             .filter { !it.DocNum.isNullOrBlank() }
-            .associate { it.DocNum to it.devolucao }
+            .associateBy { it.DocNum }
 
         return getByContratoVendaFutura(id, OrderBy("DocDueDate", Order.ASC))
             .flatMap { document ->
                 val downPayment = document.docEntry
                     ?.let { getById(it).tryGetValue<DownPayment>() }
                     ?: document
-                val devolucao = devolucaoPorDocNum[downPayment.docNum]
+                val status = statusPorDocNum[downPayment.docNum]
                 val installments = downPayment.documentInstallments.orEmpty()
-                if(installments.isEmpty()) {
-                    listOf(BoletoVf.from(downPayment, devolucao = devolucao, jurosMoraPercent = jurosMoraPercent))
+                val boletos = if(installments.isEmpty()) {
+                    listOf(BoletoVf.from(downPayment, devolucao = status?.devolucao, jurosMoraPercent = jurosMoraPercent))
                 } else {
-                    installments.map { BoletoVf.from(downPayment, it, devolucao, jurosMoraPercent) }
+                    installments.map { BoletoVf.from(downPayment, it, status?.devolucao, jurosMoraPercent) }
                 }
+                boletos.onEach { it.recebimento = status?.recebimento }
             }
     }
 
