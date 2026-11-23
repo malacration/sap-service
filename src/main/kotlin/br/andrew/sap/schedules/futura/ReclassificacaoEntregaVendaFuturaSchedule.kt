@@ -30,6 +30,8 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.context.annotation.Profile
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
+import java.time.LocalDate
+import java.time.ZoneId
 import java.util.concurrent.TimeUnit
 import br.andrew.sap.model.sap.documents.base.DocumentLines
 
@@ -54,6 +56,18 @@ class ReclassificacaoEntregaVendaFuturaSchedule(
     @Value("\${venda-futura.conta-controle}") val contaControleRedutoraPassivo : String) {
 
     val logger: Logger = LoggerFactory.getLogger(ReclassificacaoEntregaVendaFuturaSchedule::class.java)
+
+    companion object {
+        val ZONA_VENCIMENTO: ZoneId = ZoneId.of("America/Porto_Velho")
+
+        /**
+         * Ultimo boleto (yyyy-MM-dd, com ou sem hora) limitado por baixo em [hoje]: futuro e mantido,
+         * passado vira hoje, sem boleto (null) vence hoje. Sempre retorna uma data:
+         * DueDate = max(ultimo boleto ?: hoje, hoje).
+         */
+        internal fun vencimentoReclassificacao(ultimoBoleto: String?, hoje: LocalDate): String =
+            maxOf(ultimoBoleto?.let { LocalDate.parse(it.take(10)) } ?: hoje, hoje).toString()
+    }
 
 
     @Scheduled(fixedDelay = 10, timeUnit = TimeUnit.MINUTES)
@@ -108,11 +122,21 @@ class ReclassificacaoEntregaVendaFuturaSchedule(
     /**
      * Vence junto com o ultimo boleto do contrato, nao no dia da entrega: a linha a debito fica em
      * aberto no parceiro ate a apropriacao, e com o vencimento do dia o cliente aparecia vencido
-     * sem estar. Contrato sem boleto fica sem vencimento (o SAP usa a data do lancamento).
+     * sem estar. Contrato sem boleto (sem entrada, ou todos devolvidos) vence hoje,
+     * igual ao comportamento anterior ao PR. O lancamento (cabecalho e as duas linhas) sempre tem DueDate.
+     *
+     * O vencimento nunca fica no passado: se o ultimo boleto ja venceu, usa-se hoje (fuso de Porto Velho).
+     * Com data passada a ClienteEmAtrasoRegra (DueDate <= hoje-3 e saldo devedor > 0) marcaria o cliente
+     * como inadimplente. Ver [vencimentoReclassificacao], a regra de data isolada para teste.
      */
-    internal fun novaReclassificacao(invoice: Invoice): JournalEntry {
-        val vencimento = adiantamentoService.getLastInstallment(
-            invoice.U_venda_futura ?: throw Exception("Entrega sem contrato de venda futura"))
+    internal fun novaReclassificacao(
+        invoice: Invoice,
+        hoje: LocalDate = LocalDate.now(ZONA_VENCIMENTO)
+    ): JournalEntry {
+        val vencimento = vencimentoReclassificacao(
+            adiantamentoService.getLastInstallment(
+                invoice.U_venda_futura ?: throw Exception("Entrega sem contrato de venda futura")),
+            hoje)
         val filial = invoice.getBPL_IDAssignedToInvoice()
         val docTotal = invoice.DocTotal?.toDoubleOrNull() ?: throw Exception("valor Documento nao e valido")
         val cred = JournalEntryLines(

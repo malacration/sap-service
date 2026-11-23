@@ -42,7 +42,9 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
+import org.springframework.web.client.RestClientException
 import org.springframework.web.client.RestTemplate
+import br.andrew.sap.model.exceptions.SapGenericException
 import java.math.BigDecimal
 
 @Service
@@ -102,7 +104,7 @@ class DownPaymentService(env: SapEnvrioment,
      * adiantamento (sempre uma parcela, vencimento enviado), entao fica so como registro.
      */
     fun adiantamentosVendaFuturaWithoutSave(contrato: Contrato, paymentInfo: PaymentDueDates, pedido: Document? = null): Document {
-        val origem = pedido ?: orderService.getById(contrato.U_orderDocEntry).tryGetValue<OrderSales>()
+        val origem: Document? = pedido ?: buscaPedidoOrigem(contrato)?.tryGetValue<OrderSales>()
         if(vfItemAdiantamento == "none")
             throw Exception("O parametro [venda-futura.adiantamento-item] nao pode ser $vfItemAdiantamento")
         val linhas = listOf(Product(vfItemAdiantamento,paymentInfo.value.toString(),"1",vfUtilizacao))
@@ -112,22 +114,50 @@ class DownPaymentService(env: SapEnvrioment,
             linhas,
             contrato.U_filial.toString())
         //pedido sem condicao: a do contrato, para o SAP nao preencher com a do cadastro do cliente
-        adiantamento.paymentGroupCode = origem.paymentGroupCode ?: contrato.U_condicaoPagamento
+        adiantamento.paymentGroupCode = origem?.paymentGroupCode ?: contrato.U_condicaoPagamento
         //pedido sem forma: cai na configurada, e sem ela o SAP usa a do cadastro do cliente
-        adiantamento.paymentMethod = origem.paymentMethod?.takeIf { it.isNotBlank() } ?: vfFormaPagamento
+        adiantamento.paymentMethod = origem?.paymentMethod?.takeIf { it.isNotBlank() } ?: vfFormaPagamento
         adiantamento.U_venda_futura = contrato.DocEntry;
         adiantamento.salesPersonCode = contrato.U_vendedor
         return adiantamento
     }
 
     /**
+     * So a falha da consulta ao SAP cai no fallback (nulo): SapGenericException (4xx convertido por
+     * getById) e RestClientException (5xx, I/O). A desserializacao fica fora, em quem chama, para
+     * que resposta malformada propague. Nunca captura Error/Throwable.
+     */
+    private fun buscaPedidoOrigem(contrato: Contrato): OData? {
+        return try {
+            orderService.getById(contrato.U_orderDocEntry)
+        } catch (e: SapGenericException) {
+            logFallbackPedido(contrato, e)
+            null
+        } catch (e: RestClientException) {
+            logFallbackPedido(contrato, e)
+            null
+        }
+    }
+
+    private fun logFallbackPedido(contrato: Contrato, e: Exception) {
+        logger.warn(
+            "Nao foi possivel buscar o pedido de origem do adiantamento; usando condicao do contrato e forma configurada. contrato={}, pedido={}, erro={}",
+            contrato.DocEntry,
+            contrato.U_orderDocEntry,
+            e.message
+        )
+    }
+
+    /**
      * Vencimento (yyyy-MM-dd) do ultimo boleto valido do contrato; nulo quando nao ha nenhum.
-     * Ignora o devolvido: o estorno de PIX expirado devolve sem desligar do contrato.
+     * Ignora o cancelado (Cancelled == tYES) e o devolvido: o estorno de PIX expirado devolve
+     * sem desligar do contrato.
      * shortcut: olha so a primeira pagina (20 boletos, os de maior vencimento); com 20 devolvidos
      * seguidos devolve nulo e o VFET vence no dia, como antes. Producao tem no maximo 5 por contrato.
      */
     fun getLastInstallment(contratoId: Int): String? {
         return getByContratoVendaFutura(contratoId, OrderBy("DocDueDate",Order.DESC))
+            .filter { it.Cancelled != br.andrew.sap.model.enums.Cancelled.tYES }
             .firstOrNull { !foiDevolvido(it.docEntry ?: return@firstOrNull false) }
             ?.DocDueDate?.take(10)
     }

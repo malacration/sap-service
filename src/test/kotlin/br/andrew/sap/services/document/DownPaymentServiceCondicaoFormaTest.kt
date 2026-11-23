@@ -29,9 +29,26 @@ import org.mockito.kotlin.doReturn
 import org.mockito.kotlin.eq
 import org.mockito.kotlin.spy
 import org.mockito.kotlin.whenever
+import org.mockito.kotlin.verify
+import org.mockito.kotlin.never
+import org.mockito.kotlin.times
+import org.mockito.kotlin.argThat
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.assertDoesNotThrow
+import br.andrew.sap.model.enums.Cancelled
 import org.springframework.web.client.RestTemplate
 import java.math.BigDecimal
 import java.time.LocalDate
+import br.andrew.sap.model.exceptions.NotFoundException
+import br.andrew.sap.model.sap.sistema.ErrorMsg
+import br.andrew.sap.model.sap.sistema.SapError
+import br.andrew.sap.model.sap.sistema.SapMessage
+import com.fasterxml.jackson.core.JsonProcessingException
+import org.junit.jupiter.api.Assertions.assertSame
+import org.junit.jupiter.api.assertThrows
+import org.springframework.http.HttpStatus
+import org.springframework.web.client.HttpServerErrorException
+import org.springframework.web.client.ResourceAccessException
 
 /**
  * O adiantamento (boleto) do contrato sai com a condicao e a forma do pedido de origem - as mesmas
@@ -42,7 +59,9 @@ class DownPaymentServiceCondicaoFormaTest {
 
     private val orderService = mock(OrdersService::class.java)
     private val sql = mock(SqlQueriesService::class.java)
-    private val service = spy(DownPaymentService(
+    private val service = novoService("FORMA-CONFIG")
+
+    private fun novoService(formaConfig: String) = spy(DownPaymentService(
         mock(SapEnvrioment::class.java),
         sql,
         orderService,
@@ -57,7 +76,7 @@ class DownPaymentServiceCondicaoFormaTest {
         mock(BusinessPartnersService::class.java),
         "VF-ITEM",
         66,
-        "FORMA-CONFIG",
+        formaConfig,
         mock(RestTemplate::class.java),
         mock(AuthService::class.java)
     ))
@@ -115,5 +134,117 @@ class DownPaymentServiceCondicaoFormaTest {
             .thenAnswer { if ((it.arguments[1] as Parameter).value == 2) devolvido else null }
 
         assertEquals("2027-01-16", service.getLastInstallment(713))
+    }
+
+    private fun boleto(entry: Int, vencimento: String, cancelado: Boolean = false) =
+        Document("C0001", vencimento, listOf(), "2").also {
+            it.docEntry = entry
+            it.Cancelled = if (cancelado) Cancelled.tYES else Cancelled.tNO
+        }
+
+    private fun stubBoletos(vararg boletos: Document) =
+        doReturn(boletos.toList()).whenever(service).getByContratoVendaFutura(eq(713), any())
+
+    private fun stubDevolvidos(vararg entries: Int) {
+        val devolvido = OData(linkedMapOf("value" to """[{"DocEntry":900}]"""))
+        whenever(sql.execute(eq("devolucao-adiantamento.sql"), any<Parameter>()))
+            .thenAnswer { if ((it.arguments[1] as Parameter).value in entries.toList()) devolvido else null }
+    }
+
+    @Test
+    fun `ultimo boleto ignora o cancelado sem consultar devolucao`() {
+        stubBoletos(boleto(3, "2027-05-10T00:00:00Z", cancelado = true), boleto(1, "2027-01-16T00:00:00Z"))
+        stubDevolvidos()
+
+        assertEquals("2027-01-16", service.getLastInstallment(713))
+        verify(sql, times(0)).execute(eq("devolucao-adiantamento.sql"), argThat<Parameter> { key == "docEntry" && value == 3 })
+        verify(sql, times(1)).execute(eq("devolucao-adiantamento.sql"), argThat<Parameter> { key == "docEntry" && value == 1 })
+    }
+
+    @Test
+    fun `todos cancelados - sem ultimo boleto`() {
+        stubBoletos(boleto(3, "2027-05-10T00:00:00Z", cancelado = true), boleto(1, "2027-01-16T00:00:00Z", cancelado = true))
+        stubDevolvidos()
+
+        assertNull(service.getLastInstallment(713))
+        verify(sql, never()).execute(eq("devolucao-adiantamento.sql"), any<Parameter>())
+    }
+
+    @Test
+    fun `cancelado, devolvido e valido - usa o valido`() {
+        stubBoletos(
+            boleto(3, "2027-05-10T00:00:00Z", cancelado = true),
+            boleto(2, "2027-03-10T00:00:00Z"),
+            boleto(1, "2027-01-16T00:00:00Z"))
+        stubDevolvidos(2)
+
+        assertEquals("2027-01-16", service.getLastInstallment(713))
+        verify(sql, never()).execute(eq("devolucao-adiantamento.sql"), argThat<Parameter> { key == "docEntry" && value == 3 })
+    }
+
+    @Test
+    fun `GET do pedido falha - usa condicao do contrato e forma configurada`() {
+        contrato.U_condicaoPagamento = 21
+        //4xx do SAP convertido por getById; checked para o Mockito (getById sem @Throws), dai o thenAnswer
+        whenever(orderService.getById(99)).thenAnswer { throw NotFoundException(SapError(ErrorMsg("-2028", SapMessage("pt-br", "SAP 404")))) }
+
+        val adiantamento = assertDoesNotThrow { service.adiantamentosVendaFuturaWithoutSave(contrato, parcela) }
+
+        assertEquals(21, adiantamento.paymentGroupCode)
+        assertEquals("FORMA-CONFIG", adiantamento.paymentMethod)
+    }
+
+    @Test
+    fun `GET do pedido falha e forma configurada none - forma nula`() {
+        contrato.U_condicaoPagamento = 21
+        //5xx / I-O no RestTemplate
+        whenever(orderService.getById(99)).thenThrow(ResourceAccessException("SAP fora do ar"))
+
+        val adiantamento = assertDoesNotThrow { novoService("none").adiantamentosVendaFuturaWithoutSave(contrato, parcela) }
+
+        assertEquals(21, adiantamento.paymentGroupCode)
+        assertNull(adiantamento.paymentMethod)
+    }
+
+    @Test
+    fun `GET do pedido com 5xx - usa condicao do contrato e forma configurada`() {
+        contrato.U_condicaoPagamento = 21
+        whenever(orderService.getById(99)).thenThrow(HttpServerErrorException(HttpStatus.BAD_GATEWAY))
+
+        val adiantamento = assertDoesNotThrow { service.adiantamentosVendaFuturaWithoutSave(contrato, parcela) }
+
+        assertEquals(21, adiantamento.paymentGroupCode)
+        assertEquals("FORMA-CONFIG", adiantamento.paymentMethod)
+    }
+
+    @Test
+    fun `GET do pedido com erro generico propaga - sem fallback`() {
+        contrato.U_condicaoPagamento = 21
+        val erro = RuntimeException("bug inesperado")
+        whenever(orderService.getById(99)).thenThrow(erro)
+
+        val lancado = assertThrows<RuntimeException> { service.adiantamentosVendaFuturaWithoutSave(contrato, parcela) }
+
+        assertSame(erro, lancado)
+    }
+
+    @Test
+    fun `GET do pedido com resposta malformada propaga - sem fallback`() {
+        contrato.U_condicaoPagamento = 21
+        whenever(orderService.getById(99)).doReturn(OData(linkedMapOf("value" to "{nao e json")))
+
+        assertThrows<JsonProcessingException> { service.adiantamentosVendaFuturaWithoutSave(contrato, parcela) }
+    }
+
+    @Test
+    fun `pedido informado nao busca o pedido no SAP`() {
+        whenever(orderService.getById(99)).thenThrow(RuntimeException("nao deveria ser chamado"))
+
+        val adiantamento = service.adiantamentosVendaFuturaWithoutSave(contrato, parcela, pedido(13, "BB-RC-BOL-1199"))
+
+        assertEquals(13, adiantamento.paymentGroupCode)
+        assertEquals("BB-RC-BOL-1199", adiantamento.paymentMethod)
+        verify(orderService, never()).getById(any<Int>())
+        verify(orderService, never()).getById(any<String>())
     }
 }
