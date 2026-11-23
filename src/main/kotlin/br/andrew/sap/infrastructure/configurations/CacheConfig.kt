@@ -63,12 +63,15 @@ class CacheConfigurationProperties(@Value("\${otp.ttl:300}") val otpTTL : Long) 
         cacheExpirations["produto-estrutura-selecao"] = timeoutSeconds
         cacheExpirations["produtos"] = timeoutSeconds
         cacheExpirations["unidade-grupo"] = timeoutSeconds
-        cacheExpirations["employee-salesperson"] = timeoutSeconds
+        // Mesma janela das filiais: o vinculo decide de onde elas vem no login SSO.
+        cacheExpirations["employee-salesperson"] = 5 * 60
         cacheExpirations["cobranca-dominio"] = timeoutSeconds
         // Nao usa timeoutSeconds (1h) de proposito: o cobrador registra uma acao e espera
         // ver o numero mexer. 5 minutos ainda poupa as ~16 consultas que cada resumo faz
         // no SAP, e o registrarAcao faz evict pra a mudanca aparecer na hora.
         cacheExpirations["cobranca-dashboard"] = 5 * 60
+        cacheExpirations["filiais-colaborador"] = 5 * 60
+        cacheExpirations["filiais-vendedor"] = 5 * 60
     }
 
     fun getCacheExpirations(): Map<String, Long> {

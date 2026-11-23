@@ -11,7 +11,7 @@ class ContratoParse {
         /**
          * @param localidade localidade de entrega negociada, resolvida pelo chamador a partir do
          *   endereco do pedido. Nulo quando nao da pra resolver (retirada, endereco sem
-         *   localidade cadastrada): o contrato nasce sem destino e a troca exige atribuir depois.
+         *   localidade cadastrada): o contrato nasce sem destino e a troca resolve pelo pedido se houver frete.
          * @param regiaoCode regiao que valia na assinatura - historico, nunca entra em calculo.
          */
         fun parse(doc : Document, localidade : Int? = null, regiaoCode : String? = null) : Contrato{

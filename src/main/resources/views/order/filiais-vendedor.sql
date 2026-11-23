@@ -8,3 +8,4 @@ FROM
     INNER JOIN "OBPL" ON "OBPL"."BPLId"  = rfv."U_filial"
 WHERE
     o."SlpCode" = :vendedor
+    AND o."Active" = 'Y'
