@@ -49,6 +49,16 @@ import org.junit.jupiter.api.assertThrows
 import org.springframework.http.HttpStatus
 import org.springframework.web.client.HttpServerErrorException
 import org.springframework.web.client.ResourceAccessException
+import org.springframework.web.client.RestClientException
+import org.springframework.web.client.RestClientResponseException
+import br.andrew.sap.model.sap.sistema.Session
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.springframework.http.HttpMethod
+import org.springframework.http.MediaType
+import org.springframework.test.web.client.MockRestServiceServer
+import org.springframework.test.web.client.match.MockRestRequestMatchers.method
+import org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo
+import org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess
 
 /**
  * O adiantamento (boleto) do contrato sai com a condicao e a forma do pedido de origem - as mesmas
@@ -234,6 +244,52 @@ class DownPaymentServiceCondicaoFormaTest {
         whenever(orderService.getById(99)).doReturn(OData(linkedMapOf("value" to "{nao e json")))
 
         assertThrows<JsonProcessingException> { service.adiantamentosVendaFuturaWithoutSave(contrato, parcela) }
+    }
+
+    @Test
+    fun `GET do pedido com RestClientException generica propaga - sem fallback`() {
+        contrato.U_condicaoPagamento = 21
+        //ex.: RestTemplate nao conseguiu extrair o corpo de um 200 - nao e erro HTTP nem I/O
+        val erro = RestClientException("could not extract response")
+        whenever(orderService.getById(99)).thenThrow(erro)
+
+        val lancado = assertThrows<RestClientException> { service.adiantamentosVendaFuturaWithoutSave(contrato, parcela) }
+
+        assertSame(erro, lancado)
+    }
+
+    @Test
+    fun `SAP responde 200 com JSON malformado - falha propaga pelo OrdersService real`() {
+        contrato.U_condicaoPagamento = 21
+        //caminho real: OrdersService.getById -> EntitiesService.exchangeWithValidSession -> RestTemplate.
+        //MockRestServiceServer substitui o request factory: nenhuma requisicao sai da JVM.
+        val restTemplate = RestTemplate()
+        val server = MockRestServiceServer.bindTo(restTemplate).build()
+        val auth = mock(AuthService::class.java)
+        whenever(auth.executeWithValidSession<Any>(any(), any())).thenAnswer {
+            @Suppress("UNCHECKED_CAST")
+            (it.arguments[1] as (Session) -> Any).invoke(Session("sess-1", "1000", 30))
+        }
+        val env = SapEnvrioment("http://sap.test", "user", "password", "companyDB")
+        val ordersReal = OrdersService(mock(SqlQueriesService::class.java), env, restTemplate, auth)
+        server.expect(requestTo(env.host + ordersReal.path() + "(99)"))
+            .andExpect(method(HttpMethod.GET))
+            .andRespond(withSuccess("{\"DocEntry\": 99, \"PaymentGroupCode\": ", MediaType.APPLICATION_JSON))
+        val serviceReal = DownPaymentService(
+            env, sql, ordersReal,
+            mock(PaymentTermsTypesService::class.java), mock(BankPlusService::class.java),
+            mock(AccountsReceivableService::class.java), mock(IncomingPaymentService::class.java),
+            mock(CreditNotesService::class.java), mock(BatchService::class.java),
+            mock(JournalEntriesService::class.java), mock(DynamicPixQrCodeService::class.java),
+            mock(BusinessPartnersService::class.java),
+            "VF-ITEM", 66, "FORMA-CONFIG", restTemplate, auth)
+
+        val lancado = assertThrows<RestClientException> { serviceReal.adiantamentosVendaFuturaWithoutSave(contrato, parcela) }
+
+        //nao e erro HTTP nem I/O: por isso buscaPedidoOrigem nao cai no fallback
+        assertFalse(lancado is RestClientResponseException)
+        assertFalse(lancado is ResourceAccessException)
+        server.verify()
     }
 
     @Test

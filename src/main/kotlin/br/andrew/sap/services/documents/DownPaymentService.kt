@@ -42,7 +42,8 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
-import org.springframework.web.client.RestClientException
+import org.springframework.web.client.ResourceAccessException
+import org.springframework.web.client.RestClientResponseException
 import org.springframework.web.client.RestTemplate
 import br.andrew.sap.model.exceptions.SapGenericException
 import java.math.BigDecimal
@@ -124,8 +125,10 @@ class DownPaymentService(env: SapEnvrioment,
 
     /**
      * So a falha da consulta ao SAP cai no fallback (nulo): SapGenericException (4xx convertido por
-     * getById) e RestClientException (5xx, I/O). A desserializacao fica fora, em quem chama, para
-     * que resposta malformada propague. Nunca captura Error/Throwable.
+     * getById), RestClientResponseException (status HTTP de erro, ex. 5xx) e
+     * ResourceAccessException (I/O, timeout). Nao captura RestClientException generica: o RestTemplate
+     * desserializa o corpo dentro de getById e um 200 com JSON invalido vira RestClientException, que
+     * deve propagar. Nunca captura Error/Throwable.
      */
     private fun buscaPedidoOrigem(contrato: Contrato): OData? {
         return try {
@@ -133,7 +136,10 @@ class DownPaymentService(env: SapEnvrioment,
         } catch (e: SapGenericException) {
             logFallbackPedido(contrato, e)
             null
-        } catch (e: RestClientException) {
+        } catch (e: RestClientResponseException) {
+            logFallbackPedido(contrato, e)
+            null
+        } catch (e: ResourceAccessException) {
             logFallbackPedido(contrato, e)
             null
         }
