@@ -33,4 +33,19 @@ class BoletosStatusSqlTest {
         assertTrue(!sql.contains("DISTINCT"))
         assertTrue(!sql.contains("(SELECT"))
     }
+
+    // PaidToDate do ODPI (SAP ja desconta recebimento cancelado) decide pago/parcial/aberto.
+    // Nao pode virar SUM(RCT2.SumApplied): o join com RIN1 multiplica linhas e inflaria a soma.
+    @Test
+    fun `valor recebido vem do PaidToDate agrupado sem somar joins`() {
+        val sql = Files.readString(
+            Path.of("src/main/resources/views/venda-futura/boletos-status.sql")
+        )
+
+        assertTrue(sql.contains("\"ODPI\".\"PaidToDate\","))
+        assertTrue(sql.contains("\"ODPI\".\"DocTotal\", \"ODPI\".\"PaidToDate\", \"ODPI\".\"DocStatus\""))
+        assertTrue(!sql.contains("SUM("))
+        // desempate estavel para paginacao por offset
+        assertTrue(sql.trim().endsWith("ORDER BY \"ODPI\".\"DocDueDate\", \"ODPI\".\"DocEntry\""))
+    }
 }

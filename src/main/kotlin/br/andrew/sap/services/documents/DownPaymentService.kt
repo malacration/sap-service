@@ -129,27 +129,40 @@ class DownPaymentService(env: SapEnvrioment,
 
     fun getByContratoVendaFuturaStatus(id: Int, jurosMoraPercent: Double = 0.0): List<BoletoVf> {
         val parametros = listOf(Parameter("idVendaFutura",id),)
-        val statusSql = sqlQueriesService.execute("boletos-status.sql",parametros)
-            ?.tryGetValues<BoletoVf>()
-            ?: listOf()
-        val statusPorDocNum = statusSql
-            .filter { !it.DocNum.isNullOrBlank() }
-            .associateBy { it.DocNum }
+        val statusPorDocEntry = lerStatusBoletos(parametros)
+            .filter { it.DocEntry != null }
+            .associateBy { it.DocEntry }
 
         return getByContratoVendaFutura(id, OrderBy("DocDueDate", Order.ASC))
             .flatMap { document ->
                 val downPayment = document.docEntry
                     ?.let { getById(it).tryGetValue<DownPayment>() }
                     ?: document
-                val status = statusPorDocNum[downPayment.docNum]
+                val status = statusPorDocEntry[downPayment.docEntry]
                 val installments = downPayment.documentInstallments.orEmpty()
                 val boletos = if(installments.isEmpty()) {
                     listOf(BoletoVf.from(downPayment, devolucao = status?.devolucao, jurosMoraPercent = jurosMoraPercent))
                 } else {
                     installments.map { BoletoVf.from(downPayment, it, status?.devolucao, jurosMoraPercent) }
                 }
-                boletos.onEach { it.recebimento = status?.recebimento }
+                // status e do ODPI: com mais de uma parcela (DPI6) todas herdam o mesmo valor recebido
+                boletos.onEach {
+                    it.recebimento = status?.recebimento
+                    it.aplicaPagamento(status)
+                }
             }
+    }
+
+    // Pagina sem corpo (2xx vazio) encerra a leitura mantendo as linhas ja lidas; erros HTTP/parse continuam subindo.
+    private fun lerStatusBoletos(parametros: List<Parameter>): List<BoletoVf> {
+        val linhas = mutableListOf<BoletoVf>()
+        var pagina = sqlQueriesService.execute("boletos-status.sql", parametros)
+        while (pagina != null) {
+            val atual = pagina.tryGetNextValues<BoletoVf>()
+            linhas.addAll(atual.content)
+            pagina = if (atual.hasNext()) sqlQueriesService.nextLink(atual.nextLink) else null
+        }
+        return linhas
     }
 
     fun getOurNumbersByContratoVendaFutura(id: Int): List<String> {

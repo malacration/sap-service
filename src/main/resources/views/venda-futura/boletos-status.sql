@@ -3,6 +3,7 @@ SELECT
 	"ODPI"."DocNum",
 	"ODPI"."DocDueDate",
 	"ODPI"."DocTotal",
+	"ODPI"."PaidToDate",
 	MAX("ORIN"."DocEntry") as "Devolucao",
 	MAX("ORCT"."DocEntry") as "Recebimento",
 	"ODPI"."DocStatus"
@@ -14,5 +15,5 @@ FROM
 	LEFT JOIN "ORCT" ON ("ORCT"."DocEntry" = "RCT2"."DocNum" AND "ORCT"."Canceled" = 'N')
 WHERE
 	"ODPI"."U_venda_futura" = :idVendaFutura
-GROUP BY "ODPI"."DocEntry", "ODPI"."DocNum", "ODPI"."DocDueDate", "ODPI"."DocTotal", "ODPI"."DocStatus"
-ORDER BY "ODPI"."DocDueDate"
+GROUP BY "ODPI"."DocEntry", "ODPI"."DocNum", "ODPI"."DocDueDate", "ODPI"."DocTotal", "ODPI"."PaidToDate", "ODPI"."DocStatus"
+ORDER BY "ODPI"."DocDueDate", "ODPI"."DocEntry"
