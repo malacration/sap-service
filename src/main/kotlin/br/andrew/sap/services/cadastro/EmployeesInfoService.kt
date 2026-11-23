@@ -35,21 +35,18 @@ class EmployeesInfoService(restTemplate: RestTemplate,
      * Retorna o codigo do vendedor vinculado ao colaborador (pelo EmployeeID),
      * ou `null` quando nao ha vinculo. Resultado cacheado para nao consultar
      * o SAP a cada requisicao (usado na autenticacao via Keycloak).
+     * Falha propaga (e nao entra no cache): quem chama decide o que fazer,
+     * porque `null` aqui significa "sem vendedor", nao "nao consegui consultar".
      */
     @Cacheable("employee-salesperson")
     fun getSalesPersonCodeByEmployeeId(employeeId: Int): Int? {
-        return try {
-            val filter = Filter(
-                Predicate("EmployeeID", employeeId, Condicao.EQUAL),
-                Predicate("Active", YesNo.tYES, Condicao.EQUAL))
-            get(filter).tryGetValues<EmployeesInfo>()
-                .firstOrNull()
-                ?.SalesPersonCode
-                ?.takeIf { it > 0 }
-        } catch (e: Exception) {
-            logger.warn("Falha ao buscar vendedor vinculado ao colaborador $employeeId", e)
-            null
-        }
+        val filter = Filter(
+            Predicate("EmployeeID", employeeId, Condicao.EQUAL),
+            Predicate("Active", YesNo.tYES, Condicao.EQUAL))
+        return get(filter).tryGetValues<EmployeesInfo>()
+            .firstOrNull()
+            ?.SalesPersonCode
+            ?.takeIf { it > 0 }
     }
 
     override fun getByUserName(username: String): User {

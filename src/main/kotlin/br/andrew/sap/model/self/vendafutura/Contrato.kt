@@ -40,7 +40,7 @@ class Contrato(
      * tabela de frete nao muda contrato nenhum sozinho.
      *
      * Nulo em contrato criado antes desta funcionalidade: a retirada segue normal (ela confia no
-     * U_valorFrete ja atribuido), mas a troca exige atribuir antes de recalcular.
+     * U_valorFrete ja atribuido), e a troca resolve pelo pedido original se o contrato tem frete.
      */
     @JsonProperty("U_Localidade")
     var U_Localidade : Int? = null
@@ -128,16 +128,18 @@ class Contrato(
     /**
      * Refaz o U_valorFrete pela regiao vigente da filial, para a nova quantidade de itens.
      *
+     * Contrato sem frete (U_valorFrete zero) foi negociado assim e continua assim: recalcular
+     * passaria a cobrar frete que nao estava no contrato, mesmo com U_Localidade preenchida.
+     *
      * Contrato legado (sem U_Localidade) nao tem destino registrado, entao nao ha o que
-     * calcular - o chamador ja exige a atribuicao antes de chegar aqui. Deixar passar mantendo o
-     * frete antigo seria pior: a troca gravaria um contrato com frete que nao corresponde mais
-     * aos itens dele.
+     * calcular - o chamador ja resolve a localidade antes de chegar aqui quando ha frete.
      *
      * Falha em qualquer etapa aborta a troca inteira, de proposito: o /troca roda tudo num
      * BatchList, entao nada e gravado pela metade, e frete que nao pode ser calculado e cadastro
      * faltando, nao caso a ignorar.
      */
     private fun recalculaFrete(freteContratoService: FreteContratoService?) {
+        if(U_valorFrete == 0.0) return
         val localidade = U_Localidade ?: return
         val servico = freteContratoService ?: return
         U_valorFrete = servico.calcula(U_filial, localidade, quantidadeTotal())
