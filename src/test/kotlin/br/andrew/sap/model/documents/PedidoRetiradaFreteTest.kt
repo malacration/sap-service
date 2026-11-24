@@ -155,6 +155,24 @@ class PedidoRetiradaFreteTest {
         Assertions.assertEquals(2610.00, freteDa(c, 348.0, listOf(nota, devolucaoAdiantamento)))
     }
 
+    /**
+     * Devolucao mista (linha de produto + linha base 203 no mesmo documento): o filtro e por
+     * documento, igual a SBO_SP_VALIDACAO_VENDA_FUTURA, entao ela sai INTEIRA da base residual -
+     * inclusive a quantidade de produto devolvida. Se isso mudar, SP e filtro mudam juntos.
+     */
+    @Test
+    fun devolucaoMistaSaiInteiraDaBaseResidual() {
+        val c = contrato(52.494464, 400.0, 3000.0)
+        val nota = faturado(52.0, 390.0)
+        val linhaAdiantamento = Product("A", "23997.79", "1", 0)
+            .also { it.BaseType = DocumentTypes.oDownPayments.value }
+        val devolucaoMista = Document("C0001", null,
+            listOf(Product("A", "10", "1", 0), linhaAdiantamento), "2")
+            .also { it.docObjectCode = DocumentTypes.oCreditNotes }
+
+        Assertions.assertEquals(2610.00, freteDa(c, 348.0, listOf(nota, devolucaoMista)))
+    }
+
     /** Contrato que ja cobrou todo o frete: nota sai sem despesa de frete, sem travar. */
     @Test
     fun freteResidualEsgotadoNaoGeraDespesa() {

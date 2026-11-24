@@ -90,6 +90,11 @@ class PedidoRetirada(
         if(contrato.U_valorFrete <= 0)
             return null
 
+        // Devolucao de adiantamento tem so linhas com BaseType 203. Em producao (24/11/2026): 799 notas de
+        // credito com linha base-203, todas puras, nenhuma mista, e nenhuma nota de saida com base-203.
+        // O filtro e por DOCUMENTO para casar com a SBO_SP_VALIDACAO_VENDA_FUTURA (NOT EXISTS em RIN1
+        // BaseType = 203, sap-sql-sovis#241). Se surgirem devolucoes mistas, SP e filtro devem passar
+        // a ser por linha juntos.
         val entregas = entregasFaturadas.filter { doc ->
             doc.DocumentLines.none { it.BaseType == DocumentTypes.oDownPayments.value }
         }
