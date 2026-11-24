@@ -82,7 +82,7 @@ class VendaFuturaScheduled(
      * Best effort de proposito: falha aqui NAO pode impedir o contrato de nascer. Este schedule
      * roda a cada 30s e so fecha o pedido depois de salvar o contrato - propagar a excecao
      * deixaria o pedido preso num laco de erro por causa de cadastro de frete faltando. Sem
-     * destino, o contrato nasce legado: a retirada segue normal e a troca exige atribuir antes.
+     * destino, o contrato nasce legado: a retirada segue normal e a troca tenta resolver pelo pedido se houver frete.
      */
     private fun destinoDoPedido(order: Document): Pair<Int?, String?> {
         return try {
