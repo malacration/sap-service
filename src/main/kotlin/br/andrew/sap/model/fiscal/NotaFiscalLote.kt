@@ -165,7 +165,16 @@ class NotaFiscalLoteRequest(
     val contrato: Boolean = false,
     // Logo do deploy da tela, em data: URI, para o PDF do contrato (ver ContratoVendaFuturaPdfService).
     val logo: String? = null,
+    // Um "Comunicado de Cessao de Titulo" (PDF) por parcela em aberto de cada NF; exige [cessionaria].
+    val termo: Boolean = false,
+    // Code da cessionaria na UDT @NFL_CESSIONARIA (GET nota-fiscal-lote/cessionarias); nunca texto livre.
+    val cessionaria: String? = null,
+    // Parcelas escolhidas na tela (a tela lista uma linha por parcela, o lote junta em documento). NF
+    // com entradas aqui: o termo traz so essas; sem entrada: todas as parcelas em aberto.
+    val parcelasTermo: List<ParcelaTermo> = listOf(),
 )
+
+class ParcelaTermo(val docEntry: Int = 0, val parcela: Int = 0)
 
 // O zip fica num arquivo temporario (ver NotaFiscalLoteService.zip); quem envia apaga.
 class NotaFiscalLoteArquivo(
@@ -175,6 +184,11 @@ class NotaFiscalLoteArquivo(
     // Notas sem nenhum boleto no zip (sem boleto na BankPlus ou so cancelado). Nao e erro.
     val notasSemBoleto: Int = 0,
 )
+
+// Codigo, nome e nomePdf vao para a tela (o cadastro edita o nomePdf); o telefone e so do PDF.
+class CessionariaLote(val codigo: String, val nome: String, @get:JsonIgnore val telefone: String? = null,
+                      // Texto completo (razao social) impresso no termo; vazio nas linhas antigas: usa o nome.
+                      val nomePdf: String? = null)
 
 class FormaPagamentoLote(val codigo: String, val descricao: String?, val ativa: Boolean = true)
 
@@ -229,6 +243,28 @@ enum class SituacaoLinhaImportacao {
     // A BankPlus conhece o boleto, mas o documento nao aparece na tela (NF sem NF-e transmitida,
     // documento de cancelamento, adiantamento que nao e de venda futura).
     FORA_DA_TELA,
+    // So no modo NUMERO_NOTA: mais de uma NF com o mesmo numero (e parcela) dentro do filtro da tela
+    // (filiais/series diferentes). A linha nao entra no lote; a mensagem lista filial e serie.
+    AMBIGUO,
+    // So no criterio NUMERO_NOME: a parcela informada ja esta paga, ou (sem parcela) a NF nao tem parcela em
+    // aberto. docEntry/parcela vem preenchidos, mas a linha nao entra no lote (nem em `documentos`) por si so.
+    PAGA,
+}
+
+// Criterio do modo NUMERO_NOTA (propriedade importacao.numero-nota.criterio).
+enum class CriterioImportacaoNumeroNota {
+    // Numero + parcela + valor + vencimento, com o nome so de desempate (padrao).
+    COMPLETO,
+    // So numero da NF + nome do parceiro; valor e vencimento viram informacao na mensagem.
+    NUMERO_NOME,
+}
+
+// Como a importacao acha o documento de cada linha da planilha.
+enum class ModoImportacaoLote {
+    // Nosso numero do boleto na BankPlus (planilha do BB). Padrao.
+    NOSSO_NUMERO,
+    // Numero da NF + parcela, lidos de "Seu Numero"/"Nro beneficiario" (ex.: Sicoob "3956 1").
+    NUMERO_NOTA,
 }
 
 class LinhaImportacaoLote(

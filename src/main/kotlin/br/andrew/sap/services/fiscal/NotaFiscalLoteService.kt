@@ -1,9 +1,11 @@
 package br.andrew.sap.services.fiscal
 
+import br.andrew.sap.model.fiscal.CessionariaLote
 import br.andrew.sap.model.fiscal.ChaveDocumentoLote
 import br.andrew.sap.model.fiscal.NotaFiscalLoteArquivo
 import br.andrew.sap.model.fiscal.NotaFiscalLoteFiltro
 import br.andrew.sap.model.fiscal.NotaFiscalResumo
+import br.andrew.sap.model.fiscal.ParcelaTermo
 import br.andrew.sap.model.fiscal.StatusSefaz
 import br.andrew.sap.model.fiscal.TipoDocumentoLote
 import br.andrew.sap.services.odbc.OdbcClient
@@ -50,6 +52,7 @@ class NotaFiscalLoteService(
     // resposta pendurada prenderia a requisicao para sempre.
     @Value("\${nota-fiscal.lote.prazo-segundos:300}") val prazoSegundos: Long = 300,
     val contratoPdf: ContratoVendaFuturaPdfService? = null,
+    val termoPdf: TermoCessaoPdfService? = null,
 ) {
 
     private val logger = LoggerFactory.getLogger(NotaFiscalLoteService::class.java)
@@ -72,6 +75,8 @@ class NotaFiscalLoteService(
     }
 
     private fun total(linha: Map<String, Any?>): Long = linha["Total"].toString().toBigDecimal().toLong()
+
+    fun cessionarias(): List<CessionariaLote> = (termoPdf ?: throw IllegalStateException("Gerador do termo de cessao nao configurado")).cessionarias()
 
     // Mesmo formato do status SEFAZ (id + descricao).
     fun statusBoleto(): List<StatusSefaz> {
@@ -152,14 +157,20 @@ class NotaFiscalLoteService(
      * com DANFE, XML e boletos passam de 40 MB). Quem chama apaga o arquivo depois de enviar.
      */
     fun zip(docEntries: List<Int>, adiantamentos: List<Int>, pdf: Boolean, xml: Boolean,
-            boleto: Boolean = false, contrato: Boolean = false, logo: String? = null): NotaFiscalLoteArquivo {
+            boleto: Boolean = false, contrato: Boolean = false, logo: String? = null,
+            termo: Boolean = false, cessionaria: String? = null,
+            parcelasTermo: List<ParcelaTermo> = listOf()): NotaFiscalLoteArquivo {
         val pedidas = chaves(docEntries, adiantamentos)
         if (pedidas.isEmpty())
             throw Exception("Selecione ao menos um documento.")
-        if (!pdf && !xml && !boleto && !contrato)
-            throw Exception("Escolha baixar o DANFE, o XML, o boleto, o contrato ou mais de um.")
+        if (!pdf && !xml && !boleto && !contrato && !termo)
+            throw Exception("Escolha baixar o DANFE, o XML, o boleto, o contrato, o termo de cessao ou mais de um.")
         if (pedidas.size > maximo)
             throw Exception("O lote aceita no maximo $maximo documentos por vez; foram selecionados ${pedidas.size}.")
+        // Valida antes de baixar qualquer coisa: so aceita cessionaria ativa da tabela, nunca texto livre.
+        val cessionariaEscolhida = if (termo)
+            (termoPdf ?: throw IllegalStateException("Gerador do termo de cessao nao configurado")).cessionaria(cessionaria)
+        else null
 
         // O prazo limita os downloads e conta desde ja. A busca das notas e o carregamento da
         // BankPlus sao sincronos e nao sao interrompidos por ele, mas tem limite proprio (timeout
@@ -171,7 +182,7 @@ class NotaFiscalLoteService(
         val porChave = buscaDocumentos(docEntries, adiantamentos).associateBy { it.chave }
         val notas = pedidas.mapNotNull { porChave[it] }
         // So contrato marcado e nenhum adiantamento: o zip sairia vazio, como se tivesse dado certo.
-        if (contrato && !pdf && !xml && !boleto && notas.none { it.tipo == TipoDocumentoLote.AD && it.contratoDocEntry != null })
+        if (contrato && !pdf && !xml && !boleto && !termo && notas.none { it.tipo == TipoDocumentoLote.AD && it.contratoDocEntry != null })
             throw Exception("O contrato so vem de adiantamento de venda futura, e o lote nao tem nenhum.")
         // Nome decidido antes do paralelo e na ordem pedida: a nota que termina primeiro nao
         // pega o nome sem sufixo de outra com o mesmo numero.
@@ -179,10 +190,11 @@ class NotaFiscalLoteService(
         val basePorDoc = notas.associate { it.chave to nomeUnico(nomeBase(it), bases) }
         val bankPlusDisponivel = !boleto || carregaEmpresasBankPlus()
 
-        val emPastas = listOf(pdf, xml, boleto, contrato).count { it } > 1
+        val emPastas = listOf(pdf, xml, boleto, contrato, termo).count { it } > 1
         val caminhos = mutableSetOf<String>()
         val errosPorDoc = mutableMapOf<ChaveDocumentoLote, List<String>>()
         val avisosPorDoc = mutableMapOf<ChaveDocumentoLote, List<String>>()
+        val avisosGerais = mutableListOf<String>()
         var notasSemBoleto = 0
         val arquivo = Files.createTempFile("notas-fiscais-", ".zip")
         try {
@@ -202,12 +214,14 @@ class NotaFiscalLoteService(
                 }
                 if (contrato)
                     contratos(notas, logo, emPastas, caminhos, zip, errosPorDoc)
+                if (cessionariaEscolhida != null)
+                    termos(notas, cessionariaEscolhida, logo, prazo, parcelasTermo, basePorDoc, caminhos, zip, errosPorDoc, avisosPorDoc, avisosGerais)
                 // Na ordem pedida, nao na de conclusao, para o arquivo ser legivel.
                 val erros = pedidas.flatMap { doc ->
                     if (doc !in porChave) listOf(naoEncontrado(doc))
                     else errosPorDoc[doc].orEmpty()
                 }
-                val avisos = pedidas.flatMap { avisosPorDoc[it].orEmpty() }
+                val avisos = avisosGerais + pedidas.flatMap { avisosPorDoc[it].orEmpty() }
                 if (erros.isNotEmpty())
                     zip.texto("erros.txt", erros)
                 if (avisos.isNotEmpty())
@@ -255,6 +269,71 @@ class NotaFiscalLoteService(
             }
         }
     }
+
+    /**
+     * Um "Comunicado de Cessao de Titulo" por parcela em aberto de cada NF, em termo/. Adiantamento
+     * e NF sem parcela em aberto viram aviso; falha numa parcela vira erro da NF, sem derrubar o zip.
+     * Nao loga CPF/CNPJ nem nome: so o DocEntry.
+     */
+    private fun termos(notas: List<NotaFiscalResumo>, cessionaria: CessionariaLote, logo: String?, prazo: Long, parcelasTermo: List<ParcelaTermo>, basePorDoc: Map<ChaveDocumentoLote, String>,
+                       caminhos: MutableSet<String>, zip: ZipOutputStream,
+                       errosPorDoc: MutableMap<ChaveDocumentoLote, List<String>>, avisosPorDoc: MutableMap<ChaveDocumentoLote, List<String>>,
+                       avisosGerais: MutableList<String>) {
+        val gerador = termoPdf ?: throw IllegalStateException("Gerador do termo de cessao nao configurado")
+        notas.filter { it.tipo == TipoDocumentoLote.AD }.forEach {
+            avisosPorDoc.merge(it.chave, listOf("${rotulo(it)}: termo de cessao so vale para NF"), List<String>::plus)
+        }
+        val nfs = notas.filter { it.tipo == TipoDocumentoLote.NF }
+        val porNota = nfs.associateBy { it.docEntry }
+        // A selecao so restringe NF que ja esta no lote; entrada de outro DocEntry nunca alarga o lote.
+        val selecao = parcelasTermo.groupBy({ it.docEntry }, { it.parcela }).mapValues { it.value.toSet() }
+        selecao.keys.filter { it !in porNota }.forEach {
+            avisosGerais.add("termo de cessao: parcelas informadas para o DocEntry $it ignoradas (NF fora do lote)")
+        }
+        if (nfs.isEmpty())
+            return
+        val listadas = mutableMapOf<Int, List<Int>>()
+        val falhouConsulta = mutableSetOf<Int>()
+        val expirou = { if (System.nanoTime() > prazo) Exception("tempo esgotado (prazo do lote: ${prazoSegundos}s)") else null }
+        val comTermo = gerador.gerar(nfs.map { it.docEntry }, cessionaria, logo, selecao.filterKeys { it in porNota }, expirou, { docEntries, t ->
+            logger.warn("Lote NF: termo de cessao nao gerado na consulta das parcelas (DocEntry ${docEntries.joinToString()}): ${t.javaClass.simpleName}")
+            falhouConsulta.addAll(docEntries)
+            docEntries.forEach { id ->
+                val nota = porNota.getValue(id)
+                errosPorDoc.merge(nota.chave, listOf("${rotulo(nota)}: termo de cessao nao gerado (${motivo(t)})"), List<String>::plus)
+            }
+        }) { termo ->
+            val nota = porNota.getValue(termo.docEntry)
+            val base = basePorDoc.getValue(nota.chave)
+            listadas[termo.docEntry] = termo.parcelas
+            termo.pdf.onSuccess { conteudo ->
+                zip.putNextEntry(ZipEntry(nomeUnico("termo/$base", caminhos) + ".pdf"))
+                zip.write(conteudo)
+                zip.closeEntry()
+            }.onFailure { t ->
+                logger.warn("Lote NF: falha ao gerar o PDF do termo de cessao do DocEntry ${termo.docEntry}: ${t.javaClass.simpleName}")
+                errosPorDoc.merge(nota.chave, listOf("${rotulo(nota, termo.parcelas)}: termo de cessao nao gerado (${motivo(t)})"), List<String>::plus)
+            }
+        }
+        nfs.filter { it.docEntry !in falhouConsulta }.forEach {
+            val escolhidas = selecao[it.docEntry]
+            // Escolhida que nao entrou: quitada (ou inexistente) - o termo so lista parcela em aberto.
+            val fora = escolhidas?.minus(listadas[it.docEntry].orEmpty().toSet())?.sorted().orEmpty()
+            val aviso = when {
+                it.docEntry !in comTermo && escolhidas == null -> "termo de cessao nao gerado (sem parcela em aberto)"
+                it.docEntry !in comTermo -> "termo de cessao nao gerado (parcela(s) ${fora.joinToString()} selecionada(s) sem saldo em aberto)"
+                fora.isNotEmpty() -> "parcela(s) ${fora.joinToString()} selecionada(s) sem saldo em aberto, fora do termo"
+                else -> null
+            }
+            if (aviso != null)
+                avisosPorDoc.merge(it.chave, listOf("${rotulo(it)}: $aviso"), List<String>::plus)
+        }
+    }
+
+    // Rotulo dos diagnosticos do termo: DocEntry (+ parcelas), sem nome/codigo de cliente. O nome do arquivo
+    // do PDF (basePorDoc) continua o de sempre.
+    private fun rotulo(nota: NotaFiscalResumo, parcelas: List<Int> = listOf()) =
+        "DocEntry ${nota.docEntry}" + if (parcelas.isEmpty()) "" else " parcela(s) ${parcelas.joinToString()}"
 
     private fun ZipOutputStream.texto(nome: String, linhas: List<String>) {
         putNextEntry(ZipEntry(nome))

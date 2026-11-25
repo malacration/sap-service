@@ -29,6 +29,9 @@ class NotaFiscalLoteRulesTest {
         assertTrue(autorizacao.isAuthorized("/nota-fiscal-lote/status-boleto", "get", u))
         // troca de forma de pagamento: mesmo perfil (decisao do usuario)
         assertTrue(autorizacao.isAuthorized("/nota-fiscal-lote/formas-pagamento", "get", u))
+        assertTrue(autorizacao.isAuthorized("/nota-fiscal-lote/cessionarias", "get", u))
+        assertTrue(autorizacao.isAuthorized("/nota-fiscal-lote/cessionarias", "post", u))
+        assertTrue(autorizacao.isAuthorized("/nota-fiscal-lote/cessionarias/11222333000181", "patch", u))
         assertTrue(autorizacao.isAuthorized("/nota-fiscal-lote/forma-pagamento", "post", u))
         assertTrue(autorizacao.isAuthorized("/nota-fiscal-lote/importar-planilha", "post", u))
     }
@@ -51,6 +54,9 @@ class NotaFiscalLoteRulesTest {
             // busca sem recorte de carteira: vendedor nao pode usar para ver cliente de outro
             assertFalse(autorizacao.isAuthorized("/nota-fiscal-lote/clientes/search", "post", usuario(perfil)), perfil)
             assertFalse(autorizacao.isAuthorized("/nota-fiscal-lote/forma-pagamento", "post", usuario(perfil)), perfil)
+            assertFalse(autorizacao.isAuthorized("/nota-fiscal-lote/cessionarias", "get", usuario(perfil)), perfil)
+            assertFalse(autorizacao.isAuthorized("/nota-fiscal-lote/cessionarias", "post", usuario(perfil)), perfil)
+            assertFalse(autorizacao.isAuthorized("/nota-fiscal-lote/cessionarias/11222333000181", "patch", usuario(perfil)), perfil)
             assertFalse(autorizacao.isAuthorized("/nota-fiscal-lote/importar-planilha", "post", usuario(perfil)), perfil)
         }
     }

@@ -1,5 +1,7 @@
 package br.andrew.sap.services.fiscal
 
+import br.andrew.sap.model.fiscal.ImportacaoInvalidaException
+import br.andrew.sap.model.fiscal.ArquivoGrandeDemaisException
 import org.w3c.dom.Element
 import org.w3c.dom.Node
 import java.io.ByteArrayInputStream
@@ -24,13 +26,19 @@ object PlanilhaXlsx {
     // A planilha do banco tem dezenas de KB; isto e so o teto contra abuso.
     const val TETO_ARQUIVO = 10 * 1024 * 1024
 
+    // Marcas que o leitor devolve no lugar de celula com erro do Excel ou formula sem valor em cache.
+    private val MARCAS_ILEGIVEL = setOf("#N/A", "#VALUE!", "#REF!", "#DIV/0!", "#NAME?", "#NUM!", "#NULL!", "#SPILL!", "#CALC!",
+        "#GETTING_DATA", "#ERRO", "#FORMULA")
+
+    fun ilegivel(texto: String?): Boolean = texto?.trim()?.uppercase() in MARCAS_ILEGIVEL
+
     /** Linhas da primeira aba: numero da linha (1-based) -> celulas por coluna (0-based). */
     fun ler(arquivo: ByteArray): Map<Int, Map<Int, String>> {
         if (arquivo.size > TETO_ARQUIVO)
-            throw IllegalArgumentException("A planilha e grande demais (limite de ${TETO_ARQUIVO / 1024 / 1024} MB).")
+            throw ArquivoGrandeDemaisException("A planilha e grande demais (limite de ${TETO_ARQUIVO / 1024 / 1024} MB).")
         val partes = descompacta(arquivo)
         val textos = partes["xl/sharedStrings.xml"]?.let(::textosCompartilhados) ?: listOf()
-        val aba = primeiraAba(partes) ?: throw IllegalArgumentException("A planilha nao tem nenhuma aba.")
+        val aba = primeiraAba(partes) ?: throw ImportacaoInvalidaException("A planilha nao tem nenhuma aba.")
         return linhas(aba, textos)
     }
 
@@ -57,7 +65,7 @@ object PlanilhaXlsx {
                         if (lidos < 0) break
                         total += lidos
                         if (total > TETO_DESCOMPACTADO)
-                            throw IllegalArgumentException("A planilha e grande demais.")
+                            throw ArquivoGrandeDemaisException("A planilha e grande demais.")
                         saida?.write(buffer, 0, lidos)
                     }
                     if (saida != null)
@@ -68,26 +76,30 @@ object PlanilhaXlsx {
         } catch (e: IllegalArgumentException) {
             throw e
         } catch (e: Exception) {
-            throw IllegalArgumentException("Nao deu para abrir o arquivo como .xlsx.")
+            throw ImportacaoInvalidaException("Nao deu para abrir o arquivo como .xlsx.")
         }
         if (partes.isEmpty())
-            throw IllegalArgumentException("O arquivo nao e uma planilha .xlsx (se for .xls, salve como .xlsx).")
+            throw ImportacaoInvalidaException("O arquivo nao e uma planilha .xlsx (se for .xls, salve como .xlsx).")
         return partes
     }
 
-    // A primeira aba na ordem do workbook.xml; sem ele, a sheet1.
+    // A primeira aba na ordem do workbook.xml. So se workbook.xml E rels NAO existem cai na sheet1; existindo so um, existindo
+    // e malformado (ou sem aba/destino), o arquivo e invalido (400), sem chute.
     private fun primeiraAba(partes: Map<String, ByteArray>): ByteArray? {
-        val alvo = runCatching {
-            val livro = xml(partes.getValue("xl/workbook.xml"))
-            val primeira = elementos(livro.documentElement, "sheet").first()
-            val id = primeira.getAttributeNS("http://schemas.openxmlformats.org/officeDocument/2006/relationships", "id")
-            val rels = xml(partes.getValue("xl/_rels/workbook.xml.rels"))
-            val destino = elementos(rels.documentElement, "Relationship").first { it.getAttribute("Id") == id }
-                .getAttribute("Target").removePrefix("/xl/").removePrefix("/")
-            "xl/$destino"
-        }.getOrNull()
-        return alvo?.let { partes[it] } ?: partes["xl/worksheets/sheet1.xml"]
-            ?: partes.entries.filter { it.key.startsWith("xl/worksheets/sheet") }.minByOrNull { it.key }?.value
+        val livroXml = partes["xl/workbook.xml"]
+        val relsXml = partes["xl/_rels/workbook.xml.rels"]
+        if (livroXml == null && relsXml == null)
+            return partes["xl/worksheets/sheet1.xml"]
+                ?: partes.entries.filter { it.key.startsWith("xl/worksheets/sheet") }.minByOrNull { it.key }?.value
+        // So um dos dois: arquivo incompleto (nao chuta a aba).
+        if (livroXml == null || relsXml == null)
+            throw ImportacaoInvalidaException("Arquivo .xlsx incompleto (falta workbook.xml ou workbook.xml.rels).")
+        val semAba = ImportacaoInvalidaException("A planilha nao tem nenhuma aba.")
+        val primeira = elementos(xml(livroXml).documentElement, "sheet").firstOrNull() ?: throw semAba
+        val id = primeira.getAttributeNS("http://schemas.openxmlformats.org/officeDocument/2006/relationships", "id")
+        val destino = elementos(xml(relsXml).documentElement, "Relationship").firstOrNull { it.getAttribute("Id") == id }
+            ?.getAttribute("Target")?.removePrefix("/xl/")?.removePrefix("/") ?: throw semAba
+        return partes["xl/$destino"] ?: throw semAba
     }
 
     private fun textosCompartilhados(conteudo: ByteArray): List<String> =
@@ -110,10 +122,15 @@ object PlanilhaXlsx {
 
     private fun valor(c: Element, textos: List<String>): String? {
         val v = elementos(c, "v").firstOrNull()?.textContent
+        // Formula sem valor em cache: ilegivel qualquer que seja o tipo da celula (s, str, b, n...), antes de interpretar o tipo.
+        if (elementos(c, "f").isNotEmpty() && v.isNullOrBlank()) return "#FORMULA"
         return when (c.getAttribute("t")) {
-            "s" -> v?.toIntOrNull()?.let { textos.getOrNull(it) }
+            // Texto compartilhado: sem <v> e celula vazia (null); com <v> que nao resolve (nao numerico / fora da tabela) e ilegivel.
+            "s" -> if (v.isNullOrBlank()) null else textos.getOrNull(v.trim().toIntOrNull() ?: -1) ?: "#ERRO"
             "inlineStr" -> elementos(c, "t").joinToString("") { it.textContent }
-            "e" -> null
+            // Celula com erro do Excel (#N/A, #VALUE!...): fica como marca de erro, nunca como vazia (quem le a chave
+            // ou o nome trata como ilegivel em vez de "sem parcela"/nome).
+            "e" -> v?.trim()?.uppercase()?.takeIf { it in MARCAS_ILEGIVEL } ?: "#ERRO"
             else -> v
         }
     }
@@ -130,11 +147,16 @@ object PlanilhaXlsx {
         return (0 until lista.length).map { lista.item(it) }.filter { it.nodeType == Node.ELEMENT_NODE }.map { it as Element }
     }
 
-    private fun xml(conteudo: ByteArray) = DocumentBuilderFactory.newInstance().apply {
-        isNamespaceAware = true
-        setFeature("http://apache.org/xml/features/disallow-doctype-decl", true)
-        setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true)
-        isXIncludeAware = false
-        isExpandEntityReferences = false
-    }.newDocumentBuilder().parse(ByteArrayInputStream(conteudo))
+    // XML malformado (ou com DOCTYPE) e arquivo invalido: erro de entrada (400), nao 500.
+    private fun xml(conteudo: ByteArray) = try {
+        DocumentBuilderFactory.newInstance().apply {
+            isNamespaceAware = true
+            setFeature("http://apache.org/xml/features/disallow-doctype-decl", true)
+            setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true)
+            isXIncludeAware = false
+            isExpandEntityReferences = false
+        }.newDocumentBuilder().parse(ByteArrayInputStream(conteudo))
+    } catch (e: org.xml.sax.SAXException) {
+        throw ImportacaoInvalidaException("Nao deu para ler o conteudo da planilha (arquivo .xlsx danificado).")
+    }
 }

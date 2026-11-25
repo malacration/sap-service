@@ -3,6 +3,7 @@ package br.andrew.sap.services.fiscal
 import br.andrew.sap.model.bankplus.Boleto
 import br.andrew.sap.model.fiscal.NotaFiscalLoteArquivo
 import br.andrew.sap.model.fiscal.NotaFiscalLoteFiltro
+import br.andrew.sap.model.fiscal.ParcelaTermo
 import br.andrew.sap.model.fiscal.StatusSapNota
 import br.andrew.sap.model.fiscal.CategoriaDocumentoLote
 import br.andrew.sap.model.fiscal.TipoDocumentoLote
@@ -125,8 +126,54 @@ class NotaFiscalLoteServiceTest {
         })
 
     private fun servico(odbc: OdbcClient, tax: TaxNfeService = taxNfe(), maximo: Int = 200, bank: BankPlusService = bankPlus(),
-                        prazoSegundos: Long = 300, contratos: ContratoVendaFuturaPdfService? = null) =
-        NotaFiscalLoteService(odbc, tax, bank, maximo, 2, prazoSegundos, contratos)
+                        prazoSegundos: Long = 300, contratos: ContratoVendaFuturaPdfService? = null,
+                        termos: TermoCessaoPdfService? = null) =
+        NotaFiscalLoteService(odbc, tax, bank, maximo, 2, prazoSegundos, contratos, termos)
+
+    private val termosPedidos = mutableListOf<List<Int>>()
+    private val selecoesRecebidas = mutableListOf<Map<Int, Set<Int>>>()
+
+    // Parcelas por DocEntry; parcela em [falham] (docEntry to parcela) volta como falha. So a cessionaria "123" existe.
+    // grupoFalha = NF cuja consulta de parcelas falha (o grupo inteiro de [tamanhoGrupo] NF dela).
+    private fun termos(parcelas: Map<Int, List<Int>>, falham: Set<Int> = setOf(),
+                       grupoFalha: Set<Int> = setOf(), tamanhoGrupo: Int = 100) =
+        mock(TermoCessaoPdfService::class.java, Answer { inv ->
+            when (inv.method.name) {
+                "cessionaria" ->
+                    if (inv.arguments[0] == "123") br.andrew.sap.model.fiscal.CessionariaLote("123", "Securitizadora X", "(65) 3000-0000")
+                    else throw Exception("Cessionaria invalida ou inativa. Escolha uma da lista.")
+                "gerar" -> {
+                    @Suppress("UNCHECKED_CAST")
+                    val ids = inv.arguments[0] as List<Int>
+                    termosPedidos.add(ids)
+                    @Suppress("UNCHECKED_CAST")
+                    val selecao = inv.arguments[3] as Map<Int, Set<Int>>
+                    selecoesRecebidas.add(selecao)
+                    @Suppress("UNCHECKED_CAST")
+                    val expirou = inv.arguments[4] as () -> Throwable?
+                    @Suppress("UNCHECKED_CAST")
+                    val aoFalhar = inv.arguments[5] as (List<Int>, Throwable) -> Unit
+                    @Suppress("UNCHECKED_CAST")
+                    val aoGerar = inv.arguments[6] as (TermoCessaoPdfService.TermoPdf) -> Unit
+                    val comParcela = mutableSetOf<Int>()
+                    expirou()?.let { aoFalhar(ids.distinct(), it); return@Answer comParcela }
+                    ids.distinct().chunked(tamanhoGrupo).forEach { grupo ->
+                        if (grupo.any { it in grupoFalha }) return@forEach aoFalhar(grupo, Exception("consulta simulada falhou"))
+                        grupo.forEach { id ->
+                            // como o servico de verdade: so as escolhidas, se a NF tem escolha
+                            parcelas[id].orEmpty().filter { p -> selecao[id]?.contains(p) ?: true }.takeIf { it.isNotEmpty() }?.let { lista ->
+                                comParcela.add(id)
+                                aoGerar(TermoCessaoPdfService.TermoPdf(id,
+                                    if (id in falham) Result.failure(Exception("falha simulada")) else Result.success("%PDF termo $id/${lista.joinToString(",")}".toByteArray()),
+                                    lista))
+                            }
+                        }
+                    }
+                    comParcela
+                }
+                else -> null
+            }
+        })
 
     private val contratosPedidos = mutableListOf<List<Int>>()
     private val logosRecebidos = mutableListOf<String?>()
@@ -184,6 +231,133 @@ class NotaFiscalLoteServiceTest {
         assertTrue(zip.containsKey("VF412.pdf"), zip.keys.toString())
         assertTrue(zip["erros.txt"]!!.contains("contrato nao gerado (contrato de venda futura 1413 nao encontrado)"), zip["erros.txt"])
         assertEquals(1, arquivo.notasComErro)
+    }
+
+    @Test
+    fun `termo sai um PDF por NF em termo, com o nome base da nota, e adiantamento e NF quitada viram aviso`() {
+        val arquivo = servico(odbc(nota(10, 501), nota(11, 502), adiantamento(20, 4100)),
+            termos = termos(mapOf(10 to listOf(1, 2, 3))))
+            .zip(listOf(10, 11), listOf(20), pdf = true, xml = false, termo = true, cessionaria = "123")
+        val zip = conteudo(arquivo)
+        assertEquals("%PDF termo 10/1,2,3", zip["termo/NF501-S2-C0001-Cliente_C0001.pdf"])
+        assertEquals(1, zip.keys.count { it.startsWith("termo/") })
+        assertTrue(zip.containsKey("danfe/NF501-S2-C0001-Cliente_C0001.pdf"))
+        assertEquals(listOf(listOf(10, 11)), termosPedidos)
+        assertTrue(zip["avisos.txt"]!!.contains("DocEntry 20: termo de cessao so vale para NF"), zip["avisos.txt"])
+        assertTrue(zip["avisos.txt"]!!.contains("DocEntry 11: termo de cessao nao gerado (sem parcela em aberto)"), zip["avisos.txt"])
+        assertFalse(zip.containsKey("erros.txt"))
+        assertEquals(0, arquivo.notasComErro)
+    }
+
+    @Test
+    fun `parcelas escolhidas restringem o termo da NF, e NF sem escolha leva todas as em aberto`() {
+        val zip = conteudo(servico(odbc(nota(10, 501), nota(11, 502)), termos = termos(mapOf(10 to listOf(1, 2, 3), 11 to listOf(1, 2))))
+            .zip(listOf(10, 11), listOf(), pdf = false, xml = false, termo = true, cessionaria = "123",
+                parcelasTermo = listOf(ParcelaTermo(10, 1), ParcelaTermo(10, 3))))
+        assertEquals("%PDF termo 10/1,3", zip["termo/NF501-S2-C0001-Cliente_C0001.pdf"])
+        assertEquals("%PDF termo 11/1,2", zip["termo/NF502-S2-C0001-Cliente_C0001.pdf"])
+        assertEquals(listOf(mapOf(10 to setOf(1, 3))), selecoesRecebidas)
+        assertFalse(zip.containsKey("avisos.txt"))
+    }
+
+    @Test
+    fun `parcela escolhida sem saldo vira aviso, e entrada de NF fora do lote e ignorada com aviso`() {
+        val zip = conteudo(servico(odbc(nota(10, 501), nota(11, 502)), termos = termos(mapOf(10 to listOf(1, 2), 11 to listOf(1))))
+            .zip(listOf(10, 11), listOf(), pdf = false, xml = false, termo = true, cessionaria = "123",
+                parcelasTermo = listOf(ParcelaTermo(10, 2), ParcelaTermo(10, 5), ParcelaTermo(11, 4), ParcelaTermo(99, 1))))
+        val avisos = zip["avisos.txt"]!!
+        assertEquals("%PDF termo 10/2", zip["termo/NF501-S2-C0001-Cliente_C0001.pdf"])
+        assertFalse(zip.containsKey("termo/NF502-S2-C0001-Cliente_C0001.pdf"))
+        assertTrue(avisos.contains("DocEntry 10: parcela(s) 5 selecionada(s) sem saldo em aberto, fora do termo"), avisos)
+        assertTrue(avisos.contains("DocEntry 11: termo de cessao nao gerado (parcela(s) 4 selecionada(s) sem saldo em aberto)"), avisos)
+        assertTrue(avisos.contains("DocEntry 99 ignoradas"), avisos)
+        // a entrada de fora do lote nao chega ao gerador
+        assertEquals(listOf(mapOf(10 to setOf(2, 5), 11 to setOf(4))), selecoesRecebidas)
+    }
+
+    @Test
+    fun `so termo marcado vai em termo, e NF que falha vira erro sem derrubar as outras`() {
+        val arquivo = servico(odbc(nota(10, 501), nota(11, 502)), termos = termos(mapOf(10 to listOf(1, 2), 11 to listOf(1)), falham = setOf(10)))
+            .zip(listOf(10, 11), listOf(), pdf = false, xml = false, termo = true, cessionaria = "123")
+        val zip = conteudo(arquivo)
+        assertTrue(zip.containsKey("termo/NF502-S2-C0001-Cliente_C0001.pdf"), zip.keys.toString())
+        assertFalse(zip.containsKey("termo/NF501-S2-C0001-Cliente_C0001.pdf"))
+        assertTrue(Regex("DocEntry 10( parcela\\(s\\) [0-9, ]+)?: termo de cessao nao gerado \\(falha simulada\\)").containsMatchIn(zip["erros.txt"]!!), zip["erros.txt"])
+        // diagnostico sem nome/codigo de cliente
+        assertFalse(zip["erros.txt"]!!.contains("Cliente_C0001") || zip["erros.txt"]!!.contains("C0001"), zip["erros.txt"])
+        assertEquals(1, arquivo.notasComErro)
+    }
+
+    @Test
+    fun `termo recusa cessionaria ausente ou fora da tabela antes de buscar qualquer coisa`() {
+        val t = termos(mapOf(10 to listOf(1)))
+        val tax = taxNfe()
+        listOf(null, "", "Securitizadora X", "999").forEach { informada ->
+            val erro = assertThrows(Exception::class.java) {
+                servico(odbc(nota(10, 501)), tax = tax, termos = t).zip(listOf(10), listOf(), pdf = true, xml = false, termo = true, cessionaria = informada)
+            }
+            assertTrue(erro.message!!.contains("essionaria"), erro.message)
+        }
+        assertTrue(chamadasTax.isEmpty())
+        assertTrue(termosPedidos.isEmpty())
+    }
+
+    @Test
+    fun `prazo do lote vencido antes do termo - nenhum PDF e todas as NF no erros txt`() {
+        val arquivo = servico(odbc(nota(10, 501), nota(11, 502)), prazoSegundos = 0,
+            termos = termos(mapOf(10 to listOf(1), 11 to listOf(1))))
+            .zip(listOf(10, 11), listOf(), pdf = false, xml = false, termo = true, cessionaria = "123")
+        val zip = conteudo(arquivo)
+        assertEquals(setOf("erros.txt"), zip.keys)
+        listOf("DocEntry 10", "DocEntry 11").forEach {
+            assertTrue(Regex("$it: termo de cessao nao gerado \\(tempo esgotado").containsMatchIn(zip["erros.txt"]!!), zip["erros.txt"])
+        }
+        assertEquals(2, arquivo.notasComErro)
+    }
+
+    @Test
+    fun `grupo de consulta que falha vira erro so das NF dele, e os outros grupos saem`() {
+        val arquivo = servico(odbc(nota(10, 501), nota(11, 502), nota(12, 503)),
+            termos = termos(mapOf(10 to listOf(1), 11 to listOf(1), 12 to listOf(1)), grupoFalha = setOf(12), tamanhoGrupo = 2))
+            .zip(listOf(10, 11, 12), listOf(), pdf = false, xml = false, termo = true, cessionaria = "123")
+        val zip = conteudo(arquivo)
+        assertEquals(setOf("termo/NF501-S2-C0001-Cliente_C0001.pdf", "termo/NF502-S2-C0001-Cliente_C0001.pdf",
+            "erros.txt"), zip.keys)
+        assertTrue(zip["erros.txt"]!!.contains("DocEntry 12: termo de cessao nao gerado"), zip["erros.txt"])
+        assertFalse(zip["erros.txt"]!!.contains("DocEntry 10") || zip["erros.txt"]!!.contains("DocEntry 11"))
+        assertEquals(1, arquivo.notasComErro)
+    }
+
+    @Test
+    fun `so termo marcado com lote so de adiantamento gera zip com avisos txt`() {
+        val zip = conteudo(servico(odbc(adiantamento(20, 4100)), termos = termos(mapOf()))
+            .zip(listOf(), listOf(20), pdf = false, xml = false, termo = true, cessionaria = "123"))
+        assertEquals(setOf("avisos.txt"), zip.keys)
+        assertTrue(zip["avisos.txt"]!!.contains("termo de cessao so vale para NF"))
+    }
+
+    @Test
+    fun `lote so de adiantamento com parcela de NF fora do lote ainda avisa que a entrada foi ignorada`() {
+        val zip = conteudo(servico(odbc(adiantamento(20, 4100)), termos = termos(mapOf()))
+            .zip(listOf(), listOf(20), pdf = false, xml = false, termo = true, cessionaria = "123",
+                parcelasTermo = listOf(ParcelaTermo(99, 1))))
+        assertTrue(zip["avisos.txt"]!!.contains("DocEntry 99 ignoradas (NF fora do lote)"), zip["avisos.txt"])
+        assertTrue(zip["avisos.txt"]!!.contains("termo de cessao so vale para NF"))
+    }
+
+    @Test
+    fun `contrato e termo juntos com so NF no lote geram os termos, sem recusar o lote`() {
+        val zip = conteudo(servico(odbc(nota(10, 501)), contratos = contratos(), termos = termos(mapOf(10 to listOf(1, 2))))
+            .zip(listOf(10), listOf(), pdf = false, xml = false, contrato = true, termo = true, cessionaria = "123"))
+        assertEquals(1, zip.keys.count { it.startsWith("termo/") }, zip.keys.toString())
+    }
+
+    @Test
+    fun `aviso de sem parcela em aberto vem mesmo quando a NF teve erro de DANFE`() {
+        val zip = conteudo(servico(odbc(nota(10, 501)), tax = taxNfe(consultaFalha = setOf(10)), termos = termos(mapOf()))
+            .zip(listOf(10), listOf(), pdf = true, xml = false, termo = true, cessionaria = "123"))
+        assertTrue(zip["erros.txt"]!!.contains("TaxPlus"))
+        assertTrue(zip["avisos.txt"]!!.contains("sem parcela em aberto"), zip["avisos.txt"])
     }
 
     // Le o zip do temporario e apaga, como o controller faz ao enviar.

@@ -9,6 +9,7 @@ import br.andrew.sap.services.odbc.OdbcClient
 import br.andrew.sap.services.odbc.QueryResponse
 import br.andrew.sap.services.odbc.SqlResource
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -81,6 +82,18 @@ class NotaFiscalLoteImportacaoServiceTest {
     }
 
     @Test
+    fun `nosso numero - valor dentro de 5 centavos confere, acima diverge`() {
+        boleto("35158540000021002", 13, 250976, 2, "5715", "16088.38")
+        doc("NF", 250976, 5715)
+        val r = servico.importar(planilha(listOf("35158540000021002-5", "005715 2", 16088.43))).linhas.single()
+        assertEquals(ENCONTRADO, r.situacao)
+        assertEquals(ENCONTRADO, servico.importar(planilha(listOf("35158540000021002-5", "005715 2", 16088.33))).linhas.single().situacao)
+        val acima = servico.importar(planilha(listOf("35158540000021002-5", "005715 2", 16088.44))).linhas.single()
+        assertEquals(DIVERGENTE, acima.situacao)
+        assertTrue(acima.mensagem!!.contains("valor na planilha"), acima.mensagem)
+    }
+
+    @Test
     fun `adiantamento confere o DocEntry no Nro beneficiario`() {
         boleto("35158540000011882", 203, 4055, 1, "0", "1500")
         doc("AD", 4055, 4100)
@@ -106,7 +119,8 @@ class NotaFiscalLoteImportacaoServiceTest {
         doc("NF", 250976, 5715)
         val r = servico.importar(planilha(listOf("35158540000021002-5", "sem numero", 16088.38), listOf("35158540000021003-3", "005715 3", "abc"))).linhas
         assertEquals(listOf(DIVERGENTE, DIVERGENTE), r.map { it.situacao })
-        assertTrue(r[0].mensagem!!.contains("Nro beneficiario 'sem numero' ilegivel"), r[0].mensagem)
+        assertEquals("linha 11: Nro beneficiario ilegivel: nao conferido", r[0].mensagem!!.split("; ").first { it.contains("Nro beneficiario") })
+        assertFalse(r[0].mensagem!!.contains("sem numero"), r[0].mensagem)
         assertTrue(r[1].mensagem!!.contains("valor da planilha ilegivel"), r[1].mensagem)
     }
 
@@ -163,5 +177,14 @@ class NotaFiscalLoteImportacaoServiceTest {
         val sql = SqlResource.carregar("odbc/nota-fiscal-lote-boletos.sql")
         assertEquals(setOf("nossosNumeros"), Regex("(?<!:):([A-Za-z][A-Za-z0-9_]*)").findAll(sql.replace(Regex("'[^']*'"), "''")).map { it.groupValues[1] }.toSet())
         assertTrue(sql.trimStart().startsWith("SELECT"))
+    }
+
+    @Test
+    fun `csv com titulos acima do limite para de ler no primeiro excedente`() {
+        val limitado = NotaFiscalLoteImportacaoService(odbc, NotaFiscalLoteService(odbc, mock(TaxNfeService::class.java), mock(BankPlusService::class.java), 200, 2), 2)
+        // O registro com aspas sem fechamento vem DEPOIS do terceiro titulo: so daria outro erro se a leitura seguisse ate o fim.
+        val csv = "Nosso numero,Valor\n100001,1\n100002,1\n100003,1\n\"aberto,1\n"
+        val e = assertThrows(br.andrew.sap.model.fiscal.ImportacaoInvalidaException::class.java) { limitado.importar(csv.toByteArray()) }
+        assertEquals("A planilha tem mais de 2 titulos; o limite e 2.", e.message)
     }
 }
