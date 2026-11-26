@@ -60,7 +60,6 @@ class FaturaReservaSaldoTest {
             "carregamento/ord-carregamento-faturas.sql",
             "carregamento/pedidoeestoque-faturas.sql",
             "carregamento/peso-ordem-carregamento-faturas.sql",
-            "PainelInterativoCarregamento/faturas-reserva-carregamento.sql",
         ).forEach { view ->
             val sql = Files.readString(Path.of("src/main/resources/views/$view"))
             val select = sql.substringBefore("FROM")

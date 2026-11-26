@@ -29,6 +29,7 @@ class CarregamentoPixPagoTest {
         mock(br.andrew.sap.model.sistema.SapEnvrioment::class.java),
         mock(org.springframework.web.client.RestTemplate::class.java),
         mock(br.andrew.sap.services.security.AuthService::class.java),
+        CarregamentoUtilizacoes(listOf(9)),
     )
 
     private fun linha(pedido: Int, docEntry: Int, saldo: String) =
