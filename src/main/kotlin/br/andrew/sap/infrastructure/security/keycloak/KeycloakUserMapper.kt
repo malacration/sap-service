@@ -2,9 +2,11 @@ package br.andrew.sap.infrastructure.security.keycloak
 
 import br.andrew.sap.model.authentication.User
 import br.andrew.sap.model.authentication.UserOriginEnum
+import br.andrew.sap.services.cadastro.BussinessPlaceService
 import br.andrew.sap.services.cadastro.EmployeesInfoService
 import br.andrew.sap.services.security.interfaces.RuleService
 import io.jsonwebtoken.Claims
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 
 /**
@@ -13,8 +15,9 @@ import org.springframework.stereotype.Component
  * Regras (definidas pelo projeto):
  *  - As roles do app vem direto das roles do Keycloak (realm + client). Ex.:
  *    role `vendedor` no Keycloak casa com a role `vendedor` do rules.yml.
- *  - As filiais vem de roles no formato `filial-{id}-{nome}`: o `{id}` e o
- *    BPLId usado pelo sistema; `{nome}` e apenas para leitura/suporte.
+ *  - As filiais vem do cadastro do SAP, como no login interno (atribuicao de
+ *    filial do colaborador ou filial do vendedor), somadas as roles no formato
+ *    `filial-{id}-{nome}`: o `{id}` e o BPLId; `{nome}` e so para leitura.
  *  - Identidade: o EmployeeID (codigo de colaborador) vem do claim
  *    [KeycloakProperties.sapIdClaim] (ex.: `sap_code=10`). Por padrao o usuario
  *    opera como colaborador (EmployeesInfo, id = EmployeeID). Porem, se o
@@ -28,8 +31,10 @@ class KeycloakUserMapper(
     private val properties: KeycloakProperties,
     private val employeesInfoService: EmployeesInfoService,
     private val ruleService: RuleService,
+    private val bussinessPlaceService: BussinessPlaceService,
 ) {
 
+    private val log = LoggerFactory.getLogger(KeycloakUserMapper::class.java)
     private val filialPrefix = "filial-"
 
     fun toUser(claims: Claims): User {
@@ -68,9 +73,14 @@ class KeycloakUserMapper(
         }
 
         // Se o colaborador tem um vendedor vinculado no SAP, opera como vendedor.
-        val salesPersonCode = employeeId?.let { employeesInfoService.getSalesPersonCodeByEmployeeId(it) }
+        // Falha na consulta nao e "sem vendedor": nesse caso as filiais do SAP
+        // ficam de fora, senao um vendedor herdaria as filiais de colaborador.
+        val vinculo = runCatching { employeesInfoService.getSalesPersonCodeByEmployeeId(employeeId!!) }
+            .onFailure { log.warn("Falha ao buscar vendedor vinculado ao colaborador $employeeId", it) }
+        val salesPersonCode = vinculo.getOrNull()
         val origin = if (salesPersonCode != null) UserOriginEnum.SalePerson else UserOriginEnum.EmployeesInfo
         val id = (salesPersonCode ?: employeeId).toString()
+        val filiaisSap = if (vinculo.isSuccess) filiaisDoSap(employeeId!!, salesPersonCode) else listOf()
 
         return User(
             id = id,
@@ -79,9 +89,26 @@ class KeycloakUserMapper(
             userName = preferredUsername ?: email ?: claims.subject,
             emailAddress = email ?: preferredUsername,
             _password = null,
-            bussinesPlace = businessPlaces,
+            bussinesPlace = (filiaisSap + businessPlaces).distinct(),
             roles = appRoles,
         )
+    }
+
+    /**
+     * Filiais do cadastro do SAP, mesma fonte do login interno: vendedor usa a
+     * filial do OSLP (@RO_FILIAL_LINHA), colaborador usa a atribuicao de filial
+     * (HEM10). As roles `filial-*` do Keycloak continuam somando por cima.
+     * Falha no SAP nao derruba o login: so deixa de somar as filiais de la.
+     */
+    private fun filiaisDoSap(employeeId: Int, salesPersonCode: Int?): List<Int> {
+        return try {
+            (if (salesPersonCode != null) bussinessPlaceService.getFilialBySalesPerson(salesPersonCode)
+            else bussinessPlaceService.getFilialByEmployee(employeeId))
+                .map { it.BPLId }
+        } catch (e: Exception) {
+            log.warn("Falha ao buscar filiais no SAP do colaborador $employeeId", e)
+            listOf()
+        }
     }
 
     /** EmployeeID (codigo de colaborador) exclusivamente a partir do claim sap_code. */
