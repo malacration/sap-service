@@ -4,6 +4,8 @@
 -- Paginado por pedido (DENSE_RANK por DocNum+DocEntry: series diferentes repetem DocNum), nao por linha: um pedido nao fica partido
 -- entre paginas. "TotalDocumentos" diz se ha mais pagina.
 -- Cidade sem acento e sem caixa: o Kotlin manda o termo ja em maiusculas e sem acento.
+-- :utilizacoes  utilizacoes (OUSG.ID) da linha aceitas, de carregamento.utilizacoes (padrao 9).
+-- :sinaisFrete  sinais de TotalExpns aceitos: 1 com frete, 0 sem frete (retirada), -1,0,1 todos.
 SELECT * FROM (
     SELECT P.*, MAX(P."Documento") OVER () AS "TotalDocumentos"
     FROM (
@@ -67,10 +69,10 @@ SELECT * FROM (
             AND c."BPLId" = :filial
             AND (c."SlpCode" = :vendedor OR c."SlpCode" > :vendedorDisable)
             AND c."DocStatus" = 'O'
-            AND c."TotalExpns" > 0
+            AND SIGN(IFNULL(c."TotalExpns", 0)) IN (:sinaisFrete)
             AND (x."U_Status" = 'Cancelado' OR x."U_Status" IS NULL)
             AND d."U_ORD_CARREGAMENTO" IS NULL
-            AND d."Usage" = 9
+            AND d."Usage" IN (:utilizacoes)
     ) P
 ) T
 WHERE T."Documento" > :inicio AND T."Documento" <= :fim
