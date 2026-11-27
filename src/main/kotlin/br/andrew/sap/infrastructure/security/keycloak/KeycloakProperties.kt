@@ -46,6 +46,18 @@ class KeycloakProperties {
      */
     var admin: Admin = Admin()
 
+    /**
+     * Perfil de integracao (contas a pagar, Nota Agil): a role [KeycloakUserMapper.ROLE_INTEGRACAO_CONTAS_PAGAR]
+     * (fixa, e o perfil do rules.yml) so vale no token da service account de um client em
+     * [IntegracaoContasPagar.clientIds] (azp + preferred_username `service-account-<azp>`). Usuario (mesmo
+     * logado por esse client) ou outro client perde so esse perfil.
+     */
+    var integracaoContasPagar: IntegracaoContasPagar = IntegracaoContasPagar()
+
+    class IntegracaoContasPagar {
+        var clientIds: List<String> = listOf("nota-agil-integracao")
+    }
+
     class Admin {
         var enabled: Boolean = false
         var clientId: String = ""

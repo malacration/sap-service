@@ -26,6 +26,8 @@ class BussinessPlace {
     var DefaultVendorID: String? = null
     var DefaultWarehouseID: String? = null
     var FederalTaxID : String? = null
+    /** tYES quando a filial esta desativada no SAP. */
+    var Disabled: String? = null
 
     fun cnpjSemMascara() : String {
         return CpfCnpj(FederalTaxID ?: throw Exception("Erro, filial $BPLName sem cnpj")).value

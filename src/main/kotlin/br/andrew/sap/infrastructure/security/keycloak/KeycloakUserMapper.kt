@@ -38,7 +38,18 @@ class KeycloakUserMapper(
     private val filialPrefix = "filial-"
 
     fun toUser(claims: Claims): User {
-        val roles = extractRoles(claims)
+        val todas = extractRoles(claims)
+        // Service account de client de integracao: sempre caminho proprio, sem colaborador/vendedor/filial
+        // do SAP. So o perfil de integracao, se tiver; sem ele, nenhum perfil (recusada).
+        if (serviceAccountIntegracao(claims)) {
+            if (todas.any { it.equals(ROLE_INTEGRACAO_CONTAS_PAGAR, ignoreCase = true) }) return usuarioIntegracao(claims)
+            throw KeycloakUserProvisioningException(
+                "Acesso via SSO incompleto para '${claims["preferred_username"]}': service account de integracao " +
+                "sem o perfil $ROLE_INTEGRACAO_CONTAS_PAGAR. Procure o administrador do sistema."
+            )
+        }
+        // Fora disso o perfil de integracao nunca vale; demais perfis inalterados.
+        val roles = todas.filterNot { it.equals(ROLE_INTEGRACAO_CONTAS_PAGAR, ignoreCase = true) }
         val businessPlaces = roles
             .filter { it.startsWith(filialPrefix, ignoreCase = true) }
             .mapNotNull { parseFilialId(it) }
@@ -111,6 +122,35 @@ class KeycloakUserMapper(
         }
     }
 
+    /**
+     * Token de service account (client_credentials) de um client em `keycloak.integracao-contas-pagar.client-ids`:
+     * `azp` permitido, `preferred_username = service-account-<azp>` (username reservado pelo Keycloak ao usuario
+     * da service account) e `client_id`/`clientId`, quando vier, igual ao azp.
+     */
+    private fun serviceAccountIntegracao(claims: Claims): Boolean {
+        val azp = claims["azp"]?.toString()?.trim()
+        if (azp.isNullOrEmpty() || azp !in properties.integracaoContasPagar.clientIds) return false
+        val username = claims["preferred_username"]?.toString()?.trim() ?: return false
+        if (!username.equals(SERVICE_ACCOUNT_PREFIXO + azp, ignoreCase = true)) return false
+        return listOf("client_id", "clientId").all { claim -> claims[claim]?.let { it.toString().trim() == azp } ?: true }
+    }
+
+    /** Principal da service account de integracao: so o perfil de integracao, sem filial nem colaborador. */
+    private fun usuarioIntegracao(claims: Claims): User {
+        val azp = claims["azp"].toString().trim()
+        val username = claims["preferred_username"].toString().trim()
+        return User(
+            id = azp,
+            _name = username,
+            origin = UserOriginEnum.Integracao,
+            userName = username,
+            emailAddress = null,
+            _password = null,
+            bussinesPlace = listOf(),
+            roles = listOf(ROLE_INTEGRACAO_CONTAS_PAGAR),
+        )
+    }
+
     /** EmployeeID (codigo de colaborador) exclusivamente a partir do claim sap_code. */
     private fun resolveEmployeeId(claims: Claims): Int? {
         return claims[properties.sapIdClaim]?.toString()?.toIntOrNull()
@@ -134,5 +174,11 @@ class KeycloakUserMapper(
                 ?.forEach { it?.let { r -> result.add(r.toString()) } }
         }
         return result.distinct()
+    }
+
+    companion object {
+        const val SERVICE_ACCOUNT_PREFIXO = "service-account-"
+        /** Nome do perfil no rules.yml; fixo para a protecao nao se desencontrar do perfil. */
+        const val ROLE_INTEGRACAO_CONTAS_PAGAR = "integracao_contas_pagar"
     }
 }
