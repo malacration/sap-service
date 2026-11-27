@@ -45,7 +45,9 @@ class SecurityWebConf(
     private val keycloakProperties : KeycloakProperties,
     private val keycloakJwtService : KeycloakJwtService,
     private val keycloakUserMapper : KeycloakUserMapper,
-    private val corsConfig : CorsConfig
+    private val corsConfig : CorsConfig,
+    /** Opcional (nullable = nao obrigatorio): sem o bean, ou desligado, nada muda. Teste local/homolog. */
+    private val segurancaDesativadaContasPagar : SegurancaDesativadaContasPagar?
 )  {
 
     private val jwtHandler = JwtHandler(jwtSecretBean)
@@ -90,6 +92,12 @@ class SecurityWebConf(
                 .addFilterAfter(
                     RoleBasedAuthorizationFilter(ruleService,context),
                     OneTimePasswordAuthenticationFilter::class.java)
+                .apply {
+                    // SAP_ROVEMA_SECURITY_DISABLED (teste local/homolog): so POST na consulta de contas a pagar,
+                    // antes das regras (RoleBasedAuthorizationFilter), que continuam valendo.
+                    if (segurancaDesativadaContasPagar?.ativa == true)
+                        addFilterBefore(SegurancaDesativadaContasPagarFilter(), RoleBasedAuthorizationFilter::class.java)
+                }
                 .authorizeHttpRequests { it
                     .requestMatchers(
                         "/",

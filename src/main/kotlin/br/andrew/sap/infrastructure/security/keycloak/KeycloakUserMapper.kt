@@ -38,7 +38,11 @@ class KeycloakUserMapper(
     private val filialPrefix = "filial-"
 
     fun toUser(claims: Claims): User {
-        val roles = extractRoles(claims)
+        val roles = extractRoles(claims).let { todas ->
+            // Perfil de integracao so para a service account do client permitido; demais perfis inalterados.
+            if (serviceAccountIntegracao(claims)) todas
+            else todas.filterNot { it.equals(ROLE_INTEGRACAO_CONTAS_PAGAR, ignoreCase = true) }
+        }
         val businessPlaces = roles
             .filter { it.startsWith(filialPrefix, ignoreCase = true) }
             .mapNotNull { parseFilialId(it) }
@@ -111,6 +115,19 @@ class KeycloakUserMapper(
         }
     }
 
+    /**
+     * Token de service account (client_credentials) de um client em `keycloak.integracao-contas-pagar.client-ids`:
+     * `azp` permitido, `preferred_username = service-account-<azp>` (username reservado pelo Keycloak ao usuario
+     * da service account) e `client_id`/`clientId`, quando vier, igual ao azp.
+     */
+    private fun serviceAccountIntegracao(claims: Claims): Boolean {
+        val azp = claims["azp"]?.toString()?.trim()
+        if (azp.isNullOrEmpty() || azp !in properties.integracaoContasPagar.clientIds) return false
+        val username = claims["preferred_username"]?.toString()?.trim() ?: return false
+        if (!username.equals(SERVICE_ACCOUNT_PREFIXO + azp, ignoreCase = true)) return false
+        return listOf("client_id", "clientId").all { claim -> claims[claim]?.let { it.toString().trim() == azp } ?: true }
+    }
+
     /** EmployeeID (codigo de colaborador) exclusivamente a partir do claim sap_code. */
     private fun resolveEmployeeId(claims: Claims): Int? {
         return claims[properties.sapIdClaim]?.toString()?.toIntOrNull()
@@ -134,5 +151,11 @@ class KeycloakUserMapper(
                 ?.forEach { it?.let { r -> result.add(r.toString()) } }
         }
         return result.distinct()
+    }
+
+    companion object {
+        const val SERVICE_ACCOUNT_PREFIXO = "service-account-"
+        /** Nome do perfil no rules.yml; fixo para a protecao nao se desencontrar do perfil. */
+        const val ROLE_INTEGRACAO_CONTAS_PAGAR = "integracao_contas_pagar"
     }
 }

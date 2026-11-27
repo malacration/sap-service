@@ -33,6 +33,8 @@ keycloak.realm=rovema
 keycloak.client-id=front-sap
 # Claim opcional que carrega o codigo SAP do usuario (default: sap_code)
 keycloak.sap-id-claim=sap_code
+# Perfil integracao_contas_pagar (Nota Agil) so vale no token da service account destes clients (azp).
+keycloak.integracao-contas-pagar.client-ids=nota-agil-integracao
 
 # ----- Frete -----
 # true = vendedor digita o valor do frete na venda (sem exigir localidade/regiao);
@@ -89,6 +91,10 @@ lc.centrodecusto.padrao-por-filial=2:500:50000205,4:501:50100401,11:502:50200501
 # ----- Gateway de consultas SQL (sap-odbc) -----
 # Usado pelo painel de vendas v2, que precisa AGREGAR no banco (GROUP BY, funcoes
 # de data, janelas) - coisa que o SQLQueries do Service Layer nao aceita.
+# Tambem usado pela conferencia de pagamento de nota de entrada (POST /contas-pagar/
+# pagamento-parcela/consulta, Nota Agil): fornecedor, nota, parcelas e pagamentos saem de
+# resources/odbc/contas-pagar-*.sql, sem criar view no SAP. Em deploy, preferir variaveis de
+# ambiente: ODBC_BASE_URL, ODBC_API_KEY, ODBC_QUERY_TIMEOUT_SECONDS.
 #
 # Estas credenciais ficam APENAS aqui, no backend. O front-sap nunca fala com o
 # sap-odbc: ele chama /painel-vendas/v2/** e este servico aplica o recorte de
@@ -99,6 +105,17 @@ odbc.base-url=http://localhost:8080
 odbc.api-key=
 # Timeout pedido ao gateway por consulta, em segundos.
 odbc.query-timeout-seconds=30
+
+# ----- Conferencia de pagamento de nota de entrada (contas a pagar) -----
+# OPCH.Model (ONFM.AbsEntry) de cada tipo, separados por virgula. Com tipo (da chave de acesso ou
+# do pedido), so notas desses modelos contam: evita colisao CTe x NFS-e do mesmo fornecedor.
+# Padroes conferidos no SBOGRUPOROVEMA (39 = NFe 55, 45 = CTe 57, 46 = NFS-e, 60 = NFSe-Via).
+# Um modelo nao pode estar em dois tipos.
+# contas-pagar.modelos.nfe=39
+# contas-pagar.modelos.cte=45
+# contas-pagar.modelos.nfse=46,60
+# Tolerancia de arredondamento na comparacao de valor (0 a 0.10).
+# contas-pagar.tolerancia-valor=0.01
 
 # ----- Painel de vendas v2 -----
 # Limita QUAIS filiais o painel pode consultar neste ambiente. E limite de

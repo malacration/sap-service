@@ -479,3 +479,16 @@ roles:
   lancamento_retorno:
     - url: "/lancamento-retorno/**"
       actions: ["get", "post", "put"]
+
+  # Integracao Nota Agil -> SAP (fluxo FXP-NA do SoftExpert): conferencia de pagamento de parcela
+  # de nota de entrada, listagem de notas de entrada para importacao no Nota Agil e download do PDF
+  # anexado a nota. Somente leitura. Perfil de service account; nao atribuir a usuario de tela.
+  integracao_contas_pagar:
+    - url: "/contas-pagar/pagamento-parcela/consulta"
+      actions: ["post"]
+    - url: "/contas-pagar/notas-entrada/listagem"
+      actions: ["post"]
+    - url: "/contas-pagar/notas-entrada/*/anexo-pdf"
+      actions: ["post"]
+    - url: "/contas-pagar/filiais"
+      actions: ["get"]

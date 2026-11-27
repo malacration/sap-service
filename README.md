@@ -43,6 +43,11 @@ Para building e execução é necessario:
 ./gradlew bootRun
 ```
 
+Teste local do Nota Agil sem a service account do Keycloak: `SAP_ROVEMA_SECURITY_DISABLED=true`
+libera somente `POST /contas-pagar/pagamento-parcela/consulta`. **Somente teste local/homologacao;
+a aplicacao recusa subir com profile de producao.** Ver
+[docs/seguranca-desativada-local.md](docs/seguranca-desativada-local.md).
+
 ## Compatibilidade da atualização
 
 Spring Boot permanece em 3.5.16 para preservar os contratos Jackson 2 e a integração SOAP Axis/SoftExpert. A migração para Boot 4 exige uma revisão separada dessas integrações; a linha 3.5 já encerrou o suporte comunitário. Bibliotecas legadas dessa integração permanecem como exceção conhecida.

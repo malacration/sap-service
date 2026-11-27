@@ -33,6 +33,24 @@ class AttachmentService(env: SapEnvrioment, val bpService: BusinessPartnersServi
         return (contentType to body)
     }
 
+    /**
+     * Um arquivo especifico do anexo [id] (um anexo do SAP pode ter varios arquivos, ex. XML + PDF
+     * da nota): `Attachments2(id)/$value?filename='nome.ext'`. Retorna (Content-Type, bytes).
+     */
+    fun downloadArquivo(id: Int, arquivo: String): Pair<String, ByteArray> {
+        val uri = org.springframework.web.util.UriComponentsBuilder
+            .fromUriString(env.host + this.path() + "($id)/\$value")
+            .queryParam("filename", "'" + arquivo.replace("'", "''") + "'")
+            .encode()
+            .build()
+            .toUri()
+        val request = RequestEntity.get(uri)
+            .header("cookie", session().cookieHeader())
+            .build()
+        val response = restT.exchange(request, ByteArray::class.java)
+        return (response.headers.contentType?.toString() ?: "") to (response.body ?: ByteArray(0))
+    }
+
     fun appendFile(cardCode: String, attachment: Attachment): ResponseEntity<OData>{
         try{
             val partner = bpService.getById("'$cardCode'")
