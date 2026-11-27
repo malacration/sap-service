@@ -163,7 +163,8 @@ class ContratoVendaFuturaController(
      * (ver PedidoRetirada.freteResidual). Precisa casar com o que a SBO_SP_VALIDACAO_VENDA_FUTURA
      * soma do lado do banco, senao a nota nova e barrada no faturamento: nota de entrega e so a
      * que tem U_entrega_vf = 1 (a de apropriacao de adiantamento nunca seta esse flag e fica de
-     * fora), devolucao entra sem esse filtro e com sinal negativo.
+     * fora), devolucao entra sem esse filtro e com sinal negativo. A devolucao que estorna
+     * adiantamento e descartada no proprio freteResidual.
      */
     private fun entregasFaturadas(idContrato : Int) : List<Document> {
         val filter = Filter(
