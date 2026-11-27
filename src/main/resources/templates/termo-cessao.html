@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <style>
+        @page { size: A4; margin: 40mm 30mm 30mm 30mm; @top-center { content: element(cabecalho); } @bottom-center { content: element(rodape); } }
+        body { font-family: Arial, sans-serif; font-size: 11pt; line-height: 1.5; margin: 0; }
+        .cabecalho { position: running(cabecalho); width: 14cm; }
+        .cabecalho table { width: 100%; border-collapse: collapse; }
+        .cabecalho td { padding: 0; vertical-align: middle; }
+        .marca { position: absolute; left: 1.8cm; bottom: 0; width: 11.2cm; opacity: 0.18; }
+        .texto-rodape { position: relative; }
+        h1 { text-align: center; font-size: 16pt; margin: 0 0 24px 0; }
+        p { text-align: justify; margin: 0 0 14px 0; }
+        .titulo p { margin: 2px 0; }
+        table.parcelas { width: 100%; border-collapse: collapse; margin-top: 6px; }
+        table.parcelas th, table.parcelas td { border: 1px solid #ccc; padding: 5px 8px; text-align: left; font-size: 10pt; }
+        table.parcelas th { background: #f2f2f2; }
+        table.parcelas td.num { text-align: right; }
+        .rodape { position: running(rodape); text-align: center; font-size: 9pt; color: #555; }
+    </style>
+</head>
+<body>
+<div class="rodape">
+    <img class="marca" th:src="${imagens['marca-sn']}" alt=""/>
+    <div class="texto-rodape"><span th:text="${cnpj}">00.000.000/0000-00</span> - <span th:text="${filial}">Filial</span></div>
+    <div class="texto-rodape" th:text="${endereco}">Endereço</div>
+</div>
+<div class="cabecalho">
+    <table>
+        <tr>
+            <td style="text-align: left"><img style="width: 2.8cm" th:src="${imagens['grupo-rovema']}" alt=""/></td>
+            <td style="text-align: center"><img style="width: 6cm" th:src="${imagens['sustennutri']}" alt=""/></td>
+            <td style="text-align: right"><img style="width: 3.9cm" th:src="${imagens['empresa-comprometida']}" alt=""/></td>
+        </tr>
+    </table>
+</div>
+<h1>COMUNICADO – CESSÃO DE TÍTULO</h1>
+
+<p>Prezado(a) Cliente, <span th:text="${cliente + (#strings.endsWith(cliente, '.') ? '' : '.')}">Cliente.</span></p>
+
+<p>Informamos que a empresa <span th:text="${filial}">Filial</span>, inscrita no CNPJ nº
+    <span th:text="${cnpj}">00.000.000/0000-00</span>, realizou a cessão do título abaixo relacionado,
+    referente à Nota Fiscal nº <span th:text="${serial}">1</span> para a empresa
+    <span th:text="${cessionaria + (#strings.endsWith(cessionaria, '.') ? '' : '.')}">Cessionária.</span></p>
+
+<div class="titulo">
+    <p><strong>Dados do título:</strong></p>
+    <table class="parcelas">
+        <thead><tr><th>Parcela</th><th>Valor</th><th>Vencimento</th></tr></thead>
+        <tbody>
+        <tr th:each="p : ${parcelas}">
+            <td th:text="${p.titulo}">1-1</td>
+            <td class="num">R$ <span th:text="${p.valor}">0,00</span></td>
+            <td th:text="${p.vencimento}">01/01/2026</td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+<br/>
+
+<p>Dessa forma, desconsidere o boleto emitido pelo Banco do Brasil, pois este já foi baixado no banco,
+    e considere para liquidação o boleto em anexo emitido pela <span th:text="${cessionaria + (#strings.endsWith(cessionaria, '.') ? '' : '.')}">Cessionária.</span></p>
+
+<p>Para esclarecimentos ou informações adicionais, entre em contato pelo telefone <span th:text="${telefoneContato}">(00) 00000-0000</span>.</p>
+
+<p>Atenciosamente,</p>
+<p><span th:text="${filial}">Filial</span><br/>CNPJ: <span th:text="${cnpj}">00.000.000/0000-00</span></p>
+
+</body>
+</html>

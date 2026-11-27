@@ -128,6 +128,7 @@ fields.trava=true
 # Os arquivos vem da TaxPlus (taxplus.nfe.*): 1 consulta por nota + 1 chamada por arquivo.
 # Teto de notas por zip; o front usa 200 para a selecao, entao subir aqui pede ajuste la.
 nota-fiscal.lote.maximo=200
+nota-fiscal.lote.importacao.maximo-linhas=200
 # Quantas notas sao buscadas em paralelo na TaxPlus.
 nota-fiscal.lote.paralelismo=4
 
@@ -173,3 +174,8 @@ cadastro.parceiro.filiais=
 fields.agenda-relatorio=false
 # So a copia PADRAO (separada por virgula), usada enquanto a tela nao tiver gravado nada. report.enable=true liga o envio.
 report.inadimplencia.cc=
+
+# Cessionarias do "Comunicado de Cessao de Titulo" (download em lote de NF). true provisiona, no boot,
+# a tabela @NFL_CESSIONARIA (Code = CNPJ, Name = razao social, U_Cnpj, U_Telefone, U_Ativo Y/N) e o UDO
+# de cadastro. Ligue uma vez no deploy e volte para false; sem a tabela, listar cessionarias falha.
+fields.nota-fiscal-lote-cessionaria=false

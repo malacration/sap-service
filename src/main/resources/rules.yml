@@ -449,6 +449,10 @@ roles:
       actions: ["get"]
     - url: "/nota-fiscal-lote/formas-pagamento"
       actions: ["get"]
+    - url: "/nota-fiscal-lote/cessionarias"
+      actions: ["get", "post"]
+    - url: "/nota-fiscal-lote/cessionarias/*"
+      actions: ["patch"]
     # Monta o lote a partir da planilha de titulos do banco (so le).
     - url: "/nota-fiscal-lote/importar-planilha"
       actions: ["post"]
