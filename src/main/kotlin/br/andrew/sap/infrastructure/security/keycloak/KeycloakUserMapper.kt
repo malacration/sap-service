@@ -38,11 +38,18 @@ class KeycloakUserMapper(
     private val filialPrefix = "filial-"
 
     fun toUser(claims: Claims): User {
-        val roles = extractRoles(claims).let { todas ->
-            // Perfil de integracao so para a service account do client permitido; demais perfis inalterados.
-            if (serviceAccountIntegracao(claims)) todas
-            else todas.filterNot { it.equals(ROLE_INTEGRACAO_CONTAS_PAGAR, ignoreCase = true) }
+        val todas = extractRoles(claims)
+        // Service account de client de integracao: sempre caminho proprio, sem colaborador/vendedor/filial
+        // do SAP. So o perfil de integracao, se tiver; sem ele, nenhum perfil (recusada).
+        if (serviceAccountIntegracao(claims)) {
+            if (todas.any { it.equals(ROLE_INTEGRACAO_CONTAS_PAGAR, ignoreCase = true) }) return usuarioIntegracao(claims)
+            throw KeycloakUserProvisioningException(
+                "Acesso via SSO incompleto para '${claims["preferred_username"]}': service account de integracao " +
+                "sem o perfil $ROLE_INTEGRACAO_CONTAS_PAGAR. Procure o administrador do sistema."
+            )
         }
+        // Fora disso o perfil de integracao nunca vale; demais perfis inalterados.
+        val roles = todas.filterNot { it.equals(ROLE_INTEGRACAO_CONTAS_PAGAR, ignoreCase = true) }
         val businessPlaces = roles
             .filter { it.startsWith(filialPrefix, ignoreCase = true) }
             .mapNotNull { parseFilialId(it) }
@@ -126,6 +133,22 @@ class KeycloakUserMapper(
         val username = claims["preferred_username"]?.toString()?.trim() ?: return false
         if (!username.equals(SERVICE_ACCOUNT_PREFIXO + azp, ignoreCase = true)) return false
         return listOf("client_id", "clientId").all { claim -> claims[claim]?.let { it.toString().trim() == azp } ?: true }
+    }
+
+    /** Principal da service account de integracao: so o perfil de integracao, sem filial nem colaborador. */
+    private fun usuarioIntegracao(claims: Claims): User {
+        val azp = claims["azp"].toString().trim()
+        val username = claims["preferred_username"].toString().trim()
+        return User(
+            id = azp,
+            _name = username,
+            origin = UserOriginEnum.Integracao,
+            userName = username,
+            emailAddress = null,
+            _password = null,
+            bussinesPlace = listOf(),
+            roles = listOf(ROLE_INTEGRACAO_CONTAS_PAGAR),
+        )
     }
 
     /** EmployeeID (codigo de colaborador) exclusivamente a partir do claim sap_code. */

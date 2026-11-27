@@ -2,6 +2,8 @@
 -- Notas nao canceladas das filiais :filiais (BPLId) lancadas (DocDate) entre :dataInicial e :dataFinal.
 -- CNPJ/CPF do fornecedor vem da extensao fiscal do documento (PCH12), como gravado na nota.
 -- Retencao: categoria I (Fatura) ja foi descontada do DocTotal; categoria P (Pagamento) nao.
+-- Moeda: DocTotal e retencoes sao da moeda local (OADM.MainCurncy, linha unica); nota em outra moeda
+-- (DocCur) vem com problema e sem valores no sap-rovema, como a MOEDA_NAO_SUPORTADA da conferencia.
 -- AnexosPdf: quantos PDFs ha no anexo da nota (ATC1); o par XML + PDF e o padrao das filiais.
 -- Fornecedor e numero vao no SQL para valer antes do limite de linhas (o sap-rovema reaplica os dois).
 -- :fornecedor (so digitos, 11 ou 14; '' = todos) segue a regra do modelo: CNPJ = digitos de TaxId0 quando
@@ -27,12 +29,14 @@ SELECT
     T."TaxId4" AS "CpfFornecedor",
     N."DocTotal" AS "DocTotal",
     N."DocCur" AS "DocCur",
+    E."MainCurncy" AS "MainCurncy",
     N."AtcEntry" AS "AtcEntry",
     (SELECT SUM(W."WTAmnt") FROM PCH5 W WHERE W."AbsEntry" = N."DocEntry" AND W."Category" = 'P') AS "RetencaoPagamento",
     (SELECT SUM(W."WTAmnt") FROM PCH5 W WHERE W."AbsEntry" = N."DocEntry" AND W."Category" = 'I') AS "RetencaoFatura",
     (SELECT COUNT(*) FROM ATC1 A WHERE A."AbsEntry" = N."AtcEntry" AND LOWER(A."FileExt") = 'pdf') AS "AnexosPdf"
 FROM OPCH N
 LEFT JOIN PCH12 T ON T."DocEntry" = N."DocEntry"
+CROSS JOIN OADM E
 WHERE N."CANCELED" = 'N'
   AND N."BPLId" IN (:filiais)
   AND N."DocDate" >= :dataInicial

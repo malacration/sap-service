@@ -33,12 +33,13 @@ class NotasEntradaServiceTest {
     private val filial = "12345678000190"
 
     private fun linha(docEntry: Int, bpl: Int = 7, modelo: String = "39", serial: Int = 100,
-                      cnpj: String? = "98.765.432/0001-00", cpf: String? = "", anexos: Int = 1) = mapOf(
+                      cnpj: String? = "98.765.432/0001-00", cpf: String? = "", anexos: Int = 1,
+                      moeda: String? = "R$", moedaLocal: String? = "R$") = mapOf(
         "DocEntry" to docEntry, "DocNum" to docEntry + 1000, "Serial" to serial, "SeriesStr" to "1", "Model" to modelo,
         "U_ChaveAcesso" to " 11261198765432000100550010000001001000000001 ", "TaxDate" to "2026-11-10",
         "DocDate" to "2026-11-11", "BPLId" to bpl, "BPLName" to "Filial X", "CardCode" to "FOR1",
         "CardName" to "Fornecedor X", "CnpjFornecedor" to cnpj, "CpfFornecedor" to cpf, "DocTotal" to "1000.005",
-        "DocCur" to "R$", "AtcEntry" to 55, "RetencaoPagamento" to "15", "RetencaoFatura" to "50.5", "AnexosPdf" to anexos,
+        "DocCur" to moeda, "MainCurncy" to moedaLocal, "AtcEntry" to 55, "RetencaoPagamento" to "15", "RetencaoFatura" to "50.5", "AnexosPdf" to anexos,
     )
 
     private fun responde(vararg linhas: Map<String, Any?>) {
@@ -173,6 +174,33 @@ class NotasEntradaServiceTest {
         // Ausente ou em branco continua sem filtro.
         assertEquals(listOf(1), service.listar(ListagemNotasEntradaRequest(filial, "2026-11-01", "2026-11-02",
             cpfCnpjFornecedor = "  ", numeroNota = " ")).notas.map { it.docEntry })
+    }
+
+    @Test
+    fun `nota fora da moeda local vem com problema e sem valores`() {
+        whenever(gateway.filiaisPorCnpj(filial)).thenReturn(listOf(7))
+        responde(linha(1), linha(2, moeda = "USD"), linha(3, moeda = null), linha(4, moedaLocal = null))
+
+        val notas = service.listar(ListagemNotasEntradaRequest(filial, "2026-11-01", "2026-11-02")).notas.associateBy { it.docEntry }
+
+        assertNull(notas.getValue(1).problema)
+        assertEquals(BigDecimal("1000.01"), notas.getValue(1).valorTotal)
+        assertEquals("R$", notas.getValue(1).moedaLocal)
+        assertEquals(BigDecimal("50.50"), notas.getValue(1).retencaoFatura)
+        assertEquals(BigDecimal("15.00"), notas.getValue(1).retencaoPagamento)
+        assertEquals("Nota de entrada em moeda estrangeira (USD); so a moeda local e suportada", notas.getValue(2).problema)
+        for (n in listOf(2, 3, 4).map(notas::getValue)) {
+            assertTrue(n.problema != null)
+            assertNull(n.valorTotal); assertNull(n.valorBruto); assertNull(n.valorLiquido)
+            assertNull(n.retencaoFatura); assertNull(n.retencaoPagamento)
+        }
+        assertEquals("Moeda da nota de entrada desconhecida no SAP", notas.getValue(3).problema)
+
+        for (arquivo in listOf(NotasEntradaService.SQL_PERIODO, NotasEntradaService.SQL_DOCENTRIES)) {
+            val sql = SqlResource.carregar(arquivo)
+            assertTrue(sql.contains("E.\"MainCurncy\" AS \"MainCurncy\""), arquivo)
+            assertTrue(sql.contains("CROSS JOIN OADM E"), arquivo)
+        }
     }
 
     @Test

@@ -17,12 +17,14 @@ SELECT
     T."TaxId4" AS "CpfFornecedor",
     N."DocTotal" AS "DocTotal",
     N."DocCur" AS "DocCur",
+    E."MainCurncy" AS "MainCurncy",
     N."AtcEntry" AS "AtcEntry",
     (SELECT SUM(W."WTAmnt") FROM PCH5 W WHERE W."AbsEntry" = N."DocEntry" AND W."Category" = 'P') AS "RetencaoPagamento",
     (SELECT SUM(W."WTAmnt") FROM PCH5 W WHERE W."AbsEntry" = N."DocEntry" AND W."Category" = 'I') AS "RetencaoFatura",
     (SELECT COUNT(*) FROM ATC1 A WHERE A."AbsEntry" = N."AtcEntry" AND LOWER(A."FileExt") = 'pdf') AS "AnexosPdf"
 FROM OPCH N
 LEFT JOIN PCH12 T ON T."DocEntry" = N."DocEntry"
+CROSS JOIN OADM E
 WHERE N."CANCELED" = 'N'
   AND N."DocEntry" IN (:docEntries)
 ORDER BY N."DocEntry"

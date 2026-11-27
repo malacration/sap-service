@@ -45,16 +45,28 @@ data class NotaEntradaListagem(
     val nomeFornecedor: String?,
     /** So digitos: CNPJ (14) ou, sem ele, CPF (11) da extensao fiscal do documento (PCH12). */
     val cpfCnpjFornecedor: String?,
+    /** OPCH.DocCur. */
     val moeda: String?,
-    /** OPCH.DocTotal: ja liquido da retencao de categoria Fatura. */
+    /** OADM.MainCurncy: moeda local da empresa. */
+    val moedaLocal: String?,
+    /**
+     * OPCH.DocTotal: ja liquido da retencao de categoria Fatura. Em moeda local; null (assim como
+     * [valorBruto] e [valorLiquido]) quando a nota nao esta na moeda local, ver [problema].
+     */
     val valorTotal: BigDecimal?,
-    val retencaoFatura: BigDecimal,
-    val retencaoPagamento: BigDecimal,
+    /** Retencoes (PCH5) em moeda local; null, como os valores, fora da moeda local. */
+    val retencaoFatura: BigDecimal?,
+    val retencaoPagamento: BigDecimal?,
     /** DocTotal + retencao de categoria Fatura. */
     val valorBruto: BigDecimal?,
     /** DocTotal - retencao de categoria Pagamento (o que o fornecedor recebe). */
     val valorLiquido: BigDecimal?,
     val anexosPdf: Int,
+    /**
+     * Motivo de a nota nao ser importavel; null quando ok. Hoje: moeda diferente da local ou
+     * desconhecida (mesma regra da MOEDA_NAO_SUPORTADA da conferencia de pagamento).
+     */
+    val problema: String? = null,
 ) {
     companion object {
         fun from(linha: Map<String, Any?>, cnpjFilial: String, tipo: (String?) -> TipoNotaEntrada?): NotaEntradaListagem? {
@@ -66,6 +78,15 @@ data class NotaEntradaListagem(
             // So digitos ASCII, como o filtro de fornecedor do SQL (contas-pagar-notas-entrada-periodo.sql).
             val cnpj = linha.textoNota("CnpjFornecedor")?.filter(::digitoAscii)?.takeIf { it.length == 14 }
             val cpf = linha.textoNota("CpfFornecedor")?.filter(::digitoAscii)?.takeIf { it.length == 11 }
+            val moeda = linha.textoNota("DocCur")
+            val moedaLocal = linha.textoNota("MainCurncy")
+            // Valores sao da moeda local: nota em outra moeda nao expoe nenhum valor monetario (nao importavel).
+            val problema = when {
+                moeda == null || moedaLocal == null -> "Moeda da nota de entrada desconhecida no SAP"
+                moeda != moedaLocal -> "Nota de entrada em moeda estrangeira ($moeda); so a moeda local e suportada"
+                else -> null
+            }
+            val valor = total?.takeIf { problema == null }
             return NotaEntradaListagem(
                 docEntry = docEntry,
                 docNum = linha.inteiroNota("DocNum"),
@@ -82,13 +103,15 @@ data class NotaEntradaListagem(
                 cardCode = linha.textoNota("CardCode"),
                 nomeFornecedor = linha.textoNota("CardName"),
                 cpfCnpjFornecedor = cnpj ?: cpf,
-                moeda = linha.textoNota("DocCur"),
-                valorTotal = total?.dinheiroNota(),
-                retencaoFatura = retFatura.dinheiroNota(),
-                retencaoPagamento = retPagamento.dinheiroNota(),
-                valorBruto = total?.add(retFatura)?.dinheiroNota(),
-                valorLiquido = total?.subtract(retPagamento)?.dinheiroNota(),
+                moeda = moeda,
+                moedaLocal = moedaLocal,
+                valorTotal = valor?.dinheiroNota(),
+                retencaoFatura = retFatura.takeIf { problema == null }?.dinheiroNota(),
+                retencaoPagamento = retPagamento.takeIf { problema == null }?.dinheiroNota(),
+                valorBruto = valor?.add(retFatura)?.dinheiroNota(),
+                valorLiquido = valor?.subtract(retPagamento)?.dinheiroNota(),
                 anexosPdf = linha.inteiroNota("AnexosPdf") ?: 0,
+                problema = problema,
             )
         }
     }

@@ -11,6 +11,10 @@ import org.junit.jupiter.api.assertThrows
 import org.mockito.kotlin.any
 import org.mockito.kotlin.doReturn
 import org.mockito.kotlin.mock
+import org.mockito.kotlin.never
+import org.mockito.kotlin.verify
+import org.mockito.kotlin.verifyNoInteractions
+import br.andrew.sap.model.authentication.UserOriginEnum
 
 /**
  * Perfil integracao_contas_pagar so vale no token da service account do client permitido
@@ -27,9 +31,9 @@ class KeycloakUserMapperIntegracaoTest {
     private val places = mock<BussinessPlaceService> { on { getFilialByEmployee(any()) } doReturn listOf() }
     private val mapper = KeycloakUserMapper(properties, employees, rules, places)
 
-    private fun claims(extra: Map<String, Any>, vararg roles: String, realm: List<String> = listOf()) = Jwts.claims()
+    private fun claims(extra: Map<String, Any>, vararg roles: String, realm: List<String> = listOf(), sapCode: Boolean = true) = Jwts.claims()
         .subject("u1")
-        .add("sap_code", "606")
+        .add(if (sapCode) mapOf("sap_code" to "606") else mapOf())
         .add("resource_access", mapOf("sapvema" to mapOf("roles" to roles.toList())))
         .add("realm_access", mapOf("roles" to realm))
         .add(extra)
@@ -85,5 +89,51 @@ class KeycloakUserMapperIntegracaoTest {
     fun `role protegida e o perfil do rules yml`() {
         val rulesYml = javaClass.classLoader.getResource("rules.yml")!!.readText()
         assertEquals(true, rulesYml.lines().any { it == "  ${KeycloakUserMapper.ROLE_INTEGRACAO_CONTAS_PAGAR}:" })
+    }
+
+    @Test
+    fun `service account sem sap_code e mapeada so com o perfil de integracao, sem consultar o SAP`() {
+        val user = mapper.toUser(claims(sa("nota-agil-integracao"), "integracao_contas_pagar", "producao", "filial-2-matriz",
+            sapCode = false))
+
+        assertEquals(listOf("integracao_contas_pagar"), user.roles)
+        assertEquals(UserOriginEnum.Integracao, user.origin)
+        assertEquals("nota-agil-integracao", user.id)
+        assertEquals("service-account-nota-agil-integracao", user.userName)
+        assertEquals(listOf<Int>(), user.bussinesPlace)
+        verifyNoInteractions(employees, places)
+    }
+
+    @Test
+    fun `sem sap_code continua recusado para usuario e para service account sem o perfil`() {
+        assertThrows<KeycloakUserProvisioningException> {
+            mapper.toUser(claims(mapOf("azp" to "sapvema", "preferred_username" to "fulano"), "producao", sapCode = false))
+        }
+        assertThrows<KeycloakUserProvisioningException> {
+            mapper.toUser(claims(mapOf("azp" to "nota-agil-integracao", "preferred_username" to "fulano"),
+                "integracao_contas_pagar", sapCode = false))
+        }
+        assertThrows<KeycloakUserProvisioningException> {
+            mapper.toUser(claims(sa("nota-agil-integracao"), "producao", sapCode = false))
+        }
+        assertThrows<KeycloakUserProvisioningException> {
+            mapper.toUser(claims(sa("outro-client"), "integracao_contas_pagar", sapCode = false))
+        }
+        verify(employees, never()).getSalesPersonCodeByEmployeeId(any())
+    }
+
+    @Test
+    fun `service account de client de integracao nunca usa o mapeamento normal`() {
+        // Com sap_code, outra role do app e filial, mas sem o perfil de integracao: nenhum perfil (recusada).
+        assertThrows<KeycloakUserProvisioningException> {
+            mapper.toUser(claims(sa("nota-agil-integracao"), "producao", "filial-2-matriz", sapCode = true))
+        }
+        // Com o perfil: so ele, mesmo com sap_code, outra role e filial.
+        val user = mapper.toUser(claims(sa("nota-agil-integracao"), "producao", "filial-2-matriz", "integracao_contas_pagar",
+            sapCode = true))
+        assertEquals(listOf("integracao_contas_pagar"), user.roles)
+        assertEquals(listOf<Int>(), user.bussinesPlace)
+        assertEquals(UserOriginEnum.Integracao, user.origin)
+        verifyNoInteractions(employees, places)
     }
 }
