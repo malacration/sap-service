@@ -13,12 +13,15 @@ import com.fasterxml.jackson.databind.PropertyNamingStrategies
 import com.fasterxml.jackson.databind.annotation.JsonNaming
 
 @JsonNaming(PropertyNamingStrategies.UpperCamelCaseStrategy::class)
-@JsonIgnoreProperties(ignoreUnknown = true)
+@JsonIgnoreProperties(value = ["DueDate"], allowGetters = true, ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 class JournalEntry(val journalEntryLines : List<JournalEntryLines>, val memo : String) : ReconciliationListRows {
 
     var taxDate : String? = null
     var ReferenceDate : String? = null
+    //so vai na criacao: ignorado na leitura (JsonIgnoreProperties), lancamento lido do SAP e
+    //regravado (PATCH) nao reenvia o vencimento
+    var DueDate : String? = null
     var JdtNum : Int? = null
     var OriginalJournal : String? = null
     var Original : Int? = null

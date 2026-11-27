@@ -8,7 +8,7 @@ import com.fasterxml.jackson.databind.annotation.JsonNaming
 import kotlin.jvm.Throws
 
 @JsonNaming(PropertyNamingStrategies.UpperCamelCaseStrategy::class)
-@JsonIgnoreProperties(ignoreUnknown = true)
+@JsonIgnoreProperties(value = ["DueDate"], allowGetters = true, ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 class JournalEntryLines(
     val AccountCode : String,
@@ -22,6 +22,9 @@ class JournalEntryLines(
 
     var Line_ID : Int? = null
     var ShortName : String? = null
+    //so vai na criacao: ignorado na leitura (JsonIgnoreProperties), lancamento lido do SAP e
+    //regravado (PATCH) nao reenvia o vencimento
+    var DueDate : String? = null
     @JsonProperty("BPLID")
     fun getBPLID() : Int {
         return BPLID

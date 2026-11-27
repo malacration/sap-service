@@ -42,7 +42,10 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
+import org.springframework.web.client.ResourceAccessException
+import org.springframework.web.client.RestClientResponseException
 import org.springframework.web.client.RestTemplate
+import br.andrew.sap.model.exceptions.SapGenericException
 import java.math.BigDecimal
 
 @Service
@@ -73,8 +76,8 @@ class DownPaymentService(env: SapEnvrioment,
         return "/b1s/v1/DownPayments"
     }
 
-    fun adiantamentosVendaFuturaSave(contrato: Contrato, paymentInfo: PaymentDueDates): Document {
-        val adiantamento = adiantamentosVendaFuturaWithoutSave(contrato,paymentInfo)
+    fun adiantamentosVendaFuturaSave(contrato: Contrato, paymentInfo: PaymentDueDates, pedido: Document? = null): Document {
+        val adiantamento = adiantamentosVendaFuturaWithoutSave(contrato,paymentInfo,pedido)
         adiantamento.journalMemo = "Fatura de adiantamento venda futura. Contrato ${contrato.DocEntry}"
         adiantamento.comments = adiantamento.journalMemo
         return save(adiantamento).tryGetValue<Document>()
@@ -96,7 +99,13 @@ class DownPaymentService(env: SapEnvrioment,
         }
     }
 
-    fun adiantamentosVendaFuturaWithoutSave(contrato: Contrato, paymentInfo: PaymentDueDates): Document {
+    /**
+     * Condicao e forma vem do pedido de origem, as mesmas que a minuta mostra. Sem isso o SAP
+     * preenchia com as do cadastro do cliente. A condicao nao divide nem muda o vencimento do
+     * adiantamento (sempre uma parcela, vencimento enviado), entao fica so como registro.
+     */
+    fun adiantamentosVendaFuturaWithoutSave(contrato: Contrato, paymentInfo: PaymentDueDates, pedido: Document? = null): Document {
+        val origem: Document? = pedido ?: buscaPedidoOrigem(contrato)?.tryGetValue<OrderSales>()
         if(vfItemAdiantamento == "none")
             throw Exception("O parametro [venda-futura.adiantamento-item] nao pode ser $vfItemAdiantamento")
         val linhas = listOf(Product(vfItemAdiantamento,paymentInfo.value.toString(),"1",vfUtilizacao))
@@ -105,20 +114,63 @@ class DownPaymentService(env: SapEnvrioment,
             paymentInfo.dueDate.toString(),
             linhas,
             contrato.U_filial.toString())
-        if(vfFormaPagamento != null)
-            adiantamento.paymentMethod = vfFormaPagamento
+        //pedido sem condicao: a do contrato, para o SAP nao preencher com a do cadastro do cliente
+        adiantamento.paymentGroupCode = origem?.paymentGroupCode ?: contrato.U_condicaoPagamento
+        //pedido sem forma: cai na configurada, e sem ela o SAP usa a do cadastro do cliente
+        adiantamento.paymentMethod = origem?.paymentMethod?.takeIf { it.isNotBlank() } ?: vfFormaPagamento
         adiantamento.U_venda_futura = contrato.DocEntry;
         adiantamento.salesPersonCode = contrato.U_vendedor
         return adiantamento
     }
 
-    fun getLastInstallment(contrato: Contrato): String {
-        val boleto = getByContratoVendaFutura(
-            contrato.DocEntry?: throw Exception("O id do contrato nao pode ser nullo"),
-            OrderBy("DocDueDate",Order.DESC)
-        ).firstOrNull() ?: throw Exception("Contrato invalido pois nao tem nenhum boleto")
-        return boleto.DocDueDate ?: throw Exception("O ultimo boleto nao tem data de vencimento")
+    /**
+     * So a falha da consulta ao SAP cai no fallback (nulo): SapGenericException (4xx convertido por
+     * getById), RestClientResponseException (status HTTP de erro, ex. 5xx) e
+     * ResourceAccessException (I/O, timeout). Nao captura RestClientException generica: o RestTemplate
+     * desserializa o corpo dentro de getById e um 200 com JSON invalido vira RestClientException, que
+     * deve propagar. Nunca captura Error/Throwable.
+     */
+    private fun buscaPedidoOrigem(contrato: Contrato): OData? {
+        return try {
+            orderService.getById(contrato.U_orderDocEntry)
+        } catch (e: SapGenericException) {
+            logFallbackPedido(contrato, e)
+            null
+        } catch (e: RestClientResponseException) {
+            logFallbackPedido(contrato, e)
+            null
+        } catch (e: ResourceAccessException) {
+            logFallbackPedido(contrato, e)
+            null
+        }
     }
+
+    private fun logFallbackPedido(contrato: Contrato, e: Exception) {
+        logger.warn(
+            "Nao foi possivel buscar o pedido de origem do adiantamento; usando condicao do contrato e forma configurada. contrato={}, pedido={}, erro={}",
+            contrato.DocEntry,
+            contrato.U_orderDocEntry,
+            e.message
+        )
+    }
+
+    /**
+     * Vencimento (yyyy-MM-dd) do ultimo boleto valido do contrato; nulo quando nao ha nenhum.
+     * Ignora o cancelado (Cancelled == tYES) e o devolvido: o estorno de PIX expirado devolve
+     * sem desligar do contrato.
+     * shortcut: olha so a primeira pagina (20 boletos, os de maior vencimento); com 20 devolvidos
+     * seguidos devolve nulo e o VFET vence no dia, como antes. Producao tem no maximo 5 por contrato.
+     */
+    fun getLastInstallment(contratoId: Int): String? {
+        return getByContratoVendaFutura(contratoId, OrderBy("DocDueDate",Order.DESC))
+            .filter { it.Cancelled != br.andrew.sap.model.enums.Cancelled.tYES }
+            .firstOrNull { !foiDevolvido(it.docEntry ?: return@firstOrNull false) }
+            ?.DocDueDate?.take(10)
+    }
+
+    private fun foiDevolvido(docEntry: Int): Boolean =
+        (sqlQueriesService.execute("devolucao-adiantamento.sql", Parameter("docEntry", docEntry))
+            ?.tryGetValues<DocEntry>() ?: listOf()).isNotEmpty()
 
     fun getByContratoVendaFutura(id: Int, orderBy : OrderBy = OrderBy()): List<Document> {
         val filter = Filter(
@@ -300,11 +352,7 @@ class DownPaymentService(env: SapEnvrioment,
             //Talvez DownPaymentStatus indique se tem saldo a apropriar ou nao
         )
         return get(adiantamentoFilter).tryGetValues<DownPayment>()
-            .filter {
-                (sqlQueriesService
-                    .execute("devolucao-adiantamento.sql", Parameter("docEntry", it.docEntry!!))
-                    ?.tryGetValues<DocEntry>() ?: listOf()).isEmpty()
-            }
+            .filter { !foiDevolvido(it.docEntry!!) }
             .map{
                 val apropriacoes : List<Soma> = sqlQueriesService
                     .execute("adiantamento-apropriado.sql", Parameter("docEntry",it.docEntry!!))
@@ -354,7 +402,7 @@ class DownPaymentService(env: SapEnvrioment,
             paymentService.getParcelas(order.paymentGroupCode?: throw Exception("Erro ao pegar da condição de pagamento"))
         )
         hanndlePaymentTerms.calculaVencimentos(contrato,carenciaDias).map {
-            val adiantamento = this.adiantamentosVendaFuturaSave(contrato,it)
+            val adiantamento = this.adiantamentosVendaFuturaSave(contrato,it,order)
             try{
                 bankplus.geraBoletos(
                     adiantamento.getBPL_IDAssignedToInvoice().toInt(),
